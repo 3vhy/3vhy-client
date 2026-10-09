@@ -54,15 +54,14 @@ pnpm --filter=@modrinth/app run tauri build --bundles nsis
 The installer ends up in `target/release/bundle/nsis/`. For live development use
 `pnpm --filter=@modrinth/app run dev`.
 
-## Optional: Discord Rich Presence
+## Discord Rich Presence
 
-Modrinth's Discord application can't be used (it would show "Modrinth App"), so Rich Presence is
-off until you add your own:
+The launcher and the in-game mod show "Playing 3vhy Client" using the 3vhy Client Discord
+application (`1558249416144457829`). Its logo is the art asset with the key `3vhy`, uploaded under
+**Rich Presence → Art Assets** at <https://discord.com/developers/applications>.
 
-1. Create an application at <https://discord.com/developers/applications> named "3vhy Client".
-2. Under **Rich Presence → Art Assets**, upload your logo with the key `3vhy`.
-3. In your GitHub repository, add a repository variable `THREEVHY_DISCORD_APP_ID` with the
-   application ID (Settings → Secrets and variables → Actions → Variables).
+To use a different application, set a repository variable `THREEVHY_DISCORD_APP_ID` (Settings →
+Secrets and variables → Actions → Variables).
 
 ## Keeping up with Modrinth
 
