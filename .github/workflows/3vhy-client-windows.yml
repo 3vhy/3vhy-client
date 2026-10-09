@@ -77,6 +77,13 @@ jobs:
           name: 3vhy-mod
           path: packages/app-lib/threevhy-mod
 
+      - name: Check the 3vhy mod is there
+        shell: bash
+        run: |
+          ls -la packages/app-lib/threevhy-mod
+          test -s packages/app-lib/threevhy-mod/threevhy-client-1.21.11.jar
+          test -s packages/app-lib/threevhy-mod/threevhy-client-26.1.jar
+
       - name: Install dependencies
         run: pnpm install
 
