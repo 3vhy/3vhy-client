@@ -1,4 +1,133 @@
 {
+  "app.3vhy.home.caption": {
+    "message": "{loader} {version} · mods and modpacks straight from Modrinth"
+  },
+  "app.3vhy.home.caption-empty": {
+    "message": "Grab a modpack from Modrinth or create your own instance to get started"
+  },
+  "app.3vhy.home.card.modpacks.body": {
+    "message": "Download any modpack from Modrinth in one click"
+  },
+  "app.3vhy.home.card.modpacks.eyebrow": {
+    "message": "Modpacks"
+  },
+  "app.3vhy.home.card.mods.body": {
+    "message": "Sodium, Lithium, Entity Culling and more"
+  },
+  "app.3vhy.home.card.mods.eyebrow": {
+    "message": "Performance"
+  },
+  "app.3vhy.home.card.shaders.body": {
+    "message": "Shaders and resource packs for a fresh look"
+  },
+  "app.3vhy.home.card.shaders.eyebrow": {
+    "message": "Visuals"
+  },
+  "app.3vhy.home.create-first": {
+    "message": "Create"
+  },
+  "app.3vhy.home.installing": {
+    "message": "Installing"
+  },
+  "app.3vhy.home.play": {
+    "message": "Play"
+  },
+  "app.3vhy.home.stat.instances": {
+    "message": "{count, plural, one {instance} other {instances}}"
+  },
+  "app.3vhy.home.stat.mods": {
+    "message": "mods on"
+  },
+  "app.3vhy.home.stat.ram": {
+    "message": "GB RAM"
+  },
+  "app.3vhy.home.stop": {
+    "message": "Stop"
+  },
+  "app.3vhy.home.welcome": {
+    "message": "Welcome to 3vhy Client"
+  },
+  "app.3vhy.library.title": {
+    "message": "Library"
+  },
+  "app.3vhy.nav.folder": {
+    "message": "Folder"
+  },
+  "app.3vhy.nav.folder.tooltip": {
+    "message": "Open the folder of the instance picked on Home"
+  },
+  "app.3vhy.nav.library": {
+    "message": "Library"
+  },
+  "app.3vhy.nav.logs": {
+    "message": "Logs"
+  },
+  "app.3vhy.nav.logs.tooltip": {
+    "message": "Game logs for the instance picked on Home"
+  },
+  "app.3vhy.nav.modpacks": {
+    "message": "Modpacks"
+  },
+  "app.3vhy.nav.mods": {
+    "message": "Mods"
+  },
+  "app.3vhy.nav.screenshots": {
+    "message": "Shots"
+  },
+  "app.3vhy.nav.settings": {
+    "message": "Settings"
+  },
+  "app.3vhy.nav.skins": {
+    "message": "Skins"
+  },
+  "app.3vhy.picker.browse-modpacks": {
+    "message": "Get a modpack from Modrinth"
+  },
+  "app.3vhy.picker.label": {
+    "message": "Instance"
+  },
+  "app.3vhy.picker.new": {
+    "message": "New instance"
+  },
+  "app.3vhy.picker.none": {
+    "message": "No instances yet"
+  },
+  "app.3vhy.quick-mods.all": {
+    "message": "All mods"
+  },
+  "app.3vhy.quick-mods.browse": {
+    "message": "Browse mods"
+  },
+  "app.3vhy.quick-mods.empty": {
+    "message": "No mods in this instance yet."
+  },
+  "app.3vhy.quick-mods.no-instance": {
+    "message": "Pick an instance to see its mods."
+  },
+  "app.3vhy.quick-mods.title": {
+    "message": "Quick mods"
+  },
+  "app.3vhy.quick-mods.toggle": {
+    "message": "Enable {name}"
+  },
+  "app.3vhy.servers.add": {
+    "message": "Add"
+  },
+  "app.3vhy.servers.empty": {
+    "message": "Servers you join show up here so you can hop back in with one click."
+  },
+  "app.3vhy.servers.join": {
+    "message": "Join"
+  },
+  "app.3vhy.servers.online": {
+    "message": "{count} online"
+  },
+  "app.3vhy.servers.stop": {
+    "message": "Stop"
+  },
+  "app.3vhy.servers.title": {
+    "message": "Servers"
+  },
   "app.action-bar.downloading-java": {
     "message": "Downloading Java {version}"
   },
@@ -165,7 +294,7 @@
     "message": "Hide nametag"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Minimize Modrinth App when Minecraft starts."
+    "message": "Minimize 3vhy Client when Minecraft starts."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "Minimize app"
@@ -207,7 +336,7 @@
     "message": "Home and content"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Bring Modrinth App to the foreground when Minecraft exits."
+    "message": "Bring 3vhy Client to the foreground when Minecraft exits."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Refocus app when Minecraft closes"
@@ -507,7 +636,7 @@
     "message": "View instance"
   },
   "app.hosting.update-required.description": {
-    "message": "You need to update to use Modrinth Hosting through the Modrinth App"
+    "message": "You need to update to use Modrinth Hosting through 3vhy Client"
   },
   "app.hosting.update-required.download": {
     "message": "Download to update"
@@ -516,7 +645,7 @@
     "message": "Excited Modrinth Bot"
   },
   "app.hosting.update-required.title": {
-    "message": "Modrinth App update required"
+    "message": "3vhy Client update required"
   },
   "app.install.phase.downloading_content": {
     "message": "Downloading content"
@@ -1638,7 +1767,7 @@
     "message": "Oldest"
   },
   "app.settings.app-version": {
-    "message": "Modrinth App {version}"
+    "message": "3vhy Client {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Environment variables set when launching an instance."
@@ -2751,7 +2880,7 @@
     "message": "Ads make Modrinth possible and fund creator payouts. Our partners may store or access cookies in the app to personalize ads and measure performance. You can opt out or manage your preferences below."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Show Modrinth App as your current activity on Discord. This does not affect Rich Presence added to instances by mods. Requires an app restart."
+    "message": "Show 3vhy Client as your current activity on Discord. This does not affect Rich Presence added to instances by mods. Requires an app restart."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Discord Rich Presence"
@@ -2796,7 +2925,7 @@
     "message": "Browse for an app directory"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Where Modrinth App stores instances and other files. Changes take effect after restarting the app."
+    "message": "Where 3vhy Client stores instances and other files. Changes take effect after restarting the app."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Select a new app directory"
@@ -3321,7 +3450,7 @@
     "message": "Toggle on"
   },
   "app.survey.body": {
-    "message": "Would you mind answering a few questions about your experience with Modrinth App?"
+    "message": "Would you mind answering a few questions about your experience with 3vhy Client?"
   },
   "app.survey.footer": {
     "message": "This feedback will go directly to the Modrinth team and help guide future updates!"
@@ -3465,13 +3594,13 @@
     "message": "Synced resource packs"
   },
   "app.update-popup.body.download-complete": {
-    "message": "Modrinth App v{version} has finished downloading. Reload to update now, or automatically when you close Modrinth App."
+    "message": "3vhy Client v{version} has finished downloading. Reload to update now, or automatically when you close 3vhy Client."
   },
   "app.update-popup.body.linux": {
-    "message": "Modrinth App v{version} is available. Use your package manager to update for the latest features and fixes!"
+    "message": "3vhy Client v{version} is available. Use your package manager to update for the latest features and fixes!"
   },
   "app.update-popup.body.metered": {
-    "message": "Modrinth App v{version} is available now! Since you're on a metered network, we didn't automatically download it."
+    "message": "3vhy Client v{version} is available now! Since you're on a metered network, we didn't automatically download it."
   },
   "app.update-popup.changelog": {
     "message": "Changelog"
@@ -3516,7 +3645,7 @@
     "message": "Press <shortcut>N</shortcut> to quick create an instance"
   },
   "app.welcome-screen.title": {
-    "message": "Welcome to Modrinth"
+    "message": "Welcome to 3vhy Client"
   },
   "app.world.server-modal.placeholder-address": {
     "message": "example.modrinth.gg"

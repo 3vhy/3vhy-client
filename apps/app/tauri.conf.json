@@ -9,7 +9,7 @@
 	"bundle": {
 		"active": true,
 		"category": "Game",
-		"copyright": "",
+		"copyright": "3vhy Client is based on the Modrinth App (GPL-3.0). Not affiliated with Modrinth.",
 		"targets": "all",
 		"externalBin": [],
 		"icon": ["icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
@@ -42,7 +42,7 @@
 				}
 			}
 		},
-		"shortDescription": "",
+		"shortDescription": "3vhy Client - a Minecraft launcher",
 		"linux": {
 			"deb": {
 				"depends": []
@@ -55,14 +55,14 @@
 			}
 		]
 	},
-	"productName": "Modrinth App",
+	"productName": "3vhy Client",
 	"version": "../app-frontend/package.json",
-	"mainBinaryName": "Modrinth App",
-	"identifier": "ModrinthApp",
+	"mainBinaryName": "3vhy Client",
+	"identifier": "com.threevhy.client",
 	"plugins": {
 		"deep-link": {
 			"desktop": {
-				"schemes": ["modrinth"]
+				"schemes": ["threevhy"]
 			},
 			"mobile": []
 		}
@@ -77,7 +77,7 @@
 				"fullscreen": false,
 				"height": 800,
 				"resizable": true,
-				"title": "Modrinth App",
+				"title": "3vhy Client",
 				"label": "main",
 				"width": 1280,
 				"minHeight": 700,

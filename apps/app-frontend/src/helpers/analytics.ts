@@ -49,7 +49,8 @@ let activated = false
 let debug = false
 let explicitlyOptedIn = false
 const events: Array<{ name: AnalyticsEvent; properties: Record<string, unknown> | undefined }> = []
-const allowed = import.meta.env.PROD || import.meta.env.VITE_ENABLE_ANALYTICS === 'true'
+// 3vhy Client: analytics are disabled (Modrinth's PostHog project is not ours to report to)
+const allowed = false
 
 function removeActivationListeners() {
 	window.removeEventListener('pointerdown', activate)

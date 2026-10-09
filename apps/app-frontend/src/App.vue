@@ -11,21 +11,24 @@ import {
 import {
 	ArrowBigUpDashIcon,
 	ArrowLeftRightIcon,
+	BoxIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
-	CompassIcon,
+	FolderOpenIcon,
+	HomeIcon,
 	ImageIcon,
+	LayersIcon,
+	LibraryIcon,
 	LogInIcon,
 	LogOutIcon,
 	NewspaperIcon,
-	PlayIcon,
 	PlusIcon,
 	RefreshCwIcon,
 	RightArrowIcon,
-	ServerStackIcon,
 	SettingsIcon,
 	ShirtIcon,
 	SpinnerIcon,
+	TerminalSquareIcon,
 	ToggleRightIcon,
 	UserIcon,
 	UserPlusIcon,
@@ -54,7 +57,6 @@ import {
 	providePageContext,
 	providePopupNotificationManager,
 	TeleportOverflowMenu,
-	TextLogo,
 	TooltipDirective,
 	useDebugLogger,
 	useFormatBytes,
@@ -77,6 +79,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import AppActionBar from '@/components/ui/AppActionBar.vue'
+import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
 import ErrorModal from '@/components/ui/ErrorModal.vue'
 import FriendsList from '@/components/ui/friends/FriendsList.vue'
@@ -95,10 +98,8 @@ import NavButton from '@/components/ui/NavButton.vue'
 import OnboardingChecklist from '@/components/ui/onboarding-checklist/index.vue'
 import PrideFundraiserBanner from '@/components/ui/PrideFundraiserBanner.vue'
 import PromotionWrapper from '@/components/ui/PromotionWrapper.vue'
-import QuickInstanceSwitcher from '@/components/ui/QuickInstanceSwitcher.vue'
 import SharedInstanceInviteHandler from '@/components/ui/shared-instances/shared-instance-invite-handler/index.vue'
 import SplashScreen from '@/components/ui/SplashScreen.vue'
-import SurveyPopup from '@/components/ui/SurveyPopup.vue'
 import WindowControls from '@/components/ui/WindowControls.vue'
 import { useCheckDisableMouseover } from '@/composables/macCssFix.js'
 import { useAppEvent } from '@/composables/use-app-event'
@@ -106,6 +107,7 @@ import { useAppSettings } from '@/composables/use-app-settings.ts'
 import { useError } from '@/composables/use-error.js'
 import { useInstanceMetadataRefresh } from '@/composables/use-instance-metadata-refresh'
 import { useQuickInstanceLimit } from '@/composables/use-quick-instance-limit.ts'
+import { useSelectedInstance } from '@/composables/use-selected-instance'
 import { isDarkTheme, useTheme } from '@/composables/use-theme.ts'
 import { config } from '@/config'
 import NewUpdateModal from '@/features/updates/new-update-modal/index.vue'
@@ -115,7 +117,6 @@ import {
 	init_ads_window,
 	perform_ads_consent_action,
 	release_ads_window_hold,
-	should_show_ads_consent_popup,
 	take_ads_window_hold,
 } from '@/helpers/ads.js'
 import { debugAnalytics, initAnalytics, trackEvent } from '@/helpers/analytics'
@@ -166,6 +167,8 @@ import {
 	isDev,
 	isNetworkMetered,
 	setRestartAfterPendingUpdate,
+	showInstanceInFolder,
+	showLauncherLogsFolder,
 } from '@/helpers/utils.js'
 import { start_join_server, start_join_singleplayer_world } from '@/helpers/worlds.ts'
 import i18n, { setLocale } from '@/i18n.config'
@@ -196,7 +199,6 @@ import { setupAppEventsProvider } from '@/providers/setup/app-events'
 import { setupAuthProvider } from '@/providers/setup/auth'
 import { setupLoadingStateProvider } from '@/providers/setup/loading-state'
 import { setupAppUserPreferencesProvider } from '@/providers/setup/user-preferences.ts'
-import { appMessages } from '@/utils/app-messages'
 
 import { AppNotificationManager } from './providers/app-notifications'
 import { AppPopupNotificationManager } from './providers/app-popup-notifications'
@@ -245,7 +247,7 @@ async function handleFullscreenChange() {
 
 updateHistoryNavigationState()
 
-const APP_LEFT_NAV_WIDTH = '4rem'
+const APP_LEFT_NAV_WIDTH = '6rem'
 const APP_SIDEBAR_WIDTH = 300
 const INTERCOM_BUBBLE_DEFAULT_PADDING = 20
 const PRIDE_FUNDRAISER_END_DATE = new Date('2026-07-01T00:00:00Z').getTime()
@@ -362,10 +364,9 @@ const hasPlus = computed(
 		(hasMidasBadge(credentials.value.user) ||
 			hasActivePride26Midas(authenticatedModrinthUser.value?.campaigns?.pride_26)),
 )
-const showAd = computed(
-	() => sidebarVisible.value && !hasPlus.value && credentials.value !== undefined,
-)
-const adConsentAvailable = computed(() => credentials.value !== undefined && !hasPlus.value)
+// 3vhy Client: no ads and no ad-consent prompts
+const showAd = computed(() => false)
+const adConsentAvailable = computed(() => false)
 providePageContext({
 	hierarchicalSidebarAvailable: ref(true),
 	showAds: showAd,
@@ -543,7 +544,8 @@ onMounted(async () => {
 
 	await useCheckDisableMouseover()
 	try {
-		handleAdsConsentRequired(await should_show_ads_consent_popup())
+		// 3vhy Client: ads are disabled, so there is never an ads consent prompt
+		handleAdsConsentRequired(false)
 	} catch (error) {
 		handleError(error)
 	}
@@ -573,6 +575,46 @@ onUnmounted(async () => {
 
 const { formatMessage } = useVIntl()
 const formatBytes = useFormatBytes()
+
+// 3vhy Client: labeled S.A.M-style navigation
+const navMessages = defineMessages({
+	modpacks: { id: 'app.3vhy.nav.modpacks', defaultMessage: 'Modpacks' },
+	mods: { id: 'app.3vhy.nav.mods', defaultMessage: 'Mods' },
+	library: { id: 'app.3vhy.nav.library', defaultMessage: 'Library' },
+	skins: { id: 'app.3vhy.nav.skins', defaultMessage: 'Skins' },
+	screenshots: { id: 'app.3vhy.nav.screenshots', defaultMessage: 'Shots' },
+	settings: { id: 'app.3vhy.nav.settings', defaultMessage: 'Settings' },
+	logs: { id: 'app.3vhy.nav.logs', defaultMessage: 'Logs' },
+	folder: { id: 'app.3vhy.nav.folder', defaultMessage: 'Folder' },
+	logsTooltip: {
+		id: 'app.3vhy.nav.logs.tooltip',
+		defaultMessage: 'Game logs for the instance picked on Home',
+	},
+	folderTooltip: {
+		id: 'app.3vhy.nav.folder.tooltip',
+		defaultMessage: 'Open the folder of the instance picked on Home',
+	},
+})
+
+const { selected: navSelectedInstance } = useSelectedInstance()
+
+function openSelectedLogs() {
+	const instance = navSelectedInstance.value
+	if (instance) {
+		router.push(`/instance/${encodeURIComponent(instance.id)}/logs`)
+	} else {
+		showLauncherLogsFolder().catch(handleError)
+	}
+}
+
+function openSelectedFolder() {
+	const instance = navSelectedInstance.value
+	if (instance) {
+		showInstanceInFolder(instance.id).catch(handleError)
+	} else {
+		router.push('/library')
+	}
+}
 
 const messages = defineMessages({
 	warning: { id: 'app.notification.warning', defaultMessage: 'Warning' },
@@ -852,34 +894,7 @@ async function setupApp() {
 		document.getElementsByTagName('html')[0].classList.add('windows')
 	}
 
-	fetch(`https://api.modrinth.com/appCriticalAnnouncement.json?version=${version}`)
-		.then((response) => response.json())
-		.then((res) => {
-			if (res && res.header && res.body) {
-				criticalErrorMessage.value = res
-			}
-		})
-		.catch(() => {
-			console.log(
-				`No critical announcement found at https://api.modrinth.com/appCriticalAnnouncement.json?version=${version}`,
-			)
-		})
-
-	fetch(`https://modrinth.com/news/feed/articles.json`)
-		.then((response) => response.json())
-		.then((res) => {
-			if (res && res.articles) {
-				news.value = res.articles
-					.map((article) => ({
-						...article,
-						path: article.link,
-					}))
-					.slice(0, 4)
-			}
-		})
-		.catch((error) => {
-			console.error('Failed to fetch news articles', error)
-		})
+	// 3vhy Client: Modrinth App announcements and Modrinth news are not fetched in this fork
 
 	traceStartupStep('Read opening command', get_opening_command).then(handleCommand)
 	traceStartupStep('Refresh startup credentials', fetchCredentials)
@@ -1755,16 +1770,16 @@ const updatePopupMessages = defineMessages({
 	},
 	meteredBody: {
 		id: 'app.update-popup.body.metered',
-		defaultMessage: `Modrinth App v{version} is available now! Since you're on a metered network, we didn't automatically download it.`,
+		defaultMessage: `3vhy Client v{version} is available now! Since you're on a metered network, we didn't automatically download it.`,
 	},
 	downloadedBody: {
 		id: 'app.update-popup.body.download-complete',
-		defaultMessage: `Modrinth App v{version} has finished downloading. Reload to update now, or automatically when you close Modrinth App.`,
+		defaultMessage: `3vhy Client v{version} has finished downloading. Reload to update now, or automatically when you close 3vhy Client.`,
 	},
 	linuxBody: {
 		id: 'app.update-popup.body.linux',
 		defaultMessage:
-			'Modrinth App v{version} is available. Use your package manager to update for the latest features and fixes!',
+			'3vhy Client v{version} is available. Use your package manager to update for the latest features and fixes!',
 	},
 	reload: {
 		id: 'app.update-popup.reload',
@@ -1882,7 +1897,15 @@ function showDelayedUpdatePopup() {
 	markAppUpdatePopupShown(update.version, stage)
 }
 
+const UPDATES_DISABLED_IN_FORK = true
+
 async function checkUpdates() {
+	// 3vhy Client: never check Modrinth's update server; it would offer the Modrinth App instead
+	if (UPDATES_DISABLED_IN_FORK) {
+		updatesEnabled.value = false
+		return
+	}
+
 	if (!(await areUpdatesEnabled())) {
 		console.log('Skipping update check as updates are disabled in this build or environment')
 		updatesEnabled.value = false
@@ -2179,71 +2202,86 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 		/>
 		<UnknownPackWarningModal ref="unknownPackWarningModal" />
 		<div
-			class="app-grid-navbar bg-bg-raised flex flex-col p-[0.5rem] pt-0 gap-[0.25rem] w-[--left-bar-width]"
+			class="app-grid-navbar bg-bg-raised flex flex-col p-[0.6rem] pt-1 gap-[0.35rem] w-[--left-bar-width]"
 		>
 			<NavButton
-				v-tooltip.right="formatMessage(messages.home)"
+				:label="formatMessage(messages.home)"
 				to="/"
-				:is-primary="(route) => route.path === '/'"
-				:is-subpage="
-					() =>
-						(route.path.startsWith('/browse') || route.path.startsWith('/project')) && route.query.i
-				"
+				:is-primary="(r) => r.path === '/'"
+				:is-subpage="() => false"
 			>
-				<PlayIcon class="ml-0.5" />
+				<HomeIcon />
 			</NavButton>
 			<NavButton
-				v-tooltip.right="formatMessage(commonMessages.discoverContentLabel)"
+				:label="formatMessage(navMessages.modpacks)"
 				to="/browse/modpack"
-				:is-primary="() => route.path.startsWith('/browse') && !route.query.i && !route.query.sid"
+				:is-primary="(r) => r.path.startsWith('/browse/modpack') && !r.query.i && !r.query.sid"
+				:is-subpage="(r) => r.path.startsWith('/modpack/') && !r.query.i"
+			>
+				<LayersIcon />
+			</NavButton>
+			<NavButton
+				:label="formatMessage(navMessages.mods)"
+				to="/browse/mod"
+				:is-primary="
+					(r) =>
+						r.path.startsWith('/browse') &&
+						!r.path.startsWith('/browse/modpack') &&
+						!r.query.i &&
+						!r.query.sid
+				"
 				:is-subpage="
-					(route) => route.path.startsWith('/project') && !route.query.i && !route.query.sid
+					(r) =>
+						(r.path.startsWith('/project') ||
+							/^\/(mod|plugin|datapack|resourcepack|shader)\//.test(r.path)) &&
+						!r.query.i
 				"
 			>
-				<CompassIcon />
+				<BoxIcon />
+			</NavButton>
+			<NavButton
+				:label="formatMessage(navMessages.library)"
+				to="/library"
+				:is-primary="(r) => r.path === '/library'"
+				:is-subpage="
+					(r) =>
+						r.path.startsWith('/instance') ||
+						((r.path.startsWith('/browse') || r.path.startsWith('/project')) && !!r.query.i)
+				"
+			>
+				<LibraryIcon />
 			</NavButton>
 			<NavButton
 				v-if="appSettings.showSkinSelectorInSidebar"
-				v-tooltip.right="formatMessage(appMessages.skinSelectorLabel)"
+				:label="formatMessage(navMessages.skins)"
 				to="/skins"
 			>
 				<ShirtIcon />
 			</NavButton>
 			<NavButton
 				v-if="globalSyncedOptionsQuery.data.value?.screenshots"
-				v-tooltip.right="formatMessage(messages.screenshots)"
+				:label="formatMessage(navMessages.screenshots)"
 				to="/screenshots"
 			>
 				<ImageIcon />
 			</NavButton>
-			<NavButton
-				v-tooltip.right="formatMessage(messages.modrinthHosting)"
-				to="/hosting/manage"
-				:is-primary="(r) => r.path === '/hosting/manage' || r.path === '/hosting/manage/'"
-				:is-subpage="
-					(r) =>
-						(r.path.startsWith('/hosting/manage/') && r.path !== '/hosting/manage/') ||
-						((r.path.startsWith('/browse') || r.path.startsWith('/project')) && r.query.sid)
-				"
-			>
-				<ServerStackIcon />
-			</NavButton>
-			<suspense>
-				<QuickInstanceSwitcher>
-					<NavButton
-						v-tooltip.right="formatMessage(messages.createNewInstance)"
-						:to="() => installationModal?.show()"
-						:disabled="offline"
-					>
-						<PlusIcon />
-					</NavButton>
-				</QuickInstanceSwitcher>
-			</suspense>
-			<NavButton
-				v-tooltip.right="formatMessage(commonMessages.settingsLabel)"
-				:to="() => appSettingsModal?.show()"
-			>
+			<NavButton :label="formatMessage(navMessages.settings)" :to="() => appSettingsModal?.show()">
 				<SettingsIcon />
+			</NavButton>
+			<div class="flex-grow" />
+			<NavButton
+				v-tooltip.right="formatMessage(navMessages.logsTooltip)"
+				:label="formatMessage(navMessages.logs)"
+				:to="openSelectedLogs"
+			>
+				<TerminalSquareIcon />
+			</NavButton>
+			<NavButton
+				v-tooltip.right="formatMessage(navMessages.folderTooltip)"
+				:label="formatMessage(navMessages.folder)"
+				:to="openSelectedFolder"
+			>
+				<FolderOpenIcon />
 			</NavButton>
 			<IconButton
 				v-if="credentials === undefined"
@@ -2312,7 +2350,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 		</div>
 		<div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
 			<div data-tauri-drag-region class="flex min-w-0 flex-1 items-center overflow-hidden p-2">
-				<TextLogo class="h-7 w-auto shrink-0 text-contrast pointer-events-none" />
+				<ThreevhyLogo class="ml-1 shrink-0 pointer-events-none" />
 				<div data-tauri-drag-region class="ml-2 flex shrink-0 items-center gap-2">
 					<IconButton
 						type="outlined"
@@ -2370,7 +2408,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 		}"
 	>
 		<div class="app-viewport flex-grow router-view">
-			<SurveyPopup />
+			<!-- 3vhy Client: Modrinth's in-app surveys are removed -->
 			<div
 				class="loading-indicator-container h-8 fixed z-50 pointer-events-none"
 				:style="{
@@ -2429,7 +2467,6 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 			<div
 				v-overlay-scrollbars="sidebarOverlayScrollbarsOptions"
 				class="app-sidebar-scrollable flex-grow shrink relative"
-				:class="{ 'pb-12': !hasPlus }"
 				data-overlayscrollbars-initialize
 			>
 				<OnboardingChecklist
@@ -2437,19 +2474,19 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 					@login-minecraft="accounts?.login()"
 					@login-modrinth="signIn"
 				/>
+				<div
+					v-show="hasLoggedIntoMinecraft"
+					class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid"
+				>
+					<h3 class="text-base text-primary font-medium m-0">
+						{{ formatMessage(messages.playingAs) }}
+					</h3>
+					<suspense>
+						<AccountsCard ref="accounts" />
+					</suspense>
+				</div>
 				<div id="sidebar-teleport-target" class="sidebar-teleport-content"></div>
 				<div class="sidebar-default-content" :class="{ 'sidebar-enabled': sidebarVisible }">
-					<div
-						v-show="hasLoggedIntoMinecraft"
-						class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid"
-					>
-						<h3 class="text-base text-primary font-medium m-0">
-							{{ formatMessage(messages.playingAs) }}
-						</h3>
-						<suspense>
-							<AccountsCard ref="accounts" />
-						</suspense>
-					</div>
 					<div
 						v-show="showFriendsList"
 						class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid"
@@ -2564,7 +2601,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 .app-grid-layout,
 .app-contents {
 	--top-bar-height: 3rem;
-	--left-bar-width: 4rem;
+	--left-bar-width: 6rem;
 	--right-bar-width: 300px;
 }
 
@@ -2639,21 +2676,6 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 	--surface-5: var(--brand-gradient-border);
 	--color-divider: var(--brand-gradient-border);
 	--color-divider-dark: var(--brand-gradient-border);
-}
-
-.app-sidebar::after {
-	content: '';
-	position: absolute;
-	bottom: 250px;
-	left: 0;
-	right: 0;
-	height: 5rem;
-	background: var(--brand-gradient-fade-out-color);
-	pointer-events: none;
-}
-
-.app-sidebar.has-plus::after {
-	display: none;
 }
 
 .disable-advanced-rendering {

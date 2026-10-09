@@ -8,6 +8,15 @@ use tokio::sync::RwLock;
 
 use crate::State;
 
+/// 3vhy Client: Discord Rich Presence needs a Discord application owned by you
+/// (Modrinth's app ID would show "Modrinth App" with their logo).
+/// Create one at https://discord.com/developers/applications, upload an art
+/// asset named `3vhy`, and set `THREEVHY_DISCORD_APP_ID` when building.
+/// Without it, Rich Presence stays off.
+fn discord_app_id() -> Option<&'static str> {
+    option_env!("THREEVHY_DISCORD_APP_ID").filter(|id| !id.trim().is_empty())
+}
+
 pub struct DiscordGuard {
     client: Arc<RwLock<DiscordIpcClient>>,
     connected: Arc<AtomicBool>,
@@ -17,7 +26,7 @@ impl DiscordGuard {
     /// Initialize discord IPC client, and attempt to connect to it
     /// If it fails, it will still return a DiscordGuard, but the client will be unconnected
     pub fn init() -> crate::Result<DiscordGuard> {
-        let dipc = DiscordIpcClient::new("1123683254248148992");
+        let dipc = DiscordIpcClient::new(discord_app_id().unwrap_or("0"));
 
         Ok(DiscordGuard {
             client: Arc::new(RwLock::new(dipc)),
@@ -29,6 +38,9 @@ impl DiscordGuard {
     /// This MUST be called first in any client method that requires a connection, because those can PANIC if the client is not connected
     /// (No connection is different than a failed connection, the latter will not panic and can be retried)
     pub async fn retry_if_not_ready(&self) -> bool {
+        if discord_app_id().is_none() {
+            return false;
+        }
         let mut client = self.client.write().await;
         if !self.connected.load(std::sync::atomic::Ordering::Relaxed) {
             if client.connect().is_ok() {
@@ -71,9 +83,7 @@ impl DiscordGuard {
         }
 
         let activity = Activity::new().state(msg).assets(
-            Assets::new()
-                .large_image("modrinth_simple")
-                .large_text("Modrinth Logo"),
+            Assets::new().large_image("3vhy").large_text("3vhy Client"),
         );
 
         // Attempt to set the activity

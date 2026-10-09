@@ -1,0 +1,88 @@
+name: Build 3vhy Client (Windows)
+
+# Run it from the Actions tab ("Run workflow"), or push a tag like v0.1.0
+# to build and publish a GitHub Release with the installer attached.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  build-windows:
+    name: Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Respects rust-toolchain.toml, so the same Rust version as upstream is used
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ''
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (pnpm)
+        run: corepack enable
+
+      # The launcher's small Java helper is built with Gradle during the Rust build
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set app version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.1.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "Building 3vhy Client $VERSION"
+          sed -i "0,/^version = .*/s//version = \"$VERSION\"/" apps/app/Cargo.toml
+          sed -i "0,/^version = .*/s//version = \"$VERSION\"/" packages/app-lib/Cargo.toml
+          node -e "const f='apps/app-frontend/package.json';const p=require('./'+f);p.version='$VERSION';require('fs').writeFileSync(f,JSON.stringify(p,null,'\t')+'\n')"
+          cp packages/app-lib/.env.prod packages/app-lib/.env
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build installer
+        env:
+          # Optional: set a repository variable with your own Discord application ID
+          # to turn on Discord Rich Presence ("Playing 3vhy Client").
+          THREEVHY_DISCORD_APP_ID: ${{ vars.THREEVHY_DISCORD_APP_ID }}
+        run: pnpm --filter=@modrinth/app run tauri build --bundles nsis
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3vhy-client-windows
+          path: target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/release/bundle/nsis/*-setup.exe
+          generate_release_notes: true

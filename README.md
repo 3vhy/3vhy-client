@@ -1,39 +1,85 @@
-# ![Modrinth Monorepo Cover](/.github/assets/monorepo_cover.png)
+# 3vhy Client
 
-![Issues](https://img.shields.io/github/issues-raw/Modrinth/code?color=c78aff&label=issues&style=for-the-badge)
-![Pull Requests](https://img.shields.io/github/issues-pr-raw/Modrinth/code?color=c78aff&label=PRs&style=for-the-badge)
-![Contributors](https://img.shields.io/github/contributors/Modrinth/code?color=c78aff&label=contributors&style=for-the-badge)
-![Lines of Code](https://img.shields.io/endpoint?url=https://loctopus.creeperkatze.dev/github/modrinth/code/badge?style=flat&logoColor=white&color=c78aff&style=for-the-badge)
-![Commit Activity](https://img.shields.io/github/commit-activity/m/Modrinth/code?color=c78aff&label=commits&style=for-the-badge)
-![Last Commit](https://img.shields.io/github/last-commit/Modrinth/code?color=c78aff&label=last%20commit&style=for-the-badge)
+A Minecraft launcher for Windows, built on the open-source [Modrinth App](https://github.com/modrinth/code).
+It keeps everything the Modrinth App does — downloading mods and modpacks from Modrinth, instances,
+Microsoft sign-in, "Jump in" to recent servers — with a new look and home screen.
 
-## Modrinth Monorepo
+**3vhy Client is not affiliated with or endorsed by Modrinth.** Mods and modpacks come from
+[modrinth.com](https://modrinth.com) through Modrinth's public API.
 
-Welcome to the Modrinth Monorepo, the primary codebase for the Modrinth web interface and app. It contains ![Lines of code](https://img.shields.io/endpoint?url=https://loctopus.creeperkatze.dev/github/modrinth/code/badge%3Fformat%3Dhuman&logoColor=white&color=black&label=) lines of code and has ![Contributors](https://img.shields.io/github/contributors/Modrinth/code?color=black&label=) contributors!
+## What's different from the Modrinth App
 
-If you're not a developer and you've stumbled upon this repository, you can access the web interface on the [Modrinth website](https://modrinth.com) and download the latest release of the app [here](https://modrinth.com/app).
+- **Home screen** in the S.A.M Client style: big logo, Play button with an instance ("version")
+  picker, stats, Quick mods toggles, a Servers list with one-click Join, and shortcut cards.
+- **Labeled sidebar**: Home, Modpacks, Mods, Library, Skins, Settings, plus Logs and Folder for the
+  instance picked on Home.
+- **3vhy theme**: colors taken from the 3vhy banner (navy to sky blue, ice-white pixel lettering),
+  new app icon and logo.
+- **Removed**: ads and ad-consent prompts, Modrinth+ upsell, Modrinth news, in-app surveys,
+  Modrinth's analytics (PostHog) and crash reporting (Sentry), Modrinth's auto-updater, and the
+  Modrinth Hosting tab.
+- **Separate install**: own app ID (`com.threevhy.client`), own data folder and `threevhy://`
+  links, so it can sit next to the real Modrinth App without conflicts.
 
-## Development
+## Building the Windows installer
 
-This repository contains two primary packages. For detailed development information, please refer to their respective guides:
+The easiest way is GitHub Actions (no local setup needed):
 
-- [Website frontend](https://docs.modrinth.com/contributing/knossos/)
-- [Desktop app](https://docs.modrinth.com/contributing/theseus/)
+1. Push this repository to your own GitHub account.
+2. Open the **Actions** tab, pick **Build 3vhy Client (Windows)** and click **Run workflow**.
+3. When it finishes (about 20–40 minutes), download the `3vhy-client-windows` artifact. It contains
+   `3vhy Client_<version>_x64-setup.exe`.
 
-## Contributing
+To publish a release instead, push a tag such as `v0.1.0`; the installer is attached to the
+GitHub Release automatically.
 
-We welcome contributions! Before submitting any contributions, please read our [contributing guidelines](https://docs.modrinth.com/contributing/getting-started/).
+The installer is not code-signed, so Windows SmartScreen will warn the first time it runs
+("More info" → "Run anyway"). Signing needs a paid code-signing certificate.
 
-If you plan to fork this repository for your own purposes, please review our [copying guidelines](COPYING.md).
+### Building locally
 
-## Security
+You need Node.js 24.15+, pnpm (`corepack enable`), Rust (installed from `rust-toolchain.toml`),
+Java 17, and the [Tauri prerequisites for Windows](https://tauri.app/start/prerequisites/).
 
-If you discover a security vulnerability within our codebase, please follow our [responsible disclosure guidelines](https://modrinth.com/legal/security).
+```sh
+cp packages/app-lib/.env.prod packages/app-lib/.env
+pnpm install
+pnpm --filter=@modrinth/app run tauri build --bundles nsis
+```
 
-## Support
+The installer ends up in `target/release/bundle/nsis/`. For live development use
+`pnpm --filter=@modrinth/app run dev`.
 
-If you need help with the Modrinth web interface or app, please visit our [support page](https://support.modrinth.com). For general inquiries, you can also join our [Discord server](https://discord.modrinth.com).
+## Optional: Discord Rich Presence
+
+Modrinth's Discord application can't be used (it would show "Modrinth App"), so Rich Presence is
+off until you add your own:
+
+1. Create an application at <https://discord.com/developers/applications> named "3vhy Client".
+2. Under **Rich Presence → Art Assets**, upload your logo with the key `3vhy`.
+3. In your GitHub repository, add a repository variable `THREEVHY_DISCORD_APP_ID` with the
+   application ID (Settings → Secrets and variables → Actions → Variables).
+
+## Keeping up with Modrinth
+
+Modrinth ships fixes, including security fixes, regularly. To pull them in:
+
+```sh
+git remote add upstream https://github.com/modrinth/code.git
+git fetch upstream
+git merge upstream/main
+```
+
+Most 3vhy changes are in new files (`pages/Index.vue`, `pages/Library.vue`,
+`components/ui/home/`, `components/ui/brand/`, `assets/stylesheets/3vhy-theme.scss`), which keeps
+merges small. Lines changed in existing files are marked with `3vhy Client:` comments.
 
 ## License
 
-All packages in this repository are licensed under their respective licenses. Refer to the LICENSE file in each package for more information.
+The launcher (`apps/app`, `apps/app-frontend`, `packages/app-lib`) is licensed under
+**GPL-3.0**, like the Modrinth App it is based on; other packages keep their own licenses (see each
+package's `LICENSE`). If you share builds of 3vhy Client, you must also share its source code under
+the same license.
+
+Modrinth's logos and branding are not covered by these licenses and have been removed, as required
+by Modrinth's [copying guidelines](COPYING.md). "Minecraft" is a trademark of Mojang/Microsoft.

@@ -11,6 +11,11 @@ export default new createRouter({
 			component: () => import('@/pages/Index.vue'),
 		},
 		{
+			path: '/library',
+			name: 'Library',
+			component: () => import('@/pages/Library.vue'),
+		},
+		{
 			path: '/hosting/manage/',
 			name: 'Servers',
 			component: () => import('@/pages/Servers.vue'),

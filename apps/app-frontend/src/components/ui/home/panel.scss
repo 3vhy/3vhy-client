@@ -1,0 +1,192 @@
+// Shared styles for the 3vhy Home side panels (Quick mods, Servers)
+
+.tvh-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 1rem;
+}
+
+.tvh-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	h3 {
+		margin: 0;
+		font-size: 1.05rem;
+		font-weight: 700;
+		color: var(--color-contrast);
+	}
+}
+
+.tvh-panel__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--color-brand);
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.tvh-panel__link-icon {
+	width: 0.9rem;
+	height: 0.9rem;
+}
+
+.tvh-panel__empty {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+	color: var(--color-secondary);
+
+	p {
+		margin: 0;
+	}
+}
+
+.tvh-panel__list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tvh-row {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	min-height: 3.1rem;
+	padding: 0.55rem 0.7rem;
+	border-radius: 0.9rem;
+	background: var(--threevhy-card-bg);
+	border: 1px solid var(--threevhy-card-border);
+}
+
+.tvh-row--skeleton {
+	opacity: 0.5;
+	animation: tvh-pulse 1.2s ease-in-out infinite;
+}
+
+.tvh-row--server {
+	min-height: 3.6rem;
+}
+
+.tvh-row__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 0.6rem;
+	color: var(--threevhy-sky);
+	background: var(--threevhy-chip-bg);
+	overflow: hidden;
+
+	svg {
+		width: 1.1rem;
+		height: 1.1rem;
+	}
+}
+
+.tvh-row__icon--server {
+	width: 2.25rem;
+	height: 2.25rem;
+	background: linear-gradient(160deg, #3fb6e8 0%, #1a4fba 100%);
+}
+
+.tvh-row__initial {
+	font-weight: 800;
+	color: #f2faff;
+}
+
+.tvh-row__text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	flex: 1;
+}
+
+.tvh-row__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
+	color: var(--color-contrast);
+}
+
+.tvh-row__meta {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.78rem;
+	color: var(--color-secondary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tvh-dot {
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	background: #4ade80;
+	box-shadow: 0 0 6px rgba(74, 222, 128, 0.8);
+}
+
+.tvh-join {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	flex-shrink: 0;
+	padding: 0.4rem 0.9rem;
+	border: none;
+	border-radius: 999px;
+	font-weight: 800;
+	font-size: 0.85rem;
+	color: #04123f;
+	background: linear-gradient(180deg, #8ad9f2 0%, #5bc8e6 100%);
+	box-shadow: 0 3px 0 #2a7fb8;
+	cursor: pointer;
+	transition:
+		transform 0.1s ease,
+		filter 0.15s ease;
+
+	&:hover {
+		filter: brightness(1.08);
+	}
+
+	&:active {
+		transform: translateY(2px);
+		box-shadow: 0 1px 0 #2a7fb8;
+	}
+
+	svg {
+		width: 0.95rem;
+		height: 0.95rem;
+	}
+}
+
+.tvh-join--stop {
+	color: #fff;
+	background: linear-gradient(180deg, #ff7b93 0%, #ff496e 100%);
+	box-shadow: 0 3px 0 #b8203f;
+}
+
+@keyframes tvh-pulse {
+	50% {
+		opacity: 0.25;
+	}
+}

@@ -1,0 +1,136 @@
+// 3vhy Client theme
+// Colors are sampled from the 3vhy banner: a cyan rim fading into royal blue,
+// a deep navy band, then back up to pale sky, with ice-white pixel lettering.
+
+:root {
+	--threevhy-cyan: #5bc8e6;
+	--threevhy-royal: #1a4fba;
+	--threevhy-navy: #061d8c;
+	--threevhy-mid: #2a6fc4;
+	--threevhy-sky: #8cc4ea;
+	--threevhy-pale: #cfe8f7;
+	--threevhy-ice: #e3f3fc;
+
+	// The banner itself, top to bottom
+	--threevhy-banner: linear-gradient(
+		180deg,
+		#5bc8e6 0%,
+		#1a4fba 9%,
+		#061d8c 22%,
+		#0b2a9a 42%,
+		#2a6fc4 64%,
+		#8cc4ea 86%,
+		#cfe8f7 100%
+	);
+	// A darker cut of the banner for large surfaces, so text stays readable
+	--threevhy-sky-panel: linear-gradient(180deg, #0b2a9a 0%, #061d8c 35%, #123c9f 70%, #2a6fc4 100%);
+	--threevhy-chip-bg: rgba(140, 196, 234, 0.14);
+	--threevhy-card-bg: rgba(10, 26, 84, 0.62);
+	--threevhy-card-border: rgba(140, 196, 234, 0.16);
+	--threevhy-play-bg: linear-gradient(180deg, #6fd3ee 0%, #2f9be0 55%, #1a6fd0 100%);
+	--threevhy-play-shadow: 0 6px 0 #0d3f99, 0 14px 30px rgba(4, 18, 80, 0.55);
+}
+
+html.dark-mode,
+html.oled-mode {
+	--surface-1: #07112f;
+	--surface-1-5: #091536;
+	--surface-2: #0b183d;
+	--surface-2-5: #0e1d48;
+	--surface-3: #0f1f4f;
+	--surface-4: #18306b;
+	--surface-5: #23407f;
+
+	--color-text-primary: #e3f3fc;
+	--color-text-default: #b4cdea;
+	--color-text-tertiary: #84a3cf;
+
+	--color-bg: var(--surface-1);
+	--color-raised-bg: var(--surface-3);
+	--color-super-raised-bg: var(--surface-4);
+	--color-button-bg: var(--surface-4);
+	--color-button-border: rgba(140, 196, 234, 0.14);
+	--color-scrollbar: var(--surface-5);
+	--color-divider: rgba(140, 196, 234, 0.12);
+	--color-divider-dark: #3b5a96;
+
+	--color-base: var(--color-text-default);
+	--color-secondary: var(--color-text-tertiary);
+	--color-contrast: var(--color-text-primary);
+	--color-accent-contrast: #04123f;
+
+	--color-brand: #5bc8e6;
+	--color-brand-highlight: rgba(91, 200, 230, 0.2);
+	--color-brand-shadow: rgba(91, 200, 230, 0.6);
+	--color-button-bg-selected: var(--color-brand-highlight);
+	--color-button-text-selected: #a9e6f7;
+
+	--brand-gradient-bg: linear-gradient(
+		180deg,
+		rgba(26, 79, 186, 0.28) 0%,
+		rgba(6, 29, 140, 0.16) 45%,
+		rgba(42, 111, 196, 0.12) 100%
+	);
+	--brand-gradient-strong-bg: linear-gradient(270deg, #061d8c 10%, #0b2a7a 100%);
+	--brand-gradient-button: rgba(227, 243, 252, 0.08);
+	--brand-gradient-border: rgba(140, 196, 234, 0.14);
+	--brand-gradient-fade-out-color: linear-gradient(to bottom, rgba(10, 22, 64, 0), #0a1640 80%);
+
+	--color-gradient-button-bg: linear-gradient(180deg, #1d397a 0%, #18306b 100%);
+	--loading-bar-gradient: linear-gradient(to right, #1a4fba 0%, #5bc8e6 100%);
+
+	--splash-tint-top: rgba(91, 200, 230, 0.25);
+	--splash-tint-bottom: rgba(6, 29, 140, 0.55);
+	--splash-overlay: rgba(7, 17, 47, 0.7);
+
+	--shadow-card: rgba(2, 8, 40, 0.35) 0px 2px 6px 0px;
+}
+
+html.oled-mode {
+	--surface-1: #020617;
+	--surface-1-5: #030820;
+	--surface-2: #050b26;
+	--surface-3: #08112f;
+	--surface-4: #10204f;
+	--surface-5: #182d63;
+}
+
+html.light-mode {
+	--threevhy-ice: #061d8c;
+	--threevhy-chip-bg: rgba(26, 79, 186, 0.1);
+	--threevhy-card-bg: rgba(255, 255, 255, 0.72);
+	--threevhy-card-border: rgba(26, 79, 186, 0.14);
+
+	--surface-1: #e6f1fb;
+	--surface-2: #eef6fd;
+	--surface-3: #f5faff;
+	--surface-4: #ffffff;
+	--surface-5: #cfe0f2;
+
+	--color-text-primary: #061d4f;
+	--color-text-default: #1f3a6b;
+	--color-text-tertiary: #4a6390;
+
+	--color-brand: #1a4fba;
+	--color-brand-highlight: rgba(26, 79, 186, 0.14);
+	--color-accent-contrast: #ffffff;
+	--color-button-bg-selected: var(--color-brand);
+	--color-button-text-selected: #ffffff;
+
+	--brand-gradient-bg: linear-gradient(
+		180deg,
+		rgba(91, 200, 230, 0.18) 0%,
+		rgba(207, 232, 247, 0.4) 100%
+	);
+	--brand-gradient-strong-bg: linear-gradient(270deg, #cfe8f7 10%, #e3f3fc 100%);
+	--brand-gradient-button: rgba(255, 255, 255, 0.6);
+	--brand-gradient-border: rgba(26, 79, 186, 0.14);
+	--brand-gradient-fade-out-color: linear-gradient(to bottom, rgba(230, 241, 251, 0), #e6f1fb 70%);
+	--loading-bar-gradient: linear-gradient(to right, #1a4fba 0%, #5bc8e6 100%);
+}
+
+// Pixel display type, used for big headings (matches the banner lettering)
+.threevhy-pixel {
+	font-family: 'bundled-minecraft-font-mrapp', var(--font-standard, sans-serif), monospace;
+	letter-spacing: 0.04em;
+}

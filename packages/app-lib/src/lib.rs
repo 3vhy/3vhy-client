@@ -32,10 +32,10 @@ pub use util::fetch::DownloadReason;
 
 pub fn launcher_user_agent() -> String {
     const LAUNCHER_BASE_USER_AGENT: &str =
-        concat!("modrinth/theseus/", env!("CARGO_PKG_VERSION"),);
+        concat!("3vhy/3vhy-client/", env!("CARGO_PKG_VERSION"));
 
     format!(
-        "{} ({}; support@modrinth.com)",
+        "{} ({}; fork of modrinth/theseus)",
         LAUNCHER_BASE_USER_AGENT,
         std::env::consts::OS
     )
