@@ -13,6 +13,29 @@ fn main() {
 
     set_env();
     build_java_jars();
+    embed_threevhy_mods();
+}
+
+/// 3vhy Client: the in-game mod jars (built by the 3vhy mod workflow and copied into
+/// threevhy-mod/) are embedded in the launcher. Missing jars embed as empty files, which
+/// just means 3vhy's in-game features are left out of that build.
+fn embed_threevhy_mods() {
+    println!("cargo::rerun-if-changed=threevhy-mod");
+    let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    for version in ["1.21.11", "26.1"] {
+        let name = format!("threevhy-client-{version}.jar");
+        let source = PathBuf::from("threevhy-mod").join(&name);
+        let target = out_dir.join(&name);
+        if source.is_file() {
+            fs::copy(&source, &target)
+                .expect("failed to copy the 3vhy mod jar");
+        } else {
+            println!(
+                "cargo::warning=3vhy mod for Minecraft {version} not found at threevhy-mod/{name}; building without it"
+            );
+            fs::write(&target, b"").unwrap();
+        }
+    }
 }
 
 fn set_env() {

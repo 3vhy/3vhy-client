@@ -19,15 +19,17 @@ import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
 import InstancePicker from '@/components/ui/home/InstancePicker.vue'
 import QuickModsPanel from '@/components/ui/home/QuickModsPanel.vue'
 import ServersPanel from '@/components/ui/home/ServersPanel.vue'
+import { THREEVHY_VERSIONS } from '@/components/ui/home/threevhy'
 import RecentWorldsList from '@/components/ui/world/RecentWorldsList.vue'
 import { useAppEvent } from '@/composables/use-app-event'
 import { useAppSettings } from '@/composables/use-app-settings.ts'
 import { handleSevereError } from '@/composables/use-error.js'
 import { useInstanceMods } from '@/composables/use-instance-mods'
 import { useSelectedInstance } from '@/composables/use-selected-instance'
+import { install_create_instance, installJobInstanceId } from '@/helpers/install'
 import { kill, run } from '@/helpers/instance'
-import { get_all } from '@/helpers/process'
 import { maxMemoryQueryOptions } from '@/helpers/jre.js'
+import { get_all } from '@/helpers/process'
 import { appSettingsQueryOptions } from '@/helpers/settings'
 import { traceStartupStep } from '@/helpers/startup-debug'
 import { useRootBreadcrumb } from '@/providers/breadcrumbs'
@@ -58,12 +60,13 @@ const messages = defineMessages({
 	ram: { id: 'app.3vhy.home.stat.ram', defaultMessage: 'GB RAM' },
 	ramTooltip: {
 		id: 'app.3vhy.home.stat.ram.tooltip',
-		defaultMessage: 'Your PC has {total} GB. Minecraft can use {allocated} GB (change it in Settings).',
+		defaultMessage:
+			'Your PC has {total} GB. Minecraft can use {allocated} GB (change it in Settings).',
 	},
 	play: { id: 'app.3vhy.home.play', defaultMessage: 'Play' },
 	stop: { id: 'app.3vhy.home.stop', defaultMessage: 'Stop' },
 	installing: { id: 'app.3vhy.home.installing', defaultMessage: 'Installing' },
-	createFirst: { id: 'app.3vhy.home.create-first', defaultMessage: 'Create' },
+	createFirst: { id: 'app.3vhy.home.create-first', defaultMessage: 'Set up' },
 	hotbarLabel: { id: 'app.3vhy.home.hotbar', defaultMessage: 'Find content on Modrinth' },
 	hotbarKey: { id: 'app.3vhy.home.hotbar.key', defaultMessage: 'Press {key}' },
 	modpacks: { id: 'app.3vhy.home.hotbar.modpacks', defaultMessage: 'Modpacks' },
@@ -132,10 +135,23 @@ const playLabel = computed(() => {
 	return formatMessage(messages.play)
 })
 
+/** Makes a Fabric instance for a 3vhy-supported version; the 3vhy mod is added on launch. */
+async function createThreevhyInstance(gameVersion: string) {
+	const job = await install_create_instance({
+		name: `3vhy Client ${gameVersion}`,
+		gameVersion,
+		loader: 'fabric',
+		loaderVersion: 'stable',
+		iconPath: null,
+	}).catch(handleError)
+	const instanceId = job ? installJobInstanceId(job) : null
+	if (instanceId) select(instanceId)
+}
+
 async function onPlay() {
 	const instance = selected.value
 	if (!instance) {
-		showCreationModal?.()
+		await createThreevhyInstance(THREEVHY_VERSIONS[0])
 		return
 	}
 	if (isRunning.value) {
@@ -250,6 +266,7 @@ const clouds: [number, number, number][] = [
 						:selected="selected"
 						@select="select"
 						@create="showCreationModal?.()"
+						@create-threevhy="createThreevhyInstance"
 					/>
 				</div>
 			</div>

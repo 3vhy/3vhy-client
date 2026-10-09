@@ -17,6 +17,7 @@ pub mod install;
 mod launcher;
 mod logger;
 mod state;
+mod threevhy;
 
 pub use api::*;
 pub use error::*;

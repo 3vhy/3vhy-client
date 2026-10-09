@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { CheckIcon, ChevronDownIcon, CompassIcon, PlusIcon } from '@modrinth/assets'
 import { Avatar, defineMessages, useVIntl } from '@modrinth/ui'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { getInstanceIconUrl } from '@/helpers/instance'
 import type { GameInstance } from '@/helpers/types'
 
 import { loaderLabel } from './format'
+import { hasThreevhyFeatures, THREEVHY_VERSIONS } from './threevhy'
 
 // 3vhy Client: the "VERSION" box next to Play. Each entry is an instance
 // (a Minecraft version + loader + its mods), most recently played first.
-defineProps<{
+const props = defineProps<{
 	instances: GameInstance[]
 	selected: GameInstance | null
 }>()
@@ -19,7 +20,18 @@ defineProps<{
 const emit = defineEmits<{
 	select: [id: string]
 	create: []
+	createThreevhy: [gameVersion: string]
 }>()
+
+/** 3vhy Client versions the player doesn't have an instance for yet. */
+const missingThreevhyVersions = computed(() =>
+	THREEVHY_VERSIONS.filter(
+		(version) =>
+			!props.instances.some(
+				(instance) => instance.loader === 'fabric' && instance.game_version === version,
+			),
+	),
+)
 
 const { formatMessage } = useVIntl()
 const router = useRouter()
@@ -31,6 +43,15 @@ const messages = defineMessages({
 	browseModpacks: {
 		id: 'app.3vhy.picker.browse-modpacks',
 		defaultMessage: 'Get a modpack from Modrinth',
+	},
+	setUpThreevhy: {
+		id: 'app.3vhy.picker.set-up',
+		defaultMessage: 'Set up 3vhy Client {version}',
+	},
+	threevhyBadge: { id: 'app.3vhy.picker.badge', defaultMessage: '3vhy' },
+	threevhyBadgeTooltip: {
+		id: 'app.3vhy.picker.badge.tooltip',
+		defaultMessage: 'Launches with the 3vhy HUD, PvP tools and Discord presence',
 	},
 })
 
@@ -64,6 +85,11 @@ function choose(id: string) {
 function create() {
 	open.value = false
 	emit('create')
+}
+
+function createThreevhy(version: string) {
+	open.value = false
+	emit('createThreevhy', version)
 }
 
 function browseModpacks() {
@@ -114,13 +140,31 @@ function subtitle(instance: GameInstance) {
 							class="!rounded-lg"
 						/>
 						<span class="tvh-picker__option-text">
-							<span class="tvh-picker__option-name">{{ instance.name }}</span>
+							<span class="tvh-picker__option-name">
+								{{ instance.name }}
+								<span
+									v-if="hasThreevhyFeatures(instance)"
+									v-tooltip="formatMessage(messages.threevhyBadgeTooltip)"
+									class="tvh-picker__badge"
+								>
+									{{ formatMessage(messages.threevhyBadge) }}
+								</span>
+							</span>
 							<span class="tvh-picker__option-sub">{{ subtitle(instance) }}</span>
 						</span>
 						<CheckIcon v-if="instance.id === selected?.id" class="tvh-picker__check" />
 					</button>
 				</div>
 				<div class="tvh-picker__actions">
+					<button
+						v-for="version in missingThreevhyVersions"
+						:key="version"
+						type="button"
+						class="tvh-picker__action tvh-picker__action--threevhy"
+						@click="createThreevhy(version)"
+					>
+						<PlusIcon /> {{ formatMessage(messages.setUpThreevhy, { version }) }}
+					</button>
 					<button type="button" class="tvh-picker__action" @click="create">
 						<PlusIcon /> {{ formatMessage(messages.newInstance) }}
 					</button>
@@ -265,6 +309,24 @@ function subtitle(instance: GameInstance) {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.tvh-picker__badge {
+	display: inline-block;
+	margin-left: 0.3rem;
+	padding: 0 0.3rem;
+	font-size: 0.65rem;
+	font-weight: 700;
+	line-height: 1.1rem;
+	vertical-align: 0.1rem;
+	color: #04123f;
+	background: var(--threevhy-cyan);
+	clip-path: var(--threevhy-pixel-corners);
+}
+
+.tvh-picker__action--threevhy {
+	color: var(--color-brand);
+	font-weight: 700;
 }
 
 .tvh-picker__option-sub {

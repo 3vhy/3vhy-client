@@ -291,6 +291,8 @@ async fn run_credentials(
         }
     }
 
+    crate::threevhy::prepare_launch(instance_id, &context, &state).await;
+
     crate::minecraft_skins::flush_pending_skin_change().await?;
     crate::launcher::launch_minecraft(
         &java_args,

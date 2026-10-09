@@ -19,8 +19,16 @@ env:
   TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
+  # The in-game 3vhy mod, bundled into the launcher below
+  mod:
+    name: 3vhy mod
+    uses: ./.github/workflows/3vhy-mod.yml
+    with:
+      skip_gametest: true
+
   build-windows:
     name: Windows installer
+    needs: mod
     runs-on: windows-latest
     timeout-minutes: 120
 
@@ -62,6 +70,12 @@ jobs:
           sed -i "0,/^version = .*/s//version = \"$VERSION\"/" packages/app-lib/Cargo.toml
           node -e "const f='apps/app-frontend/package.json';const p=require('./'+f);p.version='$VERSION';require('fs').writeFileSync(f,JSON.stringify(p,null,'\t')+'\n')"
           cp packages/app-lib/.env.prod packages/app-lib/.env
+
+      - name: Get the 3vhy mod
+        uses: actions/download-artifact@v4
+        with:
+          name: 3vhy-mod
+          path: packages/app-lib/threevhy-mod
 
       - name: Install dependencies
         run: pnpm install

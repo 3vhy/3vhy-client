@@ -1,6 +1,6 @@
 {
   "app.3vhy.home.create-first": {
-    "message": "Create"
+    "message": "Set up"
   },
   "app.3vhy.home.hotbar": {
     "message": "Find content on Modrinth"
@@ -37,6 +37,9 @@
   },
   "app.3vhy.home.stat.ram": {
     "message": "GB RAM"
+  },
+  "app.3vhy.home.stat.ram.tooltip": {
+    "message": "Your PC has {total} GB. Minecraft can use {allocated} GB (change it in Settings)."
   },
   "app.3vhy.home.stop": {
     "message": "Stop"
@@ -77,6 +80,12 @@
   "app.3vhy.nav.skins": {
     "message": "Skins"
   },
+  "app.3vhy.picker.badge": {
+    "message": "3vhy"
+  },
+  "app.3vhy.picker.badge.tooltip": {
+    "message": "Launches with the 3vhy HUD, PvP tools and Discord presence"
+  },
   "app.3vhy.picker.browse-modpacks": {
     "message": "Get a modpack from Modrinth"
   },
@@ -88,6 +97,9 @@
   },
   "app.3vhy.picker.none": {
     "message": "No instances yet"
+  },
+  "app.3vhy.picker.set-up": {
+    "message": "Set up 3vhy Client {version}"
   },
   "app.3vhy.quick-mods.all": {
     "message": "All mods"

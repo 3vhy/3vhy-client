@@ -32,6 +32,8 @@ export function useInstanceMods(instanceId: Ref<string | null>) {
 			const byFile = new Map<string, ContentItem>()
 			for (const item of [...fromPack, ...own]) {
 				if (item.project_type !== 'mod') continue
+				// The 3vhy mod itself is managed by the launcher, not toggled here
+				if (item.file_name.toLowerCase().startsWith('3vhy-client')) continue
 				byFile.set(item.file_path ?? item.file_name, item)
 			}
 			return [...byFile.values()].sort((a, b) => modDisplayName(a).localeCompare(modDisplayName(b)))
