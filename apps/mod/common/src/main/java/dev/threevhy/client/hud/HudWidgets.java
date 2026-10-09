@@ -1,6 +1,7 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
+import dev.threevhy.client.gui.ModuleIcons;
 import dev.threevhy.client.hud.HudWidget.Anchor;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PopTracker;
@@ -262,11 +263,15 @@ public final class HudWidgets {
 			for (int i = 0; i < items.size(); i++) {
 				Item item = items.get(i);
 				int count = player == null ? (preview ? 8 : 0) : count(player.getInventory(), item);
-				ItemStack icon = new ItemStack(item);
+				ItemStack icon = ModuleIcons.stack(item);
 				int ix = x + 4 + i * 20;
-				d.item(icon, ix, y + 2);
 				String label = Integer.toString(count);
-				d.itemOverlay(icon, ix, y + 2, label);
+				if (icon != null) {
+					d.item(icon, ix, y + 2);
+					d.itemOverlay(icon, ix, y + 2, label);
+				} else {
+					d.text(label, ix + 17 - textWidth(mc, label), y + 11, Theme.ICE, true);
+				}
 				if (count == 0) {
 					d.fill(ix, y + 2, ix + 16, y + 18, 0x80060E2B);
 				}
@@ -460,7 +465,8 @@ public final class HudWidgets {
 			int alpha = 0x90 + (int) (pulse * 0x50);
 			d.fill(x, y, x + w, y + H, (alpha << 24) | 0x5A0A1E);
 			d.fill(x, y, x + 2, y + H, Theme.BAD);
-			d.item(new ItemStack(Items.TOTEM_OF_UNDYING), x + 5, y + 2);
+			ItemStack totem = ModuleIcons.stack(Items.TOTEM_OF_UNDYING);
+			if (totem != null) d.item(totem, x + 5, y + 2);
 			d.text(text, x + 24, y + 6, Theme.ICE, false);
 		}
 	};

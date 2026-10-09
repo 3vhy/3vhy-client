@@ -32,6 +32,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.setScreen(() -> new SettingsScreen(new MainMenuScreen()));
 		context.waitTicks(10);
 		context.takeScreenshot("3vhy-settings-from-menu");
+		context.setScreen(() -> new HudEditorScreen(new MainMenuScreen()));
+		context.waitTicks(5);
+		context.takeScreenshot("3vhy-hud-editor-from-menu");
 		context.setScreen(MainMenuScreen::new);
 		context.waitTicks(5);
 

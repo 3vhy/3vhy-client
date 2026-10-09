@@ -60,7 +60,7 @@ public final class SettingsScreen extends CompatScreen {
 	}
 
 	/** A settings page: one module's settings, or 3vhy's general ones. */
-	private record Page(String title, ItemStack icon, List<Option> options) {
+	private record Page(String title, Module module, List<Option> options) {
 	}
 
 	private final Screen parent;
@@ -108,7 +108,7 @@ public final class SettingsScreen extends CompatScreen {
 						Config.saveSoon();
 					}));
 		}
-		page = new Page(module.name, ModuleIcons.of(module), options);
+		page = new Page(module.name, module, options);
 		return this;
 	}
 
@@ -249,7 +249,7 @@ public final class SettingsScreen extends CompatScreen {
 		}
 
 		// General settings
-		boolean generalOpen = page != null && page.icon() == null;
+		boolean generalOpen = page != null && page.module() == null;
 		boolean gearHover = inside(mx, my, gearX, y, gearX + 16, y + 16);
 		d.roundRect(gearX, y, gearX + 16, y + 16, 4, generalOpen ? Theme.CYAN : gearHover ? 0x305BC8E6 : FIELD);
 		Icons.draw(d, Icons.GEAR, gearX + 5, y + 5 - 1, generalOpen ? Theme.NIGHT : gearHover ? Theme.ICE : Theme.SKY);
@@ -325,12 +325,7 @@ public final class SettingsScreen extends CompatScreen {
 		d.roundRect(x, y, x + w, y + h, 4, hover ? CARD_HOVER : CARD);
 		d.roundOutline(x, y, x + w, y + h, 4, hover ? 0x705BC8E6 : 0x185BC8E6);
 
-		// Icon, 1.5x
-		d.push();
-		d.translate(x + (w - 24) / 2f, y + 6);
-		d.scale(1.5f);
-		d.item(ModuleIcons.of(module), 0, 0);
-		d.pop();
+		ModuleIcons.draw(d, module, x + (w - 24) / 2, y + 6);
 
 		drawName(d, mc, module.name, x + w / 2, y + 33, w - 8);
 
@@ -415,9 +410,12 @@ public final class SettingsScreen extends CompatScreen {
 		hits.add(new Hit(cx, cy, cx + backW, cy + 16, this::closePage));
 
 		int tx = cx + backW + 8;
-		if (page.icon() != null) {
-			d.item(page.icon(), tx, cy);
-			tx += 20;
+		if (page.module() != null) {
+			ItemStack icon = ModuleIcons.of(page.module());
+			if (icon != null) {
+				d.item(icon, tx, cy);
+				tx += 20;
+			}
 		}
 		d.text(page.title(), tx, cy + 4, Theme.ICE, false);
 
@@ -470,7 +468,7 @@ public final class SettingsScreen extends CompatScreen {
 		String text = hoverText;
 		int color = Theme.SKY;
 		boolean discordShown = selected == Category.DISCORD
-				|| (page != null && page.title().equals(Modules.DISCORD.name));
+				|| (page != null && page.module() == Modules.DISCORD);
 		if (text == null && discordShown) {
 			text = DiscordPresence.statusLine();
 			color = Theme.WARN;
