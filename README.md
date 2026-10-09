@@ -9,8 +9,6 @@ Microsoft sign-in, "Jump in" to recent servers — with a new look and home scre
 
 ## What's different from the Modrinth App
 
-- **Home screen** in the S.A.M Client style: big logo, Play button with an instance ("version")
-  picker, stats, Quick mods toggles, a Servers list with one-click Join, and shortcut cards.
 - **Labeled sidebar**: Home, Modpacks, Mods, Library, Skins, Settings, plus Logs and Folder for the
   instance picked on Home.
 - **3vhy theme**: colors taken from the 3vhy banner (navy to sky blue, ice-white pixel lettering),
