@@ -9,6 +9,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -31,5 +32,10 @@ public final class Compat {
 
 	public static void chat(Component message) {
 		Minecraft.getInstance().gui.getChat().addMessage(message);
+	}
+
+	/** Minecraft's Options screen, opened from a menu (not from inside a world). */
+	public static Screen optionsScreen(Screen parent) {
+		return new OptionsScreen(parent, Minecraft.getInstance().options);
 	}
 }

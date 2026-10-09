@@ -21,10 +21,10 @@ public final class ModuleIcons {
 	private static Item item(String id) {
 		return switch (id) {
 			case "fps" -> Items.CLOCK;
-			case "cps" -> Items.STONE_BUTTON;
+			case "cps" -> Items.IRON_SWORD;
 			case "ping" -> Items.ENDER_PEARL;
 			case "coords" -> Items.MAP;
-			case "keystrokes" -> Items.LEVER;
+			case "keystrokes" -> Items.TRIPWIRE_HOOK;
 			case "armor" -> Items.DIAMOND_CHESTPLATE;
 			case "items" -> Items.ENCHANTED_GOLDEN_APPLE;
 			case "pops" -> Items.TOTEM_OF_UNDYING;

@@ -327,17 +327,17 @@ public final class SettingsScreen extends CompatScreen {
 
 		// Icon, 1.5x
 		d.push();
-		d.translate(x + (w - 24) / 2f, y + 8);
+		d.translate(x + (w - 24) / 2f, y + 6);
 		d.scale(1.5f);
 		d.item(ModuleIcons.of(module), 0, 0);
 		d.pop();
 
-		drawName(d, mc, module.name, x + w / 2, y + 36, w - 8);
+		drawName(d, mc, module.name, x + w / 2, y + 33, w - 8);
 
 		// The big enabled / disabled bar
 		int bx1 = x + 5;
 		int bx2 = x + w - 5;
-		int by1 = y + h - 19;
+		int by1 = y + h - 18;
 		int by2 = y + h - 5;
 		boolean barHover = hover && my >= by1 - 2;
 		d.roundRect(bx1, by1, bx2, by2, 3, on ? (barHover ? ON_HOVER : ON) : (barHover ? OFF_HOVER : OFF));
@@ -469,9 +469,11 @@ public final class SettingsScreen extends CompatScreen {
 
 		String text = hoverText;
 		int color = Theme.SKY;
-		if (text == null) {
+		boolean discordShown = selected == Category.DISCORD
+				|| (page != null && page.title().equals(Modules.DISCORD.name));
+		if (text == null && discordShown) {
 			text = DiscordPresence.statusLine();
-			color = Theme.MUTED;
+			color = Theme.WARN;
 		}
 		if (text == null) {
 			text = "3vhy Client " + ThreevhyClient.version() + "  ·  Right Shift opens this menu";

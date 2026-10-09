@@ -413,7 +413,7 @@ public final class HudWidgets {
 
 	// ---------- Totem warning ----------
 
-	public static final HudWidget TOTEM_WARNING = new HudWidget("totem_warning", Modules.TOTEM_WARNING, Anchor.ABOVE_HOTBAR) {
+	public static final HudWidget TOTEM_WARNING = new HudWidget("totem_warning", Modules.TOTEM_WARNING, Anchor.ABOVE_CROSSHAIR) {
 		private static final int H = 20;
 
 		private int spare(Minecraft mc) {

@@ -25,7 +25,7 @@ public final class Modules {
 	// PvP
 	public static final Module CRYSTAL_OPTIMIZER = new Module("crystal_optimizer", "Crystal optimizer",
 			"Crystals vanish the moment you hit them. Check the server's rules", Category.PVP, false);
-	public static final Module POP_NOTIFIER = new Module("pop_notifier", "Pop notifications",
+	public static final Module POP_NOTIFIER = new Module("pop_notifier", "Pop alerts",
 			"Chat message when someone pops a totem", Category.PVP, true);
 	public static final Module TOTEM_WARNING = new Module("totem_warning", "Totem warning",
 			"Warns you when your offhand has no totem but your inventory does", Category.PVP, true);
@@ -38,7 +38,7 @@ public final class Modules {
 	public static final Module ZOOM = new Module("zoom", "Zoom", "Hold C to zoom in", Category.UTILITY, true);
 	public static final Module TOGGLE_SPRINT = new Module("toggle_sprint", "Toggle sprint",
 			"Press sprint once and keep sprinting", Category.UTILITY, false);
-	public static final Module MAIN_MENU = new Module("main_menu", "3vhy main menu",
+	public static final Module MAIN_MENU = new Module("main_menu", "Main menu",
 			"The 3vhy title screen instead of Minecraft's", Category.UTILITY, true);
 
 	// Discord

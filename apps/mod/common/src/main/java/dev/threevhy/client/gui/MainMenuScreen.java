@@ -3,6 +3,7 @@ package dev.threevhy.client.gui;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
+import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.compat.CompatTitleScreen;
 import dev.threevhy.client.hud.Theme;
 import dev.threevhy.client.module.Modules;
@@ -12,7 +13,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
-import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 
@@ -99,7 +99,7 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		by += bh + gap;
 		int half = (bw - gap) / 2;
 		button(d, mc, bx, by, half, bh, "Options", false, mouseX, mouseY,
-				() -> mc.setScreen(new OptionsScreen(this, mc.options)));
+				() -> mc.setScreen(Compat.optionsScreen(this)));
 		button(d, mc, bx + half + gap, by, bw - half - gap, bh, "3vhy Settings", false, mouseX, mouseY,
 				() -> mc.setScreen(new SettingsScreen(this)));
 		by += bh + gap;

@@ -19,7 +19,7 @@ public abstract class HudWidget {
 		MIDDLE_RIGHT,
 		BOTTOM_RIGHT,
 		BELOW_CROSSHAIR,
-		ABOVE_HOTBAR
+		ABOVE_CROSSHAIR
 	}
 
 	private static final int MARGIN = 4;
@@ -89,7 +89,7 @@ public abstract class HudWidget {
 			case MIDDLE_RIGHT -> new int[] {screenWidth - w - MARGIN, (screenHeight - h) / 2};
 			case BOTTOM_RIGHT -> new int[] {screenWidth - w - MARGIN, screenHeight - h - MARGIN};
 			case BELOW_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 + 18};
-			case ABOVE_HOTBAR -> new int[] {(screenWidth - w) / 2, screenHeight - 68 - h};
+			case ABOVE_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 - 22 - h};
 		};
 	}
 
