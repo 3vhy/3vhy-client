@@ -2,21 +2,37 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
+import dev.threevhy.client.gui.HudEditorScreen;
 import dev.threevhy.client.module.Module;
 import net.minecraft.client.Minecraft;
 
-/** One movable piece of the HUD. Its position is stored as 0..1 across the free space. */
+/**
+ * One movable piece of the HUD. Until the player drags it somewhere, it sits at its anchor,
+ * stacked under the other widgets that share the anchor. A dragged position is stored as
+ * 0..1 across the free space, so it survives window and GUI scale changes.
+ */
 public abstract class HudWidget {
+	/** Where a widget sits before it's moved. */
+	public enum Anchor {
+		TOP_LEFT,
+		TOP_RIGHT,
+		MIDDLE_RIGHT,
+		BOTTOM_RIGHT,
+		BELOW_CROSSHAIR,
+		ABOVE_HOTBAR
+	}
+
+	private static final int MARGIN = 4;
+	private static final int GAP = 3;
+
 	public final String id;
 	public final Module module;
-	private final double defaultX;
-	private final double defaultY;
+	public final Anchor anchor;
 
-	protected HudWidget(String id, Module module, double defaultX, double defaultY) {
+	protected HudWidget(String id, Module module, Anchor anchor) {
 		this.id = id;
 		this.module = module;
-		this.defaultX = defaultX;
-		this.defaultY = defaultY;
+		this.anchor = anchor;
 	}
 
 	public abstract int width(Minecraft mc);
@@ -30,12 +46,10 @@ public abstract class HudWidget {
 		return true;
 	}
 
-	public double[] position() {
+	/** The position the player dragged this widget to, or null if it's at its anchor. */
+	public double[] storedPosition() {
 		double[] stored = Config.get().hud.get(id);
-		if (stored == null || stored.length < 2) {
-			return new double[] {defaultX, defaultY};
-		}
-		return stored;
+		return stored == null || stored.length < 2 ? null : stored;
 	}
 
 	public void setPosition(double x, double y) {
@@ -48,20 +62,40 @@ public abstract class HudWidget {
 		Config.saveSoon();
 	}
 
-	/** Top-left corner on a screen of the given (already scaled) size. */
-	public int x(Minecraft mc, int screenWidth) {
-		return (int) Math.round(position()[0] * Math.max(0, screenWidth - width(mc)));
-	}
-
-	public int y(Minecraft mc, int screenHeight) {
-		return (int) Math.round(position()[1] * Math.max(0, screenHeight - height(mc)));
+	/** Top-left corner {x, y} on a screen of the given (already scaled) size. */
+	public int[] position(Minecraft mc, int screenWidth, int screenHeight) {
+		double[] stored = storedPosition();
+		if (stored != null) {
+			return new int[] {
+					(int) Math.round(stored[0] * Math.max(0, screenWidth - width(mc))),
+					(int) Math.round(stored[1] * Math.max(0, screenHeight - height(mc)))
+			};
+		}
+		int w = width(mc);
+		int h = height(mc);
+		return switch (anchor) {
+			case TOP_LEFT, TOP_RIGHT -> {
+				int y = MARGIN;
+				boolean editing = mc.screen instanceof HudEditorScreen;
+				for (HudWidget other : HudWidgets.ALL) {
+					if (other == this) break;
+					if (other.anchor == anchor && other.module.enabled() && other.storedPosition() == null
+							&& (editing || other.visible(mc))) {
+						y += other.height(mc) + GAP;
+					}
+				}
+				yield new int[] {anchor == Anchor.TOP_LEFT ? MARGIN : screenWidth - w - MARGIN, y};
+			}
+			case MIDDLE_RIGHT -> new int[] {screenWidth - w - MARGIN, (screenHeight - h) / 2};
+			case BOTTOM_RIGHT -> new int[] {screenWidth - w - MARGIN, screenHeight - h - MARGIN};
+			case BELOW_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 + 18};
+			case ABOVE_HOTBAR -> new int[] {(screenWidth - w) / 2, screenHeight - 68 - h};
+		};
 	}
 
 	private static double clamp(double value) {
 		return Math.max(0.0, Math.min(1.0, value));
 	}
-
-	// ---- Shared drawing helpers ----
 
 	protected static void panel(Draw d, int x, int y, int w, int h) {
 		d.fill(x, y, x + w, y + h, Theme.PANEL);

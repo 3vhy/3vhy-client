@@ -1,6 +1,7 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
+import dev.threevhy.client.hud.HudWidget.Anchor;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
@@ -27,8 +28,8 @@ public final class HudWidgets {
 
 	/** A small panel: label in sky blue, value in white. */
 	private abstract static class StatWidget extends HudWidget {
-		StatWidget(String id, dev.threevhy.client.module.Module module, double x, double y) {
-			super(id, module, x, y);
+		StatWidget(String id, dev.threevhy.client.module.Module module) {
+			super(id, module, Anchor.TOP_LEFT);
 		}
 
 		abstract String label();
@@ -56,7 +57,7 @@ public final class HudWidgets {
 		}
 	}
 
-	public static final HudWidget FPS = new StatWidget("fps", Modules.FPS, 0.0, 0.0) {
+	public static final HudWidget FPS = new StatWidget("fps", Modules.FPS) {
 		@Override
 		String label() {
 			return "FPS";
@@ -68,7 +69,7 @@ public final class HudWidgets {
 		}
 	};
 
-	public static final HudWidget CPS = new StatWidget("cps", Modules.CPS, 0.0, 0.045) {
+	public static final HudWidget CPS = new StatWidget("cps", Modules.CPS) {
 		@Override
 		String label() {
 			return "CPS";
@@ -80,7 +81,7 @@ public final class HudWidgets {
 		}
 	};
 
-	public static final HudWidget PING = new StatWidget("ping", Modules.PING, 0.0, 0.09) {
+	public static final HudWidget PING = new StatWidget("ping", Modules.PING) {
 		@Override
 		String label() {
 			return "Ping";
@@ -103,7 +104,7 @@ public final class HudWidgets {
 		}
 	};
 
-	public static final HudWidget COORDS = new HudWidget("coords", Modules.COORDS, 0.0, 0.135) {
+	public static final HudWidget COORDS = new HudWidget("coords", Modules.COORDS, Anchor.TOP_LEFT) {
 		@Override
 		public int width(Minecraft mc) {
 			return 10 + textWidth(mc, "XYZ -30000000 320 -30000000");
@@ -139,7 +140,7 @@ public final class HudWidgets {
 
 	// ---------- Keystrokes ----------
 
-	public static final HudWidget KEYSTROKES = new HudWidget("keystrokes", Modules.KEYSTROKES, 0.0, 0.32) {
+	public static final HudWidget KEYSTROKES = new HudWidget("keystrokes", Modules.KEYSTROKES, Anchor.TOP_LEFT) {
 		private static final int K = 20;
 		private static final int GAP = 2;
 
@@ -200,7 +201,7 @@ public final class HudWidgets {
 
 	// ---------- Armor ----------
 
-	public static final HudWidget ARMOR = new HudWidget("armor", Modules.ARMOR, 1.0, 0.55) {
+	public static final HudWidget ARMOR = new HudWidget("armor", Modules.ARMOR, Anchor.MIDDLE_RIGHT) {
 		private static final EquipmentSlot[] SLOTS = {
 				EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
 		};
@@ -239,7 +240,7 @@ public final class HudWidgets {
 
 	// ---------- PvP item counter ----------
 
-	public static final HudWidget ITEMS = new HudWidget("items", Modules.ITEMS, 1.0, 0.82) {
+	public static final HudWidget ITEMS = new HudWidget("items", Modules.ITEMS, Anchor.BOTTOM_RIGHT) {
 		private final List<Item> items = List.of(
 				Items.TOTEM_OF_UNDYING, Items.END_CRYSTAL, Items.OBSIDIAN, Items.EXPERIENCE_BOTTLE,
 				Items.ENCHANTED_GOLDEN_APPLE);
@@ -284,7 +285,7 @@ public final class HudWidgets {
 
 	// ---------- Totem pops ----------
 
-	public static final HudWidget POPS = new HudWidget("pops", Modules.POPS, 1.0, 0.0) {
+	public static final HudWidget POPS = new HudWidget("pops", Modules.POPS, Anchor.TOP_RIGHT) {
 		private static final int MAX = 5;
 
 		@Override
@@ -332,7 +333,7 @@ public final class HudWidgets {
 
 	// ---------- Target ----------
 
-	public static final HudWidget TARGET = new HudWidget("target", Modules.TARGET_HUD, 0.5, 0.36) {
+	public static final HudWidget TARGET = new HudWidget("target", Modules.TARGET_HUD, Anchor.BELOW_CROSSHAIR) {
 		private static final int W = 150;
 		private static final int H = 48;
 		private static final EquipmentSlot[] SLOTS = {
@@ -412,7 +413,7 @@ public final class HudWidgets {
 
 	// ---------- Totem warning ----------
 
-	public static final HudWidget TOTEM_WARNING = new HudWidget("totem_warning", Modules.TOTEM_WARNING, 0.5, 0.74) {
+	public static final HudWidget TOTEM_WARNING = new HudWidget("totem_warning", Modules.TOTEM_WARNING, Anchor.ABOVE_HOTBAR) {
 		private static final int H = 20;
 
 		private int spare(Minecraft mc) {

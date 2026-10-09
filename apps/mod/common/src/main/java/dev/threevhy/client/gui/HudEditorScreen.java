@@ -52,8 +52,9 @@ public final class HudEditorScreen extends CompatScreen {
 		d.scale(scale);
 		for (HudWidget widget : HudWidgets.ALL) {
 			if (!widget.module.enabled()) continue;
-			int x = widget.x(mc, sw);
-			int y = widget.y(mc, sh);
+			int[] pos = widget.position(mc, sw, sh);
+			int x = pos[0];
+			int y = pos[1];
 			int w = widget.width(mc);
 			int h = widget.height(mc);
 			boolean hot = widget == dragging || (dragging == null && mx >= x && mx < x + w && my >= y && my < y + h);
@@ -63,8 +64,9 @@ public final class HudEditorScreen extends CompatScreen {
 
 		String hint = "Drag widgets to move them. Turn widgets on or off in 3vhy Settings.";
 		int hw = mc.font.width(hint);
-		d.fill(this.width / 2 - hw / 2 - 8, 8, this.width / 2 + hw / 2 + 8, 24, Theme.PANEL_SOLID);
-		d.text(hint, this.width / 2 - hw / 2, 12, Theme.ICE, false);
+		int hintY = this.height - 52;
+		d.fill(this.width / 2 - hw / 2 - 8, hintY, this.width / 2 + hw / 2 + 8, hintY + 16, Theme.PANEL_SOLID);
+		d.text(hint, this.width / 2 - hw / 2, hintY + 4, Theme.ICE, false);
 
 		int by = this.height - 30;
 		resetX1 = this.width / 2 - 96;
@@ -113,8 +115,9 @@ public final class HudEditorScreen extends CompatScreen {
 		for (int i = HudWidgets.ALL.size() - 1; i >= 0; i--) {
 			HudWidget widget = HudWidgets.ALL.get(i);
 			if (!widget.module.enabled()) continue;
-			int wx = widget.x(mc, sw);
-			int wy = widget.y(mc, sh);
+			int[] pos = widget.position(mc, sw, sh);
+			int wx = pos[0];
+			int wy = pos[1];
 			if (mx >= wx && mx < wx + widget.width(mc) && my >= wy && my < wy + widget.height(mc)) {
 				dragging = widget;
 				grabX = mx - wx;

@@ -3,6 +3,7 @@ package dev.threevhy.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
+import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.SettingsScreen;
 import dev.threevhy.client.hud.CpsTracker;
 import dev.threevhy.client.hud.HudRenderer;
@@ -10,6 +11,7 @@ import dev.threevhy.client.module.CrystalOptimizer;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
+import dev.threevhy.client.module.Zoom;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -21,6 +23,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
@@ -64,11 +67,15 @@ public final class ThreevhyClient implements ClientModInitializer {
 			CpsTracker.install();
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+			Zoom.restore(client);
 			DiscordPresence.stop();
 			Config.save();
 		});
 		ClientTickEvents.END_CLIENT_TICK.register(ThreevhyClient::tick);
-		ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> PopTracker.reset());
+		ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
+			PopTracker.reset();
+			Zoom.restore(client);
+		});
 		AttackEntityCallback.EVENT.register(CrystalOptimizer::onAttack);
 		AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
 			if (level.isClientSide()) Target.onAttack(entity);
@@ -94,6 +101,12 @@ public final class ThreevhyClient implements ClientModInitializer {
 			if (mc.screen == null) {
 				mc.setScreen(new SettingsScreen(null));
 			}
+		}
+		// Backup for the setScreen hook, and switches menus when the module is toggled
+		if (mc.screen != null && mc.screen.getClass() == TitleScreen.class && Modules.MAIN_MENU.enabled()) {
+			mc.setScreen(new MainMenuScreen());
+		} else if (mc.screen instanceof MainMenuScreen && !Modules.MAIN_MENU.enabled()) {
+			mc.setScreen(new TitleScreen());
 		}
 		Modules.tick(mc);
 		DiscordPresence.tick(mc);

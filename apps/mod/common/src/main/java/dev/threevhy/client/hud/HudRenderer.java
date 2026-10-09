@@ -3,6 +3,7 @@ package dev.threevhy.client.hud;
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.HudEditorScreen;
+import dev.threevhy.client.module.Zoom;
 import net.minecraft.client.Minecraft;
 
 /** Draws the enabled HUD widgets every frame. */
@@ -13,6 +14,7 @@ public final class HudRenderer {
 	public static void render(Draw d) {
 		Minecraft mc = Minecraft.getInstance();
 		CpsTracker.poll(mc);
+		Zoom.update(mc);
 		if (mc.options.hideGui || mc.player == null || mc.screen instanceof HudEditorScreen) {
 			return;
 		}
@@ -30,7 +32,8 @@ public final class HudRenderer {
 			if (!widget.module.enabled() || (!preview && !widget.visible(mc))) {
 				continue;
 			}
-			widget.draw(d, widget.x(mc, w), widget.y(mc, h), mc, preview);
+			int[] pos = widget.position(mc, w, h);
+			widget.draw(d, pos[0], pos[1], mc, preview);
 		}
 		d.pop();
 	}

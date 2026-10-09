@@ -38,6 +38,8 @@ public final class Modules {
 	public static final Module ZOOM = new Module("zoom", "Zoom", "Hold C to zoom in", Category.UTILITY, true);
 	public static final Module TOGGLE_SPRINT = new Module("toggle_sprint", "Toggle sprint",
 			"Press sprint once and keep sprinting", Category.UTILITY, false);
+	public static final Module MAIN_MENU = new Module("main_menu", "3vhy main menu",
+			"The 3vhy title screen instead of Minecraft's", Category.UTILITY, true);
 
 	// Discord
 	public static final Module DISCORD = new Module("discord", "Discord presence",
@@ -46,7 +48,7 @@ public final class Modules {
 	public static final List<Module> ALL = List.of(
 			FPS, CPS, PING, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD,
 			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, NO_HURT_CAM, FULLBRIGHT,
-			ZOOM, TOGGLE_SPRINT,
+			ZOOM, TOGGLE_SPRINT, MAIN_MENU,
 			DISCORD);
 
 	private static Boolean appliedToggleSprint = null;

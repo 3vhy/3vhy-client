@@ -6,8 +6,8 @@
 	"refmap": "threevhy-refmap.json",
 	"client": [
 		"ClientPacketListenerMixin",
-		"GameRendererMixin",
-		"MinecraftMixin"
+		"MinecraftMixin",
+		"OptionInstanceAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 0

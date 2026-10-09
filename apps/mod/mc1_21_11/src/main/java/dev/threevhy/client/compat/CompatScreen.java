@@ -2,6 +2,7 @@ package dev.threevhy.client.compat;
 
 import dev.threevhy.client.Draw;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -22,11 +23,20 @@ public abstract class CompatScreen extends Screen {
 		draw(new DrawImpl(graphics), mouseX, mouseY, delta);
 	}
 
+	/**
+	 * Drawn over the background. In a world the game behind is already blurred (Minecraft's own
+	 * menu blur), so this only tints it.
+	 */
+	protected void drawBackdrop(Draw d) {
+		d.fill(0, 0, this.width, this.height, 0xB0040A20);
+	}
+
 	@Override
 	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-		// A plain dim instead of Minecraft's blur
-		if (dimBackground()) {
-			graphics.fill(0, 0, this.width, this.height, 0xB0040A20);
+		if (!dimBackground()) return;
+		if (Minecraft.getInstance().level != null) {
+			super.renderBackground(graphics, mouseX, mouseY, delta);
 		}
+		drawBackdrop(new DrawImpl(graphics));
 	}
 }

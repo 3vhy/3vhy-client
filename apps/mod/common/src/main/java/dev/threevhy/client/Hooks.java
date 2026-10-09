@@ -8,8 +8,8 @@ import net.minecraft.client.Minecraft;
  */
 public final class Hooks {
 	public static volatile boolean titleHookRan = false;
-	public static volatile boolean fovHookRan = false;
 	public static volatile boolean entityEventHookRan = false;
+	public static volatile boolean mainMenuShown = false;
 
 	private Hooks() {
 	}
