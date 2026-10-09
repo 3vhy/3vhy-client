@@ -1,0 +1,29 @@
+// Prints the signatures of the Minecraft classes 3vhy Client touches (javap -p),
+// so API differences between game versions are easy to check from CI.
+tasks.register('dumpApi') {
+	def classpath = sourceSets.main.compileClasspath
+	def outFile = layout.buildDirectory.file('api.txt')
+	def classNames = file('../api-classes.txt').readLines().collect { it.trim() }.findAll { it && !it.startsWith('#') }
+	doLast {
+		def out = outFile.get().asFile
+		out.parentFile.mkdirs()
+		def jars = classpath.files.findAll { it.name.endsWith('.jar') }
+		def text = new StringBuilder()
+		classNames.each { className ->
+			def entry = className.replace('.', '/') + '.class'
+			def jar = jars.find { candidate ->
+				def zip = new java.util.zip.ZipFile(candidate)
+				try { zip.getEntry(entry) != null } finally { zip.close() }
+			}
+			if (jar == null) {
+				text.append("## ${className}: NOT FOUND\n\n")
+				return
+			}
+			def process = ['javap', '-p', '-cp', jar.absolutePath, className].execute()
+			def stdout = process.inputStream.text
+			process.waitFor()
+			text.append("## ${className}\n").append(stdout).append('\n')
+		}
+		out.text = text.toString()
+	}
+}

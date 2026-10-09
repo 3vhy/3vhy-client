@@ -19,12 +19,16 @@ public final class Modules {
 	public static final Module ARMOR = new Module("armor", "Armor status", "Armor with durability left", Category.HUD, true);
 	public static final Module ITEMS = new Module("items", "PvP item counter", "Totems, crystals, obsidian, XP and gapples", Category.HUD, true);
 	public static final Module POPS = new Module("pops", "Totem pops", "Who popped how many totems", Category.HUD, true);
+	public static final Module TARGET_HUD = new Module("target_hud", "Target HUD",
+			"Health, armor and totem of who you're fighting", Category.HUD, true);
 
 	// PvP
 	public static final Module CRYSTAL_OPTIMIZER = new Module("crystal_optimizer", "Crystal optimizer",
 			"Crystals vanish the moment you hit them. Check the server's rules", Category.PVP, false);
 	public static final Module POP_NOTIFIER = new Module("pop_notifier", "Pop notifications",
 			"Chat message when someone pops a totem", Category.PVP, true);
+	public static final Module TOTEM_WARNING = new Module("totem_warning", "Totem warning",
+			"Warns you when your offhand has no totem but your inventory does", Category.PVP, true);
 	public static final Module NO_HURT_CAM = new Module("no_hurt_cam", "No hurt cam",
 			"Your view doesn't shake when you take damage", Category.PVP, false);
 	public static final Module FULLBRIGHT = new Module("fullbright", "Fullbright",
@@ -40,8 +44,8 @@ public final class Modules {
 			"Show 3vhy Client and your server on Discord", Category.DISCORD, true);
 
 	public static final List<Module> ALL = List.of(
-			FPS, CPS, PING, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS,
-			CRYSTAL_OPTIMIZER, POP_NOTIFIER, NO_HURT_CAM, FULLBRIGHT,
+			FPS, CPS, PING, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD,
+			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, NO_HURT_CAM, FULLBRIGHT,
 			ZOOM, TOGGLE_SPRINT,
 			DISCORD);
 
@@ -58,6 +62,7 @@ public final class Modules {
 		syncNoHurtCam(mc);
 		syncFullbright(mc);
 		Zoom.tick(mc);
+		Target.tick(mc);
 	}
 
 	/** Uses Minecraft's own "Sprint: Toggle" setting, so it behaves exactly like vanilla. */

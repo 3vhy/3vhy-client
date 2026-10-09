@@ -13,6 +13,7 @@ public abstract class GameRendererMixin {
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
 	private void threevhy$zoom(CallbackInfoReturnable cir) {
+		dev.threevhy.client.Hooks.fovHookRan = true;
 		double divisor = Zoom.divisor();
 		if (divisor <= 1.0001) return;
 		// Works whether this Minecraft version returns the FOV as a float or a double

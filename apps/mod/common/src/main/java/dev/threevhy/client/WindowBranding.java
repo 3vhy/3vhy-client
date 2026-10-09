@@ -23,9 +23,9 @@ public final class WindowBranding {
 		return "3vhy Client " + ThreevhyClient.minecraftVersion();
 	}
 
-	/** Must run on the render thread (where the game window's GL context is current). */
+	/** Runs on the render thread. */
 	public static void apply() {
-		long window = GLFW.glfwGetCurrentContext();
+		long window = Hooks.windowHandle();
 		if (window == 0) return;
 		GLFW.glfwSetWindowTitle(window, title());
 		if (!iconSet) {

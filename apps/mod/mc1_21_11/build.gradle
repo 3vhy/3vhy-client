@@ -4,6 +4,7 @@ plugins {
 
 def minecraftVersion = '1.21.11'
 def fabricApiVersion = '0.141.6+1.21.11'
+ext.fabricApiVersion = fabricApiVersion
 
 version = "${mod_version}+${minecraftVersion}"
 group = 'dev.threevhy'
@@ -34,7 +35,9 @@ processResources {
 		version        : project.version,
 		minecraft_range: '~1.21.11',
 		java_version   : '21',
-		discord_app_id : (System.getenv('THREEVHY_DISCORD_APP_ID') ?: project.findProperty('discord_app_id') ?: '')
+		discord_app_id : (System.getenv('THREEVHY_DISCORD_APP_ID') ?: project.findProperty('discord_app_id') ?: ''),
+		gametest_entrypoint: providers.gradleProperty('gametest').isPresent()
+				? ',\n\t\t"fabric-client-gametest": ["dev.threevhy.client.test.ThreevhyGameTest"]' : ''
 	]
 	inputs.properties props
 	filesMatching(['fabric.mod.json', 'threevhy-build.properties']) {
@@ -50,4 +53,13 @@ tasks.withType(JavaCompile).configureEach {
 java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
+}
+
+apply from: '../testing.gradle'
+
+// Starts the real game with the mod (and its in-game test, with -Pgametest) under a virtual display
+tasks.register('runProductionClientGameTest', net.fabricmc.loom.task.prod.ClientProductionRunTask) {
+	jvmArgs.add('-Dfabric.client.gametest')
+	jvmArgs.add('-Dfabric.client.gametest.disableNetworkSynchronizer=true')
+	useXVFB = System.getenv('CI') != null
 }

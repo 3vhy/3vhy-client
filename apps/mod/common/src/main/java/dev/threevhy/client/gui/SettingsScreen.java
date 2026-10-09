@@ -111,13 +111,8 @@ public final class SettingsScreen extends CompatScreen {
 		d.fill(px, py, px + pw, py + 2, Theme.CYAN);
 		d.outline(px, py, px + pw, py + ph, 0x405BC8E6);
 
-		// Header
-		d.push();
-		d.translate(px + 12, py + 10);
-		d.scale(1.5f);
-		d.text("3vhy", 0, 0, Theme.ICE, true);
-		d.pop();
-		d.text("Client", px + 12 + Math.round(mc.font.width("3vhy") * 1.5f) + 6, py + 14, Theme.CYAN, false);
+		Wordmark.draw(d, px + 12, py + 9, 1, Theme.ICE, 0xFF061D8C);
+		d.text("CLIENT", px + 12 + Wordmark.COLUMNS + 6, py + 13, Theme.CYAN, false);
 		String hint = "Right Shift opens this menu";
 		d.text(hint, px + pw - 12 - mc.font.width(hint), py + 14, Theme.MUTED, false);
 

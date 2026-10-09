@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ClientPacketListenerMixin {
 	@Inject(method = "handleEntityEvent", at = @At("RETURN"))
 	private void threevhy$entityEvent(ClientboundEntityEventPacket packet, CallbackInfo ci) {
+		dev.threevhy.client.Hooks.entityEventHookRan = true;
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.level == null) return;
 		Entity entity = packet.getEntity(mc.level);

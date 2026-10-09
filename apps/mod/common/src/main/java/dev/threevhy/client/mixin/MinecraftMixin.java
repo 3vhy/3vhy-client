@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MinecraftMixin {
 	@Inject(method = "updateTitle", at = @At("RETURN"))
 	private void threevhy$keepTitle(CallbackInfo ci) {
+		dev.threevhy.client.Hooks.titleHookRan = true;
 		WindowBranding.apply();
 	}
 }

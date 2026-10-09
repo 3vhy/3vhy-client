@@ -3,6 +3,7 @@ package dev.threevhy.client.hud;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PopTracker;
+import dev.threevhy.client.module.Target;
 import java.util.List;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -11,6 +12,7 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -328,5 +330,140 @@ public final class HudWidgets {
 		}
 	};
 
-	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS);
+	// ---------- Target ----------
+
+	public static final HudWidget TARGET = new HudWidget("target", Modules.TARGET_HUD, 0.5, 0.36) {
+		private static final int W = 150;
+		private static final int H = 48;
+		private static final EquipmentSlot[] SLOTS = {
+				EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET,
+				EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND
+		};
+
+		@Override
+		public int width(Minecraft mc) {
+			return W;
+		}
+
+		@Override
+		public int height(Minecraft mc) {
+			return H;
+		}
+
+		@Override
+		public boolean visible(Minecraft mc) {
+			return Target.get() != null;
+		}
+
+		@Override
+		public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
+			LivingEntity target = Target.get();
+			String name = target == null ? "Steve" : target.getName().getString();
+			float health = target == null ? 14.5f : target.getHealth();
+			float max = target == null ? 20f : Math.max(1f, target.getMaxHealth());
+			float absorption = target == null ? 4f : target.getAbsorptionAmount();
+			double distance = target == null || mc.player == null ? 3.2 : mc.player.distanceTo(target);
+
+			panel(d, x, y, W, H);
+			while (textWidth(mc, name) > W - 50 && name.length() > 3) {
+				name = name.substring(0, name.length() - 1);
+			}
+			d.text(name, x + 6, y + 4, Theme.ICE, false);
+			String dist = String.format(java.util.Locale.ROOT, "%.1fm", distance);
+			d.text(dist, x + W - 6 - textWidth(mc, dist), y + 4, Theme.MUTED, false);
+
+			int barX = x + 6;
+			int barY = y + 15;
+			int barW = W - 12;
+			float total = max + absorption;
+			int healthW = Math.round(barW * Math.min(health, max) / total);
+			int absorbW = Math.round(barW * absorption / total);
+			d.fill(barX, barY, barX + barW, barY + 5, 0xFF0A1846);
+			int healthColor = health / max > 0.5f ? Theme.GOOD : health / max > 0.25f ? Theme.WARN : Theme.BAD;
+			d.fill(barX, barY, barX + healthW, barY + 5, healthColor);
+			if (absorbW > 0) d.fill(barX + healthW, barY, barX + healthW + absorbW, barY + 5, 0xFFFFC94D);
+			String hp = trimHealth(health) + (absorption > 0 ? " +" + trimHealth(absorption) : "") + " HP";
+			d.push();
+			d.translate(barX + barW - textWidth(mc, hp) * 0.75f, barY + 7);
+			d.scale(0.75f);
+			d.text(hp, 0, 0, Theme.SKY, false);
+			d.pop();
+
+			int itemY = y + H - 19;
+			for (int i = 0; i < SLOTS.length; i++) {
+				ItemStack stack = target == null ? ItemStack.EMPTY : target.getItemBySlot(SLOTS[i]);
+				int ix = x + 6 + i * 17 + (i >= 4 ? 6 : 0);
+				if (stack.isEmpty()) {
+					d.fill(ix + 1, itemY + 1, ix + 15, itemY + 15, 0x40060E2B);
+					continue;
+				}
+				d.item(stack, ix, itemY);
+				if (SLOTS[i] == EquipmentSlot.OFFHAND && stack.is(Items.TOTEM_OF_UNDYING)) {
+					d.outline(ix - 1, itemY - 1, ix + 17, itemY + 17, Theme.CYAN);
+				}
+			}
+		}
+
+		private String trimHealth(float value) {
+			return value == Math.floor(value) ? Integer.toString((int) value)
+					: String.format(java.util.Locale.ROOT, "%.1f", value);
+		}
+	};
+
+	// ---------- Totem warning ----------
+
+	public static final HudWidget TOTEM_WARNING = new HudWidget("totem_warning", Modules.TOTEM_WARNING, 0.5, 0.74) {
+		private static final int H = 20;
+
+		private int spare(Minecraft mc) {
+			LocalPlayer player = mc.player;
+			if (player == null) return 0;
+			Inventory inventory = player.getInventory();
+			int total = 0;
+			for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+				ItemStack stack = inventory.getItem(slot);
+				if (stack.is(Items.TOTEM_OF_UNDYING)) total += stack.getCount();
+			}
+			return total;
+		}
+
+		private String message(int spare) {
+			return "No totem in offhand  (" + spare + " in inventory)";
+		}
+
+		@Override
+		public int width(Minecraft mc) {
+			return 26 + textWidth(mc, message(64));
+		}
+
+		@Override
+		public int height(Minecraft mc) {
+			return H;
+		}
+
+		@Override
+		public boolean visible(Minecraft mc) {
+			LocalPlayer player = mc.player;
+			if (player == null || player.isSpectator() || player.isCreative()) return false;
+			if (player.getOffhandItem().is(Items.TOTEM_OF_UNDYING)) return false;
+			if (player.getMainHandItem().is(Items.TOTEM_OF_UNDYING)) return false;
+			return spare(mc) > 0;
+		}
+
+		@Override
+		public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
+			int spare = mc.player == null || preview && !visible(mc) ? 4 : spare(mc);
+			String text = message(spare);
+			int w = 26 + textWidth(mc, text);
+			double pulse = (Math.sin(System.currentTimeMillis() / 160.0) + 1) / 2;
+			int alpha = 0x90 + (int) (pulse * 0x50);
+			d.fill(x, y, x + w, y + H, (alpha << 24) | 0x5A0A1E);
+			d.fill(x, y, x + 2, y + H, Theme.BAD);
+			d.item(new ItemStack(Items.TOTEM_OF_UNDYING), x + 5, y + 2);
+			d.text(text, x + 24, y + 6, Theme.ICE, false);
+		}
+	};
+
+	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET,
+			TOTEM_WARNING);
 }

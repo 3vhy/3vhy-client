@@ -4,10 +4,12 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
 import dev.threevhy.client.gui.SettingsScreen;
+import dev.threevhy.client.hud.CpsTracker;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.module.CrystalOptimizer;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PopTracker;
+import dev.threevhy.client.module.Target;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -21,6 +23,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionResult;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +59,10 @@ public final class ThreevhyClient implements ClientModInitializer {
 
 		Compat.registerHud(Identifier.fromNamespaceAndPath(MOD_ID, "hud"), HudRenderer::render);
 
-		ClientLifecycleEvents.CLIENT_STARTED.register(client -> WindowBranding.apply());
+		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+			WindowBranding.apply();
+			CpsTracker.install();
+		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			DiscordPresence.stop();
 			Config.save();
@@ -64,6 +70,10 @@ public final class ThreevhyClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(ThreevhyClient::tick);
 		ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> PopTracker.reset());
 		AttackEntityCallback.EVENT.register(CrystalOptimizer::onAttack);
+		AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
+			if (level.isClientSide()) Target.onAttack(entity);
+			return InteractionResult.PASS;
+		});
 
 		// A "3vhy Settings" button in the pause menu
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {

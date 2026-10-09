@@ -13,7 +13,7 @@
 	"icon": "assets/threevhy/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"client": ["dev.threevhy.client.ThreevhyClient"]
+		"client": ["dev.threevhy.client.ThreevhyClient"]${gametest_entrypoint}
 	},
 	"mixins": ["threevhy.mixins.json"],
 	"depends": {
