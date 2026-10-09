@@ -11,6 +11,8 @@ if (gametestEnabled) {
 
 dependencies {
 	productionRuntimeMods "net.fabricmc.fabric-api:fabric-api:${project.ext.fabricApiVersion}"
+	// The performance pack the launcher installs, downloaded by CI into test-mods/<project>
+	productionRuntimeMods fileTree(dir: rootProject.file("test-mods/${project.name}"), include: '*.jar')
 }
 
 apply from: '../api-dump.gradle'

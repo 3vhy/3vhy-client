@@ -14,6 +14,7 @@ import java.util.List;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.client.gui.screens.PauseScreen;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -117,6 +118,39 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(10);
 			context.takeScreenshot("3vhy-pause-menu");
+
+			// Open 3vhy Settings the way a player does, with the button in the pause menu
+			int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
+			context.getInput().setCursorPos(51 * scale, 16 * scale);
+			context.waitTicks(2);
+			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			context.waitTicks(20);
+			context.takeScreenshot("3vhy-settings-from-pause");
+			check(failed, "pause menu button opens 3vhy Settings",
+					context.computeOnClient(client -> client.screen instanceof SettingsScreen));
+
+			// Click the first card (FPS) to switch it off, then back on
+			int[] card = context.computeOnClient(client -> {
+				int w = client.getWindow().getGuiScaledWidth();
+				int h = client.getWindow().getGuiScaledHeight();
+				int pw = Math.min(w - 16, 500);
+				int ph = Math.min(h - 16, 300);
+				return new int[] {(w - pw) / 2 + 30, (h - ph) / 2 + 39 + 30};
+			});
+			boolean fpsBefore = Modules.FPS.enabled();
+			context.getInput().setCursorPos(card[0] * scale, card[1] * scale);
+			context.waitTicks(2);
+			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			context.waitTicks(5);
+			context.takeScreenshot("3vhy-settings-card-clicked");
+			check(failed, "clicking a card switches it", Modules.FPS.enabled() != fpsBefore);
+			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			context.waitTicks(5);
+
+			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+			context.waitTicks(5);
+			check(failed, "closing 3vhy Settings goes back to the pause menu",
+					context.computeOnClient(client -> client.screen instanceof PauseScreen));
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 		}

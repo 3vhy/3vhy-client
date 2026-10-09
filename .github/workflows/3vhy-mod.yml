@@ -108,6 +108,28 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q xvfb libgl1-mesa-dri
 
+      # Same mods the launcher adds to every 3vhy instance: Sodium, Lithium, FerriteCore,
+      # Entity Culling and ImmediatelyFast, newest versions for this Minecraft version
+      - name: Get the performance pack
+        working-directory: apps/mod
+        run: |
+          case "${{ matrix.project }}" in
+            mc1_21_11) mc=1.21.11 ;;
+            mc26_1) mc=26.1.2 ;;
+          esac
+          dir="test-mods/${{ matrix.project }}"
+          mkdir -p "$dir"
+          for id in AANobbMI gvQqBUqZ uXXizFIs NNAgCjsB 5ZwdcRci; do
+            url=$(curl -fsS "https://api.modrinth.com/v2/project/$id/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%22$mc%22%5D" \
+              | jq -r 'first(.[] | .files | (map(select(.primary)) + .)[0].url) // empty')
+            if [ -n "$url" ]; then
+              echo "::notice title=Performance pack::$(basename "$url")"
+              curl -fsSL -o "$dir/$(basename "$url")" "$url"
+            else
+              echo "::notice title=Performance pack::no $mc version of $id"
+            fi
+          done
+
       - name: Play a test session
         working-directory: apps/mod
         run: |
