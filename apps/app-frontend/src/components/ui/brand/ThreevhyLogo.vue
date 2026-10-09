@@ -55,3 +55,9 @@ withDefaults(defineProps<{ size?: 'sm' | 'lg'; showClient?: boolean }>(), {
 	}
 }
 </style>
+
+<style lang="scss">
+html.light-mode .threevhy-logo__client {
+	color: #1a4fba;
+}
+</style>

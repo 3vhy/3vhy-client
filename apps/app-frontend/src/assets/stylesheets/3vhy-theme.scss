@@ -1,6 +1,20 @@
-// 3vhy Client theme
-// Colors are sampled from the 3vhy banner: a cyan rim fading into royal blue,
-// a deep navy band, then back up to pale sky, with ice-white pixel lettering.
+// 3vhy Client design system
+//
+// Everything comes from the 3vhy banner: a cyan rim fading into royal blue, a
+// deep night band, pale sky at the bottom, and blocky ice-white pixel letters.
+//
+//   night  #060e2b  the ground everything sits on
+//   deep   #0e2159  raised surfaces
+//   royal  #1a4fba  depth edges, secondary accent
+//   cyan   #5bc8e6  actions and focus (the banner's rim light)
+//   ice    #e3f3fc  primary text
+//   sky    #8cc4ea  secondary text
+//
+// The signature: primary actions are "blocks" — stepped pixel corners and a hard
+// depth edge you press into, like the letters in the wordmark. Everything else
+// stays quiet.
+
+@import './3vhy-fonts.scss';
 
 :root {
 	--threevhy-cyan: #5bc8e6;
@@ -10,6 +24,10 @@
 	--threevhy-sky: #8cc4ea;
 	--threevhy-pale: #cfe8f7;
 	--threevhy-ice: #e3f3fc;
+	--threevhy-night: #060e2b;
+
+	--threevhy-font-ui: 'Rubik 3vhy', 'Segoe UI', system-ui, sans-serif;
+	--threevhy-font-pixel: 'Pixelify Sans', 'Rubik 3vhy', monospace;
 
 	// The banner itself, top to bottom
 	--threevhy-banner: linear-gradient(
@@ -27,30 +45,84 @@
 	--threevhy-chip-bg: rgba(140, 196, 234, 0.14);
 	--threevhy-card-bg: rgba(10, 26, 84, 0.62);
 	--threevhy-card-border: rgba(140, 196, 234, 0.16);
-	--threevhy-play-bg: linear-gradient(180deg, #6fd3ee 0%, #2f9be0 55%, #1a6fd0 100%);
-	--threevhy-play-shadow: 0 6px 0 #0d3f99, 0 14px 30px rgba(4, 18, 80, 0.55);
+	--threevhy-play-bg: linear-gradient(180deg, #8ae0f5 0%, #4fbdea 48%, #2b8fdb 100%);
+
+	// Stepped pixel corners (3px steps). Use as `clip-path: var(--threevhy-pixel-corners)`.
+	--threevhy-pixel-corners: polygon(
+		0 6px,
+		3px 6px,
+		3px 3px,
+		6px 3px,
+		6px 0,
+		calc(100% - 6px) 0,
+		calc(100% - 6px) 3px,
+		calc(100% - 3px) 3px,
+		calc(100% - 3px) 6px,
+		100% 6px,
+		100% calc(100% - 6px),
+		calc(100% - 3px) calc(100% - 6px),
+		calc(100% - 3px) calc(100% - 3px),
+		calc(100% - 6px) calc(100% - 3px),
+		calc(100% - 6px) 100%,
+		6px 100%,
+		6px calc(100% - 3px),
+		3px calc(100% - 3px),
+		3px calc(100% - 6px),
+		0 calc(100% - 6px)
+	);
+	// Bigger steps for large panels
+	--threevhy-pixel-corners-lg: polygon(
+		0 12px,
+		6px 12px,
+		6px 6px,
+		12px 6px,
+		12px 0,
+		calc(100% - 12px) 0,
+		calc(100% - 12px) 6px,
+		calc(100% - 6px) 6px,
+		calc(100% - 6px) 12px,
+		100% 12px,
+		100% calc(100% - 12px),
+		calc(100% - 6px) calc(100% - 12px),
+		calc(100% - 6px) calc(100% - 6px),
+		calc(100% - 12px) calc(100% - 6px),
+		calc(100% - 12px) 100%,
+		12px 100%,
+		12px calc(100% - 6px),
+		6px calc(100% - 6px),
+		6px calc(100% - 12px),
+		0 calc(100% - 12px)
+	);
+	// A hard edge underneath a raised block, and the same edge when pressed in
+	--threevhy-block-edge:
+		inset 0 -4px 0 rgba(4, 18, 63, 0.38), inset 0 2px 0 rgba(255, 255, 255, 0.32);
+	--threevhy-block-edge-pressed:
+		inset 0 -1px 0 rgba(4, 18, 63, 0.38), inset 0 2px 0 rgba(4, 18, 63, 0.18);
+
+	// A few pixel stars for the night backdrop
+	--threevhy-stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' shape-rendering='crispEdges'%3E%3Cg fill='%23e3f3fc'%3E%3Crect x='12' y='18' width='2' height='2' opacity='.35'/%3E%3Crect x='71' y='9' width='2' height='2' opacity='.18'/%3E%3Crect x='118' y='42' width='2' height='2' opacity='.3'/%3E%3Crect x='38' y='77' width='2' height='2' opacity='.14'/%3E%3Crect x='96' y='101' width='2' height='2' opacity='.25'/%3E%3Crect x='143' y='131' width='2' height='2' opacity='.16'/%3E%3Crect x='22' y='139' width='2' height='2' opacity='.22'/%3E%3Crect x='63' y='121' width='1' height='1' opacity='.4'/%3E%3Crect x='131' y='73' width='1' height='1' opacity='.4'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 html.dark-mode,
 html.oled-mode {
-	--surface-1: #07112f;
-	--surface-1-5: #091536;
-	--surface-2: #0b183d;
-	--surface-2-5: #0e1d48;
-	--surface-3: #0f1f4f;
-	--surface-4: #18306b;
-	--surface-5: #23407f;
+	--surface-1: #060e2b;
+	--surface-1-5: #08133a;
+	--surface-2: #0a1846;
+	--surface-2-5: #0c1c50;
+	--surface-3: #0e2159;
+	--surface-4: #16307a;
+	--surface-5: #22428f;
 
 	--color-text-primary: #e3f3fc;
-	--color-text-default: #b4cdea;
-	--color-text-tertiary: #84a3cf;
+	--color-text-default: #b8d0ee;
+	--color-text-tertiary: #86a6d4;
 
 	--color-bg: var(--surface-1);
 	--color-raised-bg: var(--surface-3);
 	--color-super-raised-bg: var(--surface-4);
 	--color-button-bg: var(--surface-4);
-	--color-button-border: rgba(140, 196, 234, 0.14);
-	--color-scrollbar: var(--surface-5);
+	--color-button-border: rgba(140, 196, 234, 0.16);
+	--color-scrollbar: #22428f;
 	--color-divider: rgba(140, 196, 234, 0.12);
 	--color-divider-dark: #3b5a96;
 
@@ -60,30 +132,22 @@ html.oled-mode {
 	--color-accent-contrast: #04123f;
 
 	--color-brand: #5bc8e6;
-	--color-brand-highlight: rgba(91, 200, 230, 0.2);
-	--color-brand-shadow: rgba(91, 200, 230, 0.6);
+	--color-brand-highlight: rgba(91, 200, 230, 0.18);
+	--color-brand-shadow: rgba(91, 200, 230, 0.55);
 	--color-button-bg-selected: var(--color-brand-highlight);
 	--color-button-text-selected: #a9e6f7;
 
-	--brand-gradient-bg: linear-gradient(
-		180deg,
-		rgba(26, 79, 186, 0.28) 0%,
-		rgba(6, 29, 140, 0.16) 45%,
-		rgba(42, 111, 196, 0.12) 100%
-	);
+	--brand-gradient-bg: transparent;
 	--brand-gradient-strong-bg: linear-gradient(270deg, #061d8c 10%, #0b2a7a 100%);
 	--brand-gradient-button: rgba(227, 243, 252, 0.08);
-	--brand-gradient-border: rgba(140, 196, 234, 0.14);
-	--brand-gradient-fade-out-color: linear-gradient(to bottom, rgba(10, 22, 64, 0), #0a1640 80%);
+	--brand-gradient-border: rgba(140, 196, 234, 0.12);
+	--brand-gradient-fade-out-color: linear-gradient(to bottom, rgba(6, 14, 43, 0), #060e2b 80%);
 
-	--color-gradient-button-bg: linear-gradient(180deg, #1d397a 0%, #18306b 100%);
+	--color-gradient-button-bg: linear-gradient(180deg, #1c3a8c 0%, #16307a 100%);
 	--loading-bar-gradient: linear-gradient(to right, #1a4fba 0%, #5bc8e6 100%);
 
-	--splash-tint-top: rgba(91, 200, 230, 0.25);
-	--splash-tint-bottom: rgba(6, 29, 140, 0.55);
-	--splash-overlay: rgba(7, 17, 47, 0.7);
-
-	--shadow-card: rgba(2, 8, 40, 0.35) 0px 2px 6px 0px;
+	--shadow-card: rgba(2, 8, 40, 0.35) 0px 2px 0px 0px;
+	--shadow-floating: 0 18px 40px rgba(2, 8, 40, 0.55);
 }
 
 html.oled-mode {
@@ -93,13 +157,16 @@ html.oled-mode {
 	--surface-3: #08112f;
 	--surface-4: #10204f;
 	--surface-5: #182d63;
+	--threevhy-night: #020617;
 }
 
 html.light-mode {
 	--threevhy-ice: #061d8c;
+	--threevhy-night: #e6f1fb;
 	--threevhy-chip-bg: rgba(26, 79, 186, 0.1);
 	--threevhy-card-bg: rgba(255, 255, 255, 0.72);
 	--threevhy-card-border: rgba(26, 79, 186, 0.14);
+	--threevhy-stars: none;
 
 	--surface-1: #e6f1fb;
 	--surface-2: #eef6fd;
@@ -117,11 +184,7 @@ html.light-mode {
 	--color-button-bg-selected: var(--color-brand);
 	--color-button-text-selected: #ffffff;
 
-	--brand-gradient-bg: linear-gradient(
-		180deg,
-		rgba(91, 200, 230, 0.18) 0%,
-		rgba(207, 232, 247, 0.4) 100%
-	);
+	--brand-gradient-bg: transparent;
 	--brand-gradient-strong-bg: linear-gradient(270deg, #cfe8f7 10%, #e3f3fc 100%);
 	--brand-gradient-button: rgba(255, 255, 255, 0.6);
 	--brand-gradient-border: rgba(26, 79, 186, 0.14);
@@ -129,8 +192,160 @@ html.light-mode {
 	--loading-bar-gradient: linear-gradient(to right, #1a4fba 0%, #5bc8e6 100%);
 }
 
-// Pixel display type, used for big headings (matches the banner lettering)
+// ---------- Type ----------
+
+html body {
+	--font-standard: var(--threevhy-font-ui);
+	font-family: var(--threevhy-font-ui);
+}
+
+// Page and section titles use the pixel face, like the wordmark
+html body :is(h1, h2) {
+	font-family: var(--threevhy-font-pixel);
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
 .threevhy-pixel {
-	font-family: 'bundled-minecraft-font-mrapp', var(--font-standard, sans-serif), monospace;
-	letter-spacing: 0.04em;
+	font-family: var(--threevhy-font-pixel);
+	font-weight: 600;
+}
+
+::selection {
+	background: rgba(91, 200, 230, 0.35);
+	color: inherit;
+}
+
+// ---------- Blocks: buttons ----------
+
+// Primary actions (filled buttons) become pixel blocks you press into
+html body .button-frame--colored.button-frame--colored {
+	border-radius: 0 !important;
+	clip-path: var(--threevhy-pixel-corners);
+	background-image: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.26) 0%,
+		rgba(255, 255, 255, 0) 60%
+	);
+	box-shadow: var(--threevhy-block-edge);
+	padding-bottom: 3px;
+
+	&::before {
+		display: none;
+	}
+
+	&:not(:disabled):not([aria-disabled='true']):active {
+		transform: translateY(2px);
+		box-shadow: var(--threevhy-block-edge-pressed);
+	}
+
+	&:not(:disabled):not([aria-disabled='true']):focus-visible {
+		box-shadow:
+			inset 0 0 0 2px #fff,
+			var(--threevhy-block-edge);
+	}
+}
+
+// Regular buttons get the same hard edge, without the pixel corners
+html body .button-frame--base.button-frame--base,
+html body .button-frame--colored-text.button-frame--colored-text {
+	box-shadow:
+		inset 0 0 0 1px rgba(140, 196, 234, 0.14),
+		inset 0 -3px 0 rgba(2, 8, 40, 0.32);
+
+	&:not(:disabled):not([aria-disabled='true']):active {
+		transform: translateY(1px);
+		box-shadow:
+			inset 0 0 0 1px rgba(140, 196, 234, 0.14),
+			inset 0 -1px 0 rgba(2, 8, 40, 0.32);
+	}
+}
+
+html.light-mode body .button-frame--base.button-frame--base {
+	box-shadow:
+		inset 0 0 0 1px rgba(26, 79, 186, 0.16),
+		inset 0 -3px 0 rgba(26, 79, 186, 0.12);
+}
+
+// ---------- Inputs ----------
+
+html body :is(input, textarea) {
+	caret-color: var(--threevhy-cyan);
+}
+
+// ---------- Scrollbars ----------
+
+html body {
+	scrollbar-color: #22428f transparent;
+}
+
+html body ::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+html body ::-webkit-scrollbar-thumb {
+	background: #22428f;
+	border: 3px solid transparent;
+	background-clip: content-box;
+}
+
+html body ::-webkit-scrollbar-thumb:hover {
+	background-color: #2f5bb5;
+}
+
+html body ::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+// ---------- Focus ----------
+
+html body :focus-visible {
+	outline-color: var(--threevhy-cyan);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html body .button-frame--colored.button-frame--colored:active {
+		transform: none;
+	}
+}
+
+// Blockier corners for components that use the radius tokens
+html {
+	--radius-sm: 0.25rem;
+	--radius-md: 0.375rem;
+	--radius-lg: 0.5rem;
+	--radius-xl: 0.625rem;
+}
+
+// Shell surfaces
+:root {
+	--threevhy-slab: rgba(7, 18, 56, 0.78);
+	--threevhy-sidebar: rgba(4, 12, 40, 0.35);
+}
+
+html.light-mode {
+	--threevhy-slab: rgba(255, 255, 255, 0.7);
+	--threevhy-sidebar: rgba(255, 255, 255, 0.35);
+}
+
+// Shared components use a few fixed, very round corner sizes; square them up
+html body :is(.rounded-\[24px\], .rounded-\[20px\], .rounded-\[16px\], .rounded-\[15px\]) {
+	border-radius: 0.625rem !important;
+}
+
+html body .rounded-\[14px\] {
+	border-radius: 0.5rem !important;
+}
+
+// Cards you can click get the cyan rim when hovered, instead of just brightening
+html body .clickable-card {
+	transition:
+		border-color 0.12s ease,
+		background-color 0.12s ease;
+}
+
+html.dark-mode body .clickable-card:hover,
+html.oled-mode body .clickable-card:hover {
+	border-color: rgba(91, 200, 230, 0.45) !important;
 }

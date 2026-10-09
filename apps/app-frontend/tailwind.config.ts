@@ -15,6 +15,18 @@ const config: Config = {
 		'!../../packages/**/node_modules/**',
 	],
 	presets: [preset],
+	theme: {
+		extend: {
+			// 3vhy Client: tighter, blockier corners than the Modrinth App
+			borderRadius: {
+				md: '0.3125rem',
+				lg: '0.375rem',
+				xl: '0.5rem',
+				'2xl': '0.625rem',
+				'3xl': '0.875rem',
+			},
+		},
+	},
 }
 
 export default config

@@ -2201,9 +2201,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 			@saved="onCreationIconSaved"
 		/>
 		<UnknownPackWarningModal ref="unknownPackWarningModal" />
-		<div
-			class="app-grid-navbar bg-bg-raised flex flex-col p-[0.6rem] pt-1 gap-[0.35rem] w-[--left-bar-width]"
-		>
+		<div class="app-grid-navbar flex flex-col p-[0.6rem] pt-1 gap-[0.35rem] w-[--left-bar-width]">
 			<NavButton
 				:label="formatMessage(messages.home)"
 				to="/"
@@ -2348,7 +2346,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 				<LogInIcon class="text-brand" />
 			</NavButton>
 		</div>
-		<div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
+		<div data-tauri-drag-region class="app-grid-statusbar h-[--top-bar-height] flex">
 			<div data-tauri-drag-region class="flex min-w-0 flex-1 items-center overflow-hidden p-2">
 				<ThreevhyLogo class="ml-1 shrink-0 pointer-events-none" />
 				<div data-tauri-drag-region class="ml-2 flex shrink-0 items-center gap-2">
@@ -2612,7 +2610,10 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 	grid-template-rows: auto minmax(0, 1fr);
 	position: relative;
 	//z-index: 0;
-	background-color: var(--color-raised-bg);
+	// 3vhy Client: the shell sits on the night sky from the banner
+	background:
+		radial-gradient(120% 60% at 0% 0%, rgba(26, 79, 186, 0.35), transparent 60%),
+		var(--threevhy-stars), var(--threevhy-night);
 	height: 100vh;
 }
 
@@ -2646,8 +2647,20 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 	right: 0;
 	bottom: 0;
 	height: calc(100vh - var(--top-bar-height));
-	background-color: var(--color-bg);
-	border-top-left-radius: var(--radius-xl);
+	// 3vhy Client: content is a slab on the night sky with one stepped pixel corner
+	background-color: var(--threevhy-slab);
+	clip-path: polygon(
+		0 12px,
+		4px 12px,
+		4px 8px,
+		8px 8px,
+		8px 4px,
+		12px 4px,
+		12px 0,
+		100% 0,
+		100% 100%,
+		0 100%
+	);
 
 	display: grid;
 	grid-template-columns: 1fr 0px;
@@ -2659,7 +2672,6 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 }
 
 .loading-indicator-container {
-	border-top-left-radius: var(--radius-xl);
 	overflow: hidden;
 }
 
@@ -2668,7 +2680,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 	width: 300px;
 	position: relative;
 	height: calc(100vh - var(--top-bar-height));
-	background: var(--brand-gradient-bg);
+	background: var(--threevhy-sidebar);
 
 	--color-button-bg: var(--brand-gradient-button);
 	--surface-4: var(--brand-gradient-button);
@@ -2695,14 +2707,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 }
 
 .app-sidebar::before {
-	content: '';
-	box-shadow: -15px 0 15px -15px rgba(0, 0, 0, 0.1) inset;
-	top: 0;
-	bottom: 0;
-	left: -2rem;
-	width: 2rem;
-	position: absolute;
-	pointer-events: none;
+	content: none;
 }
 
 .app-viewport {
@@ -2714,18 +2719,20 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 }
 
 .app-contents::before {
+	// The banner's cyan rim light along the top edge of the content slab
 	z-index: 30;
 	content: '';
-	position: fixed;
-	left: var(--left-bar-width);
-	top: var(--top-bar-height);
-	right: calc(-1 * var(--left-bar-width));
-	bottom: calc(-1 * var(--left-bar-width));
-	border-radius: var(--radius-xl);
-	box-shadow: 1px 1px 15px rgba(0, 0, 0, 0.1) inset;
-	border-color: var(--surface-5);
-	border-width: 1px;
-	border-style: solid;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 1px;
+	background: linear-gradient(
+		90deg,
+		rgba(91, 200, 230, 0.7),
+		rgba(91, 200, 230, 0.15) 60%,
+		transparent
+	);
 	pointer-events: none;
 }
 

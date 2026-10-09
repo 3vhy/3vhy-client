@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import {
-	ChevronRightIcon,
-	GaugeIcon,
+	BoxIcon,
 	LayersIcon,
 	PaletteIcon,
 	PlayIcon,
 	PlusIcon,
+	ServerIcon,
+	SparklesIcon,
 	SpinnerIcon,
 	StopCircleIcon,
 } from '@modrinth/assets'
 import { defineMessages, injectNotificationManager, useVIntl } from '@modrinth/ui'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import { computed, inject } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
-import { loaderLabel } from '@/components/ui/home/format'
 import InstancePicker from '@/components/ui/home/InstancePicker.vue'
 import QuickModsPanel from '@/components/ui/home/QuickModsPanel.vue'
 import ServersPanel from '@/components/ui/home/ServersPanel.vue'
@@ -31,8 +32,8 @@ import { traceStartupStep } from '@/helpers/startup-debug'
 import { useRootBreadcrumb } from '@/providers/breadcrumbs'
 import { injectOnboardingChecklist } from '@/providers/onboarding-checklist'
 
-// 3vhy Client home: S.A.M Client's layout (big logo, Play + version picker,
-// quick mods, servers, feature cards) on top of the Modrinth App's launcher.
+// 3vhy Client home: the banner sky with Play front and centre, and a hotbar of
+// shortcuts underneath — press 1 to 5 to jump to one, like in Minecraft.
 defineOptions({
 	name: 'HomePage',
 })
@@ -43,6 +44,7 @@ const { hasCreatedInstance } = injectOnboardingChecklist()
 const showCreationModal = inject<() => void>('showCreationModal')
 const appSettings = useAppSettings()
 const queryClient = useQueryClient()
+const router = useRouter()
 
 const messages = defineMessages({
 	home: { id: 'app.navigation.home', defaultMessage: 'Home' },
@@ -57,29 +59,13 @@ const messages = defineMessages({
 	stop: { id: 'app.3vhy.home.stop', defaultMessage: 'Stop' },
 	installing: { id: 'app.3vhy.home.installing', defaultMessage: 'Installing' },
 	createFirst: { id: 'app.3vhy.home.create-first', defaultMessage: 'Create' },
-	caption: {
-		id: 'app.3vhy.home.caption',
-		defaultMessage: '{loader} {version} · mods and modpacks straight from Modrinth',
-	},
-	captionEmpty: {
-		id: 'app.3vhy.home.caption-empty',
-		defaultMessage: 'Grab a modpack from Modrinth or create your own instance to get started',
-	},
-	modpacksEyebrow: { id: 'app.3vhy.home.card.modpacks.eyebrow', defaultMessage: 'Modpacks' },
-	modpacksBody: {
-		id: 'app.3vhy.home.card.modpacks.body',
-		defaultMessage: 'Download any modpack from Modrinth in one click',
-	},
-	modsEyebrow: { id: 'app.3vhy.home.card.mods.eyebrow', defaultMessage: 'Performance' },
-	modsBody: {
-		id: 'app.3vhy.home.card.mods.body',
-		defaultMessage: 'Sodium, Lithium, Entity Culling and more',
-	},
-	shadersEyebrow: { id: 'app.3vhy.home.card.shaders.eyebrow', defaultMessage: 'Visuals' },
-	shadersBody: {
-		id: 'app.3vhy.home.card.shaders.body',
-		defaultMessage: 'Shaders and resource packs for a fresh look',
-	},
+	hotbarLabel: { id: 'app.3vhy.home.hotbar', defaultMessage: 'Find content on Modrinth' },
+	hotbarKey: { id: 'app.3vhy.home.hotbar.key', defaultMessage: 'Press {key}' },
+	modpacks: { id: 'app.3vhy.home.hotbar.modpacks', defaultMessage: 'Modpacks' },
+	mods: { id: 'app.3vhy.home.hotbar.mods', defaultMessage: 'Mods' },
+	shaders: { id: 'app.3vhy.home.hotbar.shaders', defaultMessage: 'Shaders' },
+	resourcePacks: { id: 'app.3vhy.home.hotbar.resource-packs', defaultMessage: 'Packs' },
+	servers: { id: 'app.3vhy.home.hotbar.servers', defaultMessage: 'Servers' },
 })
 
 useRootBreadcrumb({
@@ -147,38 +133,32 @@ async function onPlay() {
 	await run(instance.id).catch((error) => handleSevereError(error, { instanceId: instance.id }))
 }
 
-const caption = computed(() =>
-	selected.value
-		? formatMessage(messages.caption, {
-				loader: loaderLabel(selected.value.loader),
-				version: selected.value.game_version,
-			})
-		: formatMessage(messages.captionEmpty),
-)
-
-const cards = computed(() => [
-	{
-		to: '/browse/modpack',
-		icon: LayersIcon,
-		eyebrow: formatMessage(messages.modpacksEyebrow),
-		body: formatMessage(messages.modpacksBody),
-		tone: 'cyan',
-	},
-	{
-		to: '/browse/mod',
-		icon: GaugeIcon,
-		eyebrow: formatMessage(messages.modsEyebrow),
-		body: formatMessage(messages.modsBody),
-		tone: 'royal',
-	},
-	{
-		to: '/browse/shader',
-		icon: PaletteIcon,
-		eyebrow: formatMessage(messages.shadersEyebrow),
-		body: formatMessage(messages.shadersBody),
-		tone: 'sky',
-	},
+const hotbar = computed(() => [
+	{ to: '/browse/modpack', icon: LayersIcon, label: formatMessage(messages.modpacks) },
+	{ to: '/browse/mod', icon: BoxIcon, label: formatMessage(messages.mods) },
+	{ to: '/browse/shader', icon: SparklesIcon, label: formatMessage(messages.shaders) },
+	{ to: '/browse/resourcepack', icon: PaletteIcon, label: formatMessage(messages.resourcePacks) },
+	{ to: '/browse/server', icon: ServerIcon, label: formatMessage(messages.servers) },
 ])
+
+function onHotbarKey(event: KeyboardEvent) {
+	if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return
+	const target = event.target as HTMLElement | null
+	if (
+		target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]') ||
+		document.querySelector('[role="dialog"][aria-modal="true"]')
+	) {
+		return
+	}
+	const slot = hotbar.value[Number(event.key) - 1]
+	if (slot) {
+		event.preventDefault()
+		router.push(slot.to)
+	}
+}
+
+onMounted(() => window.addEventListener('keydown', onHotbarKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', onHotbarKey))
 
 // Pixel clouds in the hero sky, in grid cells: [x, y, width]
 const clouds: [number, number, number][] = [
@@ -251,25 +231,21 @@ const clouds: [number, number, number][] = [
 						@create="showCreationModal?.()"
 					/>
 				</div>
-				<p class="tvh-hero__caption">{{ caption }}</p>
 			</div>
-		</section>
 
-		<section class="tvh-cards">
-			<RouterLink
-				v-for="card in cards"
-				:key="card.to"
-				:to="card.to"
-				class="tvh-card"
-				:class="`tvh-card--${card.tone}`"
-			>
-				<span class="tvh-card__icon"><component :is="card.icon" /></span>
-				<span class="tvh-card__text">
-					<span class="tvh-card__eyebrow">{{ card.eyebrow }}</span>
-					<span class="tvh-card__body">{{ card.body }}</span>
-				</span>
-				<ChevronRightIcon class="tvh-card__go" />
-			</RouterLink>
+			<nav class="tvh-hotbar" :aria-label="formatMessage(messages.hotbarLabel)">
+				<RouterLink
+					v-for="(slot, index) in hotbar"
+					:key="slot.to"
+					v-tooltip="formatMessage(messages.hotbarKey, { key: index + 1 })"
+					:to="slot.to"
+					class="tvh-slot"
+				>
+					<span class="tvh-slot__key" aria-hidden="true">{{ index + 1 }}</span>
+					<component :is="slot.icon" class="tvh-slot__icon" />
+					<span class="tvh-slot__label">{{ slot.label }}</span>
+				</RouterLink>
+			</nav>
 		</section>
 
 		<div v-if="instances.length > 0 && appSettings.showJumpIn" class="tvh-jump">
@@ -299,26 +275,25 @@ const clouds: [number, number, number][] = [
 	--color-contrast: #e3f3fc;
 	--color-base: #b4cdea;
 	--color-secondary: #9fb9de;
-	--color-raised-bg: #0f1f4f;
-	--color-button-bg: #18306b;
+	--color-raised-bg: #0e2159;
+	--color-button-bg: #16307a;
 	--color-divider: rgba(140, 196, 234, 0.12);
 	--color-brand: #5bc8e6;
 	--color-brand-highlight: rgba(91, 200, 230, 0.2);
 	position: relative;
 	z-index: 2;
-	border-radius: 1.5rem;
-	min-height: 25rem;
-	background: var(--threevhy-sky-panel);
-	border: 1px solid var(--threevhy-card-border);
-	box-shadow: inset 0 2px 0 rgba(91, 200, 230, 0.35);
+	min-height: 24.5rem;
+	margin-bottom: 2.6rem;
 }
 
 .tvh-hero__sky {
 	position: absolute;
 	inset: 0;
 	overflow: hidden;
-	border-radius: inherit;
 	pointer-events: none;
+	clip-path: var(--threevhy-pixel-corners-lg);
+	background: var(--threevhy-stars), var(--threevhy-sky-panel);
+	box-shadow: inset 0 2px 0 rgba(91, 200, 230, 0.55);
 }
 
 .tvh-hero__clouds {
@@ -329,12 +304,12 @@ const clouds: [number, number, number][] = [
 }
 
 .tvh-cloud {
-	fill: rgba(227, 243, 252, 0.16);
+	fill: rgba(227, 243, 252, 0.15);
 	animation: tvh-drift 60s linear infinite alternate;
 
 	&:nth-child(2) {
 		animation-duration: 80s;
-		fill: rgba(227, 243, 252, 0.11);
+		fill: rgba(227, 243, 252, 0.1);
 	}
 
 	&:nth-child(3) {
@@ -374,14 +349,14 @@ const clouds: [number, number, number][] = [
 	flex-direction: column;
 	align-items: center;
 	gap: 0.85rem;
-	padding: 2.75rem 1.5rem 1.75rem;
+	padding: 2.6rem 1.5rem 4.6rem;
 	text-align: center;
 }
 
 .tvh-hero__welcome {
 	margin: 0;
-	font-size: 1.05rem;
-	font-weight: 600;
+	font-size: 1rem;
+	font-weight: 500;
 	color: var(--threevhy-pale);
 }
 
@@ -393,15 +368,15 @@ const clouds: [number, number, number][] = [
 }
 
 .tvh-stat {
-	padding: 0.35rem 0.85rem;
-	border-radius: 999px;
+	padding: 0.32rem 0.8rem 0.38rem;
 	font-size: 0.85rem;
 	color: var(--threevhy-pale);
-	background: rgba(4, 18, 63, 0.35);
-	border: 1px solid rgba(140, 196, 234, 0.22);
+	background: rgba(4, 18, 63, 0.45);
+	clip-path: var(--threevhy-pixel-corners);
 
 	b {
 		color: #f2faff;
+		font-weight: 700;
 	}
 }
 
@@ -411,35 +386,30 @@ const clouds: [number, number, number][] = [
 	display: flex;
 	align-items: stretch;
 	gap: 0.6rem;
-	margin-top: 1.25rem;
-	padding: 0.45rem;
-	border-radius: 1.4rem;
-	background: rgba(4, 18, 63, 0.4);
-	border: 1px solid rgba(140, 196, 234, 0.22);
-	backdrop-filter: blur(8px);
+	margin-top: 1.1rem;
 }
 
 .tvh-play {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.7rem;
+	gap: 0.75rem;
 	min-width: 15rem;
-	padding: 0 2rem;
+	padding: 0 2.2rem 4px;
 	border: none;
-	border-radius: 1rem;
-	font-size: 1.45rem;
-	font-weight: 900;
-	letter-spacing: 0.18em;
-	text-transform: uppercase;
+	font-family: var(--threevhy-font-pixel);
+	font-size: 1.75rem;
+	font-weight: 600;
 	color: #04123f;
 	background: var(--threevhy-play-bg);
-	box-shadow: var(--threevhy-play-shadow);
+	clip-path: var(--threevhy-pixel-corners);
+	box-shadow:
+		inset 0 -6px 0 rgba(4, 18, 63, 0.4),
+		inset 0 3px 0 rgba(255, 255, 255, 0.45);
 	cursor: pointer;
 	transition:
-		transform 0.1s ease,
-		filter 0.15s ease,
-		box-shadow 0.1s ease;
+		transform 0.08s ease,
+		filter 0.15s ease;
 
 	svg {
 		width: 1.4rem;
@@ -447,14 +417,21 @@ const clouds: [number, number, number][] = [
 	}
 
 	&:hover:not(:disabled) {
-		filter: brightness(1.06);
+		filter: brightness(1.07);
 	}
 
 	&:active:not(:disabled) {
-		transform: translateY(4px);
+		transform: translateY(3px);
 		box-shadow:
-			0 2px 0 #0d3f99,
-			0 8px 18px rgba(4, 18, 80, 0.45);
+			inset 0 -2px 0 rgba(4, 18, 63, 0.4),
+			inset 0 3px 0 rgba(4, 18, 63, 0.15);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow:
+			inset 0 0 0 3px #fff,
+			inset 0 -6px 0 rgba(4, 18, 63, 0.4);
 	}
 
 	&:disabled {
@@ -465,116 +442,87 @@ const clouds: [number, number, number][] = [
 
 .tvh-play--stop {
 	color: #fff;
-	background: linear-gradient(180deg, #ff8aa0 0%, #ff496e 60%, #d92a52 100%);
+	background: linear-gradient(180deg, #ff8aa0 0%, #ff496e 55%, #d92a52 100%);
+}
+
+// Hotbar, sitting on the bottom edge of the sky like Minecraft's
+.tvh-hotbar {
+	position: absolute;
+	left: 50%;
+	bottom: -2.4rem;
+	z-index: 3;
+	display: flex;
+	gap: 4px;
+	padding: 6px;
+	translate: -50% 0;
+	background: #050c2a;
+	clip-path: var(--threevhy-pixel-corners);
 	box-shadow:
-		0 6px 0 #9c1736,
-		0 14px 30px rgba(80, 4, 24, 0.45);
+		inset 0 0 0 2px rgba(140, 196, 234, 0.22),
+		inset 0 -4px 0 rgba(0, 0, 0, 0.35);
 }
 
-.tvh-hero__caption {
-	margin: 0.4rem 0 0;
-	font-size: 0.85rem;
-	color: var(--threevhy-pale);
-	opacity: 0.85;
-}
-
-.tvh-cards {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 1rem;
-}
-
-.tvh-card {
-	display: flex;
-	align-items: center;
-	gap: 0.9rem;
-	padding: 1rem 1.1rem;
-	border-radius: 1.1rem;
-	text-decoration: none;
-	background: var(--color-raised-bg);
-	border: 1px solid var(--threevhy-card-border);
-	transition:
-		transform 0.15s ease,
-		border-color 0.15s ease;
-
-	&:hover {
-		transform: translateY(-2px);
-		border-color: var(--color-brand);
-
-		.tvh-card__go {
-			opacity: 1;
-		}
-	}
-}
-
-.tvh-card__icon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	width: 3rem;
-	height: 3rem;
-	border-radius: 0.9rem;
-	color: #f2faff;
-
-	svg {
-		width: 1.5rem;
-		height: 1.5rem;
-	}
-}
-
-.tvh-card--cyan .tvh-card__icon {
-	background: linear-gradient(160deg, #6fd3ee 0%, #2f9be0 100%);
-}
-
-.tvh-card--royal .tvh-card__icon {
-	background: linear-gradient(160deg, #3f7fe0 0%, #1a4fba 100%);
-}
-
-.tvh-card--sky .tvh-card__icon {
-	background: linear-gradient(160deg, #8cc4ea 0%, #2a6fc4 100%);
-}
-
-.tvh-card__text {
+.tvh-slot {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: 0.15rem;
-	min-width: 0;
-	flex: 1;
-}
+	align-items: center;
+	justify-content: center;
+	gap: 0.3rem;
+	width: 5.25rem;
+	height: 4.25rem;
+	color: var(--threevhy-pale);
+	text-decoration: none;
+	background: #0b1a4f;
+	box-shadow:
+		inset 3px 3px 0 rgba(0, 0, 0, 0.35),
+		inset -3px -3px 0 rgba(140, 196, 234, 0.12);
+	transition:
+		background 0.12s,
+		color 0.12s;
 
-.tvh-card__eyebrow {
-	font-size: 0.72rem;
-	font-weight: 800;
-	letter-spacing: 0.14em;
-	text-transform: uppercase;
-	color: var(--color-brand);
-}
-
-.tvh-card__body {
-	font-weight: 700;
-	color: var(--color-contrast);
-	line-height: 1.3;
-}
-
-.tvh-card__go {
-	width: 1.1rem;
-	height: 1.1rem;
-	flex-shrink: 0;
-	color: var(--color-secondary);
-	opacity: 0;
-	transition: opacity 0.15s ease;
-}
-
-@media (max-width: 1180px) {
-	.tvh-cards {
-		grid-template-columns: 1fr;
+	&:hover,
+	&:focus-visible {
+		outline: none;
+		color: #fff;
+		background: #12286e;
+		box-shadow:
+			inset 0 0 0 3px #e3f3fc,
+			inset 3px 3px 0 3px rgba(0, 0, 0, 0.25);
 	}
+
+	&:active {
+		background: #0e2159;
+	}
+}
+
+.tvh-slot__key {
+	position: absolute;
+	top: 4px;
+	left: 6px;
+	font-family: var(--threevhy-font-pixel);
+	font-size: 0.72rem;
+	color: rgba(207, 232, 247, 0.45);
+}
+
+.tvh-slot__icon {
+	width: 1.45rem;
+	height: 1.45rem;
+	color: var(--threevhy-cyan);
+}
+
+.tvh-slot__label {
+	font-size: 0.78rem;
+	font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.tvh-cloud {
 		animation: none;
+	}
+
+	.tvh-play:active:not(:disabled) {
+		transform: none;
 	}
 }
 </style>

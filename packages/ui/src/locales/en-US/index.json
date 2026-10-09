@@ -6102,7 +6102,7 @@
     "defaultMessage": "Dark"
   },
   "settings.display.theme.description": {
-    "defaultMessage": "Select your preferred color theme across Modrinth."
+    "defaultMessage": "Pick a color theme for 3vhy Client."
   },
   "settings.display.theme.light": {
     "defaultMessage": "Light"

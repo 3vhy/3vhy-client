@@ -80,32 +80,45 @@ defineOptions({
 	}
 }
 
-// 3vhy Client: labeled nav tiles
+// 3vhy Client: labeled nav tiles. The active one is a pixel block with a
+// cyan marker on the window edge.
 .nav-tile {
 	flex-direction: column;
-	gap: 0.3rem;
+	gap: 0.35rem;
 	width: 100%;
-	min-height: 4.25rem;
-	padding: 0.55rem 0.25rem;
-	border-radius: 1rem;
+	min-height: 4.1rem;
+	padding: 0.55rem 0.25rem 0.6rem;
+	border-radius: 0;
+	background: transparent;
 
 	&::before {
-		border-radius: 1rem;
+		border-radius: 0;
+		clip-path: var(--threevhy-pixel-corners);
+	}
+
+	&:hover {
+		background: transparent;
+
+		&::before {
+			opacity: 1;
+			scale: 1;
+			background: rgba(140, 196, 234, 0.1);
+		}
 	}
 }
 
 .nav-tile__icon {
 	display: flex;
-	font-size: 1.45rem;
+	font-size: 1.4rem;
 
 	:deep(svg) {
-		width: 1.45rem;
-		height: 1.45rem;
+		width: 1.4rem;
+		height: 1.4rem;
 	}
 }
 
 .nav-tile__label {
-	font-size: 0.78rem;
+	font-size: 0.75rem;
 	font-weight: 600;
 	line-height: 1;
 	white-space: nowrap;
@@ -115,14 +128,35 @@ defineOptions({
 	color: #f2faff;
 
 	&::before {
-		background: linear-gradient(160deg, #3fb6e8 0%, #1a6fd0 55%, #1a4fba 100%);
-		box-shadow:
-			0 4px 0 #0d3f99,
-			0 10px 22px rgba(26, 79, 186, 0.45);
+		background: linear-gradient(180deg, #4fbdea 0%, #2b8fdb 45%, #1a4fba 100%);
+		box-shadow: var(--threevhy-block-edge);
+	}
+
+	&::after {
+		content: '';
+		position: absolute;
+		left: -0.6rem;
+		top: 50%;
+		width: 4px;
+		height: 1.5rem;
+		translate: 0 -50%;
+		background: #5bc8e6;
+		box-shadow: 0 0 10px rgba(91, 200, 230, 0.8);
 	}
 
 	svg {
 		filter: none;
+	}
+}
+
+.nav-tile.subpage-active {
+	background: transparent;
+
+	&::before {
+		opacity: 1;
+		scale: 1;
+		background: rgba(91, 200, 230, 0.14);
+		box-shadow: inset 0 0 0 1px rgba(91, 200, 230, 0.35);
 	}
 }
 

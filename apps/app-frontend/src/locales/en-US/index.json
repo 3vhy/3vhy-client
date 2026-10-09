@@ -1,30 +1,27 @@
 {
-  "app.3vhy.home.caption": {
-    "message": "{loader} {version} · mods and modpacks straight from Modrinth"
-  },
-  "app.3vhy.home.caption-empty": {
-    "message": "Grab a modpack from Modrinth or create your own instance to get started"
-  },
-  "app.3vhy.home.card.modpacks.body": {
-    "message": "Download any modpack from Modrinth in one click"
-  },
-  "app.3vhy.home.card.modpacks.eyebrow": {
-    "message": "Modpacks"
-  },
-  "app.3vhy.home.card.mods.body": {
-    "message": "Sodium, Lithium, Entity Culling and more"
-  },
-  "app.3vhy.home.card.mods.eyebrow": {
-    "message": "Performance"
-  },
-  "app.3vhy.home.card.shaders.body": {
-    "message": "Shaders and resource packs for a fresh look"
-  },
-  "app.3vhy.home.card.shaders.eyebrow": {
-    "message": "Visuals"
-  },
   "app.3vhy.home.create-first": {
     "message": "Create"
+  },
+  "app.3vhy.home.hotbar": {
+    "message": "Find content on Modrinth"
+  },
+  "app.3vhy.home.hotbar.key": {
+    "message": "Press {key}"
+  },
+  "app.3vhy.home.hotbar.modpacks": {
+    "message": "Modpacks"
+  },
+  "app.3vhy.home.hotbar.mods": {
+    "message": "Mods"
+  },
+  "app.3vhy.home.hotbar.resource-packs": {
+    "message": "Packs"
+  },
+  "app.3vhy.home.hotbar.servers": {
+    "message": "Servers"
+  },
+  "app.3vhy.home.hotbar.shaders": {
+    "message": "Shaders"
   },
   "app.3vhy.home.installing": {
     "message": "Installing"

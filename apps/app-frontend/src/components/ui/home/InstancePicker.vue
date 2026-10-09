@@ -72,7 +72,7 @@ function browseModpacks() {
 }
 
 function subtitle(instance: GameInstance) {
-	return `${instance.game_version} · ${loaderLabel(instance.loader)}`
+	return `${loaderLabel(instance.loader)} ${instance.game_version}`
 }
 </script>
 
@@ -147,18 +147,24 @@ function subtitle(instance: GameInstance) {
 	height: 100%;
 	min-height: 4.25rem;
 	padding: 0.6rem 1rem 0.6rem 1.15rem;
-	border: 1px solid var(--threevhy-card-border);
-	border-radius: 1rem;
-	background: var(--threevhy-card-bg);
-	backdrop-filter: blur(10px);
+	border: none;
+	background: rgba(4, 18, 63, 0.6);
+	clip-path: var(--threevhy-pixel-corners);
+	box-shadow:
+		inset 0 0 0 2px rgba(140, 196, 234, 0.2),
+		inset 0 -4px 0 rgba(0, 0, 0, 0.3);
 	color: var(--color-contrast);
 	text-align: left;
 	cursor: pointer;
-	transition: border-color 0.15s ease;
+	transition: box-shadow 0.15s ease;
 
 	&:hover,
+	&:focus-visible,
 	.tvh-picker--open & {
-		border-color: var(--color-brand);
+		outline: none;
+		box-shadow:
+			inset 0 0 0 2px var(--color-brand),
+			inset 0 -4px 0 rgba(0, 0, 0, 0.3);
 	}
 }
 
@@ -170,10 +176,8 @@ function subtitle(instance: GameInstance) {
 }
 
 .tvh-picker__label {
-	font-size: 0.68rem;
-	font-weight: 800;
-	letter-spacing: 0.16em;
-	text-transform: uppercase;
+	font-size: 0.75rem;
+	font-weight: 500;
 	color: var(--color-secondary);
 }
 
@@ -210,7 +214,7 @@ function subtitle(instance: GameInstance) {
 	display: flex;
 	flex-direction: column;
 	padding: 0.4rem;
-	border-radius: 1rem;
+	border-radius: 0.5rem;
 	border: 1px solid var(--threevhy-card-border);
 	background: var(--color-raised-bg);
 	box-shadow: 0 18px 40px rgba(2, 8, 40, 0.5);
