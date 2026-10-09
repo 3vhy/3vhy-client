@@ -73,16 +73,27 @@ jobs:
           THREEVHY_DISCORD_APP_ID: ${{ vars.THREEVHY_DISCORD_APP_ID }}
         run: pnpm --filter=@modrinth/app run tauri build --bundles nsis
 
-      - name: Upload installer
+      # The interactive "3vhy Client Setup" wraps the installer built above
+      - name: Build 3vhy Client Setup
+        shell: bash
+        run: |
+          mkdir -p dist
+          INSTALLER="$(ls target/release/bundle/nsis/*-setup.exe | head -n 1)"
+          cp "$INSTALLER" apps/setup/payload/3vhy-client-installer.exe
+          cp "$INSTALLER" "dist/3vhy Client Classic Installer.exe"
+          cargo build --release -p threevhy_setup
+          cp target/release/3vhy-client-setup.exe "dist/3vhy Client Setup.exe"
+
+      - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
           name: 3vhy-client-windows
-          path: target/release/bundle/nsis/*-setup.exe
+          path: dist/*.exe
           if-no-files-found: error
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/bundle/nsis/*-setup.exe
+          files: dist/*.exe
           generate_release_notes: true

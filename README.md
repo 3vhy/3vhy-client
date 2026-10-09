@@ -18,6 +18,8 @@ Microsoft sign-in, "Jump in" to recent servers — with a new look and home scre
 - **Removed**: ads and ad-consent prompts, Modrinth+ upsell, Modrinth news, in-app surveys,
   Modrinth's analytics (PostHog) and crash reporting (Sentry), Modrinth's auto-updater, and the
   Modrinth Hosting tab.
+- **Interactive installer** (`apps/setup`): a small app in the 3vhy style that runs the real
+  installer silently and shows progress, with options for install folder, shortcuts and launching.
 - **Separate install**: own app ID (`com.threevhy.client`), own data folder and `threevhy://`
   links, so it can sit next to the real Modrinth App without conflicts.
 
@@ -27,8 +29,12 @@ The easiest way is GitHub Actions (no local setup needed):
 
 1. Push this repository to your own GitHub account.
 2. Open the **Actions** tab, pick **Build 3vhy Client (Windows)** and click **Run workflow**.
-3. When it finishes (about 20–40 minutes), download the `3vhy-client-windows` artifact. It contains
-   `3vhy Client_<version>_x64-setup.exe`.
+3. When it finishes (about 20–40 minutes), download the `3vhy-client-windows` artifact. It contains:
+   - **`3vhy Client Setup.exe`**: the interactive installer (welcome screen, install options,
+     live progress, launch when done). Give this one to players.
+   - **`3vhy Client Classic Installer.exe`**: the standard Windows installer, themed in 3vhy blue.
+     Use it if the Setup doesn't open (it needs Microsoft Edge WebView2, which Windows 10 and 11
+     normally have).
 
 To publish a release instead, push a tag such as `v0.1.0`; the installer is attached to the
 GitHub Release automatically.

@@ -12630,6 +12630,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "threevhy_setup"
+version = "1.0.0-local"
+dependencies = [
+ "dirs",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+]
+
+[[package]]
 name = "tiff"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

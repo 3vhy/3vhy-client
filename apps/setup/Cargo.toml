@@ -1,0 +1,29 @@
+[package]
+name = "threevhy_setup"
+version = "1.0.0-local"
+edition.workspace = true
+description = "Interactive installer for 3vhy Client"
+license = "GPL-3.0-only"
+publish = false
+
+[[bin]]
+name = "3vhy-client-setup"
+path = "src/main.rs"
+
+[dependencies]
+dirs = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tauri = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
+tauri-plugin-opener = { workspace = true }
+
+[build-dependencies]
+tauri-build = { workspace = true }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[lints]
+workspace = true

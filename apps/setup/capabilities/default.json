@@ -1,0 +1,7 @@
+{
+	"identifier": "default",
+	"description": "Setup window",
+	"local": true,
+	"windows": ["setup"],
+	"permissions": ["core:default", "core:window:allow-start-dragging"]
+}
