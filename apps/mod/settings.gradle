@@ -1,0 +1,16 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'threevhy-client-mod'
+
+// One build per Minecraft line; both compile the shared code in common/
+include 'mc1_21_11'
+include 'mc26_1'

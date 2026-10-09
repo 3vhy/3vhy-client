@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.threevhy.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"refmap": "threevhy-refmap.json",
+	"client": [
+		"ClientPacketListenerMixin",
+		"GameRendererMixin",
+		"MinecraftMixin"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

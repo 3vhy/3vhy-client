@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "threevhy",
+	"version": "${version}",
+	"name": "3vhy Client",
+	"description": "The in-game side of 3vhy Client: HUD, crystal PvP tools, zoom, Discord presence and the 3vhy game window.",
+	"authors": ["3vhy"],
+	"contact": {
+		"homepage": "https://github.com/xsaaacc-collab/3vhy-client",
+		"sources": "https://github.com/xsaaacc-collab/3vhy-client"
+	},
+	"license": "GPL-3.0-only",
+	"icon": "assets/threevhy/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["dev.threevhy.client.ThreevhyClient"]
+	},
+	"mixins": ["threevhy.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.18.0",
+		"minecraft": "${minecraft_range}",
+		"java": ">=${java_version}",
+		"fabric-api": "*"
+	}
+}

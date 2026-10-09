@@ -27,6 +27,7 @@ import { useInstanceMods } from '@/composables/use-instance-mods'
 import { useSelectedInstance } from '@/composables/use-selected-instance'
 import { kill, run } from '@/helpers/instance'
 import { get_all } from '@/helpers/process'
+import { maxMemoryQueryOptions } from '@/helpers/jre.js'
 import { appSettingsQueryOptions } from '@/helpers/settings'
 import { traceStartupStep } from '@/helpers/startup-debug'
 import { useRootBreadcrumb } from '@/providers/breadcrumbs'
@@ -55,6 +56,10 @@ const messages = defineMessages({
 		defaultMessage: '{count, plural, one {instance} other {instances}}',
 	},
 	ram: { id: 'app.3vhy.home.stat.ram', defaultMessage: 'GB RAM' },
+	ramTooltip: {
+		id: 'app.3vhy.home.stat.ram.tooltip',
+		defaultMessage: 'Your PC has {total} GB. Minecraft can use {allocated} GB (change it in Settings).',
+	},
 	play: { id: 'app.3vhy.home.play', defaultMessage: 'Play' },
 	stop: { id: 'app.3vhy.home.stop', defaultMessage: 'Stop' },
 	installing: { id: 'app.3vhy.home.installing', defaultMessage: 'Installing' },
@@ -85,11 +90,19 @@ const selectedId = computed(() => selected.value?.id ?? null)
 const { enabledCount } = useInstanceMods(selectedId)
 
 const settingsQuery = useQuery(appSettingsQueryOptions())
-const ramGb = computed(() => {
+// How much of it Minecraft is allowed to use (shown on hover)
+const allocatedGb = computed(() => {
 	const megabytes =
 		selected.value?.memory?.maximum ?? settingsQuery.data.value?.memory?.maximum ?? null
 	if (!megabytes) return null
 	return Math.round((megabytes / 1024) * 10) / 10
+})
+// The PC's total memory (reported in KB)
+const maxMemoryQuery = useQuery(maxMemoryQueryOptions())
+const ramGb = computed(() => {
+	const kilobytes = maxMemoryQuery.data.value
+	if (!kilobytes) return null
+	return Math.round(kilobytes / 1024 / 1024)
 })
 
 type ProcessMetadata = { uuid: string; instance_id: string }
@@ -206,7 +219,15 @@ const clouds: [number, number, number][] = [
 						<b>{{ instances.length }}</b>
 						{{ formatMessage(messages.instances, { count: instances.length }) }}
 					</span>
-					<span v-if="ramGb" class="tvh-stat">
+					<span
+						v-if="ramGb"
+						v-tooltip="
+							allocatedGb
+								? formatMessage(messages.ramTooltip, { total: ramGb, allocated: allocatedGb })
+								: undefined
+						"
+						class="tvh-stat"
+					>
 						<b>{{ ramGb }}</b> {{ formatMessage(messages.ram) }}
 					</span>
 				</div>

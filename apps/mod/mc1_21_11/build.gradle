@@ -1,0 +1,53 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap'
+}
+
+def minecraftVersion = '1.21.11'
+def fabricApiVersion = '0.141.6+1.21.11'
+
+version = "${mod_version}+${minecraftVersion}"
+group = 'dev.threevhy'
+base { archivesName = 'threevhy-client' }
+
+sourceSets {
+	main {
+		java { srcDir '../common/src/main/java' }
+		resources { srcDir '../common/src/main/resources' }
+	}
+}
+
+loom {
+	mixin {
+		defaultRefmapName = 'threevhy-refmap.json'
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${minecraftVersion}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricApiVersion}"
+}
+
+processResources {
+	def props = [
+		version        : project.version,
+		minecraft_range: '~1.21.11',
+		java_version   : '21',
+		discord_app_id : (System.getenv('THREEVHY_DISCORD_APP_ID') ?: project.findProperty('discord_app_id') ?: '')
+	]
+	inputs.properties props
+	filesMatching(['fabric.mod.json', 'threevhy-build.properties']) {
+		expand props
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
