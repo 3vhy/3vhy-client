@@ -14,6 +14,7 @@ import java.util.List;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.PauseScreen;
 import org.lwjgl.glfw.GLFW;
 
@@ -27,15 +28,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		List<String> failed = new ArrayList<>();
 
 		context.waitTicks(40);
-		context.takeScreenshot("3vhy-main-menu");
+		shot(context, "3vhy-main-menu");
 		check(failed, "3vhy main menu replaces the title screen",
 				context.computeOnClient(client -> client.screen instanceof MainMenuScreen) && Hooks.mainMenuShown);
 		context.setScreen(() -> new SettingsScreen(new MainMenuScreen()));
 		context.waitTicks(10);
-		context.takeScreenshot("3vhy-settings-from-menu");
+		shot(context, "3vhy-settings-from-menu");
 		context.setScreen(() -> new HudEditorScreen(new MainMenuScreen()));
 		context.waitTicks(5);
-		context.takeScreenshot("3vhy-hud-editor-from-menu");
+		shot(context, "3vhy-hud-editor-from-menu");
 		context.setScreen(MainMenuScreen::new);
 		context.waitTicks(5);
 
@@ -63,12 +64,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			server.runCommand("execute at @p run summon zombie ~ ~ ~3 {NoAI:1b,Silent:1b,PersistenceRequired:1b,"
 					+ "equipment:{head:{id:\"minecraft:diamond_helmet\",count:1},offhand:{id:\"minecraft:totem_of_undying\",count:1}}}");
 			context.waitTicks(40);
-			context.takeScreenshot("3vhy-hud");
+			shot(context, "3vhy-hud");
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
 			server.runCommand("damage @p 1000 minecraft:generic");
 			context.waitTicks(30);
-			context.takeScreenshot("3vhy-totem-pop");
+			shot(context, "3vhy-totem-pop");
 			check(failed, "totem pop counted", context.computeOnClient(client -> !PopTracker.top(1).isEmpty()));
 
 			// Face the zombie (south, slightly down) and hit it for the target HUD
@@ -79,13 +80,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(10);
-			context.takeScreenshot("3vhy-target-hud");
+			shot(context, "3vhy-target-hud");
 			check(failed, "target HUD picks up who you hit", context.computeOnClient(client -> Target.get() != null));
 
 			int normalFov = context.computeOnClient(client -> client.options.fov().get());
 			context.getInput().holdKey(ThreevhyClient.zoomKey);
 			context.waitTicks(20);
-			context.takeScreenshot("3vhy-zoom");
+			shot(context, "3vhy-zoom");
 			int zoomedFov = context.computeOnClient(client -> client.options.fov().get());
 			context.getInput().releaseKey(ThreevhyClient.zoomKey);
 			context.waitTicks(20);
@@ -96,28 +97,28 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 
 			context.setScreen(() -> new SettingsScreen(null));
 			context.waitTicks(10);
-			context.takeScreenshot("3vhy-settings");
+			shot(context, "3vhy-settings");
 			context.getInput().typeChars("totem");
 			context.waitTicks(5);
-			context.takeScreenshot("3vhy-settings-search");
+			shot(context, "3vhy-settings-search");
 
 			context.setScreen(() -> new SettingsScreen(null).openOptions(Modules.ZOOM));
 			context.waitTicks(10);
-			context.takeScreenshot("3vhy-settings-zoom-page");
+			shot(context, "3vhy-settings-zoom-page");
 
 			context.setScreen(() -> new SettingsScreen(null).openGeneral());
 			context.waitTicks(10);
-			context.takeScreenshot("3vhy-settings-general");
+			shot(context, "3vhy-settings-general");
 
 			context.setScreen(() -> new HudEditorScreen(null));
 			context.waitTicks(10);
-			context.takeScreenshot("3vhy-hud-editor");
+			shot(context, "3vhy-hud-editor");
 
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(10);
-			context.takeScreenshot("3vhy-pause-menu");
+			shot(context, "3vhy-pause-menu");
 
 			// Open 3vhy Settings the way a player does, with the button in the pause menu
 			int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
@@ -125,7 +126,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(2);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(20);
-			context.takeScreenshot("3vhy-settings-from-pause");
+			shot(context, "3vhy-settings-from-pause");
 			check(failed, "pause menu button opens 3vhy Settings",
 					context.computeOnClient(client -> client.screen instanceof SettingsScreen));
 
@@ -142,7 +143,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(2);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(5);
-			context.takeScreenshot("3vhy-settings-card-clicked");
+			shot(context, "3vhy-settings-card-clicked");
 			check(failed, "clicking a card switches it", Modules.FPS.enabled() != fpsBefore);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(5);
@@ -163,6 +164,20 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		if (!failed.isEmpty()) {
 			throw new AssertionError("3vhy checks that failed: " + String.join(", ", failed));
 		}
+	}
+
+	/**
+	 * Sodium on 26.1 can't draw the world in the extra frame a test screenshot renders, so
+	 * in-world screenshots are skipped there; everything else still runs.
+	 */
+	private static void shot(ClientGameTestContext context, String name) {
+		boolean sodiumOn26 = FabricLoader.getInstance().isModLoaded("sodium")
+				&& ThreevhyClient.minecraftVersion().startsWith("26.");
+		if (sodiumOn26 && context.computeOnClient(client -> client.level != null)) {
+			ThreevhyClient.LOG.info("3vhy-check: screenshot {} skipped (Sodium on 26.1)", name);
+			return;
+		}
+		context.takeScreenshot(name);
 	}
 
 	private static void check(List<String> failed, String name, boolean ok) {
