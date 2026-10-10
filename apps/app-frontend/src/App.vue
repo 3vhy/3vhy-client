@@ -79,6 +79,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import AppActionBar from '@/components/ui/AppActionBar.vue'
+import PixelSnow from '@/components/ui/brand/PixelSnow.vue'
 import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
 import ErrorModal from '@/components/ui/ErrorModal.vue'
@@ -2161,6 +2162,8 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 		class="app-grid-layout relative"
 		:class="{ 'disable-advanced-rendering': !appTheme.advancedRendering }"
 	>
+		<!-- 3vhy Client: pixel snow falls on the night sky behind everything -->
+		<PixelSnow v-if="appTheme.advancedRendering" class="app-snow" />
 		<Transition name="fade">
 			<div
 				v-if="restarting"
@@ -2610,11 +2613,17 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 	grid-template-rows: auto minmax(0, 1fr);
 	position: relative;
 	//z-index: 0;
-	// 3vhy Client: the shell sits on the night sky from the banner
+	// 3vhy Client: the shell sits on the night sky from the banner; isolation keeps the snow
+	// canvas above this background but behind everything in the shell
+	isolation: isolate;
 	background:
 		radial-gradient(120% 60% at 0% 0%, rgba(26, 79, 186, 0.35), transparent 60%),
 		var(--threevhy-stars), var(--threevhy-night);
 	height: 100vh;
+}
+
+.app-snow {
+	z-index: -1;
 }
 
 .app-grid-navbar {

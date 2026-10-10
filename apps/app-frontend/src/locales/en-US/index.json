@@ -47,6 +47,30 @@
   "app.3vhy.home.welcome": {
     "message": "Welcome to 3vhy Client"
   },
+  "app.3vhy.ingame.built-in": {
+    "message": "30+ mods built in: HUD, PvP tools, crosshair, waypoints, profiles and more."
+  },
+  "app.3vhy.ingame.freelook": {
+    "message": "Freelook"
+  },
+  "app.3vhy.ingame.hub": {
+    "message": "Hub, HUD editor and mod menu"
+  },
+  "app.3vhy.ingame.key.left-alt": {
+    "message": "Left Alt"
+  },
+  "app.3vhy.ingame.key.right-shift": {
+    "message": "Right Shift"
+  },
+  "app.3vhy.ingame.title": {
+    "message": "In game"
+  },
+  "app.3vhy.ingame.unsupported": {
+    "message": "This instance doesn't get the 3vhy in-game client. Pick a Fabric 1.21.11 or 26.1 instance, or set one up from the instance picker."
+  },
+  "app.3vhy.ingame.zoom": {
+    "message": "Zoom (scroll to adjust)"
+  },
   "app.3vhy.library.title": {
     "message": "Library"
   },

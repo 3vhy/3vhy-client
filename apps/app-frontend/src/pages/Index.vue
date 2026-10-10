@@ -15,7 +15,9 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, inject, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
+import PixelSnow from '@/components/ui/brand/PixelSnow.vue'
 import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
+import InGamePanel from '@/components/ui/home/InGamePanel.vue'
 import InstancePicker from '@/components/ui/home/InstancePicker.vue'
 import QuickModsPanel from '@/components/ui/home/QuickModsPanel.vue'
 import ServersPanel from '@/components/ui/home/ServersPanel.vue'
@@ -212,6 +214,7 @@ const clouds: [number, number, number][] = [
 						<rect :x="x" :y="y + 1" :width="w" height="1" />
 					</g>
 				</svg>
+				<PixelSnow :density="1.6" :speed="12" />
 				<svg
 					class="tvh-hero__hills"
 					viewBox="0 0 64 12"
@@ -292,6 +295,7 @@ const clouds: [number, number, number][] = [
 
 		<Teleport to="#sidebar-teleport-target">
 			<QuickModsPanel :instance="selected" />
+			<InGamePanel :instance="selected" />
 			<ServersPanel :instances="instances" :selected="selected" />
 		</Teleport>
 	</div>

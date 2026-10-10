@@ -87,9 +87,9 @@ public final class HubScreen extends CompatScreen {
 			if (dragging == null) controls(ui, mc, active);
 		}
 
-		String hint = "DRAG TO MOVE  ·  PENCIL FOR SETTINGS  ·  X TO HIDE  ·  RIGHT SHIFT TO CLOSE";
+		String hint = "DRAG TO MOVE  ·  PENCIL FOR SETTINGS  ·  X TO HIDE";
 		float scale = 0.6f;
-		ui.small(hint, this.width / 2f - ui.width(hint) * scale / 2, this.height - 10, scale, MenuTheme.alpha(t.text(), 0xB0));
+		ui.small(hint, this.width / 2f - ui.width(hint) * scale / 2, 4, scale, MenuTheme.alpha(t.text(), 0xB0));
 	}
 
 	/** Draws one widget in its spot with its outline; returns its box. */
