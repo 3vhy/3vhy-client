@@ -232,6 +232,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		check(failed, "3vhy main menu after leaving a world",
 				context.computeOnClient(client -> client.screen instanceof MainMenuScreen));
 		check(failed, "window title hook (Minecraft.updateTitle)", Hooks.titleHookRan);
+		String title = dev.threevhy.client.WindowBranding.title();
+		ThreevhyClient.LOG.info("3vhy-check: window title is \"{}\"", title);
+		check(failed, "window title starts with Minecraft, for Medal", title.startsWith("Minecraft"));
 		check(failed, "tab list ping numbers (PlayerTabOverlay)", Hooks.tabPingRan);
 		check(failed, "item highlighter (AbstractContainerScreen slots)", Hooks.slotHighlightRan);
 		check(failed, "freelook camera (Camera.setRotation)", Hooks.freelookCameraRan);

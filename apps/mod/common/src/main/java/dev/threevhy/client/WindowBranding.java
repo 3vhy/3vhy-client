@@ -1,5 +1,6 @@
 package dev.threevhy.client;
 
+import dev.threevhy.client.module.Modules;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -11,23 +12,35 @@ import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-/** The game window says "3vhy Client" and shows the 3vhy icon instead of the grass block. */
+/**
+ * The game window shows the 3vhy icon and a 3vhy title. By default the title still starts with
+ * "Minecraft", because recorders like Medal and OBS game capture look for that to find the game.
+ */
 public final class WindowBranding {
 	private static final int[] ICON_SIZES = {16, 32, 48, 64, 128, 256};
 	private static boolean iconSet = false;
+	private static String applied = null;
 
 	private WindowBranding() {
 	}
 
 	public static String title() {
-		return "3vhy Client " + ThreevhyClient.minecraftVersion();
+		String version = ThreevhyClient.minecraftVersion();
+		if (Modules.THEME_WINDOW_TITLE.is("3vhy Client")) return "3vhy Client " + version;
+		return "Minecraft " + version + " - 3vhy Client";
+	}
+
+	/** Re-applies the title when the setting changes. Runs on the render thread. */
+	public static void tick() {
+		if (applied != null && !applied.equals(title())) apply();
 	}
 
 	/** Runs on the render thread. */
 	public static void apply() {
 		long window = Hooks.windowHandle();
 		if (window == 0) return;
-		GLFW.glfwSetWindowTitle(window, title());
+		applied = title();
+		GLFW.glfwSetWindowTitle(window, applied);
 		if (!iconSet) {
 			iconSet = setIcon(window);
 		}

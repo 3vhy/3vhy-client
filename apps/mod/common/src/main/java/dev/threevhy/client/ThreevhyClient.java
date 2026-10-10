@@ -135,6 +135,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 			mc.setScreen(new TitleScreen());
 		}
 		Modules.tick(mc);
+		WindowBranding.tick();
 		DiscordPresence.tick(mc);
 		Config.tick();
 	}

@@ -136,6 +136,9 @@ public final class Modules {
 			10, 100, 10, 50, "%"));
 	public static final Slider THEME_HUD_SCALE = THEME.add(new Slider("hud_scale", "HUD size", "Makes every HUD widget bigger or smaller",
 			50, 200, 5, 100, "%"));
+	public static final Choice THEME_WINDOW_TITLE = THEME.add(new Choice("window_title", "Window title",
+			"Keep \"Minecraft\" in it so Medal, OBS and Discord recognise the game", 0,
+			"Minecraft - 3vhy Client", "3vhy Client"));
 
 	// Utility
 	public static final Module ZOOM = new Module("zoom", "Zoom", "Hold C to zoom in", Category.UTILITY, true);
