@@ -1,12 +1,13 @@
 package dev.threevhy.client.hud;
 
-import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.gui.HudEditorScreen;
+import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.Waypoints;
 import dev.threevhy.client.module.Zoom;
 import net.minecraft.client.Minecraft;
 
-/** Draws the enabled HUD widgets every frame. */
+/** Draws the waypoint markers and the enabled HUD widgets every frame. */
 public final class HudRenderer {
 	private HudRenderer() {
 	}
@@ -15,31 +16,29 @@ public final class HudRenderer {
 		Minecraft mc = Minecraft.getInstance();
 		CpsTracker.poll(mc);
 		Zoom.update(mc);
-		if (mc.options.hideGui || mc.player == null || mc.screen instanceof HudEditorScreen) {
-			return;
-		}
-		drawAll(d, mc, false);
+		if (mc.options.hideGui || mc.player == null) return;
+		Waypoints.drawOnScreen(d, mc);
+		// The hub draws the widgets itself, sharp above its blur
+		if (mc.screen instanceof HubScreen) return;
+		drawAll(d, mc);
 	}
 
-	/** Shared with the HUD editor, which draws the same widgets in preview mode. */
-	public static void drawAll(Draw d, Minecraft mc, boolean preview) {
-		float scale = scale();
-		int w = Math.round(d.width() / scale);
-		int h = Math.round(d.height() / scale);
-		d.push();
-		d.scale(scale);
+	private static void drawAll(Draw d, Minecraft mc) {
 		for (HudWidget widget : HudWidgets.ALL) {
-			if (!widget.module.enabled() || (!preview && !widget.visible(mc))) {
-				continue;
-			}
+			if (!widget.module.enabled() || !widget.visible(mc)) continue;
+			float scale = widget.scaled() ? scale() : 1f;
+			int w = Math.round(d.width() / scale);
+			int h = Math.round(d.height() / scale);
 			int[] pos = widget.position(mc, w, h);
-			widget.draw(d, pos[0], pos[1], mc, preview);
+			d.push();
+			d.scale(scale);
+			widget.draw(d, pos[0], pos[1], mc, false);
+			d.pop();
 		}
-		d.pop();
 	}
 
+	/** The HUD size setting, as a multiplier. */
 	public static float scale() {
-		float scale = Config.get().hudScale;
-		return scale <= 0.25f ? 1.0f : scale;
+		return (float) (Modules.THEME_HUD_SCALE.get() / 100.0);
 	}
 }

@@ -1,0 +1,40 @@
+package dev.threevhy.client.mixin;
+
+import dev.threevhy.client.module.ChatTweaks;
+import java.util.List;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.Component;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+
+/** Chat: timestamps, stacked repeats and a longer history. */
+@Mixin(ChatComponent.class)
+public abstract class ChatComponentMixin {
+	@Shadow @Final private List<GuiMessage> allMessages;
+
+	@Shadow
+	private void refreshTrimmedMessages() {
+		throw new AssertionError();
+	}
+
+	@ModifyVariable(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+	private Component threevhy$decorate(Component message) {
+		return ChatTweaks.decorate(message, () -> {
+			if (!allMessages.isEmpty()) {
+				allMessages.remove(0);
+				refreshTrimmedMessages();
+			}
+		});
+	}
+
+	@ModifyConstant(method = {"addMessageToQueue", "addMessageToDisplayQueue"}, constant = @Constant(intValue = 100))
+	private int threevhy$history(int vanilla) {
+		return ChatTweaks.historyLimit(vanilla);
+	}
+}

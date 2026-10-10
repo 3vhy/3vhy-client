@@ -2,101 +2,259 @@ package dev.threevhy.client.module;
 
 import dev.threevhy.client.Config;
 import dev.threevhy.client.module.Module.Category;
+import dev.threevhy.client.module.Setting.Choice;
+import dev.threevhy.client.module.Setting.Color;
+import dev.threevhy.client.module.Setting.Slider;
+import dev.threevhy.client.module.Setting.Toggle;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
-/** Every 3vhy feature, plus the per-tick work for the ones that change game settings. */
+/** Every 3vhy feature and its settings, plus the per-tick work for the ones that change game options. */
 public final class Modules {
-	// HUD
-	public static final Module FPS = new Module("fps", "FPS", "Frames per second", Category.HUD, true);
-	public static final Module CPS = new Module("cps", "CPS", "Clicks per second, left and right", Category.HUD, true);
-	public static final Module PING = new Module("ping", "Ping", "Your latency to the server", Category.HUD, true);
-	public static final Module COORDS = new Module("coords", "Coordinates", "Position and facing", Category.HUD, false);
-	public static final Module KEYSTROKES = new Module("keystrokes", "Keystrokes", "WASD, jump and mouse buttons", Category.HUD, true);
-	public static final Module ARMOR = new Module("armor", "Armor status", "Armor with durability left", Category.HUD, true);
-	public static final Module ITEMS = new Module("items", "PvP item counter", "Totems, crystals, obsidian, XP and gapples", Category.HUD, true);
-	public static final Module POPS = new Module("pops", "Totem pops", "Who popped how many totems", Category.HUD, true);
-	public static final Module TARGET_HUD = new Module("target_hud", "Target HUD",
-			"Health, armor and totem of who you're fighting", Category.HUD, true);
-
-	// PvP
-	public static final Module CRYSTAL_OPTIMIZER = new Module("crystal_optimizer", "Crystal optimizer",
-			"Crystals vanish the moment you hit them. Check the server's rules", Category.PVP, false);
-	public static final Module POP_NOTIFIER = new Module("pop_notifier", "Pop alerts",
-			"Chat message when someone pops a totem", Category.PVP, true);
-	public static final Module TOTEM_WARNING = new Module("totem_warning", "Totem warning",
-			"Warns you when your offhand has no totem but your inventory does", Category.PVP, true);
-	public static final Module NO_HURT_CAM = new Module("no_hurt_cam", "No hurt cam",
-			"Your view doesn't shake when you take damage", Category.PVP, false);
-	public static final Module FULLBRIGHT = new Module("fullbright", "Fullbright",
-			"See clearly in the dark", Category.PVP, false);
-
-	// Utility
-	public static final Module ZOOM = new Module("zoom", "Zoom", "Hold C to zoom in", Category.UTILITY, true);
-	public static final Module TOGGLE_SPRINT = new Module("toggle_sprint", "Toggle sprint",
-			"Press sprint once and keep sprinting", Category.UTILITY, false);
-	public static final Module MAIN_MENU = new Module("main_menu", "Main menu",
-			"The 3vhy title screen instead of Minecraft's", Category.UTILITY, true);
-
-	// Discord
-	public static final Module DISCORD = new Module("discord", "Discord presence",
-			"Show 3vhy Client and your server on Discord", Category.DISCORD, true);
-
-	public static final List<Module> ALL = List.of(
-			FPS, CPS, PING, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD,
-			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, NO_HURT_CAM, FULLBRIGHT,
-			ZOOM, TOGGLE_SPRINT, MAIN_MENU,
-			DISCORD);
-
-	private static Boolean appliedToggleSprint = null;
-	private static Boolean appliedNoHurtCam = null;
-	private static boolean addedNightVision = false;
-	private static final int NIGHT_VISION_TICKS = 20 * 30;
-
 	private Modules() {
 	}
 
+	/** A HUD module: every one can hide its label, drop its background and pick a colour. */
+	private static Module hud(String id, String name, String description, boolean on) {
+		Module module = new Module(id, name, description, Category.HUD, on);
+		module.add(new Toggle("label", "Show label", "The grey name in front of the value", true));
+		module.add(new Toggle("background", "Background", "The dark box behind the text", true));
+		module.add(new Color("color", "Text colour", "Colour of the value", 0xFFE3F3FC));
+		return module;
+	}
+
+	// HUD
+	public static final Module FPS = hud("fps", "FPS", "Shows your current frames per second", true);
+	public static final Module CPS = hud("cps", "CPS", "Shows your clicks per second, left and right", true);
+	public static final Module PING = hud("ping", "Ping", "Shows your latency to the server, coloured by quality", true);
+	public static final Toggle PING_COLOURS = PING.add(new Toggle("quality", "Colour by quality",
+			"Green when it's good, red when it's bad", true));
+	public static final Module TPS = hud("tps", "TPS", "Displays the server's current ticks per second", false).markNew();
+	public static final Toggle TPS_COLOURS = TPS.add(new Toggle("quality", "Colour by quality",
+			"Green at 20, red when the server lags", true));
+	public static final Module CLOCK = hud("clock", "Clock", "Displays the real-world time on your HUD", false).markNew();
+	public static final Toggle CLOCK_24H = CLOCK.add(new Toggle("24h", "24-hour time", "14:05 instead of 2:05 PM", true));
+	public static final Toggle CLOCK_SECONDS = CLOCK.add(new Toggle("seconds", "Seconds", "Show seconds too", false));
+	public static final Module COORDS = hud("coords", "Coordinates", "Shows your current coordinates and facing", false);
+	public static final Toggle COORDS_FACING = COORDS.add(new Toggle("facing", "Facing", "Which way you're looking", true));
+	public static final Module KEYSTROKES = new Module("keystrokes", "Keystrokes",
+			"Shows WASD, jump and your mouse buttons as you press them", Category.HUD, true);
+	public static final Toggle KEYSTROKES_MOUSE = KEYSTROKES.add(new Toggle("mouse", "Mouse buttons", "LMB and RMB with CPS", true));
+	public static final Toggle KEYSTROKES_SPACE = KEYSTROKES.add(new Toggle("space", "Space bar", "The jump key", true));
+	public static final Module ARMOR = new Module("armor", "Armor Status",
+			"Displays the durability and status of your equipped armor", Category.HUD, true);
+	public static final Choice ARMOR_LAYOUT = ARMOR.add(new Choice("layout", "Layout",
+			"A column at the side, or a row like an armor bar", 0, "Column", "Row"));
+	public static final Choice ARMOR_DURABILITY = ARMOR.add(new Choice("durability", "Durability",
+			"How durability is shown", 0, "Percent", "Points", "Hidden"));
+	public static final Toggle ARMOR_HAND = ARMOR.add(new Toggle("hand", "Held item", "Also show the item in your hand", false));
+	public static final Module ITEMS = new Module("items", "Item Counter",
+			"Counts the PvP items in your inventory", Category.HUD, true);
+	public static final Toggle ITEMS_TOTEMS = ITEMS.add(new Toggle("totem", "Totems", "Totems of Undying", true));
+	public static final Toggle ITEMS_CRYSTALS = ITEMS.add(new Toggle("crystal", "End crystals", "End crystals", true));
+	public static final Toggle ITEMS_OBSIDIAN = ITEMS.add(new Toggle("obsidian", "Obsidian", "Obsidian", true));
+	public static final Toggle ITEMS_XP = ITEMS.add(new Toggle("xp", "XP bottles", "Bottles o' Enchanting", true));
+	public static final Toggle ITEMS_GAPPLES = ITEMS.add(new Toggle("gapple", "Golden apples", "Golden and enchanted golden apples", true));
+	public static final Toggle ITEMS_PEARLS = ITEMS.add(new Toggle("pearl", "Ender pearls", "Ender pearls", false));
+	public static final Toggle ITEMS_ANCHORS = ITEMS.add(new Toggle("anchor", "Anchors", "Respawn anchors and glowstone", false));
+	public static final Module POPS = new Module("pops", "Totem Pops", "Who popped how many totems", Category.HUD, true);
+	public static final Module TARGET_HUD = new Module("target_hud", "Target HUD",
+			"Health, armor and totem of who you're fighting", Category.HUD, true);
+	public static final Toggle TARGET_ARMOR = TARGET_HUD.add(new Toggle("armor", "Armor", "Their armor and held items", true));
+	public static final Module COMBO = hud("combo", "Combo Counter", "Flex on your opponent with the combo you land", false).markNew();
+	public static final Module SCOREBOARD = new Module("scoreboard", "Scoreboard",
+			"Move the server scoreboard, hide its red numbers, or hide it", Category.HUD, true).markNew();
+	public static final Toggle SCOREBOARD_HIDE_NUMBERS = SCOREBOARD.add(new Toggle("numbers", "Hide numbers",
+			"Hide the red score numbers on the right", false));
+	public static final Module JUMP_RESET = new Module("jump_reset", "Jump Reset",
+			"Shows how well you timed your jump after being hit, to take less knockback", Category.HUD, false).markNew();
+
+	// PvP
+	public static final Module CRYSTAL_OPTIMIZER = new Module("crystal_optimizer", "Crystal Optimizer",
+			"Crystals vanish the moment you hit them. Check the server's rules", Category.PVP, false);
+	public static final Module POP_NOTIFIER = new Module("pop_notifier", "Pop Alerts",
+			"A chat message when someone pops a totem", Category.PVP, true);
+	public static final Module TOTEM_WARNING = new Module("totem_warning", "Totem Warning",
+			"Warns you when your offhand has no totem but your inventory does", Category.PVP, true);
+	public static final Module ITEM_HIGHLIGHTER = new Module("item_highlighter", "Item Highlighter",
+			"Highlights PvP items in your inventory so you find them quickly", Category.PVP, true).markNew();
+	public static final Toggle HIGHLIGHT_TOTEMS = ITEM_HIGHLIGHTER.add(new Toggle("totem", "Totems", "Totems of Undying", true));
+	public static final Toggle HIGHLIGHT_CRYSTALS = ITEM_HIGHLIGHTER.add(new Toggle("crystal", "End crystals", "End crystals", true));
+	public static final Toggle HIGHLIGHT_OBSIDIAN = ITEM_HIGHLIGHTER.add(new Toggle("obsidian", "Obsidian", "Obsidian", false));
+	public static final Toggle HIGHLIGHT_GAPPLES = ITEM_HIGHLIGHTER.add(new Toggle("gapple", "Golden apples", "Golden apples", true));
+	public static final Toggle HIGHLIGHT_PEARLS = ITEM_HIGHLIGHTER.add(new Toggle("pearl", "Ender pearls", "Ender pearls", true));
+	public static final Toggle HIGHLIGHT_XP = ITEM_HIGHLIGHTER.add(new Toggle("xp", "XP bottles", "Bottles o' Enchanting", false));
+	public static final Color HIGHLIGHT_COLOR = ITEM_HIGHLIGHTER.add(new Color("color", "Colour", "Highlight colour", 0xFF5BC8E6));
+	public static final Module HURT_CAM = new Module("no_hurt_cam", "Hurt Cam",
+			"Choose how much your view shakes when you take damage", Category.PVP, false);
+	public static final Slider HURT_CAM_STRENGTH = HURT_CAM.add(new Slider("strength", "Shake", "0% means no shake at all",
+			0, 100, 5, 0, "%"));
+
+	// Visual
+	public static final Module CROSSHAIR = new Module("crosshair", "Custom Crosshair",
+			"Personalise your crosshair for better aiming", Category.VISUAL, false).markNew();
+	public static final Choice CROSSHAIR_STYLE = CROSSHAIR.add(new Choice("style", "Style", "Shape of the crosshair", 0,
+			"Cross", "Cross + dot", "Dot", "Circle", "T"));
+	public static final Slider CROSSHAIR_SIZE = CROSSHAIR.add(new Slider("size", "Size", "Length of each arm", 1, 10, 1, 4, ""));
+	public static final Slider CROSSHAIR_GAP = CROSSHAIR.add(new Slider("gap", "Gap", "Space in the middle", 0, 6, 1, 2, ""));
+	public static final Slider CROSSHAIR_THICKNESS = CROSSHAIR.add(new Slider("thickness", "Thickness", "Width of the lines",
+			1, 3, 1, 1, ""));
+	public static final Color CROSSHAIR_COLOR = CROSSHAIR.add(new Color("color", "Colour", "Crosshair colour", 0xFFE3F3FC));
+	public static final Toggle CROSSHAIR_OUTLINE = CROSSHAIR.add(new Toggle("outline", "Outline", "A dark edge so it shows on bright blocks", true));
+	public static final Toggle CROSSHAIR_TARGET = CROSSHAIR.add(new Toggle("target", "Red on players",
+			"Turns red while you're aiming at a player", true));
+	public static final Module FULLBRIGHT = new Module("fullbright", "Fullbright",
+			"Removes darkness and improves visibility in caves", Category.VISUAL, false);
+	public static final Module NO_FOG = new Module("no_fog", "NoFog", "Removes fog for a clearer, more detailed view",
+			Category.VISUAL, false).markNew();
+	public static final Module FOV_CHANGER = new Module("fov_changer", "FOV Changer",
+			"Customise how much your FOV changes when sprinting or flying", Category.VISUAL, false).markNew();
+	public static final Slider FOV_EFFECTS = FOV_CHANGER.add(new Slider("effects", "FOV effects",
+			"How much sprinting, flying and speed change your FOV", 0, 100, 5, 0, "%"));
+	public static final Module NAMETAGS = new Module("nametags", "Nametags",
+			"Customise player nametags and see your own in third person", Category.VISUAL, false).markNew();
+	public static final Toggle NAMETAGS_OWN = NAMETAGS.add(new Toggle("own", "Show your own", "See your nametag in third person", true));
+	public static final Module SHINY_POTS = new Module("shiny_pots", "Shiny Pots",
+			"Adds an enchantment glint to potions", Category.VISUAL, false).markNew();
+	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
+			"The 3vhy title screen instead of Minecraft's", Category.VISUAL, true);
+	public static final Module THEME = new Module("theme", "Theme",
+			"Switch between light and dark colours and the snow for 3vhy's menus", Category.VISUAL, true).alwaysOn();
+	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark navy or light frost", 0, "Dark", "Light"));
+	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Snow", "Pixel snow behind 3vhy's menus", true));
+	public static final Slider THEME_SNOW_AMOUNT = THEME.add(new Slider("snow_amount", "Snow amount", "How much snow falls",
+			10, 100, 10, 50, "%"));
+	public static final Slider THEME_HUD_SCALE = THEME.add(new Slider("hud_scale", "HUD size", "Makes every HUD widget bigger or smaller",
+			50, 200, 5, 100, "%"));
+
+	// Utility
+	public static final Module ZOOM = new Module("zoom", "Zoom", "Hold C to zoom in", Category.UTILITY, true);
+	public static final Slider ZOOM_STRENGTH = ZOOM.add(new Slider("strength", "Zoom strength", "How far zoom goes in",
+			2, 10, 0.5, 4, "x"));
+	public static final Toggle ZOOM_SMOOTH = ZOOM.add(new Toggle("smooth", "Smooth camera", "Cinematic camera while zooming", true));
+	public static final Toggle ZOOM_SCROLL = ZOOM.add(new Toggle("scroll", "Scroll to adjust", "Mouse wheel zooms further in or out", true));
+	public static final Module FREELOOK = new Module("freelook", "Freelook",
+			"Hold Left Alt to look around freely without changing your movement", Category.UTILITY, true).markNew();
+	public static final Choice FREELOOK_MODE = FREELOOK.add(new Choice("mode", "Key mode", "Hold the key or press it once",
+			0, "Hold", "Toggle"));
+	public static final Module TOGGLE_SPRINT = new Module("toggle_sprint", "ToggleSprint",
+			"Press sprint once and keep sprinting", Category.UTILITY, false);
+	public static final Toggle TOGGLE_SNEAK = TOGGLE_SPRINT.add(new Toggle("sneak", "Toggle sneak too", "Press sneak once to keep sneaking", false));
+	public static final Module CHAT = new Module("chat", "Chat",
+			"Timestamps, stacked spam and longer chat history", Category.UTILITY, true).markNew();
+	public static final Toggle CHAT_TIMESTAMPS = CHAT.add(new Toggle("timestamps", "Timestamps", "[14:05] in front of every message", true));
+	public static final Toggle CHAT_STACK = CHAT.add(new Toggle("stack", "Stack spam", "Repeated messages become one with (x3)", true));
+	public static final Toggle CHAT_HISTORY = CHAT.add(new Toggle("history", "Longer history", "Keep 1000 lines instead of 100", true));
+	public static final Module TAB_EDITOR = new Module("tab_editor", "Tab Editor",
+			"Customise the tab list: ping as numbers, hide parts", Category.UTILITY, true).markNew();
+	public static final Toggle TAB_PING_NUMBERS = TAB_EDITOR.add(new Toggle("ping", "Ping as numbers", "137ms instead of bars", true));
+	public static final Toggle TAB_HIDE_HEADER = TAB_EDITOR.add(new Toggle("header", "Hide header and footer", "Just the player list", false));
+	public static final Module CONFIRM_DISCONNECT = new Module("confirm_disconnect", "Confirm Disconnect",
+			"Asks for a second click before you disconnect", Category.UTILITY, true).markNew();
+	public static final Module BORDERLESS = new Module("borderless", "Borderless Fullscreen",
+			"Fullscreen as a borderless window, so alt-tab is instant", Category.UTILITY, false).markNew();
+	public static final Module WAYPOINTS = new Module("waypoints", "Waypoints",
+			"Mark places and see them on screen with their distance", Category.UTILITY, true).markNew();
+	public static final Toggle WAYPOINTS_DISTANCE = WAYPOINTS.add(new Toggle("distance", "Distance", "Show how far away each one is", true));
+	public static final Module PROFILES = new Module("profiles", "Profiles",
+			"Save and switch between different mod and setting setups", Category.UTILITY, true).alwaysOn();
+	public static final Module DISCORD = new Module("discord", "Discord Presence",
+			"Show 3vhy Client and your server on your Discord profile", Category.UTILITY, true);
+	public static final Toggle DISCORD_SERVER = DISCORD.add(new Toggle("server", "Show server address",
+			"Your server's address on your Discord profile", true));
+
+	public static final List<Module> ALL = List.of(
+			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD, COMBO, SCOREBOARD, JUMP_RESET,
+			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM,
+			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, MAIN_MENU, THEME,
+			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, WAYPOINTS, PROFILES,
+			DISCORD);
+
+	private static Boolean appliedToggleSprint = null;
+	private static Boolean appliedToggleSneak = null;
+	private static Double appliedHurtCam = null;
+	private static Double appliedFovEffects = null;
+	private static Boolean appliedNoFog = null;
+	private static boolean addedNightVision = false;
+	private static final int NIGHT_VISION_TICKS = 20 * 30;
+
 	public static void tick(Minecraft mc) {
-		syncToggleSprint(mc);
-		syncNoHurtCam(mc);
+		syncToggleKeys(mc);
+		syncHurtCam(mc);
+		syncFovEffects(mc);
 		syncFullbright(mc);
+		syncFog();
 		Zoom.tick(mc);
+		Freelook.tick(mc);
 		Target.tick(mc);
+		Combo.tick(mc);
+		JumpReset.tick(mc);
+		ConfirmDisconnect.tick();
 	}
 
-	/** Uses Minecraft's own "Sprint: Toggle" setting, so it behaves exactly like vanilla. */
-	private static void syncToggleSprint(Minecraft mc) {
-		boolean want = TOGGLE_SPRINT.enabled();
-		if (appliedToggleSprint == null || appliedToggleSprint != want) {
-			// Only touch the vanilla option when the module changes, so a player who never
-			// uses the module keeps whatever they picked in Controls
-			if (appliedToggleSprint != null || want) {
-				mc.options.toggleSprint().set(want);
-			}
-			appliedToggleSprint = want;
+	/** Uses Minecraft's own "Sprint: Toggle" and "Sneak: Toggle", so they behave exactly like vanilla. */
+	private static void syncToggleKeys(Minecraft mc) {
+		boolean sprint = TOGGLE_SPRINT.enabled();
+		// Only touch the vanilla options when the module changes, so players who never use it keep
+		// whatever they picked in Controls
+		if (appliedToggleSprint == null || appliedToggleSprint != sprint) {
+			if (appliedToggleSprint != null || sprint) mc.options.toggleSprint().set(sprint);
+			appliedToggleSprint = sprint;
+		}
+		boolean sneak = sprint && TOGGLE_SNEAK.get();
+		if (appliedToggleSneak == null || appliedToggleSneak != sneak) {
+			if (appliedToggleSneak != null || sneak) mc.options.toggleCrouch().set(sneak);
+			appliedToggleSneak = sneak;
 		}
 	}
 
-	/** Uses the vanilla "Damage Tilt" accessibility setting. */
-	private static void syncNoHurtCam(Minecraft mc) {
-		boolean want = NO_HURT_CAM.enabled();
-		if (appliedNoHurtCam != null && appliedNoHurtCam == want) {
-			return;
-		}
-		if (want) {
-			double current = mc.options.damageTiltStrength().get();
-			if (current > 0) {
-				Config.get().savedDamageTilt = current;
+	/** Uses the vanilla "Damage Tilt" accessibility option. */
+	private static void syncHurtCam(Minecraft mc) {
+		Double want = HURT_CAM.enabled() ? HURT_CAM_STRENGTH.get() / 100.0 : null;
+		if (java.util.Objects.equals(want, appliedHurtCam)) return;
+		if (want != null) {
+			if (appliedHurtCam == null) {
+				Config.get().savedDamageTilt = mc.options.damageTiltStrength().get();
 				Config.saveSoon();
 			}
-			mc.options.damageTiltStrength().set(0.0);
-		} else if (appliedNoHurtCam != null) {
+			mc.options.damageTiltStrength().set(want);
+		} else if (appliedHurtCam != null) {
 			mc.options.damageTiltStrength().set(Config.get().savedDamageTilt);
 		}
-		appliedNoHurtCam = want;
+		appliedHurtCam = want;
+	}
+
+	/** Uses the vanilla "FOV Effects" accessibility option. */
+	private static void syncFovEffects(Minecraft mc) {
+		Double want = FOV_CHANGER.enabled() ? FOV_EFFECTS.get() / 100.0 : null;
+		if (java.util.Objects.equals(want, appliedFovEffects)) return;
+		if (want != null) {
+			if (appliedFovEffects == null) {
+				Config.get().savedFovEffects = mc.options.fovEffectScale().get();
+				Config.saveSoon();
+			}
+			mc.options.fovEffectScale().set(want);
+		} else if (appliedFovEffects != null) {
+			mc.options.fovEffectScale().set(Config.get().savedFovEffects);
+		}
+		appliedFovEffects = want;
+	}
+
+	/** Uses the fog switch Minecraft keeps for debugging. */
+	private static void syncFog() {
+		boolean noFog = NO_FOG.enabled();
+		if (appliedNoFog == null && !noFog) {
+			appliedNoFog = false;
+			return;
+		}
+		if (appliedNoFog != null && appliedNoFog == noFog) return;
+		// toggleFog flips the switch and returns the new state; flip again if it landed wrong
+		if (FogRenderer.toggleFog() == noFog) FogRenderer.toggleFog();
+		appliedNoFog = noFog;
 	}
 
 	/** Fullbright through a hidden, client-only night vision effect. */

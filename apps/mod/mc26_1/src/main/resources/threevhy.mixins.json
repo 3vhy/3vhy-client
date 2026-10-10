@@ -4,9 +4,21 @@
 	"package": "dev.threevhy.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"AbstractContainerScreenMixin",
+		"AvatarRendererMixin",
+		"CameraMixin",
+		"ChatComponentMixin",
 		"ClientPacketListenerMixin",
+		"EntityMixin",
+		"GuiAccessor",
+		"ItemStackMixin",
+		"LivingEntityRendererMixin",
 		"MinecraftMixin",
-		"OptionInstanceAccessor"
+		"MouseHandlerMixin",
+		"OptionInstanceAccessor",
+		"PlayerTabOverlayMixin",
+		"WindowAccessor",
+		"WindowMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

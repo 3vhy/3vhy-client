@@ -31,8 +31,8 @@ public final class DiscordPresence {
 	private static final long STARTED = System.currentTimeMillis() / 1000L;
 
 	private static String builtInAppId = "";
-	private static DiscordIpc ipc = null;
-	private static String sent = null;
+	private static volatile DiscordIpc ipc = null;
+	private static volatile String sent = null;
 	private static long nextConnectAttempt = 0;
 	private static volatile String status = null;
 	private static int ticks = 0;
@@ -58,7 +58,12 @@ public final class DiscordPresence {
 		return id.matches("\\d{5,}") ? id : "";
 	}
 
-	/** Shown at the bottom of 3vhy Settings when presence can't run. */
+	/** Whether Discord is showing the presence right now. */
+	public static boolean connected() {
+		return Modules.DISCORD.enabled() && ipc != null && sent != null;
+	}
+
+	/** Shown in the mod menu when presence can't run. */
 	public static String statusLine() {
 		if (!Modules.DISCORD.enabled()) return null;
 		if (appId().isEmpty()) return "Discord presence needs a Discord app ID";
@@ -140,7 +145,7 @@ public final class DiscordPresence {
 			details = "Playing singleplayer";
 		} else {
 			ServerData server = mc.getCurrentServer();
-			if (server != null && Config.get().discordShowServer) {
+			if (server != null && Modules.DISCORD_SERVER.get()) {
 				details = "Playing on " + server.ip;
 			} else {
 				details = "Playing multiplayer";

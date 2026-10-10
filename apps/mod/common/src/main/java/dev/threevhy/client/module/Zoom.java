@@ -1,6 +1,5 @@
 package dev.threevhy.client.module;
 
-import dev.threevhy.client.Config;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.mixin.OptionInstanceAccessor;
 import net.minecraft.client.Minecraft;
@@ -18,6 +17,8 @@ public final class Zoom {
 	private static Integer savedFov = null;
 	private static double current = 1.0;
 	private static long lastFrame = 0;
+	/** Extra zoom from the mouse wheel while zooming, multiplied onto the zoom strength. */
+	private static double scrollFactor = 1.0;
 
 	private Zoom() {
 	}
@@ -29,7 +30,8 @@ public final class Zoom {
 			held = true;
 			if (savedFov == null) savedFov = mc.options.fov().get();
 			savedSmoothCamera = mc.options.smoothCamera;
-			if (Config.get().zoomCinematic) mc.options.smoothCamera = true;
+			scrollFactor = 1.0;
+			if (Modules.ZOOM_SMOOTH.get()) mc.options.smoothCamera = true;
 		} else if (!want && held) {
 			held = false;
 			mc.options.smoothCamera = savedSmoothCamera;
@@ -50,7 +52,7 @@ public final class Zoom {
 		long now = System.nanoTime();
 		double seconds = lastFrame == 0 ? 0 : Math.min(0.1, (now - lastFrame) / 1_000_000_000.0);
 		lastFrame = now;
-		double target = held ? Math.max(1.0, Config.get().zoomFactor) : 1.0;
+		double target = held ? Math.max(1.0, Modules.ZOOM_STRENGTH.get() * scrollFactor) : 1.0;
 		current += (target - current) * Math.min(1.0, seconds * 14.0);
 		if (Math.abs(target - current) < 0.01) current = target;
 
@@ -80,6 +82,13 @@ public final class Zoom {
 		if (fov.get() != value) {
 			((OptionInstanceAccessor) (Object) fov).threevhy$setValue(value);
 		}
+	}
+
+	/** Mouse wheel while zooming zooms further in or out. Returns true when it used the scroll. */
+	public static boolean onScroll(double amount) {
+		if (!held || amount == 0 || !Modules.ZOOM_SCROLL.get()) return false;
+		scrollFactor = Math.max(0.5, Math.min(4.0, scrollFactor * (amount > 0 ? 1.25 : 0.8)));
+		return true;
 	}
 
 	public static boolean isZooming() {

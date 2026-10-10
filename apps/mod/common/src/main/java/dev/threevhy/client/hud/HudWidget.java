@@ -2,8 +2,9 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.gui.HudEditorScreen;
+import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.module.Module;
+import dev.threevhy.client.module.Setting;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -19,7 +20,8 @@ public abstract class HudWidget {
 		MIDDLE_RIGHT,
 		BOTTOM_RIGHT,
 		BELOW_CROSSHAIR,
-		ABOVE_CROSSHAIR
+		ABOVE_CROSSHAIR,
+		ABOVE_HOTBAR
 	}
 
 	private static final int MARGIN = 4;
@@ -39,10 +41,15 @@ public abstract class HudWidget {
 
 	public abstract int height(Minecraft mc);
 
-	/** Draws at (x, y). In preview mode (HUD editor) widgets show sample values when empty. */
+	/** Draws at (x, y). In preview mode (the hub) widgets show sample values when empty. */
 	public abstract void draw(Draw d, int x, int y, Minecraft mc, boolean preview);
 
 	public boolean visible(Minecraft mc) {
+		return true;
+	}
+
+	/** Whether the HUD size setting applies. The scoreboard keeps Minecraft's own size. */
+	public boolean scaled() {
 		return true;
 	}
 
@@ -71,12 +78,16 @@ public abstract class HudWidget {
 					(int) Math.round(stored[1] * Math.max(0, screenHeight - height(mc)))
 			};
 		}
+		return defaultPosition(mc, screenWidth, screenHeight);
+	}
+
+	protected int[] defaultPosition(Minecraft mc, int screenWidth, int screenHeight) {
 		int w = width(mc);
 		int h = height(mc);
 		return switch (anchor) {
 			case TOP_LEFT, TOP_RIGHT -> {
 				int y = MARGIN;
-				boolean editing = mc.screen instanceof HudEditorScreen;
+				boolean editing = mc.screen instanceof HubScreen;
 				for (HudWidget other : HudWidgets.ALL) {
 					if (other == this) break;
 					if (other.anchor == anchor && other.module.enabled() && other.storedPosition() == null
@@ -90,6 +101,7 @@ public abstract class HudWidget {
 			case BOTTOM_RIGHT -> new int[] {screenWidth - w - MARGIN, screenHeight - h - MARGIN};
 			case BELOW_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 + 18};
 			case ABOVE_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 - 22 - h};
+			case ABOVE_HOTBAR -> new int[] {(screenWidth - w) / 2, screenHeight - 58 - h};
 		};
 	}
 
@@ -97,9 +109,27 @@ public abstract class HudWidget {
 		return Math.max(0.0, Math.min(1.0, value));
 	}
 
-	protected static void panel(Draw d, int x, int y, int w, int h) {
+	/** Whether this widget's module wants its dark box. */
+	protected boolean background() {
+		Setting.Toggle toggle = module.toggleSetting("background");
+		return toggle == null || toggle.get();
+	}
+
+	protected boolean showLabel() {
+		Setting.Toggle toggle = module.toggleSetting("label");
+		return toggle == null || toggle.get();
+	}
+
+	protected int valueColor() {
+		Setting.Color color = module.colorSetting("color");
+		return color == null ? Theme.ICE : color.get();
+	}
+
+	/** The box behind a widget: dark navy glass with a thin ice edge on the left. */
+	protected void panel(Draw d, int x, int y, int w, int h) {
+		if (!background()) return;
 		d.fill(x, y, x + w, y + h, Theme.PANEL);
-		d.fill(x, y, x + 2, y + h, Theme.CYAN);
+		d.fill(x, y, x + 1, y + h, Theme.CYAN);
 	}
 
 	protected static int textWidth(Minecraft mc, String text) {

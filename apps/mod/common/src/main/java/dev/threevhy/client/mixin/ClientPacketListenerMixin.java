@@ -1,16 +1,18 @@
 package dev.threevhy.client.mixin;
 
 import dev.threevhy.client.module.PopTracker;
+import dev.threevhy.client.module.TpsTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundEntityEventPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Totem pops and deaths arrive as entity events; hand them to the pop tracker. */
+/** Totem pops and deaths arrive as entity events; the world time feeds the TPS estimate. */
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
 	@Inject(method = "handleEntityEvent", at = @At("RETURN"))
@@ -22,5 +24,15 @@ public abstract class ClientPacketListenerMixin {
 		if (entity != null) {
 			PopTracker.onEntityEvent(entity, packet.getEventId());
 		}
+	}
+
+	@Inject(method = "handleSetTime", at = @At("TAIL"))
+	private void threevhy$time(ClientboundSetTimePacket packet, CallbackInfo ci) {
+		TpsTracker.onTime(packet.gameTime());
+	}
+
+	@Inject(method = "handleLogin", at = @At("TAIL"))
+	private void threevhy$login(CallbackInfo ci) {
+		TpsTracker.reset();
 	}
 }

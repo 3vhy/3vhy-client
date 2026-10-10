@@ -3,6 +3,7 @@ package dev.threevhy.client.compat;
 import dev.threevhy.client.Draw;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /** Draw for Minecraft 26.1 (GuiGraphicsExtractor). */
@@ -31,6 +32,15 @@ public final class DrawImpl implements Draw {
 	@Override
 	public void text(String text, int x, int y, int argb, boolean shadow) {
 		graphics.text(Minecraft.getInstance().font, text, x, y, argb, shadow);
+	}
+
+	@Override
+	public void text(Component text, int x, int y, int argb, boolean shadow) {
+		graphics.text(Minecraft.getInstance().font, text, x, y, argb, shadow);
+	}
+
+	public GuiGraphicsExtractor graphics() {
+		return graphics;
 	}
 
 	@Override

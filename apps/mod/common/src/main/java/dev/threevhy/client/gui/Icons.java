@@ -42,6 +42,15 @@ public final class Icons {
 			".#...#.",
 			"#.....#",
 	};
+	public static final String[] PENCIL = {
+			".....#.",
+			"....###",
+			"...###.",
+			"..###..",
+			".###...",
+			"#.#....",
+			"##.....",
+	};
 	public static final String[] LAYOUT = {
 			"###.###",
 			"#.#.#.#",

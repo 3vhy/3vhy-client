@@ -7,7 +7,6 @@ import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.compat.CompatTitleScreen;
 import dev.threevhy.client.hud.Theme;
 import dev.threevhy.client.module.Modules;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -18,7 +17,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 
 /**
  * The 3vhy main menu: the banner's sky with drifting pixel clouds, the pixel 3vhy wordmark and
- * big block buttons. Replaces Minecraft's title screen (turn it off in 3vhy Settings).
+ * big block buttons. Replaces Minecraft's title screen (turn it off in the mod menu).
  */
 public final class MainMenuScreen extends CompatTitleScreen {
 	/** Banner colours from top to bottom, as {position 0..1, rgb}. */
@@ -28,13 +27,8 @@ public final class MainMenuScreen extends CompatTitleScreen {
 	/** Pixel clouds as {x per mille of width, y per mille of height, width in cells, speed}. */
 	private static final int[][] CLOUDS = {{80, 140, 22, 7}, {560, 90, 30, 5}, {340, 260, 18, 9}, {820, 210, 26, 6}};
 
-	private record Hit(int x1, int y1, int x2, int y2, Runnable action) {
-		boolean contains(double x, double y) {
-			return x >= x1 && x < x2 && y >= y1 && y < y2;
-		}
-	}
-
-	private final List<Hit> hits = new ArrayList<>();
+	private final List<Ui.Hit> hits = Ui.newHits();
+	private final Snow snow = new Snow();
 	private final long openedAt = System.currentTimeMillis();
 
 	public MainMenuScreen() {
@@ -73,6 +67,9 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		int w = this.width;
 		int h = this.height;
 		drawBackdrop(d, w, h);
+		snow.draw(d, w, h);
+		Ui ui = new Ui(d, mouseX, mouseY, hits);
+		MenuTheme t = ui.t;
 
 		// Wordmark, sized to the window
 		int cell = Math.max(2, Math.min(5, w / 150));
@@ -85,33 +82,28 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		String client = "C L I E N T";
 		d.text(client, (w - mc.font.width(client)) / 2, markY + 15 * cell + 8, Theme.CYAN, false);
 
-		// Buttons
+		// Buttons, NoRisk-style glass in 3vhy colours
 		int bw = Math.min(220, w - 40);
-		int bh = 22;
-		int gap = 6;
+		int bh = 20;
+		int gap = 5;
 		int bx = (w - bw) / 2;
-		int by = markY + 15 * cell + 30;
-		button(d, mc, bx, by, bw, bh, "Multiplayer", true, mouseX, mouseY,
-				() -> mc.setScreen(new JoinMultiplayerScreen(this)));
+		int by = markY + 15 * cell + 28;
+		ui.button(bx, by, bw, bh, "Multiplayer", true, () -> mc.setScreen(new JoinMultiplayerScreen(this)));
 		by += bh + gap;
-		button(d, mc, bx, by, bw, bh, "Singleplayer", false, mouseX, mouseY,
-				() -> mc.setScreen(new SelectWorldScreen(this)));
+		ui.button(bx, by, bw, bh, "Singleplayer", false, () -> mc.setScreen(new SelectWorldScreen(this)));
 		by += bh + gap;
 		int half = (bw - gap) / 2;
-		button(d, mc, bx, by, half, bh, "Options", false, mouseX, mouseY,
-				() -> mc.setScreen(Compat.optionsScreen(this)));
-		button(d, mc, bx + half + gap, by, bw - half - gap, bh, "3vhy Settings", false, mouseX, mouseY,
-				() -> mc.setScreen(new SettingsScreen(this)));
+		ui.button(bx, by, half, bh, "Options", false, () -> mc.setScreen(Compat.optionsScreen(this)));
+		ui.button(bx + half + gap, by, bw - half - gap, bh, "3vhy Mods", false, () -> mc.setScreen(new ModMenuScreen(this)));
 		by += bh + gap;
-		button(d, mc, bx, by, bw, bh, "Quit Game", false, mouseX, mouseY, mc::stop);
+		ui.button(bx, by, bw, bh, "Quit Game", false, mc::stop);
 
 		// Who's playing
 		String player = mc.getUser().getName();
 		int pw = mc.font.width(player) + 21;
-		d.roundRect(w - pw - 6, 6, w - 6, 22, 4, 0xA00A1A52);
-		d.roundOutline(w - pw - 6, 6, w - 6, 22, 4, 0x505BC8E6);
-		d.fill(w - pw + 1, 12, w - pw + 5, 16, Theme.GOOD);
-		d.text(player, w - pw + 9, 10, Theme.ICE, false);
+		ui.panel(w - pw - 6, 6, w - 6, 22, t.panel());
+		d.fill(w - pw + 1, 12, w - pw + 5, 16, t.good());
+		d.text(player, w - pw + 9, 10, t.text(), false);
 
 		String left = "3vhy Client " + ThreevhyClient.version() + "  ·  Minecraft " + ThreevhyClient.minecraftVersion();
 		d.text(left, 6, h - 12, 0xFF0B2A6E, false);
@@ -175,23 +167,12 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		return 1 - (1 - t) * (1 - t) * (1 - t);
 	}
 
-	private void button(Draw d, Minecraft mc, int x, int y, int w, int h, String label, boolean primary, int mx,
-			int my, Runnable action) {
-		boolean hover = mx >= x && mx < x + w && my >= y && my < y + h;
-		int bg = primary ? (hover ? 0xFF8AE0F5 : Theme.CYAN) : (hover ? 0xD0234C9E : 0xA00A1A52);
-		d.roundRect(x, y + 2, x + w, y + h + 2, 5, 0x30000000);
-		d.roundRect(x, y, x + w, y + h, 5, bg);
-		d.roundOutline(x, y, x + w, y + h, 5, primary ? 0x60FFFFFF : hover ? 0xB05BC8E6 : 0x505BC8E6);
-		int tw = mc.font.width(label);
-		d.text(label, x + (w - tw) / 2, y + (h - 8) / 2, primary ? Theme.NIGHT : Theme.ICE, false);
-		hits.add(new Hit(x, y, x + w, y + h, action));
-	}
-
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		if (event.button() == 0) {
-			for (Hit hit : List.copyOf(hits)) {
-				if (hit.contains(event.x(), event.y())) {
+			for (int i = hits.size() - 1; i >= 0; i--) {
+				Ui.Hit hit = hits.get(i);
+				if (hit.contains(event.x(), event.y()) && hit.action() != null) {
 					Minecraft.getInstance().getSoundManager().play(
 							net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
 									net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0f));

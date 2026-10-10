@@ -8,28 +8,60 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
 
-/** Everything the player changes in 3vhy Settings, saved to config/3vhy-client.json. */
+/**
+ * Everything the player changes in 3vhy's menus, saved to config/3vhy-client.json. The module
+ * switches, settings and HUD layout belong to the active profile; waypoints and the rest are shared.
+ */
 public final class Config {
+	public static final String DEFAULT_PROFILE = "Default";
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static Config instance = new Config();
 	private static long saveAt = 0;
 
 	/** Module id -> on/off. Missing entries use the module's default. */
 	public Map<String, Boolean> modules = new LinkedHashMap<>();
+	/** "module.setting" -> value as text. Missing entries use the setting's default. */
+	public Map<String, String> settings = new LinkedHashMap<>();
 	/** HUD widget id -> [x, y], each 0..1 across the free space on screen. */
 	public Map<String, double[]> hud = new LinkedHashMap<>();
-	public float hudScale = 1.0f;
-	public float zoomFactor = 4.0f;
-	public boolean zoomCinematic = true;
-	public boolean discordShowServer = true;
+
+	/** Name of the profile the fields above belong to. */
+	public String profile = DEFAULT_PROFILE;
+	/** Saved copies of the other profiles. */
+	public Map<String, Profile> profiles = new LinkedHashMap<>();
+
+	/** World or server key -> its waypoints. */
+	public Map<String, List<Waypoint>> waypoints = new LinkedHashMap<>();
+
 	/** Overrides the Discord application ID the mod was built with. */
 	public String discordAppId = "";
-	/** The player's own damage tilt, restored when "No hurt cam" is turned off. */
+	/** The player's own options, put back when the 3vhy module that changes them is turned off. */
 	public double savedDamageTilt = 1.0;
+	public double savedFovEffects = 1.0;
+
+	/** A saved setup: which modules are on, their settings and where the HUD widgets are. */
+	public static final class Profile {
+		public Map<String, Boolean> modules = new LinkedHashMap<>();
+		public Map<String, String> settings = new LinkedHashMap<>();
+		public Map<String, double[]> hud = new LinkedHashMap<>();
+	}
+
+	/** A marked place in one world. */
+	public static final class Waypoint {
+		public String name = "Waypoint";
+		public int x;
+		public int y;
+		public int z;
+		public String dimension = "minecraft:overworld";
+		public int color = 0xFF5BC8E6;
+		public boolean visible = true;
+	}
 
 	public static Config get() {
 		return instance;
@@ -48,7 +80,11 @@ public final class Config {
 			Config loaded = GSON.fromJson(reader, Config.class);
 			if (loaded != null) {
 				if (loaded.modules == null) loaded.modules = new LinkedHashMap<>();
+				if (loaded.settings == null) loaded.settings = new LinkedHashMap<>();
 				if (loaded.hud == null) loaded.hud = new LinkedHashMap<>();
+				if (loaded.profile == null || loaded.profile.isBlank()) loaded.profile = DEFAULT_PROFILE;
+				if (loaded.profiles == null) loaded.profiles = new LinkedHashMap<>();
+				if (loaded.waypoints == null) loaded.waypoints = new LinkedHashMap<>();
 				if (loaded.discordAppId == null) loaded.discordAppId = "";
 				instance = loaded;
 			}
@@ -79,5 +115,69 @@ public final class Config {
 		if (saveAt != 0 && System.currentTimeMillis() >= saveAt) {
 			save();
 		}
+	}
+
+	// Profiles
+
+	/** Every profile name, the active one included, in the order they were made. */
+	public List<String> profileNames() {
+		List<String> names = new ArrayList<>();
+		names.add(profile);
+		for (String name : profiles.keySet()) {
+			if (!name.equals(profile)) names.add(name);
+		}
+		names.sort((a, b) -> a.equals(DEFAULT_PROFILE) ? -1 : b.equals(DEFAULT_PROFILE) ? 1 : 0);
+		return names;
+	}
+
+	/** Starts a new profile as a copy of the current setup and switches to it. */
+	public boolean createProfile(String name) {
+		String clean = name.trim();
+		if (clean.isEmpty() || clean.equals(profile) || profiles.containsKey(clean)) return false;
+		profiles.put(profile, snapshot());
+		profile = clean;
+		profiles.remove(clean);
+		saveSoon();
+		return true;
+	}
+
+	/** Switches to another saved profile, keeping the current one as it is. */
+	public void loadProfile(String name) {
+		Profile target = profiles.get(name);
+		if (target == null || name.equals(profile)) return;
+		profiles.put(profile, snapshot());
+		profiles.remove(name);
+		modules = new LinkedHashMap<>(target.modules);
+		settings = new LinkedHashMap<>(target.settings);
+		hud = copyHud(target.hud);
+		profile = name;
+		saveSoon();
+	}
+
+	public boolean deleteProfile(String name) {
+		if (name.equals(profile)) return false;
+		boolean removed = profiles.remove(name) != null;
+		if (removed) saveSoon();
+		return removed;
+	}
+
+	private Profile snapshot() {
+		Profile copy = new Profile();
+		copy.modules = new LinkedHashMap<>(modules);
+		copy.settings = new LinkedHashMap<>(settings);
+		copy.hud = copyHud(hud);
+		return copy;
+	}
+
+	private static Map<String, double[]> copyHud(Map<String, double[]> source) {
+		Map<String, double[]> copy = new LinkedHashMap<>();
+		if (source != null) source.forEach((key, value) -> copy.put(key, value == null ? null : value.clone()));
+		return copy;
+	}
+
+	// Waypoints
+
+	public List<Waypoint> waypoints(String worldKey) {
+		return waypoints.computeIfAbsent(worldKey, key -> new ArrayList<>());
 	}
 }

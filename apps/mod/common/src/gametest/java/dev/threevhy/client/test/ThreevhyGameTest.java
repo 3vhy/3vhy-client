@@ -1,11 +1,16 @@
 package dev.threevhy.client.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.threevhy.client.Config;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
-import dev.threevhy.client.gui.HudEditorScreen;
+import dev.threevhy.client.compat.Compat;
+import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MainMenuScreen;
-import dev.threevhy.client.gui.SettingsScreen;
+import dev.threevhy.client.gui.ModMenuScreen;
+import dev.threevhy.client.module.ChatTweaks;
+import dev.threevhy.client.module.ConfirmDisconnect;
+import dev.threevhy.client.module.Freelook;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
@@ -15,7 +20,11 @@ import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -31,12 +40,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		shot(context, "3vhy-main-menu");
 		check(failed, "3vhy main menu replaces the title screen",
 				context.computeOnClient(client -> client.screen instanceof MainMenuScreen) && Hooks.mainMenuShown);
-		context.setScreen(() -> new SettingsScreen(new MainMenuScreen()));
+		context.setScreen(() -> new ModMenuScreen(new MainMenuScreen()));
 		context.waitTicks(10);
-		shot(context, "3vhy-settings-from-menu");
-		context.setScreen(() -> new HudEditorScreen(new MainMenuScreen()));
-		context.waitTicks(5);
-		shot(context, "3vhy-hud-editor-from-menu");
+		shot(context, "3vhy-modmenu-from-menu");
+		context.setScreen(() -> new HubScreen(new MainMenuScreen()));
+		context.waitTicks(10);
+		shot(context, "3vhy-hub-from-menu");
 		context.setScreen(MainMenuScreen::new);
 		context.waitTicks(5);
 
@@ -44,7 +53,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(200);
 			context.runOnClient(client -> {
 				Modules.COORDS.set(true);
+				Modules.CLOCK.set(true);
 				Modules.CRYSTAL_OPTIMIZER.set(true);
+				Modules.SHINY_POTS.set(true);
+				Modules.CROSSHAIR.set(true);
 			});
 
 			var server = singleplayer.getServer();
@@ -61,10 +73,31 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			server.runCommand("give @a obsidian 64");
 			server.runCommand("give @a experience_bottle 64");
 			server.runCommand("give @a enchanted_golden_apple 3");
+			server.runCommand("give @a splash_potion[potion_contents={potion:\"minecraft:strong_healing\"}] 3");
+			server.runCommand("scoreboard objectives add kills dummy \"Kills\"");
+			server.runCommand("scoreboard objectives setdisplay sidebar kills");
+			server.runCommand("scoreboard objectives setdisplay list kills");
+			server.runCommand("scoreboard players set Steve kills 29");
+			server.runCommand("scoreboard players set Alex kills 17");
+			server.runCommand("scoreboard players set @p kills 3");
 			server.runCommand("execute at @p run summon zombie ~ ~ ~3 {NoAI:1b,Silent:1b,PersistenceRequired:1b,"
 					+ "equipment:{head:{id:\"minecraft:diamond_helmet\",count:1},offhand:{id:\"minecraft:totem_of_undying\",count:1}}}");
+			server.runCommand("tellraw @a \"3vhy chat test\"");
+			server.runCommand("tellraw @a \"3vhy chat test\"");
+			context.runOnClient(client -> {
+				client.player.setYRot(0f);
+				client.player.setXRot(10f);
+				Config.Waypoint ahead = new Config.Waypoint();
+				ahead.name = "Base";
+				ahead.x = client.player.blockPosition().getX();
+				ahead.y = client.player.blockPosition().getY();
+				ahead.z = client.player.blockPosition().getZ() + 12;
+				ahead.dimension = dev.threevhy.client.module.Waypoints.dimension(client);
+				dev.threevhy.client.module.Waypoints.current(client).add(ahead);
+			});
 			context.waitTicks(40);
 			shot(context, "3vhy-hud");
+			check(failed, "chat stacks repeated messages", context.computeOnClient(client -> ChatTweaks.repeats() >= 2));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
 			server.runCommand("damage @p 1000 minecraft:generic");
@@ -72,7 +105,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-totem-pop");
 			check(failed, "totem pop counted", context.computeOnClient(client -> !PopTracker.top(1).isEmpty()));
 
-			// Face the zombie (south, slightly down) and hit it for the target HUD
+			// Hit the zombie for the target HUD
 			context.runOnClient(client -> {
 				client.player.setYRot(0f);
 				client.player.setXRot(10f);
@@ -95,63 +128,99 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "zoom lowers the FOV", zoomedFov < normalFov);
 			check(failed, "zoom gives the FOV back", afterFov == normalFov);
 
-			context.setScreen(() -> new SettingsScreen(null));
+			// Freelook: third person while held, back to first person after
+			context.getInput().holdKey(ThreevhyClient.freelookKey);
 			context.waitTicks(10);
-			shot(context, "3vhy-settings");
+			shot(context, "3vhy-freelook");
+			check(failed, "freelook switches to third person", context.computeOnClient(client ->
+					Freelook.active() && client.options.getCameraType() == CameraType.THIRD_PERSON_BACK));
+			context.getInput().releaseKey(ThreevhyClient.freelookKey);
+			context.waitTicks(5);
+			check(failed, "freelook puts the camera back", context.computeOnClient(client ->
+					!Freelook.active() && client.options.getCameraType() == CameraType.FIRST_PERSON));
+
+			// Tab list with ping numbers and the scoreboard objective
+			context.getInput().holdKey(options -> options.keyPlayerList);
+			context.waitTicks(5);
+			shot(context, "3vhy-tab-list");
+			context.getInput().releaseKey(options -> options.keyPlayerList);
+
+			// Inventory with highlighted PvP items
+			context.setScreen(() -> new InventoryScreen(net.minecraft.client.Minecraft.getInstance().player));
+			context.waitTicks(10);
+			shot(context, "3vhy-inventory-highlight");
+			context.setScreen(() -> null);
+			context.waitTicks(5);
+
+			// The hub: HUD drawn sharp over the blur, with the logo and mod menu button
+			context.getInput().pressKey(ThreevhyClient.openSettingsKey);
+			context.waitTicks(15);
+			shot(context, "3vhy-hub");
+			check(failed, "Right Shift opens the hub", context.computeOnClient(client -> client.screen instanceof HubScreen));
+
+			context.setScreen(() -> new ModMenuScreen(null));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu");
 			context.getInput().typeChars("totem");
 			context.waitTicks(5);
-			shot(context, "3vhy-settings-search");
-
-			context.setScreen(() -> new SettingsScreen(null).openOptions(Modules.ZOOM));
+			shot(context, "3vhy-modmenu-search");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.CROSSHAIR));
 			context.waitTicks(10);
-			shot(context, "3vhy-settings-zoom-page");
-
-			context.setScreen(() -> new SettingsScreen(null).openGeneral());
+			shot(context, "3vhy-modmenu-crosshair");
+			context.runOnClient(client -> Config.get().createProfile("Crystal PvP"));
+			context.setScreen(() -> new ModMenuScreen(null).openTab(ModMenuScreen.Tab.PROFILES));
 			context.waitTicks(10);
-			shot(context, "3vhy-settings-general");
-
-			context.setScreen(() -> new HudEditorScreen(null));
+			shot(context, "3vhy-modmenu-profiles");
+			check(failed, "profiles can be created", context.computeOnClient(client ->
+					Config.get().profile.equals("Crystal PvP") && Config.get().profileNames().contains(Config.DEFAULT_PROFILE)));
+			context.runOnClient(client -> Config.get().loadProfile(Config.DEFAULT_PROFILE));
+			context.setScreen(() -> new ModMenuScreen(null).openTab(ModMenuScreen.Tab.WAYPOINTS));
 			context.waitTicks(10);
-			shot(context, "3vhy-hud-editor");
+			shot(context, "3vhy-modmenu-waypoints");
+			context.runOnClient(client -> Modules.THEME_MODE.next());
+			context.setScreen(() -> new ModMenuScreen(null));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-light");
+			context.runOnClient(client -> Modules.THEME_MODE.next());
 
+			// Pause menu: the mod menu button, then Confirm Disconnect
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(10);
 			shot(context, "3vhy-pause-menu");
-
-			// Open 3vhy Settings the way a player does, with the button in the pause menu
 			int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
 			context.getInput().setCursorPos(51 * scale, 16 * scale);
 			context.waitTicks(2);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			context.waitTicks(20);
-			shot(context, "3vhy-settings-from-pause");
-			check(failed, "pause menu button opens 3vhy Settings",
-					context.computeOnClient(client -> client.screen instanceof SettingsScreen));
-
-			// Click the first card (FPS) to switch it off, then back on
-			int[] card = context.computeOnClient(client -> {
-				int w = client.getWindow().getGuiScaledWidth();
-				int h = client.getWindow().getGuiScaledHeight();
-				int pw = Math.min(w - 16, 500);
-				int ph = Math.min(h - 16, 300);
-				return new int[] {(w - pw) / 2 + 30, (h - ph) / 2 + 39 + 30};
-			});
-			boolean fpsBefore = Modules.FPS.enabled();
-			context.getInput().setCursorPos(card[0] * scale, card[1] * scale);
-			context.waitTicks(2);
-			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			context.waitTicks(5);
-			shot(context, "3vhy-settings-card-clicked");
-			check(failed, "clicking a card switches it", Modules.FPS.enabled() != fpsBefore);
-			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			context.waitTicks(5);
-
+			context.waitTicks(15);
+			check(failed, "pause menu button opens the mod menu",
+					context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(5);
-			check(failed, "closing 3vhy Settings goes back to the pause menu",
+			check(failed, "closing the mod menu goes back to the pause menu",
 					context.computeOnClient(client -> client.screen instanceof PauseScreen));
+
+			int[] quit = context.computeOnClient(client -> {
+				for (AbstractWidget widget : Compat.widgets(client.screen)) {
+					if (widget.getMessage().getContents() instanceof TranslatableContents key
+							&& (key.getKey().equals("menu.returnToMenu") || key.getKey().equals("menu.disconnect"))) {
+						return new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
+					}
+				}
+				return null;
+			});
+			if (quit != null) {
+				context.getInput().setCursorPos(quit[0] * scale, quit[1] * scale);
+				context.waitTicks(2);
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				context.waitTicks(5);
+				shot(context, "3vhy-confirm-disconnect");
+				check(failed, "disconnect needs a second click", context.computeOnClient(client ->
+						client.screen instanceof PauseScreen && client.level != null && ConfirmDisconnect.waiting()));
+			} else {
+				check(failed, "found the pause menu's quit button", false);
+			}
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 		}

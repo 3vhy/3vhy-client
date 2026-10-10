@@ -84,3 +84,9 @@ net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents
 net.fabricmc.fabric.api.client.screen.v1.Screens
 net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents
 net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
+net.minecraft.world.scores.PlayerScoreEntry
+net.minecraft.world.scores.PlayerTeam
+net.minecraft.world.scores.DisplaySlot
+net.minecraft.network.chat.numbers.StyledFormat
+net.minecraft.network.chat.numbers.BlankFormat
+net.minecraft.client.AttackIndicatorStatus

@@ -1,5 +1,6 @@
 package dev.threevhy.client;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -15,6 +16,9 @@ public interface Draw {
 	void fill(int x1, int y1, int x2, int y2, int argb);
 
 	void text(String text, int x, int y, int argb, boolean shadow);
+
+	/** Styled text, e.g. bold titles. */
+	void text(Component text, int x, int y, int argb, boolean shadow);
 
 	void item(ItemStack stack, int x, int y);
 
