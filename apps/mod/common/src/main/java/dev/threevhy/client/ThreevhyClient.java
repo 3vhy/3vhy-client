@@ -5,7 +5,7 @@ import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
 import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.HubScreen;
-import dev.threevhy.client.gui.ModMenuScreen;
+import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.hud.CpsTracker;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidgets;
@@ -21,6 +21,7 @@ import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
 import dev.threevhy.client.module.TpsTracker;
 import dev.threevhy.client.module.Zoom;
+import dev.threevhy.client.music.MusicBridge;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -31,10 +32,8 @@ import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import org.lwjgl.glfw.GLFW;
@@ -75,8 +74,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 
 		Compat.registerHud(Identifier.fromNamespaceAndPath(MOD_ID, "hud"), HudRenderer::render);
 		Compat.replaceHud(VanillaHudElements.CROSSHAIR, Crosshair::draw);
-		Compat.replaceHud(VanillaHudElements.SCOREBOARD,
-				(d, original) -> ((ScoreboardWidget) HudWidgets.SCOREBOARD).drawVanilla(d, original, false));
+		Compat.replaceHud(VanillaHudElements.SCOREBOARD, (d, original) -> ((ScoreboardWidget) HudWidgets.SCOREBOARD).drawInPlace(d));
 		ConfirmDisconnect.install();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -87,6 +85,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 			Zoom.restore(client);
 			Freelook.stop(client);
 			DiscordPresence.stop();
+			MusicBridge.stop();
 			Config.save();
 		});
 		ClientTickEvents.END_CLIENT_TICK.register(ThreevhyClient::tick);
@@ -105,15 +104,8 @@ public final class ThreevhyClient implements ClientModInitializer {
 			return InteractionResult.PASS;
 		});
 
-		// A "3vhy Mod Menu" button in the pause menu
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-			if (screen instanceof PauseScreen) {
-				Compat.addWidget(screen, Button.builder(Component.literal("3vhy Mod Menu"),
-								button -> client.setScreen(new ModMenuScreen(screen)))
-						.pos(6, 6)
-						.size(90, 20)
-						.build());
-			}
+			if (screen instanceof PauseScreen) PauseMenuButton.add(client, screen);
 		});
 
 		LOG.info("3vhy Client {} loaded on Minecraft {}", version, minecraftVersion);

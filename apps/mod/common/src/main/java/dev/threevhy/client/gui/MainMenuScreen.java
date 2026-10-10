@@ -1,5 +1,6 @@
 package dev.threevhy.client.gui;
 
+import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
@@ -16,8 +17,9 @@ import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 
 /**
- * The 3vhy main menu: the banner's sky with drifting pixel clouds, the pixel 3vhy wordmark and
- * big block buttons. Replaces Minecraft's title screen (turn it off in the mod menu).
+ * The 3vhy main menu, in the style of the 3vhy installer: the banner's sky with drifting clouds, the
+ * pixel wordmark dropping in letter by letter, glass pills, and a rounded glass card holding a big
+ * cyan Multiplayer button. Replaces Minecraft's title screen (turn it off in the mod menu).
  */
 public final class MainMenuScreen extends CompatTitleScreen {
 	/** Banner colours from top to bottom, as {position 0..1, rgb}. */
@@ -66,49 +68,135 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		hits.clear();
 		int w = this.width;
 		int h = this.height;
+		long elapsed = System.currentTimeMillis() - openedAt;
 		drawBackdrop(d, w, h);
 		snow.draw(d, w, h);
 		Ui ui = new Ui(d, mouseX, mouseY, hits);
-		MenuTheme t = ui.t;
 
-		// Wordmark, sized to the window
-		int cell = Math.max(2, Math.min(5, w / 150));
-		int markW = 43 * cell;
-		int markX = (w - markW) / 2;
-		int markY = Math.max(16, h / 2 - 15 * cell - 74);
-		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 450f);
-		int drop = Math.round((1 - easeOut(intro)) * -12);
-		Wordmark.draw(d, markX, markY + drop, cell, Theme.ICE, 0xFF04104A);
+		drawTitleBar(ui, mc, w);
+
+		int cell = Math.max(2, Math.min(5, Math.min(w / 150, (h - 190) / 15)));
+		int cardW = Math.min(250, w - 40);
+		int blockH = 15 * cell + 8 + 9 + 10 + 14 + 12 + CARD_H;
+		int top = Math.max(30, (h - blockH) / 2);
+
+		int markX = (w - 43 * cell) / 2;
+		Wordmark.drawDropping(d, markX, top, cell, Theme.ICE, 0xFF04104A, elapsed);
+		int y = top + 15 * cell + 8;
 		String client = "C L I E N T";
-		d.text(client, (w - mc.font.width(client)) / 2, markY + 15 * cell + 8, Theme.CYAN, false);
+		d.text(client, (w - mc.font.width(client)) / 2, y, fade(Theme.CYAN, elapsed, 450), false);
+		y += 9 + 10;
 
-		// Buttons, NoRisk-style glass in 3vhy colours
-		int bw = Math.min(220, w - 40);
-		int bh = 20;
-		int gap = 5;
-		int bx = (w - bw) / 2;
-		int by = markY + 15 * cell + 28;
-		ui.button(bx, by, bw, bh, "Multiplayer", true, () -> mc.setScreen(new JoinMultiplayerScreen(this)));
-		by += bh + gap;
-		ui.button(bx, by, bw, bh, "Singleplayer", false, () -> mc.setScreen(new SelectWorldScreen(this)));
-		by += bh + gap;
-		int half = (bw - gap) / 2;
-		ui.button(bx, by, half, bh, "Options", false, () -> mc.setScreen(Compat.optionsScreen(this)));
-		ui.button(bx + half + gap, by, bw - half - gap, bh, "3vhy Mods", false, () -> mc.setScreen(new ModMenuScreen(this)));
-		by += bh + gap;
-		ui.button(bx, by, bw, bh, "Quit Game", false, mc::stop);
-
-		// Who's playing
-		String player = mc.getUser().getName();
-		int pw = mc.font.width(player) + 21;
-		ui.panel(w - pw - 6, 6, w - 6, 22, t.panel());
-		d.fill(w - pw + 1, 12, w - pw + 5, 16, t.good());
-		d.text(player, w - pw + 9, 10, t.text(), false);
+		float rise = (float) Math.max(0, Math.min(1, (elapsed - 350) / 300.0));
+		int lift = Math.round((1 - easeOut(rise)) * 8);
+		d.push();
+		d.translate(0, lift);
+		drawChips(ui, mc, w, y);
+		y += 14 + 12;
+		drawCard(ui, mc, (w - cardW) / 2, y, cardW);
+		d.pop();
 
 		String left = "3vhy Client " + ThreevhyClient.version() + "  ·  Minecraft " + ThreevhyClient.minecraftVersion();
-		d.text(left, 6, h - 12, 0xFF0B2A6E, false);
+		d.text(left, 8, h - 13, 0xFF0B2A6E, false);
 		String right = "Not affiliated with Mojang or Microsoft";
-		d.text(right, w - 6 - mc.font.width(right), h - 12, 0xFF0B2A6E, false);
+		d.text(right, w - 8 - mc.font.width(right), h - 13, 0xFF0B2A6E, false);
+	}
+
+	private static final int CARD_H = 10 + 26 + 7 + 22 + 8 + 12 + 8;
+	private static final int GLASS = 0x8C061654;
+	private static final int GLASS_EDGE = 0x33A9D8F2;
+
+	/** The installer's title bar: the 3 app icon and the name on the left, who's playing on the right. */
+	private void drawTitleBar(Ui ui, Minecraft mc, int w) {
+		Draw d = ui.d;
+		d.roundRect(8, 7, 24, 23, 4, 0xFF1A4FBA);
+		d.roundOutline(8, 7, 24, 23, 4, 0x4DE3F3FC);
+		Wordmark.drawGlyph(d, 11, 9, 1, Theme.ICE);
+		d.text(Ui.bold("3vhy Client"), 30, 11, 0xE6CFE8F7, false);
+
+		String player = mc.getUser().getName();
+		int pw = mc.font.width(player) + 22;
+		int px = w - 8 - pw;
+		d.roundRect(px, 7, px + pw, 23, 8, GLASS);
+		d.roundOutline(px, 7, px + pw, 23, 8, GLASS_EDGE);
+		ui.dot(px + 7, 12, 6, 0xFF4ADE80);
+		d.text(player, px + 16, 11, Theme.ICE, false);
+	}
+
+	/** Glass pills like the installer's feature chips: the game version, how many mods are on, the profile. */
+	private void drawChips(Ui ui, Minecraft mc, int w, int y) {
+		int on = 0;
+		for (var module : Modules.ALL) {
+			if (module.toggleable() && module.enabled()) on++;
+		}
+		List<String> chips = List.of("Minecraft " + ThreevhyClient.minecraftVersion(), on + " mods on",
+				"Profile: " + Config.get().profile);
+		int gap = 6;
+		int total = -gap;
+		for (String chip : chips) total += mc.font.width(chip) + 18 + gap;
+		int x = (w - total) / 2;
+		for (String chip : chips) {
+			int cw = mc.font.width(chip) + 18;
+			ui.d.roundRect(x, y, x + cw, y + 14, 7, GLASS);
+			ui.d.roundOutline(x, y, x + cw, y + 14, 7, GLASS_EDGE);
+			ui.d.roundRect(x + 6, y + 5, x + 10, y + 9, 2, Theme.CYAN);
+			ui.d.text(chip, x + 13, y + 3, Theme.ICE, false);
+			x += cw + gap;
+		}
+	}
+
+	/** The rounded glass card with the big Multiplayer button, three smaller ones and Quit. */
+	private void drawCard(Ui ui, Minecraft mc, int x, int y, int w) {
+		Draw d = ui.d;
+		d.roundRect(x, y, x + w, y + CARD_H, 10, 0xB8051246);
+		d.roundOutline(x, y, x + w, y + CARD_H, 10, GLASS_EDGE);
+		int inner = w - 20;
+		int bx = x + 10;
+		int by = y + 10;
+		heroButton(ui, bx, by, inner, 26, "Multiplayer", () -> mc.setScreen(new JoinMultiplayerScreen(this)));
+		by += 26 + 7;
+		int gap = 6;
+		int third = (inner - gap * 2) / 3;
+		glassButton(ui, bx, by, third, 22, "Singleplayer", () -> mc.setScreen(new SelectWorldScreen(this)));
+		glassButton(ui, bx + third + gap, by, third, 22, "Options", () -> mc.setScreen(Compat.optionsScreen(this)));
+		glassButton(ui, bx + (third + gap) * 2, by, inner - (third + gap) * 2, 22, "3vhy Mods",
+				() -> mc.setScreen(new ModMenuScreen(this)));
+		by += 22 + 8;
+		String quit = "Quit Game";
+		int qw = mc.font.width(quit);
+		int qx = x + (w - qw) / 2;
+		boolean hover = ui.hover(qx - 6, by - 2, qx + qw + 6, by + 10);
+		d.text(quit, qx, by, hover ? Theme.ICE : 0xFFA9C3E6, false);
+		if (hover) d.fill(qx, by + 9, qx + qw, by + 10, Theme.ICE);
+		ui.hit(qx - 6, by - 2, qx + qw + 6, by + 10, mc::stop);
+	}
+
+	/** The installer's Install button: a cyan face shaded top to bottom on a deep blue edge. */
+	private static void heroButton(Ui ui, int x, int y, int w, int h, String label, Runnable action) {
+		boolean hover = ui.hover(x, y, x + w, y + h);
+		int top = hover ? 0xFFA2E9F8 : 0xFF8AE0F5;
+		int bottom = hover ? 0xFF3A9EE4 : 0xFF2B8FDB;
+		ui.d.roundRect(x, y, x + w, y + h, 7, 0xFF0D3F99);
+		ui.d.roundGradient(x, y, x + w, y + h - 3, 7, top, bottom);
+		ui.d.fill(x + 7, y + 1, x + w - 7, y + 2, 0x8CFFFFFF);
+		String text = label.toUpperCase(java.util.Locale.ROOT);
+		ui.d.text(Ui.bold(text), x + (w - ui.boldWidth(text)) / 2, y + (h - 3 - 8) / 2 + 1, 0xFF04123F, false);
+		ui.hit(x, y, x + w, y + h, action);
+	}
+
+	/** A frosted glass button with a thin edge that lights up on hover. */
+	private static void glassButton(Ui ui, int x, int y, int w, int h, String label, Runnable action) {
+		boolean hover = ui.hover(x, y, x + w, y + h);
+		ui.d.roundRect(x, y, x + w, y + h, 6, hover ? 0xC0123A9A : GLASS);
+		ui.d.roundOutline(x, y, x + w, y + h, 6, hover ? 0xA05BC8E6 : GLASS_EDGE);
+		String text = ui.trimTitle(label, w - 8);
+		ui.d.text(Ui.bold(text), x + (w - ui.boldWidth(text)) / 2, y + (h - 8) / 2, Theme.ICE, false);
+		ui.hit(x, y, x + w, y + h, action);
+	}
+
+	private static int fade(int argb, long elapsed, long startMs) {
+		double t = Math.max(0, Math.min(1, (elapsed - startMs) / 300.0));
+		return ((int) Math.round(t * (argb >>> 24)) << 24) | (argb & 0xFFFFFF);
 	}
 
 	/** The banner sky with drifting clouds and hills. Also behind 3vhy Settings when it's opened from here. */

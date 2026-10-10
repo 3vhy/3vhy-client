@@ -269,7 +269,7 @@ public final class HudWidgets {
 			}
 			if (Modules.KEYSTROKES_SPACE.get()) {
 				boolean jump = o.keyJump.isDown();
-				d.fill(x, row, x + width(mc), row + 10, jump ? Theme.KEY_DOWN : backgroundColor());
+				box(d, x, row, x + width(mc), row + 10, jump ? Theme.KEY_DOWN : backgroundColor());
 				int barW = width(mc) / 3;
 				d.fill(x + (width(mc) - barW) / 2, row + 4, x + (width(mc) + barW) / 2, row + 6,
 						jump ? Theme.NIGHT : Theme.SKY);
@@ -278,14 +278,14 @@ public final class HudWidgets {
 
 		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
 			boolean down = key.isDown();
-			d.fill(x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
+			box(d, x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
 			int tw = textWidth(mc, label);
 			d.text(label, x + (w - tw) / 2, y + (h - 8) / 2, down ? Theme.NIGHT : Theme.ICE, !down && textShadow());
 		}
 
 		private void mouse(Draw d, Minecraft mc, int x, int y, int w, int h, String label, int cps, KeyMapping key) {
 			boolean down = key.isDown();
-			d.fill(x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
+			box(d, x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
 			int color = down ? Theme.NIGHT : Theme.ICE;
 			int tw = textWidth(mc, label);
 			d.text(label, x + (w - tw) / 2, y + 3, color, !down && textShadow());
@@ -654,8 +654,13 @@ public final class HudWidgets {
 			int w = 26 + textWidth(mc, text);
 			double pulse = (Math.sin(System.currentTimeMillis() / 160.0) + 1) / 2;
 			int alpha = 0x90 + (int) (pulse * 0x50);
-			d.fill(x, y, x + w, y + H, (alpha << 24) | 0x5A0A1E);
-			d.fill(x, y, x + 1, y + H, Theme.BAD);
+			if (rounded()) {
+				d.roundRect(x, y, x + w, y + H, 4, (alpha << 24) | 0x5A0A1E);
+				d.fill(x + 1, y + 4, x + 2, y + H - 4, Theme.BAD);
+			} else {
+				d.fill(x, y, x + w, y + H, (alpha << 24) | 0x5A0A1E);
+				d.fill(x, y, x + 1, y + H, Theme.BAD);
+			}
 			ItemStack totem = SafeItems.stack(Items.TOTEM_OF_UNDYING);
 			if (totem != null) d.item(totem, x + 5, y + 2);
 			d.text(text, x + 24, y + 6, Theme.ICE, false);
@@ -663,8 +668,10 @@ public final class HudWidgets {
 	};
 
 	public static final HudWidget SCOREBOARD = new ScoreboardWidget();
+	public static final HudWidget MUSIC = new MusicWidget();
+	public static final HudWidget PLAYER_LIST = new PlayerListWidget();
 
 	/** Drawing order; widgets that share an anchor stack in this order (upwards at the bottom). */
 	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, TPS, CLOCK, COMBO, COORDS, KEYSTROKES, ITEMS,
-			ARMOR, POPS, TARGET, JUMP_RESET, TOTEM_WARNING, SCOREBOARD);
+			ARMOR, POPS, PLAYER_LIST, TARGET, JUMP_RESET, TOTEM_WARNING, MUSIC, SCOREBOARD);
 }

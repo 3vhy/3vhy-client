@@ -5,7 +5,9 @@ import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Setting.Choice;
 import dev.threevhy.client.module.Setting.Color;
 import dev.threevhy.client.module.Setting.Slider;
+import dev.threevhy.client.module.Setting.Text;
 import dev.threevhy.client.module.Setting.Toggle;
+import dev.threevhy.client.music.MusicBridge;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -24,6 +26,12 @@ public final class Modules {
 		module.add(new Toggle("label", "Show label", "The grey name in front of the value", true));
 		background(module);
 		module.add(new Color("color", "Text colour", "Colour of the value", 0xFFE3F3FC));
+		return module;
+	}
+
+	/** How big one widget is drawn, on top of the HUD size in Theme. Scroll over it in the hub to change it. */
+	private static Module sized(Module module) {
+		module.add(new Slider("size", "Size", "Bigger or smaller. You can also scroll over it in the hub", 50, 200, 5, 100, "%"));
 		return module;
 	}
 
@@ -76,6 +84,30 @@ public final class Modules {
 			"Move the server scoreboard, hide its red numbers, or hide it", Category.HUD, true).markNew();
 	public static final Toggle SCOREBOARD_HIDE_NUMBERS = SCOREBOARD.add(new Toggle("numbers", "Hide numbers",
 			"Hide the red score numbers on the right", false));
+	public static final Slider SCOREBOARD_SIZE = SCOREBOARD.add(new Slider("size", "Size",
+			"Bigger or smaller. You can also scroll over it in the hub", 50, 200, 5, 100, "%"));
+	public static final Slider SCOREBOARD_BACKGROUND = SCOREBOARD.add(new Slider("background", "Background",
+			"How dark the box behind it is. 0% removes it", 0, 100, 5, 30, "%"));
+	public static final Color SCOREBOARD_COLOR = SCOREBOARD.add(new Color("color", "Background colour",
+			"Colour of the box behind it", 0xFF000000));
+	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
+			"A darker strip behind the title, like Minecraft's", true));
+	public static final Toggle SCOREBOARD_ROUNDED = SCOREBOARD.add(new Toggle("rounded", "Rounded corners",
+			"Soft corners instead of a sharp box", false));
+	public static final Module MUSIC = sized(background(new Module("music", "Music HUD",
+			"Shows the song playing on Spotify, YouTube or any other app", Category.HUD, false).markNew()));
+	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
+	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
+	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
+			"Keep it on screen while the music is paused", true));
+	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
+			"Add players and see when they're online on your server", Category.HUD, true).markNew()));
+	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
+			"Players", 16));
+	public static final Toggle PLAYER_LIST_OFFLINE = PLAYER_LIST.add(new Toggle("offline", "Show offline players",
+			"Grey names for players who aren't on", false));
+	public static final Toggle PLAYER_LIST_ALERTS = PLAYER_LIST.add(new Toggle("alerts", "Join alerts",
+			"A chat message when someone on your list joins or leaves", true));
 	public static final Module JUMP_RESET = background(new Module("jump_reset", "Jump Reset",
 			"Shows how well you timed your jump after being hit, to take less knockback", Category.HUD, false).markNew());
 
@@ -126,6 +158,12 @@ public final class Modules {
 	public static final Toggle NAMETAGS_OWN = NAMETAGS.add(new Toggle("own", "Show your own", "See your nametag in third person", true));
 	public static final Module SHINY_POTS = new Module("shiny_pots", "Shiny Pots",
 			"Adds an enchantment glint to potions", Category.VISUAL, false).markNew();
+	public static final Module SKIN_PROTECT = new Module("skin_protect", "Skin Protect",
+			"Shows default skins instead of real ones, for streams and videos", Category.VISUAL, false).markNew();
+	public static final Toggle SKIN_PROTECT_OWN = SKIN_PROTECT.add(new Toggle("own", "Your skin",
+			"You look like a default Steve or Alex", true));
+	public static final Toggle SKIN_PROTECT_OTHERS = SKIN_PROTECT.add(new Toggle("others", "Other players",
+			"Everyone else looks default too", false));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
 			"The 3vhy title screen instead of Minecraft's", Category.VISUAL, true);
 	public static final Module THEME = new Module("theme", "Theme",
@@ -136,6 +174,8 @@ public final class Modules {
 			10, 100, 10, 50, "%"));
 	public static final Slider THEME_HUD_SCALE = THEME.add(new Slider("hud_scale", "HUD size", "Makes every HUD widget bigger or smaller",
 			50, 200, 5, 100, "%"));
+	public static final Toggle THEME_ROUNDED_HUD = THEME.add(new Toggle("rounded_hud", "Rounded HUD",
+			"Soft round corners on HUD widgets", true));
 	public static final Choice THEME_WINDOW_TITLE = THEME.add(new Choice("window_title", "Window title",
 			"Keep \"Minecraft\" in it so Medal, OBS and Discord recognise the game", 0,
 			"Minecraft - 3vhy Client", "3vhy Client"));
@@ -166,6 +206,12 @@ public final class Modules {
 			"Asks for a second click before you disconnect", Category.UTILITY, true).markNew();
 	public static final Module BORDERLESS = new Module("borderless", "Borderless Fullscreen",
 			"Fullscreen as a borderless window, so alt-tab is instant", Category.UTILITY, false).markNew();
+	public static final Module NAME_PROTECT = new Module("name_protect", "Name Protect",
+			"Hides your username everywhere on screen, for streams and videos", Category.UTILITY, false).markNew();
+	public static final Text NAME_PROTECT_NAME = NAME_PROTECT.add(new Text("name", "Show me as",
+			"The name shown instead of yours", "You", 16));
+	public static final Toggle NAME_PROTECT_OTHERS = NAME_PROTECT.add(new Toggle("others", "Hide other players",
+			"Other players' names become Player 1, Player 2 and so on", false));
 	public static final Module WAYPOINTS = new Module("waypoints", "Waypoints",
 			"Mark places and see them on screen with their distance", Category.UTILITY, true).markNew();
 	public static final Toggle WAYPOINTS_DISTANCE = WAYPOINTS.add(new Toggle("distance", "Distance", "Show how far away each one is", true));
@@ -178,10 +224,11 @@ public final class Modules {
 
 	public static final List<Module> ALL = List.of(
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD, COMBO, SCOREBOARD, JUMP_RESET,
+			MUSIC, PLAYER_LIST,
 			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM,
-			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, MAIN_MENU, THEME,
-			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, WAYPOINTS, PROFILES,
-			DISCORD);
+			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SKIN_PROTECT, MAIN_MENU, THEME,
+			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, NAME_PROTECT, WAYPOINTS,
+			PROFILES, DISCORD);
 
 	private static Boolean appliedToggleSprint = null;
 	private static Boolean appliedToggleSneak = null;
@@ -203,6 +250,9 @@ public final class Modules {
 		Combo.tick(mc);
 		JumpReset.tick(mc);
 		ConfirmDisconnect.tick();
+		NameProtect.tick(mc);
+		PlayerList.tick(mc);
+		MusicBridge.tick();
 	}
 
 	/** Uses Minecraft's own "Sprint: Toggle" and "Sneak: Toggle", so they behave exactly like vanilla. */

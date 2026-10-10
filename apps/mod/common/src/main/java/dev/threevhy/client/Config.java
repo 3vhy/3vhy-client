@@ -39,6 +39,9 @@ public final class Config {
 	/** World or server key -> its waypoints. */
 	public Map<String, List<Waypoint>> waypoints = new LinkedHashMap<>();
 
+	/** Names on the Player List, in the order they were added. */
+	public List<String> players = new ArrayList<>();
+
 	/** Overrides the Discord application ID the mod was built with. */
 	public String discordAppId = "";
 	/** The player's own options, put back when the 3vhy module that changes them is turned off. */
@@ -86,6 +89,7 @@ public final class Config {
 				if (loaded.profiles == null) loaded.profiles = new LinkedHashMap<>();
 				if (loaded.waypoints == null) loaded.waypoints = new LinkedHashMap<>();
 				if (loaded.discordAppId == null) loaded.discordAppId = "";
+				if (loaded.players == null) loaded.players = new ArrayList<>();
 				instance = loaded;
 			}
 		} catch (Exception e) {

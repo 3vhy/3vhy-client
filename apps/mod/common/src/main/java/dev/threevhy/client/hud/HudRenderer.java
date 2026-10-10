@@ -26,7 +26,7 @@ public final class HudRenderer {
 	private static void drawAll(Draw d, Minecraft mc) {
 		for (HudWidget widget : HudWidgets.ALL) {
 			if (!widget.module.enabled() || !widget.visible(mc)) continue;
-			float scale = widget.scaled() ? scale() : 1f;
+			float scale = scaleFor(widget);
 			int w = Math.round(d.width() / scale);
 			int h = Math.round(d.height() / scale);
 			int[] pos = widget.position(mc, w, h);
@@ -35,6 +35,11 @@ public final class HudRenderer {
 			widget.draw(d, pos[0], pos[1], mc, false);
 			d.pop();
 		}
+	}
+
+	/** How big a widget is drawn: the HUD size setting (unless it opts out) times its own Size setting. */
+	public static float scaleFor(HudWidget widget) {
+		return (widget.scaled() ? scale() : 1f) * widget.sizeScale();
 	}
 
 	/** The HUD size setting, as a multiplier. */

@@ -11,12 +11,17 @@ import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.PlayerList;
 import dev.threevhy.client.module.Setting;
 import dev.threevhy.client.module.Waypoints;
+import dev.threevhy.client.music.MusicBridge;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -41,7 +46,9 @@ public final class ModMenuScreen extends CompatScreen {
 	private enum Focus {
 		SEARCH,
 		PROFILE_NAME,
-		WAYPOINT_NAME
+		WAYPOINT_NAME,
+		SETTING_TEXT,
+		PLAYER_NAME
 	}
 
 	private static final int CARD_H = 42;
@@ -60,6 +67,8 @@ public final class ModMenuScreen extends CompatScreen {
 	private String profileName = "";
 	private Waypoint renaming = null;
 	private String waypointName = "";
+	private Setting.Text editingText = null;
+	private String playerName = "";
 	private String notice = null;
 	private long noticeAt = 0;
 
@@ -177,7 +186,7 @@ public final class ModMenuScreen extends CompatScreen {
 		for (Item item : items) {
 			boolean hover = ui.hover(x + 3, iy, x + w - 3, iy + 38);
 			if (item.active() || hover) {
-				ui.d.roundRect(x + 3, iy, x + w - 3, iy + 38, 2, item.active() ? ui.t.cardOn() : ui.t.cardHover());
+				ui.d.roundRect(x + 3, iy, x + w - 3, iy + 38, Ui.R_CARD, item.active() ? ui.t.cardOn() : ui.t.cardHover());
 			}
 			int color = item.active() ? ui.t.accent() : hover ? ui.t.text() : MenuTheme.alpha(ui.t.text(), 0xD0);
 			PixelIcons.draw(ui.d, item.icon(), x + (w - 24) / 2, iy + 4, 2, color);
@@ -199,8 +208,8 @@ public final class ModMenuScreen extends CompatScreen {
 			boolean active = tab == each;
 			boolean hover = ui.hover(x, y, x + tw, y + 16);
 			if (active) {
-				ui.d.roundRect(x, y, x + tw, y + 16, 2, ui.t.cardOn());
-				ui.d.roundOutline(x, y, x + tw, y + 16, 2, ui.t.edgeStrong());
+				ui.d.roundRect(x, y, x + tw, y + 16, 8, ui.t.cardOn());
+				ui.d.roundOutline(x, y, x + tw, y + 16, 8, ui.t.edgeStrong());
 			}
 			ui.title(label, x + 7, y + 4, active || hover ? ui.t.text() : ui.t.muted());
 			ui.hit(x, y, x + tw, y + 16, () -> openTab(each));
@@ -219,7 +228,7 @@ public final class ModMenuScreen extends CompatScreen {
 		int themeX = searchX - 20;
 		boolean light = ui.t.isLight();
 		boolean hover = ui.hover(themeX, y, themeX + 16, y + 16);
-		if (hover) ui.d.roundRect(themeX, y, themeX + 16, y + 16, 2, ui.t.cardHover());
+		if (hover) ui.d.roundRect(themeX, y, themeX + 16, y + 16, 8, ui.t.cardHover());
 		PixelIcons.draw(ui.d, light ? PixelIcons.MOON : PixelIcons.SUN, themeX + 2, y + 2, 1, hover ? ui.t.accent() : ui.t.text());
 		ui.hit(themeX, y, themeX + 16, y + 16, () -> Modules.THEME_MODE.next());
 		if (hover) ui.tooltip(light ? "Dark theme" : "Light theme", themeX + 8, y + 19);
@@ -262,7 +271,7 @@ public final class ModMenuScreen extends CompatScreen {
 			int tw = ui.width(label) + 10;
 			boolean active = category == each;
 			boolean hover = ui.hover(x, cy, x + tw, cy + 12);
-			ui.d.roundRect(x, cy, x + tw, cy + 12, 2, active ? MenuTheme.alpha(ui.t.accent(), 0xD8) : hover ? ui.t.cardHover() : 0);
+			ui.d.roundRect(x, cy, x + tw, cy + 12, 6, active ? MenuTheme.alpha(ui.t.accent(), 0xD8) : hover ? ui.t.cardHover() : 0);
 			ui.text(label, x + 5, cy + 2, active ? ui.t.onAccent() : hover ? ui.t.text() : ui.t.muted());
 			ui.hit(x, cy, x + tw, cy + 12, () -> {
 				category = each;
@@ -303,8 +312,7 @@ public final class ModMenuScreen extends CompatScreen {
 		boolean toggleable = module.toggleable();
 		boolean hover = ui.hover(x, y, x + w, y + CARD_H);
 		int fill = hover ? t.cardHover() : toggleable && on ? t.cardOn() : t.card();
-		ui.d.roundRect(x, y, x + w, y + CARD_H, 2, fill);
-		ui.d.roundOutline(x, y, x + w, y + CARD_H, 2, toggleable && on ? t.edgeStrong() : t.edge());
+		ui.card(x, y, x + w, y + CARD_H, fill, toggleable && on ? t.edgeStrong() : t.edge());
 
 		int iconColor = !toggleable || on ? t.text() : t.muted();
 		PixelIcons.draw(ui.d, PixelIcons.forModule(module), x + 8, y + (CARD_H - 24) / 2, 2, iconColor);
@@ -318,13 +326,13 @@ public final class ModMenuScreen extends CompatScreen {
 		for (int i = 0; i < lines.size(); i++) ui.small(lines.get(i), textX, y + 19 + i * 8, 0.75f, t.muted());
 
 		if (toggleable) {
-			ui.d.fill(x + w - 7, y + 4, x + w - 3, y + 8, on ? t.good() : MenuTheme.alpha(t.muted(), 0x80));
+			ui.dot(x + w - 10, y + 5, 5, on ? t.good() : MenuTheme.alpha(t.muted(), 0x80));
 		}
 		if (hasPage) {
 			int bx = x + w - 19;
 			int by = y + (CARD_H - 12) / 2;
 			boolean dotsHover = ui.hover(bx, by, bx + 14, by + 12);
-			if (dotsHover) ui.d.roundRect(bx, by, bx + 14, by + 12, 2, t.cardOn());
+			if (dotsHover) ui.d.roundRect(bx, by, bx + 14, by + 12, 4, t.cardOn());
 			for (int i = 0; i < 3; i++) ui.d.fill(bx + 3 + i * 3, by + 7, bx + 5 + i * 3, by + 9, dotsHover ? t.accent() : t.text());
 		}
 
@@ -339,8 +347,8 @@ public final class ModMenuScreen extends CompatScreen {
 		Module module = page;
 		// Back, icon, name and description
 		boolean backHover = ui.hover(cx, cy, cx + 16, cy + 16);
-		ui.d.roundRect(cx, cy, cx + 16, cy + 16, 2, backHover ? t.cardHover() : t.card());
-		ui.d.roundOutline(cx, cy, cx + 16, cy + 16, 2, backHover ? t.edgeStrong() : t.edge());
+		ui.d.roundRect(cx, cy, cx + 16, cy + 16, 8, backHover ? t.cardHover() : t.card());
+		ui.d.roundOutline(cx, cy, cx + 16, cy + 16, 8, backHover ? t.edgeStrong() : t.edge());
 		Icons.draw(ui.d, Icons.BACK, cx + 4, cy + 4, t.text());
 		ui.hit(cx, cy, cx + 16, cy + 16, () -> {
 			page = null;
@@ -361,8 +369,9 @@ public final class ModMenuScreen extends CompatScreen {
 		List<Runnable> rows = new ArrayList<>();
 		List<Setting> settings = module.settings();
 		HudWidget widget = HudWidgets.ALL.stream().filter(each -> each.module == module).findFirst().orElse(null);
-		int count = settings.size() + (widget != null ? 1 : 0) + (module == Modules.THEME ? 1 : 0);
-		int contentH = count * (ROW_H + 4);
+		int count = settings.size() + (widget != null ? 1 : 0) + (module == Modules.THEME ? 1 : 0)
+				+ (module == Modules.MUSIC ? 1 : 0);
+		int contentH = count * (ROW_H + 4) + (module == Modules.PLAYER_LIST ? playersHeight() : 0);
 		maxScroll = Math.max(0, contentH - listH);
 		scroll = Math.max(0, Math.min(scroll, maxScroll));
 		shownScroll = Math.max(0, Math.min(shownScroll, maxScroll));
@@ -386,14 +395,23 @@ public final class ModMenuScreen extends CompatScreen {
 				notice("HUD layout reset");
 			});
 		}
+		if (module == Modules.MUSIC) {
+			row(ui, cx, y, rowW, "Status", "Reads what's playing from Windows' media controls");
+			String status = MusicBridge.status();
+			boolean connected = status.equals("Connected");
+			int sw = ui.width(status);
+			ui.text(status, cx + rowW - 8 - sw, y + 9, connected ? t.good() : t.muted());
+			ui.dot(cx + rowW - 8 - sw - 9, y + 10, 5, connected ? t.good() : MenuTheme.alpha(t.muted(), 0x90));
+			y += ROW_H + 4;
+		}
+		if (module == Modules.PLAYER_LIST) drawPlayers(ui, cx, y, rowW);
 		ui.endClip();
 		ui.scrollbar(cx + cw - 2, listY, listH, shownScroll, maxScroll, contentH);
 	}
 
 	private void row(Ui ui, int x, int y, int w, String name, String description) {
 		boolean hover = ui.hover(x, y, x + w, y + ROW_H);
-		ui.d.roundRect(x, y, x + w, y + ROW_H, 2, hover ? ui.t.cardHover() : ui.t.card());
-		ui.d.roundOutline(x, y, x + w, y + ROW_H, 2, ui.t.edge());
+		ui.card(x, y, x + w, y + ROW_H, hover ? ui.t.cardHover() : ui.t.card(), ui.t.edge());
 		ui.text(name, x + 8, y + 5, ui.t.text());
 		ui.small(ui.trim(description, (int) ((w - 150) / 0.75f)), x + 8, y + 16, 0.75f, ui.t.muted());
 	}
@@ -422,26 +440,119 @@ public final class ModMenuScreen extends CompatScreen {
 			int boxW = 92;
 			int bx = right - boxW;
 			boolean hover = ui.hover(bx, y + 6, bx + boxW, y + 20);
-			ui.d.roundRect(bx, y + 6, bx + boxW, y + 20, 2, hover ? t.cardHover() : t.field());
-			ui.d.roundOutline(bx, y + 6, bx + boxW, y + 20, 2, hover ? t.edgeStrong() : t.edge());
+			ui.d.roundRect(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
+			ui.d.roundOutline(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.edgeStrong() : t.edge());
 			ui.text("<", bx + 4, y + 9, t.muted());
 			ui.text(">", bx + boxW - 9, y + 9, t.muted());
 			String value = choice.get().toUpperCase(Locale.ROOT);
 			ui.text(value, bx + (boxW - ui.width(value)) / 2, y + 9, t.text());
 			ui.hit(bx, y + 6, bx + boxW / 2, y + 20, choice::previous);
 			ui.hit(bx + boxW / 2, y + 6, bx + boxW, y + 20, choice::next);
+		} else if (setting instanceof Setting.Text text) {
+			int fieldW = 110;
+			int fx = right - fieldW;
+			boolean focused = focus == Focus.SETTING_TEXT && editingText == text;
+			ui.field(fx, y + 5, fieldW, 16, text.get(), "Type here", focused, PixelIcons.PENCIL);
+			ui.hit(fx, y + 5, fx + fieldW, y + 21, () -> {
+				editingText = text;
+				focus = Focus.SETTING_TEXT;
+			});
 		} else if (setting instanceof Setting.Color color) {
 			int[] swatches = Setting.Color.SWATCHES;
 			int size = 10;
 			int sx = right - swatches.length * (size + 2) + 2;
 			for (int swatch : swatches) {
 				boolean selected = (color.get() | 0xFF000000) == swatch;
-				if (selected) ui.d.fill(sx - 1, y + 7, sx + size + 1, y + 9 + size, t.accent());
-				ui.d.fill(sx, y + 8, sx + size, y + 8 + size, swatch);
+				if (selected) ui.d.roundRect(sx - 2, y + 6, sx + size + 2, y + 10 + size, 4, t.accent());
+				ui.d.roundRect(sx, y + 8, sx + size, y + 8 + size, 3, swatch);
 				int pick = swatch;
 				ui.hit(sx, y + 8, sx + size, y + 8 + size, () -> color.set(pick));
 				sx += size + 2;
 			}
+		}
+	}
+
+	private static final int PLAYER_ROW = 22;
+
+	private int playersHeight() {
+		return 14 + 22 + (PlayerList.suggestions(minecraft(), playerName, 6).isEmpty() ? 0 : 18)
+				+ Math.max(1, PlayerList.names().size()) * (PLAYER_ROW + 4);
+	}
+
+	/** The Player List page: add a name (with names from the server as suggestions), then everyone on the list. */
+	private void drawPlayers(Ui ui, int x, int y, int w) {
+		MenuTheme t = ui.t;
+		Minecraft mc = minecraft();
+		ui.small("PLAYERS ON YOUR LIST", x + 2, y + 3, 0.75f, t.muted());
+		y += 14;
+		int fieldW = w - 70;
+		ui.field(x, y, fieldW, 16, playerName, "Add a player: type their name", focus == Focus.PLAYER_NAME, PixelIcons.PLUS);
+		ui.hit(x, y, x + fieldW, y + 16, () -> focus = Focus.PLAYER_NAME);
+		ui.button(x + fieldW + 6, y, 64, 16, "+ Add", true, this::addPlayer);
+		y += 22;
+
+		List<String> suggestions = PlayerList.suggestions(mc, playerName, 6);
+		if (!suggestions.isEmpty()) {
+			int sx = x;
+			for (String name : suggestions) {
+				int pw = ui.pillWidth(name) + 10;
+				if (sx + pw > x + w) break;
+				boolean hover = ui.hover(sx, y, sx + pw, y + 12);
+				ui.d.roundRect(sx, y, sx + pw, y + 12, 6, hover ? t.cardHover() : t.card());
+				ui.d.roundOutline(sx, y, sx + pw, y + 12, 6, hover ? t.edgeStrong() : t.edge());
+				ui.text("+ " + name, sx + 5, y + 2, hover ? t.accent() : t.text());
+				ui.hit(sx, y, sx + pw, y + 12, () -> {
+					if (PlayerList.add(name)) notice("Added " + name);
+				});
+				sx += pw + 4;
+			}
+			y += 18;
+		}
+
+		List<String> names = new ArrayList<>(PlayerList.names());
+		if (names.isEmpty()) {
+			String hint = "Nobody yet. Add friends, rivals or staff to see when they're on.";
+			ui.text(ui.trim(hint, w - 8), x + 4, y + 7, t.muted());
+			return;
+		}
+		for (String name : names) {
+			boolean online = PlayerList.isOnline(name);
+			PlayerInfo info = online ? PlayerList.info(mc, name) : null;
+			boolean hover = ui.hover(x, y, x + w, y + PLAYER_ROW);
+			ui.card(x, y, x + w, y + PLAYER_ROW, hover ? t.cardHover() : t.card(), t.edge());
+			int fx = x + 6;
+			int fy = y + 5;
+			if (info != null) ui.d.face(info.getSkin(), fx, fy, 12);
+			else ui.d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(name)), fx, fy, 12);
+			ui.text(name, x + 24, y + 7, online ? t.text() : t.muted());
+			int right = x + w - 8;
+			int dx = right - 16;
+			boolean delHover = ui.hover(dx, y + 3, dx + 16, y + 19);
+			if (delHover) ui.d.roundRect(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 5, 1, delHover ? t.bad() : t.muted());
+			ui.hit(dx, y + 3, dx + 16, y + 19, () -> {
+				PlayerList.remove(name);
+				notice("Removed " + name);
+			});
+			String state = online ? "ONLINE" : "OFFLINE";
+			int pw = ui.pillWidth(state);
+			ui.pill(dx - 6 - pw, y + 5, state, online ? MenuTheme.alpha(t.good(), 0x40) : MenuTheme.alpha(t.muted(), 0x30),
+					online ? t.good() : t.muted());
+			y += PLAYER_ROW + 4;
+		}
+	}
+
+	private void addPlayer() {
+		String name = playerName.trim();
+		if (name.isEmpty()) {
+			notice("Type a name first");
+		} else if (!PlayerList.isValidName(name)) {
+			notice("That isn't a Minecraft name");
+		} else if (!PlayerList.add(name)) {
+			notice(name + " is already on the list");
+		} else {
+			notice("Added " + name);
+			playerName = "";
 		}
 	}
 
@@ -465,16 +576,14 @@ public final class ModMenuScreen extends CompatScreen {
 		for (String name : names) {
 			boolean active = name.equals(config.profile);
 			boolean hover = ui.hover(cx, y, cx + cw - 6, y + 24);
-			ui.d.roundRect(cx, y, cx + cw - 6, y + 24, 2, active ? t.cardOn() : hover ? t.cardHover() : t.card());
-			ui.d.roundOutline(cx, y, cx + cw - 6, y + 24, 2, active ? t.edgeStrong() : t.edge());
+			ui.card(cx, y, cx + cw - 6, y + 24, active ? t.cardOn() : hover ? t.cardHover() : t.card(),
+					active ? t.edgeStrong() : t.edge());
 			PixelIcons.draw(ui.d, PixelIcons.forModule(Modules.PROFILES), cx + 6, y + 6, 1, t.text());
 			ui.title(ui.trimTitle(name, cw - 180), cx + 24, y + 8, t.text());
 			int right = cx + cw - 12;
 			if (active) {
 				String badge = "ACTIVE";
-				int bw = ui.width(badge) + 8;
-				ui.d.roundRect(right - bw, y + 6, right, y + 18, 2, MenuTheme.alpha(t.accent(), 0xD8));
-				ui.text(badge, right - bw + 4, y + 8, t.onAccent());
+				ui.pill(right - ui.pillWidth(badge), y + 6, badge, MenuTheme.alpha(t.accent(), 0xD8), t.onAccent());
 			} else {
 				ui.button(right - 58, y + 5, 58, 14, "Load", false, () -> {
 					config.loadProfile(name);
@@ -483,7 +592,7 @@ public final class ModMenuScreen extends CompatScreen {
 				if (!name.equals(Config.DEFAULT_PROFILE)) {
 					int dx = right - 58 - 20;
 					boolean delHover = ui.hover(dx, y + 5, dx + 16, y + 19);
-					if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 2, MenuTheme.alpha(t.bad(), 0x50));
+					if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
 					PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 6, 1, delHover ? t.bad() : t.muted());
 					ui.hit(dx, y + 5, dx + 16, y + 19, () -> {
 						if (config.deleteProfile(name)) notice("Deleted " + name);
@@ -536,10 +645,9 @@ public final class ModMenuScreen extends CompatScreen {
 		int y = listY - (int) Math.round(shownScroll);
 		for (Waypoint waypoint : list) {
 			boolean hover = ui.hover(cx, y, cx + cw - 6, y + 24);
-			ui.d.roundRect(cx, y, cx + cw - 6, y + 24, 2, hover ? t.cardHover() : t.card());
-			ui.d.roundOutline(cx, y, cx + cw - 6, y + 24, 2, t.edge());
+			ui.card(cx, y, cx + cw - 6, y + 24, hover ? t.cardHover() : t.card(), t.edge());
 			// Colour: click to change
-			ui.d.fill(cx + 6, y + 7, cx + 16, y + 17, waypoint.color | 0xFF000000);
+			ui.d.roundRect(cx + 6, y + 7, cx + 16, y + 17, 3, waypoint.color | 0xFF000000);
 			ui.hit(cx + 6, y + 7, cx + 16, y + 17, () -> {
 				int[] swatches = Setting.Color.SWATCHES;
 				int index = 0;
@@ -566,7 +674,7 @@ public final class ModMenuScreen extends CompatScreen {
 			ui.text(distance, right - 44 - ui.width(distance), y + 8, t.muted());
 			int ex = right - 38;
 			boolean eyeHover = ui.hover(ex, y + 5, ex + 16, y + 19);
-			if (eyeHover) ui.d.roundRect(ex, y + 5, ex + 16, y + 19, 2, t.cardOn());
+			if (eyeHover) ui.d.roundRect(ex, y + 5, ex + 16, y + 19, 4, t.cardOn());
 			PixelIcons.draw(ui.d, waypoint.visible ? PixelIcons.EYE : PixelIcons.EYE_OFF, ex + 2, y + 6, 1,
 					waypoint.visible ? t.text() : t.muted());
 			ui.hit(ex, y + 5, ex + 16, y + 19, () -> {
@@ -575,7 +683,7 @@ public final class ModMenuScreen extends CompatScreen {
 			});
 			int dx = right - 18;
 			boolean delHover = ui.hover(dx, y + 5, dx + 16, y + 19);
-			if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 2, MenuTheme.alpha(t.bad(), 0x50));
+			if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
 			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 6, 1, delHover ? t.bad() : t.muted());
 			ui.hit(dx, y + 5, dx + 16, y + 19, () -> Waypoints.remove(mc, waypoint));
 			y += 28;
@@ -613,7 +721,7 @@ public final class ModMenuScreen extends CompatScreen {
 		float sx = px + pw - 8 - textW;
 		ui.small(status, sx, y + 1, scale, t.muted());
 		int dot = (int) sx - 8;
-		ui.d.fill(dot, y + 1, dot + 5, y + 6, connected ? t.good() : MenuTheme.alpha(t.muted(), 0x90));
+		ui.dot(dot, y + 1, 5, connected ? t.good() : MenuTheme.alpha(t.muted(), 0x90));
 	}
 
 	private Minecraft minecraft() {
@@ -632,12 +740,14 @@ public final class ModMenuScreen extends CompatScreen {
 				Runnable action = button == 0 ? hit.action() : hit.rightAction();
 				if (action == null) continue;
 				if (focus == Focus.WAYPOINT_NAME) finishRename();
+				if (focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME) focus = Focus.SEARCH;
 				minecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
 				action.run();
 				return true;
 			}
 		}
 		if (focus == Focus.WAYPOINT_NAME) finishRename();
+		if (focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME) focus = Focus.SEARCH;
 		return super.mouseClicked(event, doubleClick);
 	}
 
@@ -676,6 +786,12 @@ public final class ModMenuScreen extends CompatScreen {
 			case WAYPOINT_NAME -> {
 				if (waypointName.length() < 24) waypointName += typed;
 			}
+			case SETTING_TEXT -> {
+				if (editingText != null) editingText.set(editingText.get() + typed);
+			}
+			case PLAYER_NAME -> {
+				if (playerName.length() < 16 && typed.matches("[A-Za-z0-9_]")) playerName += typed;
+			}
 			case SEARCH -> {
 				if (tab != Tab.MODS || page != null) {
 					tab = Tab.MODS;
@@ -695,6 +811,10 @@ public final class ModMenuScreen extends CompatScreen {
 			switch (focus) {
 				case PROFILE_NAME -> profileName = dropLast(profileName);
 				case WAYPOINT_NAME -> waypointName = dropLast(waypointName);
+				case SETTING_TEXT -> {
+					if (editingText != null) editingText.set(dropLast(editingText.get()));
+				}
+				case PLAYER_NAME -> playerName = dropLast(playerName);
 				case SEARCH -> {
 					search = dropLast(search);
 					resetScroll();
@@ -705,9 +825,15 @@ public final class ModMenuScreen extends CompatScreen {
 		if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
 			if (focus == Focus.PROFILE_NAME) createProfile();
 			if (focus == Focus.WAYPOINT_NAME) finishRename();
+			if (focus == Focus.PLAYER_NAME) addPlayer();
+			if (focus == Focus.SETTING_TEXT) focus = Focus.SEARCH;
 			return true;
 		}
 		if (key == GLFW.GLFW_KEY_ESCAPE) {
+			if (focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME) {
+				focus = Focus.SEARCH;
+				return true;
+			}
 			if (focus == Focus.WAYPOINT_NAME) {
 				renaming = null;
 				focus = Focus.SEARCH;

@@ -24,6 +24,46 @@ public final class Wordmark {
 	private Wordmark() {
 	}
 
+	/** Column where each of the four letters (3, v, h, y) starts; a run belongs to the last start at or before it. */
+	private static final int[] LETTER_STARTS = {0, 11, 22, 33};
+
+	/**
+	 * Draws the wordmark with each letter dropping in after the one before it, like the launcher and
+	 * the installer do. {@code elapsedMs} is the time since the screen opened.
+	 */
+	public static void drawDropping(Draw d, int x, int y, int cell, int color, int shadowColor, long elapsedMs) {
+		for (int pass = 0; pass < 2; pass++) {
+			if (pass == 0 && shadowColor == 0) continue;
+			for (int[] run : RUNS) {
+				int letter = 0;
+				for (int i = 0; i < LETTER_STARTS.length; i++) {
+					if (run[0] >= LETTER_STARTS[i]) letter = i;
+				}
+				double t = Math.max(0, Math.min(1, (elapsedMs - 100 - letter * 90) / 620.0));
+				if (t <= 0) continue;
+				int drop = (int) Math.round((1 - easeOutBack(t)) * -3 * cell);
+				int alpha = (int) Math.round(Math.min(1, t * 2.5) * ((pass == 0 ? shadowColor : color) >>> 24));
+				int argb = (alpha << 24) | ((pass == 0 ? shadowColor : color) & 0xFFFFFF);
+				int top = y + run[1] * cell + drop + (pass == 0 ? cell : 0);
+				d.fill(x + run[0] * cell, top, x + (run[0] + run[2]) * cell, top + cell, argb);
+			}
+		}
+	}
+
+	/** Just the "3", 10 x 12 cells: the app icon's glyph. */
+	public static void drawGlyph(Draw d, int x, int y, int cell, int color) {
+		for (int[] run : RUNS) {
+			if (run[0] >= LETTER_STARTS[1]) continue;
+			d.fill(x + run[0] * cell, y + run[1] * cell, x + (run[0] + run[2]) * cell, y + (run[1] + 1) * cell, color);
+		}
+	}
+
+	private static double easeOutBack(double t) {
+		double c1 = 1.70158;
+		double c3 = c1 + 1;
+		return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+	}
+
 	/** Draws the wordmark with its top-left at (x, y); each cell is {@code cell} pixels. */
 	public static void draw(Draw d, int x, int y, int cell, int color, int shadowColor) {
 		if (shadowColor != 0) {

@@ -8,12 +8,17 @@ import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.ModMenuScreen;
+import dev.threevhy.client.gui.PauseMenuButton;
+import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.ChatTweaks;
 import dev.threevhy.client.module.ConfirmDisconnect;
 import dev.threevhy.client.module.Freelook;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.NameProtect;
+import dev.threevhy.client.module.PlayerList;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
+import dev.threevhy.client.music.MusicBridge;
 import java.util.ArrayList;
 import java.util.List;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
@@ -32,6 +37,11 @@ import org.lwjgl.glfw.GLFW;
  * takes screenshots of every 3vhy screen. Fails if one of 3vhy's features didn't work.
  */
 public final class ThreevhyGameTest implements FabricClientGameTest {
+	/** A song as the Windows helper reports it, with a tiny 8x8 cover, since CI can't play real music. */
+	private static final String SAMPLE_SONG = "{\"key\":\"test\",\"app\":\"Spotify.exe\",\"title\":\"Snowfall\","
+			+ "\"artist\":\"3vhy Test Band\",\"album\":\"CI\",\"playing\":true,\"position\":61,\"duration\":235,"
+			+ "\"art\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\"}";
+
 	@Override
 	public void runTest(ClientGameTestContext context) {
 		List<String> failed = new ArrayList<>();
@@ -60,6 +70,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				Modules.NAMETAGS.set(true);
 				Modules.CPS.sliderSetting("background").set(0);
 				Modules.KEYSTROKES.sliderSetting("background").set(25);
+				Modules.MUSIC.set(true);
+				MusicBridge.simulate(SAMPLE_SONG);
+				Modules.PLAYER_LIST_OFFLINE.set(true);
+				Modules.PLAYER_LIST_TITLE.set("Friends");
+				PlayerList.add(client.getUser().getName());
+				PlayerList.add("Steve");
 			});
 
 			var server = singleplayer.getServer();
@@ -101,6 +117,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(40);
 			shot(context, "3vhy-hud");
 			check(failed, "chat stacks repeated messages", context.computeOnClient(client -> ChatTweaks.repeats() >= 2));
+			check(failed, "music HUD shows the playing song", context.computeOnClient(client ->
+					MusicBridge.current() != null && MusicBridge.current().title().equals("Snowfall")
+							&& HudWidgets.MUSIC.visible(client)));
+			check(failed, "music cover uploaded as a texture (NativeImage, DynamicTexture)", Hooks.musicArtUploaded);
+			check(failed, "player list sees who is online", context.computeOnClient(client ->
+					Hooks.playerListTicked && PlayerList.isOnline(client.getUser().getName()) && !PlayerList.isOnline("Steve")
+							&& HudWidgets.PLAYER_LIST.visible(client)));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
 			server.runCommand("damage @p 1000 minecraft:generic");
@@ -118,6 +141,20 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(10);
 			shot(context, "3vhy-target-hud");
 			check(failed, "target HUD picks up who you hit", context.computeOnClient(client -> Target.get() != null));
+
+			// Name Protect and Skin Protect stay on through freelook, so the third person view shows them
+			context.runOnClient(client -> {
+				Modules.NAME_PROTECT.set(true);
+				Modules.NAME_PROTECT_NAME.set("Streamer");
+				Modules.SKIN_PROTECT.set(true);
+				Compat.chat(net.minecraft.network.chat.Component.literal(client.getUser().getName() + " is streaming"));
+			});
+			context.waitTicks(10);
+			shot(context, "3vhy-name-protect");
+			check(failed, "name protect swaps your name", context.computeOnClient(client ->
+					NameProtect.apply("<" + client.getUser().getName() + "> hi").equals("<Streamer> hi")
+							&& NameProtect.apply(client.getUser().getName() + "son").equals(client.getUser().getName() + "son")));
+			check(failed, "name protect hook (StringDecomposer)", Hooks.nameProtectRan);
 
 			int normalFov = context.computeOnClient(client -> client.options.fov().get());
 			context.getInput().holdKey(ThreevhyClient.zoomKey);
@@ -141,12 +178,32 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			check(failed, "freelook puts the camera back", context.computeOnClient(client ->
 					!Freelook.active() && client.options.getCameraType() == CameraType.FIRST_PERSON));
+			check(failed, "skin protect hook (PlayerInfo.getSkin)", Hooks.skinProtectRan);
+			context.runOnClient(client -> {
+				Modules.NAME_PROTECT.set(false);
+				Modules.SKIN_PROTECT.set(false);
+			});
 
 			// Tab list with ping numbers and the scoreboard objective
 			context.getInput().holdKey(options -> options.keyPlayerList);
 			context.waitTicks(5);
 			shot(context, "3vhy-tab-list");
 			context.getInput().releaseKey(options -> options.keyPlayerList);
+
+			// The scoreboard made bigger, rounded and blue
+			context.runOnClient(client -> {
+				Modules.SCOREBOARD_SIZE.set(150);
+				Modules.SCOREBOARD_ROUNDED.set(true);
+				Modules.SCOREBOARD_BACKGROUND.set(65);
+				Modules.SCOREBOARD_COLOR.set(0xFF1A4FBA);
+			});
+			context.waitTicks(5);
+			shot(context, "3vhy-scoreboard-styled");
+			context.runOnClient(client -> {
+				Modules.SCOREBOARD_ROUNDED.reset();
+				Modules.SCOREBOARD_BACKGROUND.reset();
+				Modules.SCOREBOARD_COLOR.reset();
+			});
 
 			// Inventory with highlighted PvP items
 			context.setScreen(() -> new InventoryScreen(net.minecraft.client.Minecraft.getInstance().player));
@@ -160,6 +217,20 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(15);
 			shot(context, "3vhy-hub");
 			check(failed, "Right Shift opens the hub", context.computeOnClient(client -> client.screen instanceof HubScreen));
+			double sizeBefore = context.computeOnClient(client -> Modules.SCOREBOARD_SIZE.get());
+			context.runOnClient(client -> {
+				var widget = HudWidgets.SCOREBOARD;
+				float scale = dev.threevhy.client.hud.HudRenderer.scaleFor(widget);
+				int screenW = client.getWindow().getGuiScaledWidth();
+				int screenH = client.getWindow().getGuiScaledHeight();
+				int[] pos = widget.position(client, Math.round(screenW / scale), Math.round(screenH / scale));
+				double x = (pos[0] + widget.width(client) / 2.0) * scale;
+				double y = (pos[1] + widget.height(client) / 2.0) * scale;
+				client.screen.mouseScrolled(x, y, 0, -1);
+			});
+			check(failed, "scrolling over the scoreboard in the hub resizes it",
+					context.computeOnClient(client -> Modules.SCOREBOARD_SIZE.get() < sizeBefore));
+			context.runOnClient(client -> Modules.SCOREBOARD_SIZE.reset());
 
 			context.setScreen(() -> new ModMenuScreen(null));
 			context.waitTicks(10);
@@ -170,6 +241,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.CROSSHAIR));
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-crosshair");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.PLAYER_LIST));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-player-list");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.NAME_PROTECT));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-name-protect");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.SCOREBOARD));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-scoreboard");
 			context.runOnClient(client -> Config.get().createProfile("Crystal PvP"));
 			context.setScreen(() -> new ModMenuScreen(null).openTab(ModMenuScreen.Tab.PROFILES));
 			context.waitTicks(10);
@@ -193,10 +273,24 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(10);
 			shot(context, "3vhy-pause-menu");
 			int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
-			context.getInput().setCursorPos(51 * scale, 16 * scale);
-			context.waitTicks(2);
-			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			context.waitTicks(15);
+			int[] modMenuButton = context.computeOnClient(client -> {
+				AbstractWidget ours = null;
+				AbstractWidget disconnect = null;
+				for (AbstractWidget widget : Compat.widgets(client.screen)) {
+					if (widget.getMessage().getString().equals(PauseMenuButton.LABEL)) ours = widget;
+					if (ConfirmDisconnect.isDisconnect(widget.getMessage())) disconnect = widget;
+				}
+				if (ours == null || disconnect == null) return null;
+				boolean above = ours.getX() == disconnect.getX() && ours.getY() + ours.getHeight() + 4 == disconnect.getY();
+				return new int[] {ours.getX() + ours.getWidth() / 2, ours.getY() + ours.getHeight() / 2, above ? 1 : 0};
+			});
+			check(failed, "3vhy Mod Menu button sits right above Disconnect", modMenuButton != null && modMenuButton[2] == 1);
+			if (modMenuButton != null) {
+				context.getInput().setCursorPos(modMenuButton[0] * scale, modMenuButton[1] * scale);
+				context.waitTicks(2);
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				context.waitTicks(15);
+			}
 			check(failed, "pause menu button opens the mod menu",
 					context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);

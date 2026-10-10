@@ -110,3 +110,5 @@ net.minecraft.client.gui.components.toasts.SystemToast$SystemToastId
 net.minecraft.client.resources.language.ClientLanguage
 net.minecraft.network.chat.CommonComponents
 net.minecraft.client.User
+net.minecraft.core.UUIDUtil
+net.minecraft.client.resources.ClientAsset

@@ -1,11 +1,13 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.compat.Compat;
+import dev.threevhy.client.Hooks;
+import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.module.Modules;
+import java.util.Comparator;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.numbers.BlankFormat;
 import net.minecraft.network.chat.numbers.NumberFormat;
 import net.minecraft.network.chat.numbers.StyledFormat;
 import net.minecraft.world.scores.DisplaySlot;
@@ -15,12 +17,32 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
 /**
- * The server's sidebar scoreboard as a HUD widget. Minecraft still draws it; 3vhy only moves it
- * to where the player dragged it, can hide its red numbers, and can hide it altogether.
+ * The server's sidebar scoreboard as a HUD widget. 3vhy draws it the way Minecraft does (same lines,
+ * order and layout), so it can also be moved, resized, given another background or rounded corners,
+ * have its red numbers hidden, or be hidden altogether.
  */
 public final class ScoreboardWidget extends HudWidget {
 	private static final int SAMPLE_W = 96;
-	private static final int SAMPLE_H = 64;
+	private static final int LINE = 9;
+	private static final int TITLE = 10;
+	private static final int MAX_LINES = 15;
+	/** Minecraft's sidebar order: highest score first, then by name. */
+	private static final Comparator<PlayerScoreEntry> ORDER = Comparator.comparingInt(PlayerScoreEntry::value).reversed()
+			.thenComparing(PlayerScoreEntry::owner, String.CASE_INSENSITIVE_ORDER);
+	private static final String[] SAMPLE = {"Kills: 29", "Deaths: 17", "Online: 272", "", "your.server"};
+
+	private record Line(Component name, Component score, int scoreWidth) {
+	}
+
+	private record Board(Component title, List<Line> lines, int contentWidth) {
+		int width() {
+			return contentWidth + 4;
+		}
+
+		int height() {
+			return lines.size() * LINE + TITLE;
+		}
+	}
 
 	ScoreboardWidget() {
 		super("scoreboard", Modules.SCOREBOARD, Anchor.MIDDLE_RIGHT);
@@ -39,27 +61,30 @@ public final class ScoreboardWidget extends HudWidget {
 		return objective != null ? objective : scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
 	}
 
-	/** Where Minecraft draws the sidebar: {x1, y1, x2, y2}, or null when there isn't one. */
-	private static int[] vanillaBounds(Minecraft mc, int screenWidth, int screenHeight) {
+	/** The lines to show, worked out like Minecraft does; null when there's no sidebar. */
+	private static Board board(Minecraft mc) {
 		Objective objective = sidebarObjective(mc);
 		if (objective == null) return null;
 		Scoreboard scoreboard = objective.getScoreboard();
 		NumberFormat format = objective.numberFormatOrDefault(StyledFormat.SIDEBAR_DEFAULT);
 		boolean hideNumbers = Modules.SCOREBOARD_HIDE_NUMBERS.get();
-		int widest = mc.font.width(objective.getDisplayName());
+		List<Line> lines = scoreboard.listPlayerScores(objective).stream()
+				.filter(entry -> !entry.isHidden())
+				.sorted(ORDER)
+				.limit(MAX_LINES)
+				.map(entry -> {
+					Component name = PlayerTeam.formatNameForTeam(scoreboard.getPlayersTeam(entry.owner()), entry.ownerName());
+					Component score = hideNumbers ? Component.empty() : entry.formatValue(format);
+					return new Line(name, score, hideNumbers ? 0 : mc.font.width(score));
+				})
+				.toList();
+		Component title = objective.getDisplayName();
+		int width = mc.font.width(title);
 		int colon = mc.font.width(": ");
-		int lines = 0;
-		for (PlayerScoreEntry entry : scoreboard.listPlayerScores(objective)) {
-			if (entry.isHidden()) continue;
-			if (lines >= 15) break;
-			lines++;
-			Component name = PlayerTeam.formatNameForTeam(scoreboard.getPlayersTeam(entry.owner()), entry.ownerName());
-			int scoreWidth = hideNumbers ? 0 : mc.font.width(entry.formatValue(format));
-			widest = Math.max(widest, mc.font.width(name) + (scoreWidth > 0 ? colon + scoreWidth : 0));
+		for (Line line : lines) {
+			width = Math.max(width, mc.font.width(line.name()) + (line.scoreWidth() > 0 ? colon + line.scoreWidth() : 0));
 		}
-		int bottom = screenHeight / 2 + lines * 9 / 3;
-		int left = screenWidth - widest - 3;
-		return new int[] {left - 2, bottom - lines * 9 - 10, screenWidth - 1, bottom};
+		return new Board(title, lines, width);
 	}
 
 	@Override
@@ -74,75 +99,87 @@ public final class ScoreboardWidget extends HudWidget {
 
 	@Override
 	public int width(Minecraft mc) {
-		int[] bounds = vanillaBounds(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
-		return bounds == null ? SAMPLE_W : bounds[2] - bounds[0];
+		Board board = board(mc);
+		return board == null ? SAMPLE_W : board.width();
 	}
 
 	@Override
 	public int height(Minecraft mc) {
-		int[] bounds = vanillaBounds(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
-		return bounds == null ? SAMPLE_H : bounds[3] - bounds[1];
+		Board board = board(mc);
+		return board == null ? SAMPLE.length * LINE + TITLE : board.height();
 	}
 
+	/** Where Minecraft puts it: against the right edge, a little below the middle. */
 	@Override
 	protected int[] defaultPosition(Minecraft mc, int screenWidth, int screenHeight) {
-		int[] bounds = vanillaBounds(mc, screenWidth, screenHeight);
-		if (bounds == null) return new int[] {screenWidth - SAMPLE_W - 1, (screenHeight - SAMPLE_H) / 2};
-		return new int[] {bounds[0], bounds[1]};
+		Board board = board(mc);
+		int lines = board == null ? SAMPLE.length : board.lines().size();
+		int bottom = screenHeight / 2 + lines * LINE / 3;
+		return new int[] {screenWidth - width(mc) - 1, bottom - lines * LINE - TITLE};
 	}
 
-	/** How far the player moved the scoreboard from where Minecraft puts it. */
-	private int[] offset(Minecraft mc, int screenWidth, int screenHeight) {
-		int[] bounds = vanillaBounds(mc, screenWidth, screenHeight);
-		if (bounds == null || storedPosition() == null) return new int[] {0, 0};
-		int[] position = position(mc, screenWidth, screenHeight);
-		return new int[] {position[0] - bounds[0], position[1] - bounds[1]};
-	}
-
-	/** Called in place of Minecraft's own scoreboard drawing. */
-	public void drawVanilla(Draw d, Runnable original, boolean editing) {
+	/** Called in place of Minecraft's own scoreboard, so it stays in the same layer of the HUD. */
+	public void drawInPlace(Draw d) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!module.enabled() || (!editing && mc.screen instanceof dev.threevhy.client.gui.HubScreen)) return;
-		dev.threevhy.client.Hooks.scoreboardRan = true;
-		int[] offset = offset(mc, d.width(), d.height());
+		if (!module.enabled() || mc.screen instanceof HubScreen) return;
+		Board board = board(mc);
+		if (board == null) return;
+		Hooks.scoreboardRan = true;
+		float scale = HudRenderer.scaleFor(this);
+		int[] pos = position(mc, Math.round(d.width() / scale), Math.round(d.height() / scale));
 		d.push();
-		d.translate(offset[0], offset[1]);
-		withNumbersHidden(mc, original);
+		d.scale(scale);
+		drawBoard(d, mc, board, pos[0], pos[1]);
 		d.pop();
-	}
-
-	/** Runs Minecraft's scoreboard drawing with the score numbers blanked when the player wants that. */
-	private static void withNumbersHidden(Minecraft mc, Runnable draw) {
-		Objective objective = Modules.SCOREBOARD_HIDE_NUMBERS.get() ? sidebarObjective(mc) : null;
-		if (objective == null) {
-			draw.run();
-			return;
-		}
-		NumberFormat previous = objective.numberFormat();
-		objective.setNumberFormat(BlankFormat.INSTANCE);
-		try {
-			draw.run();
-		} finally {
-			objective.setNumberFormat(previous);
-		}
 	}
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 		if (!preview) return;
-		Objective objective = sidebarObjective(mc);
-		if (objective != null) {
-			drawVanilla(d, () -> Compat.drawScoreboard(d, objective), true);
+		Board board = board(mc);
+		if (board != null) {
+			drawBoard(d, mc, board, x, y);
 			return;
 		}
-		// A sample, so the scoreboard can be placed before joining a server that has one
-		d.fill(x, y, x + SAMPLE_W, y + 10, 0x66000000);
-		d.fill(x, y + 10, x + SAMPLE_W, y + SAMPLE_H, 0x4C000000);
+		// A sample, so the scoreboard can be placed and styled before joining a server that has one
+		int h = SAMPLE.length * LINE + TITLE;
+		background(d, x, y, SAMPLE_W, h);
 		String title = "Scoreboard";
 		d.text(title, x + (SAMPLE_W - mc.font.width(title)) / 2, y + 1, Theme.ICE, false);
-		String[] lines = {"Kills: 29", "Deaths: 17", "Online: 272", "", "your.server"};
-		for (int i = 0; i < lines.length; i++) {
-			d.text(lines[i], x + 3, y + 12 + i * 10, Theme.SKY, false);
+		for (int i = 0; i < SAMPLE.length; i++) d.text(SAMPLE[i], x + 2, y + TITLE + i * LINE, Theme.SKY, false);
+	}
+
+	private void drawBoard(Draw d, Minecraft mc, Board board, int x, int y) {
+		int w = board.width();
+		background(d, x, y, w, board.height());
+		int titleWidth = mc.font.width(board.title());
+		d.text(board.title(), x + 2 + board.contentWidth() / 2 - titleWidth / 2, y + 1, 0xFFFFFFFF, false);
+		int lineY = y + TITLE;
+		for (Line line : board.lines()) {
+			d.text(line.name(), x + 2, lineY, 0xFFFFFFFF, false);
+			if (line.scoreWidth() > 0) d.text(line.score(), x + w - line.scoreWidth(), lineY, 0xFFFFFFFF, false);
+			lineY += LINE;
 		}
+	}
+
+	/** The box behind it: the chosen colour and darkness, a slightly darker title strip, square or rounded. */
+	private static void background(Draw d, int x, int y, int w, int h) {
+		int alpha = (int) Math.round(Modules.SCOREBOARD_BACKGROUND.get() / 100.0 * 255);
+		if (alpha <= 0) return;
+		int rgb = Modules.SCOREBOARD_COLOR.get() & 0xFFFFFF;
+		int body = (alpha << 24) | rgb;
+		boolean rounded = Modules.SCOREBOARD_ROUNDED.get();
+		if (rounded) d.roundRect(x, y, x + w, y + h, 4, body);
+		else d.fill(x, y, x + w, y + h, body);
+		if (!Modules.SCOREBOARD_TITLE_BAR.get()) return;
+		int extra = (Math.min(255, Math.max(26, alpha / 3)) << 24) | rgb;
+		if (!rounded) {
+			d.fill(x, y, x + w, y + TITLE - 1, extra);
+			return;
+		}
+		// The same top corners as the rounded box, so the strip lines up with it
+		d.fill(x + 2, y, x + w - 2, y + 1, extra);
+		d.fill(x + 1, y + 1, x + w - 1, y + 2, extra);
+		d.fill(x, y + 2, x + w, y + TITLE - 1, extra);
 	}
 }

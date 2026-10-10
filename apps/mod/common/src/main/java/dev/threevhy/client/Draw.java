@@ -1,6 +1,8 @@
 package dev.threevhy.client;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -24,6 +26,12 @@ public interface Draw {
 
 	/** Durability bar and count label; pass null to use the stack's own count. */
 	void itemOverlay(ItemStack stack, int x, int y, String countLabel);
+
+	/** Draws a whole texture of the given size, stretched to w x h. */
+	void texture(Identifier texture, int x, int y, int w, int h, int textureWidth, int textureHeight);
+
+	/** A player's face (with the hat layer), size x size. */
+	void face(PlayerSkin skin, int x, int y, int size);
 
 	void push();
 
@@ -80,6 +88,29 @@ public interface Draw {
 		}
 		fill(x1, y1 + r, x1 + 1, y2 - r, argb);
 		fill(x2 - 1, y1 + r, x2, y2 - r, argb);
+	}
+
+	/** A rounded rectangle shaded from {@code top} at the top edge to {@code bottom} at the bottom edge. */
+	default void roundGradient(int x1, int y1, int x2, int y2, int radius, int top, int bottom) {
+		int h = y2 - y1;
+		if (h <= 0 || x2 <= x1) return;
+		int r = Math.max(0, Math.min(radius, Math.min((x2 - x1) / 2, h / 2)));
+		for (int row = 0; row < h; row++) {
+			int inset = row < r ? cornerInset(r, row) : row >= h - r ? cornerInset(r, h - 1 - row) : 0;
+			fill(x1 + inset, y1 + row, x2 - inset, y1 + row + 1, mix(top, bottom, h == 1 ? 0 : row / (double) (h - 1)));
+		}
+	}
+
+	/** Blends two ARGB colours, alpha included; t = 0 gives {@code a}. */
+	static int mix(int a, int b, double t) {
+		double u = Math.max(0, Math.min(1, t));
+		int out = 0;
+		for (int shift = 0; shift <= 24; shift += 8) {
+			int ca = (a >>> shift) & 255;
+			int cb = (b >>> shift) & 255;
+			out |= ((int) Math.round(ca + (cb - ca) * u) & 255) << shift;
+		}
+		return out;
 	}
 
 	private static int cornerInset(int r, int row) {

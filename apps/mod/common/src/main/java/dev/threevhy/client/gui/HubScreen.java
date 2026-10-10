@@ -8,6 +8,7 @@ import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidget;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.Setting;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -88,6 +89,9 @@ public final class HubScreen extends CompatScreen {
 		}
 
 		String hint = "DRAG TO MOVE  ·  PENCIL FOR SETTINGS  ·  X TO HIDE";
+		if (active != null && active.resizable()) {
+			hint += "  ·  SCROLL TO RESIZE (" + Math.round(active.sizeScale() * 100) + "%)";
+		}
 		float scale = 0.6f;
 		ui.small(hint, this.width / 2f - ui.width(hint) * scale / 2, 4, scale, MenuTheme.alpha(t.text(), 0xB0));
 	}
@@ -96,13 +100,13 @@ public final class HubScreen extends CompatScreen {
 	private int[] drawWidget(Ui ui, Minecraft mc, HudWidget widget, boolean highlighted) {
 		float scale = widgetScale(widget);
 		int[] box = box(mc, widget);
-		if (highlighted) ui.d.fill(box[0] - 2, box[1] - 2, box[2] + 2, box[3] + 2, MenuTheme.alpha(ui.t.panel(), 0x60));
+		if (highlighted) ui.d.roundRect(box[0] - 2, box[1] - 2, box[2] + 2, box[3] + 2, 4, MenuTheme.alpha(ui.t.panel(), 0x60));
 		ui.d.push();
 		ui.d.scale(scale);
 		int[] pos = widget.position(mc, Math.round(this.width / scale), Math.round(this.height / scale));
 		widget.draw(ui.d, pos[0], pos[1], mc, true);
 		ui.d.pop();
-		ui.d.roundOutline(box[0] - 1, box[1] - 1, box[2] + 1, box[3] + 1, 1,
+		ui.d.roundOutline(box[0] - 1, box[1] - 1, box[2] + 1, box[3] + 1, 3,
 				highlighted ? ui.t.accent() : MenuTheme.alpha(ui.t.edge(), 0x90));
 		return box;
 	}
@@ -129,8 +133,8 @@ public final class HubScreen extends CompatScreen {
 		MenuTheme t = ui.t;
 		boolean hover = ui.hover(x, y, x + 10, y + 10);
 		int fill = danger ? (hover ? t.bad() : MenuTheme.alpha(t.bad(), 0xB0)) : (hover ? t.accent() : MenuTheme.alpha(t.panel(), 0xF0));
-		ui.d.roundRect(x, y, x + 10, y + 10, 1, fill);
-		ui.d.roundOutline(x, y, x + 10, y + 10, 1, danger ? t.bad() : t.edgeStrong());
+		ui.d.roundRect(x, y, x + 10, y + 10, 5, fill);
+		ui.d.roundOutline(x, y, x + 10, y + 10, 5, danger ? t.bad() : t.edgeStrong());
 		Icons.draw(ui.d, icon, x + 2, y + 2, 0xFFFFFFFF);
 		ui.hit(x, y, x + 10, y + 10, action);
 	}
@@ -179,7 +183,7 @@ public final class HubScreen extends CompatScreen {
 	}
 
 	private float widgetScale(HudWidget widget) {
-		return widget.scaled() ? HudRenderer.scale() : 1f;
+		return HudRenderer.scaleFor(widget);
 	}
 
 	/** A widget's box on screen (GUI pixels): {x1, y1, x2, y2}. */
@@ -263,6 +267,24 @@ public final class HubScreen extends CompatScreen {
 			return true;
 		}
 		return super.mouseReleased(event);
+	}
+
+	/** Scrolling over a widget that has its own Size setting makes it bigger or smaller. */
+	@Override
+	public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+		if (dragging == null && vertical != 0) {
+			Minecraft mc = Minecraft.getInstance();
+			for (int i = HudWidgets.ALL.size() - 1; i >= 0; i--) {
+				HudWidget widget = HudWidgets.ALL.get(i);
+				if (!widget.module.enabled() || !widget.resizable()) continue;
+				int[] box = box(mc, widget);
+				if (x < box[0] || x >= box[2] || y < box[1] || y >= box[3]) continue;
+				Setting.Slider size = widget.module.sliderSetting("size");
+				size.set(size.get() + Math.signum(vertical) * size.step);
+				return true;
+			}
+		}
+		return super.mouseScrolled(x, y, horizontal, vertical);
 	}
 
 	@Override

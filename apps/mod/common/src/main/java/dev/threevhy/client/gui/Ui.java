@@ -20,6 +20,13 @@ public final class Ui {
 		}
 	}
 
+	/** Corner radius of the big glass panels. */
+	public static final int R_PANEL = 8;
+	/** Corner radius of cards and list rows. */
+	public static final int R_CARD = 6;
+	/** Corner radius of buttons, fields and other small controls. */
+	public static final int R_CONTROL = 5;
+
 	public final Draw d;
 	public final MenuTheme t;
 	public final Minecraft mc = Minecraft.getInstance();
@@ -150,32 +157,42 @@ public final class Ui {
 		return lines;
 	}
 
-	// Shapes
-
-	/** A glass panel with a thin edge. */
+	/** A glass panel with a thin edge and soft round corners, like the launcher's cards. */
 	public void panel(int x1, int y1, int x2, int y2, int fill) {
-		d.roundRect(x1, y1, x2, y2, 2, fill);
-		d.roundOutline(x1, y1, x2, y2, 2, t.edge());
+		d.roundRect(x1, y1, x2, y2, R_PANEL, fill);
+		d.roundOutline(x1, y1, x2, y2, R_PANEL, t.edge());
 	}
 
-	/** A NoRisk-style rectangle button: thin edge, fills in on hover. */
+	/** A card or list row: rounded, with a thin edge. */
+	public void card(int x1, int y1, int x2, int y2, int fill, int edge) {
+		d.roundRect(x1, y1, x2, y2, R_CARD, fill);
+		d.roundOutline(x1, y1, x2, y2, R_CARD, edge);
+	}
+
+	/**
+	 * A rounded button. The primary one is the launcher's Play button: a cyan face shaded top to
+	 * bottom, sitting on a darker edge, so it looks pressable. The others are glass with an edge.
+	 */
 	public void button(int x, int y, int w, int h, String label, boolean primary, Runnable action) {
 		boolean hover = hover(x, y, x + w, y + h);
-		int fill = primary ? (hover ? MenuTheme.alpha(t.accent(), 0xFF) : MenuTheme.alpha(t.accent(), 0xD8))
-				: (hover ? t.cardHover() : t.card());
-		d.roundRect(x, y, x + w, y + h, 2, fill);
-		d.roundOutline(x, y, x + w, y + h, 2, primary ? t.accent() : hover ? t.edgeStrong() : t.edge());
 		String text = label.toUpperCase(Locale.ROOT);
-		int color = primary ? t.onAccent() : t.text();
-		d.text(bold(text), x + (w - boldWidth(text)) / 2, y + (h - 8) / 2, color, false);
+		if (primary) {
+			int face = hover ? Draw.mix(t.accent(), 0xFFFFFFFF, 0.12) : t.accent();
+			d.roundRect(x, y, x + w, y + h, R_CONTROL, Draw.mix(t.accent(), 0xFF000000, 0.45));
+			d.roundGradient(x, y, x + w, y + h - 2, R_CONTROL, Draw.mix(face, 0xFFFFFFFF, 0.3), face);
+			d.text(bold(text), x + (w - boldWidth(text)) / 2, y + (h - 2 - 8) / 2 + 1, t.onAccent(), false);
+		} else {
+			card(x, y, x + w, y + h, hover ? t.cardHover() : t.card(), hover ? t.edgeStrong() : t.edge());
+			d.text(bold(text), x + (w - boldWidth(text)) / 2, y + (h - 8) / 2, t.text(), false);
+		}
 		hit(x, y, x + w, y + h, action);
 	}
 
 	/** A square icon button, with a label shown under it on hover. */
 	public void iconButton(int x, int y, int size, String[] icon, String label, boolean active, Runnable action) {
 		boolean hover = hover(x, y, x + size, y + size);
-		d.roundRect(x, y, x + size, y + size, 2, active ? MenuTheme.alpha(t.accent(), 0xD8) : hover ? t.cardHover() : t.card());
-		d.roundOutline(x, y, x + size, y + size, 2, active ? t.accent() : hover ? t.edgeStrong() : t.edge());
+		card(x, y, x + size, y + size, active ? MenuTheme.alpha(t.accent(), 0xD8) : hover ? t.cardHover() : t.card(),
+				active ? t.accent() : hover ? t.edgeStrong() : t.edge());
 		int scale = size >= 28 ? 2 : 1;
 		int iconSize = PixelIcons.SIZE * scale;
 		PixelIcons.draw(d, icon, x + (size - iconSize) / 2, y + (size - iconSize) / 2, scale,
@@ -187,9 +204,20 @@ public final class Ui {
 	/** A small dark label centred under (cx, y). */
 	public void tooltip(String text, int cx, int y) {
 		String upper = text.toUpperCase(Locale.ROOT);
-		int w = width(upper) + 8;
-		d.roundRect(cx - w / 2, y, cx + w / 2, y + 12, 2, 0xE0050C26);
-		d.text(upper, cx - w / 2 + 4, y + 2, 0xFFE3F3FC, false);
+		int w = width(upper) + 10;
+		d.roundRect(cx - w / 2, y, cx + w / 2, y + 12, 4, 0xE0050C26);
+		d.text(upper, cx - w / 2 + 5, y + 2, 0xFFE3F3FC, false);
+	}
+
+	/** A small rounded label, like ACTIVE or NEW. */
+	public void pill(int x, int y, String label, int fill, int color) {
+		int w = width(label) + 10;
+		d.roundRect(x, y, x + w, y + 12, 6, fill);
+		d.text(label, x + 5, y + 2, color, false);
+	}
+
+	public int pillWidth(String label) {
+		return width(label) + 10;
 	}
 
 	/** An on/off switch, 22x10. */
@@ -199,28 +227,29 @@ public final class Ui {
 		d.roundRect(knob, y + 1, knob + 8, y + 9, 4, on ? t.onAccent() : 0xFFFFFFFF);
 	}
 
-	/** A slider track with a knob; fraction is 0..1. */
+	/** A slider track with a round knob; fraction is 0..1. */
 	public void slider(int x, int y, int w, double fraction) {
 		d.roundRect(x, y + 3, x + w, y + 6, 1, MenuTheme.alpha(t.muted(), 0x60));
 		int filled = (int) Math.round(w * fraction);
 		d.roundRect(x, y + 3, x + filled, y + 6, 1, t.accent());
-		int knob = x + filled - 3;
-		d.roundRect(knob, y, knob + 7, y + 9, 2, 0xFFFFFFFF);
-		d.roundOutline(knob, y, knob + 7, y + 9, 2, t.accent());
+		int knob = x + filled - 4;
+		d.roundRect(knob, y, knob + 9, y + 9, 4, 0xFFFFFFFF);
+		d.roundOutline(knob, y, knob + 9, y + 9, 4, t.accent());
 	}
 
 	/** A text field. Draws a blinking caret when focused. */
 	public void field(int x, int y, int w, int h, String value, String placeholder, boolean focused, String[] icon) {
-		d.roundRect(x, y, x + w, y + h, 2, t.field());
-		d.roundOutline(x, y, x + w, y + h, 2, focused ? t.edgeStrong() : t.edge());
-		int tx = x + 5;
+		d.roundRect(x, y, x + w, y + h, R_CONTROL, t.field());
+		d.roundOutline(x, y, x + w, y + h, R_CONTROL, focused ? t.edgeStrong() : t.edge());
+		int tx = x + 6;
 		if (icon != null) {
-			PixelIcons.draw(d, icon, x + 3, y + (h - 12) / 2, 1, value.isEmpty() ? t.muted() : t.accent());
-			tx = x + 17;
+			PixelIcons.draw(d, icon, x + 4, y + (h - 12) / 2, 1, value.isEmpty() ? t.muted() : t.accent());
+			tx = x + 18;
 		}
 		int max = w - (tx - x) - 6;
 		if (value.isEmpty()) {
 			text(trim(placeholder, max), tx, y + (h - 8) / 2, t.muted());
+			if (focused && (System.currentTimeMillis() / 500) % 2 == 0) d.fill(tx, y + 3, tx + 1, y + h - 3, t.text());
 		} else {
 			String shown = value;
 			while (!shown.isEmpty() && width(shown) > max) shown = shown.substring(1);
@@ -232,12 +261,17 @@ public final class Ui {
 		}
 	}
 
+	/** A small round dot, e.g. an on/off or online indicator. */
+	public void dot(int x, int y, int size, int color) {
+		d.roundRect(x, y, x + size, y + size, size / 2, color);
+	}
+
 	/** Thin scrollbar on the right of a list. */
 	public void scrollbar(int x, int y, int h, double scroll, int maxScroll, int contentHeight) {
 		if (maxScroll <= 0) return;
-		d.fill(x, y, x + 2, y + h, MenuTheme.alpha(t.muted(), 0x30));
+		d.roundRect(x, y, x + 2, y + h, 1, MenuTheme.alpha(t.muted(), 0x30));
 		int thumb = Math.max(14, h * h / Math.max(1, contentHeight));
 		int ty = y + (int) Math.round((h - thumb) * (scroll / maxScroll));
-		d.fill(x, ty, x + 2, ty + thumb, t.accent());
+		d.roundRect(x, ty, x + 2, ty + thumb, 1, t.accent());
 	}
 }

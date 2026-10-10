@@ -75,6 +75,35 @@ jobs:
           path: mod-jars/*.jar
           if-no-files-found: error
 
+  # The Music HUD reads Windows' media controls through a PowerShell script. Run it once on Windows
+  # to check it parses and can reach the media controls (CI has no music playing, so it reports none).
+  music-script:
+    name: Music HUD script (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Run the now-playing script once
+        shell: powershell
+        run: |
+          $script = 'apps/mod/common/src/main/resources/assets/threevhy/music/now-playing.ps1'
+          $out = powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $script -Once 2>&1 | Out-String
+          $code = $LASTEXITCODE
+          $line = ($out -split "`n" | Where-Object { $_.Trim().StartsWith('{') } | Select-Object -Last 1)
+          Write-Output "Exit code $code, output: $out"
+          if (-not $line) {
+            Write-Output "::error title=Music HUD script::No JSON line. Output: $($out.Trim() -replace "`r?`n", ' | ')"
+            exit 1
+          }
+          $json = $line | ConvertFrom-Json
+          if ($json.error) {
+            Write-Output "::warning title=Music HUD script::$($json.error)"
+          } else {
+            Write-Output "::notice title=Music HUD script::$($line.Trim())"
+          }
+
   gametest:
     name: In-game test (${{ matrix.project }})
     if: ${{ inputs.skip_gametest != true }}

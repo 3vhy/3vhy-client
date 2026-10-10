@@ -163,6 +163,33 @@ public abstract class Setting {
 		}
 	}
 
+	/** A short piece of text the player types, like the name Name Protect shows. */
+	public static final class Text extends Setting {
+		private final String def;
+		public final int maxLength;
+
+		public Text(String id, String name, String description, String def, int maxLength) {
+			super(id, name, description);
+			this.def = def;
+			this.maxLength = maxLength;
+		}
+
+		public String get() {
+			String raw = raw();
+			return raw == null ? def : raw;
+		}
+
+		/** The value, or the default when the player cleared the field. */
+		public String getOrDefault() {
+			String value = get().trim();
+			return value.isEmpty() ? def : value;
+		}
+
+		public void set(String value) {
+			store(value.length() > maxLength ? value.substring(0, maxLength) : value);
+		}
+	}
+
 	/** A colour picked from the 3vhy swatches. */
 	public static final class Color extends Setting {
 		/** ARGB swatches: the banner blues first, then the usual PvP colours. */

@@ -46,7 +46,7 @@ public final class ConfirmDisconnect {
 		return true;
 	}
 
-	static boolean isDisconnect(Component message) {
+	public static boolean isDisconnect(Component message) {
 		if (message == null || !(message.getContents() instanceof TranslatableContents translatable)) return false;
 		String key = translatable.getKey();
 		return key.equals("menu.disconnect") || key.equals("menu.returnToMenu") || key.contains("saveAndQuit")

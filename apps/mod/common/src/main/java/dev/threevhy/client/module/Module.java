@@ -91,6 +91,10 @@ public final class Module {
 		return find(settingId, Setting.Slider.class);
 	}
 
+	public Setting.Text textSetting(String settingId) {
+		return find(settingId, Setting.Text.class);
+	}
+
 	public Setting.Color colorSetting(String settingId) {
 		return find(settingId, Setting.Color.class);
 	}

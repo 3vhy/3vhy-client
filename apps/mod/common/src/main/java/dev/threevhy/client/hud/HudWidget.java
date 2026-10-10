@@ -4,6 +4,7 @@ import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.module.Module;
+import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.Setting;
 import net.minecraft.client.Minecraft;
 
@@ -51,6 +52,17 @@ public abstract class HudWidget {
 	/** Whether the HUD size setting applies. The scoreboard keeps Minecraft's own size. */
 	public boolean scaled() {
 		return true;
+	}
+
+	/** This widget's own Size setting as a multiplier, or 1 when it has none. */
+	public float sizeScale() {
+		Setting.Slider size = module.sliderSetting("size");
+		return size == null ? 1f : (float) (size.get() / 100.0);
+	}
+
+	/** Whether this widget has its own Size setting (scroll over it in the hub to change it). */
+	public boolean resizable() {
+		return module.sliderSetting("size") != null;
 	}
 
 	/** The position the player dragged this widget to, or null if it's at its anchor. */
@@ -152,12 +164,32 @@ public abstract class HudWidget {
 		return color == null ? Theme.ICE : color.get();
 	}
 
-	/** The box behind a widget: dark navy glass with a thin ice edge on the left. */
+	/** Whether HUD boxes get round corners (Theme > Rounded HUD). */
+	protected static boolean rounded() {
+		return Modules.THEME_ROUNDED_HUD.get();
+	}
+
+	/**
+	 * The box behind a widget: dark navy glass with a thin ice edge on the left. With Rounded HUD on,
+	 * the corners are soft and the edge is a short line inside the box.
+	 */
 	protected void panel(Draw d, int x, int y, int w, int h) {
 		int alpha = backgroundAlpha();
 		if (alpha <= 0) return;
+		int edge = (Math.min(255, alpha + 60) << 24) | 0x5BC8E6;
+		if (rounded()) {
+			d.roundRect(x, y, x + w, y + h, 4, backgroundColor());
+			if (h > 8) d.fill(x + 1, y + 4, x + 2, y + h - 4, edge);
+			return;
+		}
 		d.fill(x, y, x + w, y + h, backgroundColor());
-		d.fill(x, y, x + 1, y + h, (Math.min(255, alpha + 60) << 24) | 0x5BC8E6);
+		d.fill(x, y, x + 1, y + h, edge);
+	}
+
+	/** A key or slot: rounded with Rounded HUD on, square otherwise. */
+	protected static void box(Draw d, int x1, int y1, int x2, int y2, int color) {
+		if (rounded()) d.roundRect(x1, y1, x2, y2, 3, color);
+		else d.fill(x1, y1, x2, y2, color);
 	}
 
 	protected static int textWidth(Minecraft mc, String text) {

@@ -18,6 +18,10 @@ public final class Hooks {
 	public static volatile boolean timePacketRan = false;
 	public static volatile boolean crosshairRan = false;
 	public static volatile boolean scoreboardRan = false;
+	public static volatile boolean nameProtectRan = false;
+	public static volatile boolean skinProtectRan = false;
+	public static volatile boolean playerListTicked = false;
+	public static volatile boolean musicArtUploaded = false;
 
 	private Hooks() {
 	}
