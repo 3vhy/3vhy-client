@@ -103,6 +103,7 @@ public final class ScoreboardWidget extends HudWidget {
 	public void drawVanilla(Draw d, Runnable original, boolean editing) {
 		Minecraft mc = Minecraft.getInstance();
 		if (!module.enabled() || (!editing && mc.screen instanceof dev.threevhy.client.gui.HubScreen)) return;
+		dev.threevhy.client.Hooks.scoreboardRan = true;
 		int[] offset = offset(mc, d.width(), d.height());
 		d.push();
 		d.translate(offset[0], offset[1]);

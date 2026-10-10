@@ -86,23 +86,34 @@ public abstract class HudWidget {
 		int h = height(mc);
 		return switch (anchor) {
 			case TOP_LEFT, TOP_RIGHT -> {
-				int y = MARGIN;
-				boolean editing = mc.screen instanceof HubScreen;
-				for (HudWidget other : HudWidgets.ALL) {
-					if (other == this) break;
-					if (other.anchor == anchor && other.module.enabled() && other.storedPosition() == null
-							&& (editing || other.visible(mc))) {
-						y += other.height(mc) + GAP;
-					}
-				}
+				int y = MARGIN + stackedBefore(mc);
 				yield new int[] {anchor == Anchor.TOP_LEFT ? MARGIN : screenWidth - w - MARGIN, y};
 			}
+			case BOTTOM_RIGHT -> new int[] {screenWidth - w - MARGIN, screenHeight - h - MARGIN - stackedBefore(mc)};
+			case ABOVE_HOTBAR -> new int[] {(screenWidth - w) / 2, screenHeight - 58 - h - stackedBefore(mc)};
 			case MIDDLE_RIGHT -> new int[] {screenWidth - w - MARGIN, (screenHeight - h) / 2};
-			case BOTTOM_RIGHT -> new int[] {screenWidth - w - MARGIN, screenHeight - h - MARGIN};
-			case BELOW_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 + 18};
+			case BELOW_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 + 20};
 			case ABOVE_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 - 22 - h};
-			case ABOVE_HOTBAR -> new int[] {(screenWidth - w) / 2, screenHeight - 58 - h};
 		};
+	}
+
+	/** Height taken by the earlier widgets stacked at the same anchor. */
+	private int stackedBefore(Minecraft mc) {
+		int total = 0;
+		boolean editing = mc.screen instanceof HubScreen;
+		for (HudWidget other : HudWidgets.ALL) {
+			if (other == this) break;
+			if (other.anchor == anchor && other.module.enabled() && other.storedPosition() == null
+					&& other.usesAnchor() && (editing || other.visible(mc))) {
+				total += other.height(mc) + GAP;
+			}
+		}
+		return total;
+	}
+
+	/** False when the widget's current layout ignores its anchor (e.g. armor drawn as a row). */
+	protected boolean usesAnchor() {
+		return true;
 	}
 
 	private static double clamp(double value) {

@@ -20,6 +20,7 @@ public final class Crosshair {
 			original.run();
 			return;
 		}
+		dev.threevhy.client.Hooks.crosshairRan = true;
 		int cx = d.width() / 2;
 		int cy = d.height() / 2;
 		int size = Modules.CROSSHAIR_SIZE.getInt();

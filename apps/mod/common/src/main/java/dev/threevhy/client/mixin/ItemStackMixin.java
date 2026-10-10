@@ -12,6 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ItemStackMixin {
 	@Inject(method = "hasFoil", at = @At("RETURN"), cancellable = true)
 	private void threevhy$shinyPots(CallbackInfoReturnable<Boolean> cir) {
-		if (!cir.getReturnValueZ() && ShinyPots.shiny((ItemStack) (Object) this)) cir.setReturnValue(true);
+		if (!cir.getReturnValueZ() && ShinyPots.shiny((ItemStack) (Object) this)) {
+			dev.threevhy.client.Hooks.shinyPotRan = true;
+			cir.setReturnValue(true);
+		}
 	}
 }

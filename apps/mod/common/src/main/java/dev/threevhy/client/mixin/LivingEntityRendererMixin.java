@@ -13,6 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class LivingEntityRendererMixin {
 	@Inject(method = "shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z", at = @At("RETURN"), cancellable = true)
 	private void threevhy$ownNametag(LivingEntity entity, double distance, CallbackInfoReturnable<Boolean> cir) {
-		if (!cir.getReturnValueZ() && Nametags.showOwn(entity)) cir.setReturnValue(true);
+		if (!cir.getReturnValueZ() && Nametags.showOwn(entity)) {
+			dev.threevhy.client.Hooks.ownNametagRan = true;
+			cir.setReturnValue(true);
+		}
 	}
 }

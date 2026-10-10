@@ -12,7 +12,9 @@ public abstract class CameraMixin {
 	@ModifyArg(method = {"setup", "alignWithEntity"},
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;setRotation(FF)V"), index = 0)
 	private float threevhy$freelookYaw(float yaw) {
-		return Freelook.active() ? Freelook.yaw() : yaw;
+		if (!Freelook.active()) return yaw;
+		dev.threevhy.client.Hooks.freelookCameraRan = true;
+		return Freelook.yaw();
 	}
 
 	@ModifyArg(method = {"setup", "alignWithEntity"},

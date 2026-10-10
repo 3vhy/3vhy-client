@@ -480,13 +480,15 @@ public final class ModMenuScreen extends CompatScreen {
 					config.loadProfile(name);
 					notice("Switched to " + name);
 				});
-				int dx = right - 58 - 20;
-				boolean delHover = ui.hover(dx, y + 5, dx + 16, y + 19);
-				if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 2, MenuTheme.alpha(t.bad(), 0x50));
-				PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 6, 1, delHover ? t.bad() : t.muted());
-				ui.hit(dx, y + 5, dx + 16, y + 19, () -> {
-					if (config.deleteProfile(name)) notice("Deleted " + name);
-				});
+				if (!name.equals(Config.DEFAULT_PROFILE)) {
+					int dx = right - 58 - 20;
+					boolean delHover = ui.hover(dx, y + 5, dx + 16, y + 19);
+					if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 2, MenuTheme.alpha(t.bad(), 0x50));
+					PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 6, 1, delHover ? t.bad() : t.muted());
+					ui.hit(dx, y + 5, dx + 16, y + 19, () -> {
+						if (config.deleteProfile(name)) notice("Deleted " + name);
+					});
+				}
 			}
 			y += 28;
 		}

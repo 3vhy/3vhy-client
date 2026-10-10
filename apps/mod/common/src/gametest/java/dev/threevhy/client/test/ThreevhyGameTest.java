@@ -57,6 +57,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				Modules.CRYSTAL_OPTIMIZER.set(true);
 				Modules.SHINY_POTS.set(true);
 				Modules.CROSSHAIR.set(true);
+				Modules.NAMETAGS.set(true);
 			});
 
 			var server = singleplayer.getServer();
@@ -229,6 +230,14 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		check(failed, "3vhy main menu after leaving a world",
 				context.computeOnClient(client -> client.screen instanceof MainMenuScreen));
 		check(failed, "window title hook (Minecraft.updateTitle)", Hooks.titleHookRan);
+		check(failed, "tab list ping numbers (PlayerTabOverlay)", Hooks.tabPingRan);
+		check(failed, "item highlighter (AbstractContainerScreen slots)", Hooks.slotHighlightRan);
+		check(failed, "freelook camera (Camera.setRotation)", Hooks.freelookCameraRan);
+		check(failed, "own nametag in third person (shouldShowName)", Hooks.ownNametagRan);
+		check(failed, "shiny pots (ItemStack.hasFoil)", Hooks.shinyPotRan);
+		check(failed, "TPS from server time (handleSetTime)", Hooks.timePacketRan);
+		check(failed, "custom crosshair replaces Minecraft's", Hooks.crosshairRan);
+		check(failed, "scoreboard drawn through 3vhy", Hooks.scoreboardRan);
 		check(failed, "totem pop hook (ClientPacketListener.handleEntityEvent)", Hooks.entityEventHookRan);
 		if (!failed.isEmpty()) {
 			throw new AssertionError("3vhy checks that failed: " + String.join(", ", failed));

@@ -300,7 +300,7 @@ public final class HudWidgets {
 		}
 	};
 
-	public static final HudWidget ARMOR = new HudWidget("armor", Modules.ARMOR, Anchor.MIDDLE_RIGHT) {
+	public static final HudWidget ARMOR = new HudWidget("armor", Modules.ARMOR, Anchor.BOTTOM_RIGHT) {
 		private static final EquipmentSlot[] ARMOR_SLOTS = {
 				EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
 		};
@@ -336,6 +336,11 @@ public final class HudWidgets {
 		protected int[] defaultPosition(Minecraft mc, int screenWidth, int screenHeight) {
 			if (row()) return new int[] {(screenWidth - width(mc)) / 2 + 100, screenHeight - 38 - height(mc)};
 			return super.defaultPosition(mc, screenWidth, screenHeight);
+		}
+
+		@Override
+		protected boolean usesAnchor() {
+			return !row();
 		}
 
 		@Override
@@ -452,9 +457,13 @@ public final class HudWidgets {
 			return 110;
 		}
 
+		private int rows() {
+			return Math.max(2, Math.min(MAX, PopTracker.top(MAX).size()));
+		}
+
 		@Override
 		public int height(Minecraft mc) {
-			return 14 + MAX * 10 + 2;
+			return 14 + rows() * 10 + 2;
 		}
 
 		@Override
@@ -465,9 +474,7 @@ public final class HudWidgets {
 		@Override
 		public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 			List<PopTracker.Entry> entries = PopTracker.top(MAX);
-			int rows = Math.max(entries.size(), preview ? 2 : 0);
-			int h = 14 + rows * 10 + 2;
-			panel(d, x, y, width(mc), h);
+			panel(d, x, y, width(mc), height(mc));
 			d.text("Totem pops", x + 6, y + 3, Theme.MUTED, false);
 			if (entries.isEmpty() && preview) {
 				d.text("Steve", x + 6, y + 14, Theme.ICE, false);
@@ -657,6 +664,7 @@ public final class HudWidgets {
 
 	public static final HudWidget SCOREBOARD = new ScoreboardWidget();
 
-	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, TPS, CLOCK, COMBO, COORDS, KEYSTROKES, ARMOR,
-			ITEMS, POPS, TARGET, JUMP_RESET, TOTEM_WARNING, SCOREBOARD);
+	/** Drawing order; widgets that share an anchor stack in this order (upwards at the bottom). */
+	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, TPS, CLOCK, COMBO, COORDS, KEYSTROKES, ITEMS,
+			ARMOR, POPS, TARGET, JUMP_RESET, TOTEM_WARNING, SCOREBOARD);
 }

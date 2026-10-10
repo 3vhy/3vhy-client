@@ -22,7 +22,10 @@ public abstract class PlayerTabOverlayMixin {
 
 	@Inject(method = "extractPingIcon", at = @At("HEAD"), cancellable = true)
 	private void threevhy$pingNumber(GuiGraphicsExtractor graphics, int width, int x, int y, PlayerInfo info, CallbackInfo ci) {
-		if (TabTweaks.drawPing(new DrawImpl(graphics), width, x, y, info)) ci.cancel();
+		if (TabTweaks.drawPing(new DrawImpl(graphics), width, x, y, info)) {
+			dev.threevhy.client.Hooks.tabPingRan = true;
+			ci.cancel();
+		}
 	}
 
 	@Redirect(method = "extractRenderState", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD,

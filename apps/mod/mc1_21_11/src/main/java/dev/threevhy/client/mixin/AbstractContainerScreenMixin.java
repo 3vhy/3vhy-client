@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AbstractContainerScreenMixin {
 	@Inject(method = "renderSlot", at = @At("HEAD"))
 	private void threevhy$highlight(GuiGraphics graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+		dev.threevhy.client.Hooks.slotHighlightRan = true;
 		ItemHighlighter.drawSlot(new DrawImpl(graphics), slot);
 	}
 }

@@ -155,7 +155,7 @@ public final class Config {
 	}
 
 	public boolean deleteProfile(String name) {
-		if (name.equals(profile)) return false;
+		if (name.equals(profile) || name.equals(DEFAULT_PROFILE)) return false;
 		boolean removed = profiles.remove(name) != null;
 		if (removed) saveSoon();
 		return removed;

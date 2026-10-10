@@ -28,6 +28,7 @@ public abstract class ClientPacketListenerMixin {
 
 	@Inject(method = "handleSetTime", at = @At("TAIL"))
 	private void threevhy$time(ClientboundSetTimePacket packet, CallbackInfo ci) {
+		dev.threevhy.client.Hooks.timePacketRan = true;
 		TpsTracker.onTime(packet.gameTime());
 	}
 

@@ -63,31 +63,58 @@ public final class HubScreen extends CompatScreen {
 			if (guideY >= 0) d.fill(0, guideY, this.width, guideY + 1, MenuTheme.alpha(t.accent(), 0xA0));
 		}
 
+		int[] centre = centreBounds();
+		boolean overCentre = dragging == null && mouseX >= centre[0] && mouseX < centre[2]
+				&& mouseY >= centre[1] && mouseY < centre[3];
 		HudWidget hovered = null;
 		for (HudWidget widget : HudWidgets.ALL) {
 			if (!widget.module.enabled()) continue;
-			float scale = widgetScale(widget);
-			int[] box = box(mc, widget);
-			d.push();
-			d.scale(scale);
-			int[] pos = widget.position(mc, Math.round(this.width / scale), Math.round(this.height / scale));
-			widget.draw(d, pos[0], pos[1], mc, true);
-			d.pop();
-			if (dragging == null && mouseX >= box[0] && mouseX < box[2] && mouseY >= box[1] && mouseY < box[3]) {
+			int[] box = drawWidget(ui, mc, widget, false);
+			if (dragging == null && !overCentre && mouseX >= box[0] && mouseX < box[2] && mouseY >= box[1]
+					&& mouseY < box[3]) {
 				hovered = widget;
 			}
-			boolean hot = widget == dragging;
-			d.roundOutline(box[0] - 1, box[1] - 1, box[2] + 1, box[3] + 1, 1,
-					hot ? t.accent() : MenuTheme.alpha(t.edge(), 0x90));
 			hits.add(new Ui.Hit(box[0], box[1], box[2], box[3], () -> startDrag(widget, mouseX, mouseY), null));
 		}
-		if (hovered != null) controls(ui, mc, hovered);
 
-		drawCentre(ui, mc);
+		// The logo block sits on its own glass plate, and steps aside while something is dragged
+		if (dragging == null) drawCentre(ui, mc, centre);
+
+		// The widget being touched is drawn again on top, so it's never hidden behind the logo block
+		HudWidget active = dragging != null ? dragging : hovered;
+		if (active != null) {
+			drawWidget(ui, mc, active, true);
+			if (dragging == null) controls(ui, mc, active);
+		}
 
 		String hint = "DRAG TO MOVE  ·  PENCIL FOR SETTINGS  ·  X TO HIDE  ·  RIGHT SHIFT TO CLOSE";
 		float scale = 0.6f;
 		ui.small(hint, this.width / 2f - ui.width(hint) * scale / 2, this.height - 10, scale, MenuTheme.alpha(t.text(), 0xB0));
+	}
+
+	/** Draws one widget in its spot with its outline; returns its box. */
+	private int[] drawWidget(Ui ui, Minecraft mc, HudWidget widget, boolean highlighted) {
+		float scale = widgetScale(widget);
+		int[] box = box(mc, widget);
+		if (highlighted) ui.d.fill(box[0] - 2, box[1] - 2, box[2] + 2, box[3] + 2, MenuTheme.alpha(ui.t.panel(), 0x60));
+		ui.d.push();
+		ui.d.scale(scale);
+		int[] pos = widget.position(mc, Math.round(this.width / scale), Math.round(this.height / scale));
+		widget.draw(ui.d, pos[0], pos[1], mc, true);
+		ui.d.pop();
+		ui.d.roundOutline(box[0] - 1, box[1] - 1, box[2] + 1, box[3] + 1, 1,
+				highlighted ? ui.t.accent() : MenuTheme.alpha(ui.t.edge(), 0x90));
+		return box;
+	}
+
+	/** Where the logo, MOD MENU button and quick buttons go: {x1, y1, x2, y2}. */
+	private int[] centreBounds() {
+		int cell = this.height >= 420 ? 3 : 2;
+		int btnY = this.height / 2 - 10;
+		int top = btnY - 14 - 4 - 15 * cell - 8;
+		int bottom = btnY + 20 + 6 + 24 + 8;
+		int half = 88;
+		return new int[] {this.width / 2 - half, top, this.width / 2 + half, bottom};
 	}
 
 	/** The pencil and X over a hovered widget. */
@@ -108,8 +135,9 @@ public final class HubScreen extends CompatScreen {
 		ui.hit(x, y, x + 10, y + 10, action);
 	}
 
-	private void drawCentre(Ui ui, Minecraft mc) {
+	private void drawCentre(Ui ui, Minecraft mc, int[] plate) {
 		MenuTheme t = ui.t;
+		ui.panel(plate[0], plate[1], plate[2], plate[3], MenuTheme.alpha(t.panel(), 0xD8));
 		int cx = this.width / 2;
 		int btnW = 150;
 		int btnH = 20;
