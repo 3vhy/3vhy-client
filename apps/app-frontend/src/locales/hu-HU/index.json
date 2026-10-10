@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Elsődleges példány"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Töltsd újra a frissítéshez"
-  },
   "app.action-bar.show-downloads": {
     "message": "Aktív letöltések megjelenítése"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Példány megtekintése"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Frissítened kell, hogy használhasd a Modrinth Hostingot a 3vhy Clienton keresztül"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Letöltés a frissítéshez"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Izgatott Modrinth bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Frissítés szükséges a 3vhy Clienthoz"
   },
   "app.install.phase.downloading_content": {
     "message": "A tartalom letöltése..."
@@ -3443,38 +3428,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Szinkronizált erőforráscsomagok"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "A 3vhy Client v{version} letöltése befejeződött. Válaszd a Frissítés lehetőséget a frissítéshez, vagy az alkalmazás bezárásakor automatikusan frissül."
-  },
-  "app.update-popup.body.linux": {
-    "message": "A 3vhy Client v{version} elérhető. A legújabb funkciókért és javításokért frissíts a csomagkezelőddel!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "A 3vhy Client v{version} már elérhető! Mivel korlátozott adatforgalmú hálózaton vagy, nem töltöttük le automatikusan."
-  },
-  "app.update-popup.changelog": {
-    "message": "Változásnapló"
-  },
-  "app.update-popup.download": {
-    "message": "Letöltés ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Letöltés befejezve"
-  },
-  "app.update-popup.reload": {
-    "message": "Frissítés"
-  },
-  "app.update-popup.title": {
-    "message": "Frissítés elérhető"
-  },
   "app.update.complete-toast.text": {
     "message": "Kattints ide a változások megtekintéséhez."
   },
   "app.update.complete-toast.title": {
     "message": "Verzió {version} sikeresen telepítve!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Nem sikerult a frissítést letölteni: nincs elérehtő verzió"
   },
   "app.user.project.install-to-instance": {
     "message": "Telepítés a példányba"

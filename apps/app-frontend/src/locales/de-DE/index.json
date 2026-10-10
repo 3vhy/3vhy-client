@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Primäre Instanz"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Zum Aktualisieren neu laden"
-  },
   "app.action-bar.show-downloads": {
     "message": "Aktive Downloads anzeigen"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Instanz anzeigen"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Du musst aktualisieren, um Modrinth Hosting durch die 3vhy Client zu verwenden"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Zum Aktualisieren herunterladen"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Begeisterter Modrinth-Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Update der 3vhy Client erforderlich"
   },
   "app.install.phase.downloading_content": {
     "message": "Inhalte werden heruntergeladen"
@@ -3443,38 +3428,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Synchronisierte Ressourcenpakete"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} wurde heruntergeladen. Jetzt neu laden, um sofort zu aktualisieren, oder beim Schließen der Modrinth-App automatisch aktualisieren."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} ist verfügbar. Verwende deinen Paketmanager, um die neuesten Funktionen und Fehlerbehebungen zu installieren!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} ist jetzt verfügbar! Da du ein getaktetes Netzwerk nutzt, haben wir den Download nicht automatisch gestartet."
-  },
-  "app.update-popup.changelog": {
-    "message": "Änderungen"
-  },
-  "app.update-popup.download": {
-    "message": "Herunterladen ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Download abgeschlossen"
-  },
-  "app.update-popup.reload": {
-    "message": "Zum Aktualisieren neu laden"
-  },
-  "app.update-popup.title": {
-    "message": "Aktualisierung verfügbar"
-  },
   "app.update.complete-toast.text": {
     "message": "Hier klicken, um das Änderungsprotokoll anzuzeigen."
   },
   "app.update.complete-toast.title": {
     "message": "Version {version} wurde erfolgreich installiert!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Update konnte nicht heruntergeladen werden: Keine Version verfügbar"
   },
   "app.user.project.install-to-instance": {
     "message": "In Instanz installieren"

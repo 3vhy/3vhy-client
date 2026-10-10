@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
 	CoffeeIcon,
+	DownloadIcon,
 	HeartHandshakeIcon,
 	LanguagesIcon,
 	LightBulbIcon,
@@ -32,6 +33,7 @@ import ThreevhyGlyph from '@/components/ui/brand/ThreevhyGlyph.vue'
 import PrivacySettings from '@/components/ui/settings/account/PrivacySettings.vue'
 import ProfileSettings from '@/components/ui/settings/account/ProfileSettings.vue'
 import SocialSettings from '@/components/ui/settings/account/SocialSettings.vue'
+import UpdateSettings from '@/components/ui/settings/client/UpdateSettings.vue'
 import AppearanceSettings from '@/components/ui/settings/display/AppearanceSettings.vue'
 import BehaviorSettings from '@/components/ui/settings/display/BehaviorSettings.vue'
 import FeatureFlagSettings from '@/components/ui/settings/display/FeatureFlagSettings.vue'
@@ -46,7 +48,7 @@ import {
 	appSettingsModalContextKey,
 	type UnsavedChangesController,
 } from '@/providers/app-settings-modal'
-import { injectAppUpdateDownloadProgress } from '@/providers/download-progress.ts'
+import { appUpdateState } from '@/providers/app-update'
 
 // TODO: Apply COMPONENT_STRUCTURE.md here and extract out common setting option components
 const appSettings = useAppSettings()
@@ -75,7 +77,23 @@ const tabCategories = defineMessages({
 		id: 'app.settings.sidebar.label.instances',
 		defaultMessage: 'Instances',
 	},
+	client: {
+		id: 'app.3vhy.settings.sidebar.label.client',
+		defaultMessage: '3vhy Client',
+	},
 })
+
+const { availableUpdate, downloading: downloadingUpdate, progress: updateProgress } = appUpdateState
+
+const updatesTab = {
+	name: defineMessage({
+		id: 'app.3vhy.settings.tabs.updates',
+		defaultMessage: 'Updates',
+	}),
+	category: tabCategories.client,
+	icon: DownloadIcon,
+	content: UpdateSettings,
+}
 
 const tabs = [
 	{
@@ -170,10 +188,21 @@ const tabs = [
 		icon: MicrochipIcon,
 		content: ResourceManagementSettings,
 	},
+	updatesTab,
 ]
 
+const updatesTabWithBadge = {
+	...updatesTab,
+	badge: defineMessage({
+		id: 'app.3vhy.settings.tabs.updates.new',
+		defaultMessage: 'New',
+	}),
+}
+
 const availableTabs = computed(() =>
-	tabs.filter((tab) => !tab.developerOnly || appSettings.devMode),
+	tabs
+		.filter((tab) => !tab.developerOnly || appSettings.devMode)
+		.map((tab) => (tab === updatesTab && availableUpdate.value ? updatesTabWithBadge : tab)),
 )
 
 const modal = ref<InstanceType<typeof TabbedModal> | null>(null)
@@ -258,8 +287,6 @@ function showSyncedOptions(): void {
 }
 
 defineExpose({ show, showProfile, showFeatureFlags, showSyncedOptions })
-
-const { progress, version: downloadingVersion } = injectAppUpdateDownloadProgress()
 
 const { data: appInfo } = useQuery({
 	queryKey: ['app-info'],
@@ -352,11 +379,11 @@ const messages = defineMessages({
 		<template #footer>
 			<div class="mt-auto text-secondary text-sm">
 				<div class="mb-3">
-					<template v-if="progress > 0 && progress < 1">
+					<template v-if="downloadingUpdate && availableUpdate">
 						<p class="m-0 mb-2">
-							{{ formatMessage(messages.downloading, { version: downloadingVersion }) }}
+							{{ formatMessage(messages.downloading, { version: availableUpdate.version }) }}
 						</p>
-						<ProgressBar :progress="progress" />
+						<ProgressBar :progress="updateProgress" />
 					</template>
 				</div>
 				<p v-if="appSettings.devMode" class="text-brand font-semibold m-0 mb-2">

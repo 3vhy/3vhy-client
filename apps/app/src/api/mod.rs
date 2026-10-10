@@ -7,6 +7,7 @@ pub mod import;
 pub mod install;
 pub mod instance;
 pub mod jre;
+pub mod launcher_update;
 pub mod logs;
 pub mod metadata;
 pub mod minecraft_skins;

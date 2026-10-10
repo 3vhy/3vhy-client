@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Hoofdinstantie"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Herlaad om bij te werken"
-  },
   "app.action-bar.show-downloads": {
     "message": "Actieve downloads weergeven"
   },
@@ -490,18 +487,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Bekijk instantie"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Je moet bijwerken om Modrinth Hosting te gebruiken via de 3vhy Client"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Update aan het downloaden"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Opgewonden Modrinth-bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Update van Modrinth-app vereist"
   },
   "app.install.phase.downloading_content": {
     "message": "Inhoud aan het downloaden"
@@ -3077,38 +3062,11 @@
   "app.synced-packs.load-failed": {
     "message": "Pakketten konden niet worden geladen. Probeer deze te herladen."
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} is klaar met downloaden. Herlaad om nu te updaten, of automatisch wanneer je de 3vhy Client afsluit."
-  },
-  "app.update-popup.body.linux": {
-    "message": "De Modrinth-app v{version} is beschikbaar. Gebruik je pakketbeheerder om bij te werken en zo de nieuwste functies en verbeteringen te krijgen!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} is nu beschikbaar! Omdat je nu op een netwerk met datalimiet zit, is de download niet automatisch gestart."
-  },
-  "app.update-popup.changelog": {
-    "message": "Wijzigingen"
-  },
-  "app.update-popup.download": {
-    "message": "Download ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Downloaden voltooid"
-  },
-  "app.update-popup.reload": {
-    "message": "Herladen om te updaten"
-  },
-  "app.update-popup.title": {
-    "message": "Update beschikbaar"
-  },
   "app.update.complete-toast.text": {
     "message": "Klik hier om het wijzigingenlogboek te bekijken."
   },
   "app.update.complete-toast.title": {
     "message": "Versie {version} is succesvol geïnstalleerd!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Update downloaden mislukt: geen versie beschikbaar"
   },
   "app.user.project.install-to-instance": {
     "message": "Op instantie installeren"

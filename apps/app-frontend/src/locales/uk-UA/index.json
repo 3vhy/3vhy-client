@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Основний примірник"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Перезапустити для оновлення"
-  },
   "app.action-bar.show-downloads": {
     "message": "Показати активні завантаження"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Переглянути примірник"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Вам потрібно оновитися, щоб використовувати Modrinth Hosting через застосунок Modrinth"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Завантажити для оновлення"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Схвильований бот Modrinth"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Потрібне оновлення 3vhy Client"
   },
   "app.install.phase.downloading_content": {
     "message": "Завантаження вмісту"
@@ -3434,38 +3419,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Синхронізовані пакети ресурсів"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} завантажено. Перезапустіть, щоб оновити зараз, або це відбудеться автоматично після закриття застосунку."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} вже доступно. Скористайтеся менеджером пакетів, щоб отримати найновіші функції та виправлення!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} вже доступно! Оскільки ви використовуєте лімітне підключення, ми не завантажили його автоматично."
-  },
-  "app.update-popup.changelog": {
-    "message": "Список змін"
-  },
-  "app.update-popup.download": {
-    "message": "Завантажити ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Завантаження завершено"
-  },
-  "app.update-popup.reload": {
-    "message": "Перезавантаження для оновлення"
-  },
-  "app.update-popup.title": {
-    "message": "Доступне оновлення"
-  },
   "app.update.complete-toast.text": {
     "message": "Натисніть тут, щоб переглянути список змін."
   },
   "app.update.complete-toast.title": {
     "message": "Версію {version} успішно встановлено!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Не вдалося завантажити оновлення: немає доступної версії"
   },
   "app.user.project.install-to-instance": {
     "message": "Установити в примірник"

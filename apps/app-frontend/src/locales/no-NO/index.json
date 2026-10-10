@@ -104,9 +104,6 @@
   "app.action-bar.primary-instance": {
     "message": "Primærtilfelle"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Last inn på nytt for å oppdatere"
-  },
   "app.action-bar.show-downloads": {
     "message": "Vis aktive nedlastninger"
   },

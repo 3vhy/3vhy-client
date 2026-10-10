@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Primärinstans"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Uppdatera (ladda om)"
-  },
   "app.action-bar.show-downloads": {
     "message": "Visa aktiva nedladdningar"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Visa instans"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Du behöver uppdatera för att använda Modrinth Hosting genom 3vhy Client"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Ladda ner för att uppdatera"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Exalterad Modrinth-bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Client-uppdatering krävs"
   },
   "app.install.phase.downloading_content": {
     "message": "Laddar ner innehåll"
@@ -3002,38 +2987,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Synkroniserade resurspaket"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} har laddats ner. Ladda om för att uppdatera nu, eller automatiskt när du stänger 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} är tillgänglig. Använd din pakethanterare för att uppdatera och få tillgång till de senaste funktionerna och buggfixarna!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} är nu tillgänglig! Eftersom du använder ett nätverk med datatrafikbegränsningar har vi inte laddat ner det automatiskt."
-  },
-  "app.update-popup.changelog": {
-    "message": "Ändringslogg"
-  },
-  "app.update-popup.download": {
-    "message": "Ladda ner ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Nedladdning slutförd"
-  },
-  "app.update-popup.reload": {
-    "message": "Ladda om för att uppdatera"
-  },
-  "app.update-popup.title": {
-    "message": "Uppdatering tillgänglig"
-  },
   "app.update.complete-toast.text": {
     "message": "Tryck här för att visa ändringsloggen."
   },
   "app.update.complete-toast.title": {
     "message": "Version {version} har installerats!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Kunde inte ladda ner uppdatering: ingen version tillgänglig"
   },
   "app.user.project.install-to-instance": {
     "message": "Installera till instans"

@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Birincil kurulum"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Güncellemek için yeniden yükle"
-  },
   "app.action-bar.show-downloads": {
     "message": "Aktif indirmeleri göster"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Kurulumu göster"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Modrinth Hosting'i 3vhy Client'ten kullanmak için güncellemeniz gerekiyor"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Güncellemeyi indir"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Heyecanlı Modrinth Botu"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Client güncellemesi gerekli"
   },
   "app.install.phase.downloading_content": {
     "message": "İçerik indiriliyor"
@@ -2762,38 +2747,11 @@
   "app.sync-instances-update.skip": {
     "message": "Atla"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} indirildi. Güncellemek için yeniden başlatın veya 3vhy Client’i kapattığınızda otomatik olarak güncellenecektir."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} yayımlandı. En yeni özellikler ve hata düzeltmeleri için paket yöneticin üzerinden güncelle!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} mevcut! Kısıtlı bağlantıda olduğunuzdan otomatik olarak indirmedik."
-  },
-  "app.update-popup.changelog": {
-    "message": "Yama Notları"
-  },
-  "app.update-popup.download": {
-    "message": "İndir ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "İndirme tamamlandı"
-  },
-  "app.update-popup.reload": {
-    "message": "Güncellemek için yeniden yükle"
-  },
-  "app.update-popup.title": {
-    "message": "Güncelleme mevcut"
-  },
   "app.update.complete-toast.text": {
     "message": "Yama notlarını görüntülemek için buraya tıklayın."
   },
   "app.update.complete-toast.title": {
     "message": "{version} sürümü başarıyla kuruldu!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Güncelleme indirilemedi: sürüm mevcut değil"
   },
   "app.user.project.install-to-instance": {
     "message": "Bu örneğe yükle"

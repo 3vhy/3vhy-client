@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Istanza principale"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Riavvia"
-  },
   "app.action-bar.show-downloads": {
     "message": "Mostra i download attivi"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Mostra istanza"
-  },
-  "app.hosting.update-required.description": {
-    "message": "È necessario aggiornare l'app per usare Modrinth Hosting"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Scarica per aggiornare"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Modrinth Bot emozionato"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Aggiornamento richiesto"
   },
   "app.install.phase.downloading_content": {
     "message": "Download dei contenuti"
@@ -3437,38 +3422,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Pacchetti di risorse sincronizzati"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} è stata scaricata. Riavvia per aggiornare ora, o avverrà in automatico alla chiusura dell'app."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} è disponibile. Usa il tuo gestore di pacchetti per aggiornare e ricevere le novità più recenti!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} è ora disponibile! Poiché sei su una rete a consumo, non l'abbiamo scaricata automaticamente."
-  },
-  "app.update-popup.changelog": {
-    "message": "Novità"
-  },
-  "app.update-popup.download": {
-    "message": "Scarica ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Download completato"
-  },
-  "app.update-popup.reload": {
-    "message": "Riavvia"
-  },
-  "app.update-popup.title": {
-    "message": "Aggiornamento disponibile"
-  },
   "app.update.complete-toast.text": {
     "message": "Consulta qui le ultime novità in inglese."
   },
   "app.update.complete-toast.title": {
     "message": "La versione {version} è stata installata con successo!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Impossibile scaricare l'aggiornamento: non sono disponibili"
   },
   "app.user.project.install-to-instance": {
     "message": "Installa nell'istanza"

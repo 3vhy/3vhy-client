@@ -104,9 +104,6 @@
   "app.action-bar.primary-instance": {
     "message": "אקסמפלר ראשי"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "יש לתרענן כדי לעדכן"
-  },
   "app.action-bar.show-downloads": {
     "message": "הצג הורדות פעילות"
   },
@@ -400,18 +397,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "הצג התקנה"
-  },
-  "app.hosting.update-required.description": {
-    "message": "עליך לעדכן בכדי להשתמש ב- Modrinth Hosting דרך אפליקציית ה Modrinth"
-  },
-  "app.hosting.update-required.download": {
-    "message": "הורד על מנת לעדכן"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "רובוט Modrinth מתרגש"
-  },
-  "app.hosting.update-required.title": {
-    "message": "אפליקציית ה- Modrinth דורשת עדכון"
   },
   "app.install.phase.downloading_content": {
     "message": "מוריד תוכן"
@@ -1477,27 +1462,6 @@
   },
   "app.skins.modal.save-skin-button": {
     "message": "שמור סקין"
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} סיימה את תהליך ההורדה. יש לרענן כדי לעדכן עכשיו, או באופן אוטומטי בעת סגירת האפליקציה."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} זמין. יש להשתמש במנהל חבילות שלך כדי לעדכן בשביל התכונות החדשות ותיקונים!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} זמינה עכשיו! בגלל החיבור לפי שימוש, לא הורדנו אותה אוטומטית."
-  },
-  "app.update-popup.changelog": {
-    "message": "יומן שינויים"
-  },
-  "app.update-popup.download": {
-    "message": "הורדה ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "הורדה הושלמה"
-  },
-  "app.update-popup.title": {
-    "message": "עדכון זמין"
   },
   "app.update.complete-toast.text": {
     "message": "לחיצה כדי לראות את יומן השינויים."

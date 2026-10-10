@@ -79,6 +79,14 @@ fn main() {
                     ),
             )
             .plugin(
+                "launcher-update",
+                InlinedPlugin::new()
+                    .commands(&["check_for_3vhy_update", "install_3vhy_update"])
+                    .default_permission(
+                        DefaultPermissionRule::AllowAllCommands,
+                    ),
+            )
+            .plugin(
                 "logs",
                 InlinedPlugin::new()
                     .commands(&[

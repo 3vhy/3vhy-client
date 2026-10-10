@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Instância principal"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Recarregar para atualizar"
-  },
   "app.action-bar.show-downloads": {
     "message": "Exibir downloads ativos"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Ver instância"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Você precisa atualizar para usar o Modrinth Hosting através do 3vhy Client"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Baixar para atualizar"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Modrinth Bot animado"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Atualização do 3vhy Client necessária"
   },
   "app.install.phase.downloading_content": {
     "message": "Instalando conteúdo"
@@ -3443,38 +3428,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Pacotes de recursos sincronizados"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "O 3vhy Client v{version} já foi instalado. Recarregue para atualizar agora ou ela será feita automaticamente ao fechar o 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "O 3vhy Client v{version} está disponível. Use o gerenciador de pacotes para atualizar para obter novos recursos e correções!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "O 3vhy Client v{version} já está disponível! Já que sua rede é limitada, não a instalamos automaticamente."
-  },
-  "app.update-popup.changelog": {
-    "message": "Mudanças"
-  },
-  "app.update-popup.download": {
-    "message": "Instalar ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Instalação concluída"
-  },
-  "app.update-popup.reload": {
-    "message": "Recarregar para atualizar"
-  },
-  "app.update-popup.title": {
-    "message": "Atualização disponível"
-  },
   "app.update.complete-toast.text": {
     "message": "Clique aqui para ver as mudanças."
   },
   "app.update.complete-toast.title": {
     "message": "Versão {version} instalada!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Falha ao baixar atualização: nenhuma versão disponível"
   },
   "app.user.project.install-to-instance": {
     "message": "Instalar para instância"

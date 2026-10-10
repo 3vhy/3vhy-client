@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Główna instancja"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Załaduj ponownie, aby zaktualizować"
-  },
   "app.action-bar.show-downloads": {
     "message": "Pokaż aktywne pobrania"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Pokaż instancję"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Musisz pobrać aktualizacje, by móc korzystać z Modrinth Hosting poprzez 3vhy Client"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Pobierz aktualizację"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Podekscytowany Modrinth Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Wymagana aktualizacja 3vhy Client"
   },
   "app.install.phase.downloading_content": {
     "message": "Pobieranie zawartości"
@@ -3431,38 +3416,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Synchronizowane paczki zasobów"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "Wersja 3vhy Client v{version} została pobrana. Załaduj ponownie, żeby zaktualizować teraz, albo automatycznie, gdy zamkniesz 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "Wersja 3vhy Client v{version} jest dostępna. Pobierz aktualizację poprzez menedżer pakietów, by uzyskać najnowsze funkcje i poprawki!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "Wersja 3vhy Client v{version} jest dostępna! Skoro korzystasz z sieci taryfowej, nie pobraliśmy jej automatycznie."
-  },
-  "app.update-popup.changelog": {
-    "message": "Dziennik zmian"
-  },
-  "app.update-popup.download": {
-    "message": "Pobierz ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Pobieranie ukończone"
-  },
-  "app.update-popup.reload": {
-    "message": "Załaduj ponownie, by zaktualizować"
-  },
-  "app.update-popup.title": {
-    "message": "Dostępna aktualizacja"
-  },
   "app.update.complete-toast.text": {
     "message": "Kliknij, by pokazać dziennik zmian."
   },
   "app.update.complete-toast.title": {
     "message": "Wersja {version} została pomyślnie zainstalowana!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Nie udało się pobrać aktualizacji: brak dostępnej wersji"
   },
   "app.user.project.install-to-instance": {
     "message": "Zainstaluj do instancji"

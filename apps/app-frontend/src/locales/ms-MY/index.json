@@ -95,9 +95,6 @@
   "app.action-bar.primary-instance": {
     "message": "Pemasangan utama"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Muat semula untuk kemas kini"
-  },
   "app.action-bar.show-more-running-instances": {
     "message": "Tunjukkan lebih banyak pemasangan yang berjalan"
   },
@@ -1603,27 +1600,6 @@
   },
   "app.synced-content.desync.keep": {
     "message": "Kekalkan"
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} sudah selesai dimuat turun! Muat semula untuk kemas kini sekarang, atau kemas kini secara automatik apabila anda menutup 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} tersedia. Gunakan pengurus pakej anda untuk mengemas kini dan mendapatkan ciri-ciri dan pembetulan terkini!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} kini tersedia! Memandangkan anda sedang menggunakan rangkaian bermeter, kami tidak memuat turunnya secara automatik."
-  },
-  "app.update-popup.changelog": {
-    "message": "Log perubahan"
-  },
-  "app.update-popup.download": {
-    "message": "Muat turun ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Muat turun selesai"
-  },
-  "app.update-popup.title": {
-    "message": "Kemas kini tersedia"
   },
   "app.update.complete-toast.text": {
     "message": "Klik di sini untuk melihat log perubahan."

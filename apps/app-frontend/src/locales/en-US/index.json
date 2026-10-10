@@ -161,6 +161,75 @@
   "app.3vhy.servers.title": {
     "message": "Servers"
   },
+  "app.3vhy.settings.sidebar.label.client": {
+    "message": "3vhy Client"
+  },
+  "app.3vhy.settings.tabs.updates": {
+    "message": "Updates"
+  },
+  "app.3vhy.settings.tabs.updates.new": {
+    "message": "New"
+  },
+  "app.3vhy.settings.updates.automatic": {
+    "message": "3vhy Client looks for updates when it starts and every few hours. Updating also brings the latest in-game 3vhy mod to your instances."
+  },
+  "app.3vhy.settings.updates.check": {
+    "message": "Check for updates"
+  },
+  "app.3vhy.settings.updates.check-failed": {
+    "message": "Couldn't check for updates"
+  },
+  "app.3vhy.settings.updates.checked": {
+    "message": "Checked {time}"
+  },
+  "app.3vhy.settings.updates.checking": {
+    "message": "Checking for updates…"
+  },
+  "app.3vhy.settings.updates.released": {
+    "message": "Released {date}"
+  },
+  "app.3vhy.settings.updates.title": {
+    "message": "3vhy Client"
+  },
+  "app.3vhy.settings.updates.up-to-date": {
+    "message": "You're on the latest version"
+  },
+  "app.3vhy.settings.updates.version": {
+    "message": "Version {version}"
+  },
+  "app.3vhy.settings.updates.view-on-github": {
+    "message": "View on GitHub"
+  },
+  "app.3vhy.settings.updates.whats-new": {
+    "message": "What's new"
+  },
+  "app.3vhy.update.available": {
+    "message": "3vhy Client {version} is available"
+  },
+  "app.3vhy.update.download-progress": {
+    "message": "{downloaded} of {total}"
+  },
+  "app.3vhy.update.download-size": {
+    "message": "{size} download"
+  },
+  "app.3vhy.update.downloading": {
+    "message": "Downloading 3vhy Client {version}"
+  },
+  "app.3vhy.update.includes-mod": {
+    "message": "Includes the latest in-game 3vhy mod, so your instances get it too."
+  },
+  "app.3vhy.update.later": {
+    "message": "Later"
+  },
+  "app.3vhy.update.restarting": {
+    "message": "Restarting…"
+  },
+  "app.3vhy.update.restarting-hint": {
+    "message": "3vhy Client closes to install the update and opens again when it's done."
+  },
+  "app.3vhy.update.update-now": {
+    "message": "Update now"
+  },
   "app.action-bar.downloading-java": {
     "message": "Downloading Java {version}"
   },
@@ -268,9 +337,6 @@
   },
   "app.action-bar.primary-instance": {
     "message": "Primary instance"
-  },
-  "app.action-bar.reload-to-update": {
-    "message": "Reload to update"
   },
   "app.action-bar.show-downloads": {
     "message": "Show active downloads"
@@ -667,18 +733,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "View instance"
-  },
-  "app.hosting.update-required.description": {
-    "message": "You need to update to use Modrinth Hosting through 3vhy Client"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Download to update"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Excited Modrinth Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Client update required"
   },
   "app.install.phase.downloading_content": {
     "message": "Downloading content"
@@ -3626,38 +3680,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Synced resource packs"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} has finished downloading. Reload to update now, or automatically when you close 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} is available. Use your package manager to update for the latest features and fixes!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} is available now! Since you're on a metered network, we didn't automatically download it."
-  },
-  "app.update-popup.changelog": {
-    "message": "Changelog"
-  },
-  "app.update-popup.download": {
-    "message": "Download ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Download complete"
-  },
-  "app.update-popup.reload": {
-    "message": "Reload to update"
-  },
-  "app.update-popup.title": {
-    "message": "Update available"
-  },
   "app.update.complete-toast.text": {
     "message": "Click here to view the changelog."
   },
   "app.update.complete-toast.title": {
     "message": "Version {version} was successfully installed!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Failed to download update: no version available"
   },
   "app.user.project.install-to-instance": {
     "message": "Install to instance"

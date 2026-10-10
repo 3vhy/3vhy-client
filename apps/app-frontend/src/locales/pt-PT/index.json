@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Instância principal"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Recarregar para atualizar"
-  },
   "app.action-bar.show-downloads": {
     "message": "Mostrar transferências ativas"
   },
@@ -490,9 +487,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Ver instância"
-  },
-  "app.hosting.update-required.title": {
-    "message": "É necessária uma atualização da aplicação Modrinth"
   },
   "app.install.phase.downloading_content": {
     "message": "Baixando conteúdo"
@@ -1219,27 +1213,6 @@
   },
   "app.synced-content.delete.override-description": {
     "message": "Pode removê-lo apenas desta instância ou de todas as instâncias sincronizadas. Se o remover apenas desta instância, as substituições serão ativadas e esta instância deixará de receber as alterações sincronizadas para estes tipos de conteúdo."
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} acabou de ser transferida. Recarrega para atualizar agora, ou automaticamente quando fechares a 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} está disponível. Usa o teu gestor de pacotes para atualizar e receber as correções e recursos mais recentes!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} está disponível! Como estás numa rede com tráfego limitado, não a transferimos automaticamente."
-  },
-  "app.update-popup.changelog": {
-    "message": "Lista de alterações"
-  },
-  "app.update-popup.download": {
-    "message": "Transferir ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Transferência concluída"
-  },
-  "app.update-popup.title": {
-    "message": "Atualização disponível"
   },
   "app.update.complete-toast.text": {
     "message": "Clica aqui para ver a lista de alterações."

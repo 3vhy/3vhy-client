@@ -104,9 +104,6 @@
   "app.action-bar.primary-instance": {
     "message": "デフォルトのインスタンス"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "再読み込みしてアップデート"
-  },
   "app.action-bar.show-downloads": {
     "message": "進行中のダウンロードを表示"
   },
@@ -487,18 +484,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "インスタンスを表示"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Modrinth Hostingを利用するには、3vhy Clientを更新してください"
-  },
-  "app.hosting.update-required.download": {
-    "message": "ダウンロードして更新"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "ワクワクしているModrinth Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Clientの更新が必要です"
   },
   "app.install.phase.downloading_content": {
     "message": "コンテンツをダウンロード中"
@@ -2489,38 +2474,11 @@
   "app.sync-instances-update.skip": {
     "message": "スキップ"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} のダウンロードが完了しました。今すぐ更新するには再読み込みするか、3vhy Clientを閉じる際に自動更新されます。"
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} が利用可能です。最新の機能と修正プログラムを入手するには、パッケージマネージャーを使用して更新してください！"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} が利用可能になりました！お使いのネットワークが従量制のため、自動ダウンロードは行っておりません。"
-  },
-  "app.update-popup.changelog": {
-    "message": "更新履歴"
-  },
-  "app.update-popup.download": {
-    "message": "ダウンロード ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "ダウンロード完了"
-  },
-  "app.update-popup.reload": {
-    "message": "再読み込みして更新"
-  },
-  "app.update-popup.title": {
-    "message": "アップデートが利用可能です"
-  },
   "app.update.complete-toast.text": {
     "message": "クリックすると更新履歴を表示できます。"
   },
   "app.update.complete-toast.title": {
     "message": "バージョン {version} が正常にインストールされました！"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "更新のダウンロードに失敗しました: 利用可能なバージョンがありません"
   },
   "app.user.project.install-to-instance": {
     "message": "インスタンスにインストール"

@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Primární instance"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Znovu načíst pro aktualizaci"
-  },
   "app.action-bar.show-downloads": {
     "message": "Zobrazit probíhající stahování"
   },
@@ -442,18 +439,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Zobrazit instanci"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Musíte aktualizovat Modrinth Hosting přes 3vhy Client"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Stáhnout novou aktualizaci"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Nadšený Modrinth Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Client potřebuje být aktualizovaná"
   },
   "app.install.phase.downloading_content": {
     "message": "Stahování obsahu"
@@ -1826,38 +1811,11 @@
   "app.survey.title": {
     "message": "Ahoj Modrinth uživateli!"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "Stahování 3vhy Client v{version} bylo dokončeno. Aktualizujte ji znovunačtením nebo se automaticky aktualizuje po zavření."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} je k dispozici. Aktualizujte ji pomocí svého správce balíčků, abyste získali nejnovější funkce a opravy!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} je nyní k dispozici! Protože jste v měřené síti, nebyla stažena automaticky."
-  },
-  "app.update-popup.changelog": {
-    "message": "Seznam změn"
-  },
-  "app.update-popup.download": {
-    "message": "Stáhnout ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Stahování bylo dokončeno"
-  },
-  "app.update-popup.reload": {
-    "message": "Znovu načíst pro aktualizaci"
-  },
-  "app.update-popup.title": {
-    "message": "Aktualizace k dispozici"
-  },
   "app.update.complete-toast.text": {
     "message": "Kliknutím sem zobrazíte seznam změn."
   },
   "app.update.complete-toast.title": {
     "message": "Verze {version} byla úspěšně nainstalována!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Nepodařilo se stáhnout aktualizaci: není k dispozici žádná verze"
   },
   "app.user.project.install-to-instance": {
     "message": "Instalovat do instance"

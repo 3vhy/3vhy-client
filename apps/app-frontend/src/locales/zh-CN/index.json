@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "主实例"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "重启以完成更新"
-  },
   "app.action-bar.show-downloads": {
     "message": "查看当前的下载项目列表"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "查看实例"
-  },
-  "app.hosting.update-required.description": {
-    "message": "你需要更新才能通过 3vhy Client 使用 Modrinth Hosting"
-  },
-  "app.hosting.update-required.download": {
-    "message": "更新升级"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "兴奋的 Modrinth Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "需要更新 3vhy Client"
   },
   "app.install.phase.downloading_content": {
     "message": "正在下载内容"
@@ -3443,38 +3428,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "同步的资源包"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} 更新已下载完成！立即重启更新，或退出时自动安装。"
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} 现已发布。请使用你的软件包管理器进行更新，获取最新功能与修复！"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} 现已发布！由于你正在使用按流量计费的网络，该更新未自动下载。"
-  },
-  "app.update-popup.changelog": {
-    "message": "更新日志"
-  },
-  "app.update-popup.download": {
-    "message": "下载（{size}）"
-  },
-  "app.update-popup.download-complete": {
-    "message": "下载完成"
-  },
-  "app.update-popup.reload": {
-    "message": "重新加载以更新"
-  },
-  "app.update-popup.title": {
-    "message": "有可用的更新"
-  },
   "app.update.complete-toast.text": {
     "message": "点击此处查看更新日志。"
   },
   "app.update.complete-toast.title": {
     "message": "版本 {version} 已成功安装！"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "下载更新失败：无可用版本"
   },
   "app.user.project.install-to-instance": {
     "message": "在实例上安装"

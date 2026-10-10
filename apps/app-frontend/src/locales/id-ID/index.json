@@ -101,9 +101,6 @@
   "app.action-bar.primary-instance": {
     "message": "Instans utama"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Muat ulang untuk memperbarui"
-  },
   "app.action-bar.show-downloads": {
     "message": "Lihat unduhan yang sedang berlangsung"
   },
@@ -337,9 +334,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Lihat instans"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Client membutuhkan pembaruan"
   },
   "app.install.phase.downloading_content": {
     "message": "Mengunduh konten"
@@ -682,30 +676,6 @@
   },
   "app.skins.title": {
     "message": "Pemilih rupa"
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} telah selesai mengunduh. Muat ulang untuk memperbarui sekarang, atau secara otomatis saat Anda menutup 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client v{version} tersedia. Gunakan pengelola paket Anda untuk memperbarui dan mendapatkan fitur-fitur dan perbaikan terbaru!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client v{version} sudah tersedia! Karena Anda saat ini sedang berada dalam jaringan terukur, kami tidak mengunduhnya secara otomatis."
-  },
-  "app.update-popup.changelog": {
-    "message": "Catatan perubahan"
-  },
-  "app.update-popup.download": {
-    "message": "Unduh ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Selesai mengunduh"
-  },
-  "app.update-popup.reload": {
-    "message": "Muat ulang untuk memperbarui"
-  },
-  "app.update-popup.title": {
-    "message": "Pembaruan tersedia"
   },
   "app.update.complete-toast.text": {
     "message": "Klik di sini untuk melihat catatan perubahan."

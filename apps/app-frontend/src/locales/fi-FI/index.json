@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Ensisijainen instanssi"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Lataa uudelleen päivittääksesi"
-  },
   "app.action-bar.show-downloads": {
     "message": "Näytä aktiiviset lataukset"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Näytä instanssi"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Modrinth -ohjelma tulee päivittää käyttääksesi Modrinth Hosting -palvelua"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Päivitä"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Innokas Modrinth -botti"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Modrinth -ohjelman päivitys vaaditaan"
   },
   "app.install.phase.downloading_content": {
     "message": "Ladataan sisältöä"
@@ -1045,30 +1030,6 @@
   },
   "app.skins.toggle-ears-features-on": {
     "message": "Ota käyttöön"
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client versio {version} on ladattu. Voit käynnistää sovelluksen uudelleen päivittääksesi heti tai antaa päivityksen asentua automaattisesti, kun suljet 3vhy Clientin."
-  },
-  "app.update-popup.body.linux": {
-    "message": "3vhy Client versio {version} on saatavilla. Käytä paketinhallintasi ja päivitä käyttääksesi uusimpia ominaisuuksia ja korjauksia!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "3vhy Client versio {version} on nyt saatavilla! Koska käytät käytön mukaan laskutettavaa verkkoa, emme ladannut sitä automaattisesti."
-  },
-  "app.update-popup.changelog": {
-    "message": "Muutosloki"
-  },
-  "app.update-popup.download": {
-    "message": "Lataa ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Lataus valmis"
-  },
-  "app.update-popup.reload": {
-    "message": "Lataa uudelleen päivittääksesi"
-  },
-  "app.update-popup.title": {
-    "message": "Päivitys saatavilla"
   },
   "app.update.complete-toast.text": {
     "message": "Klikkaa tästä nähdäksesi muutoslokin."

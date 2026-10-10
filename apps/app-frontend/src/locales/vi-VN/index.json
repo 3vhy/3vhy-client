@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Bản cài đặt chính"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Tải lại để cập nhật"
-  },
   "app.action-bar.show-downloads": {
     "message": "Hiển thị các lượt tải xuống đang hoạt động"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "Xem bản cài đặt"
-  },
-  "app.hosting.update-required.description": {
-    "message": "Bạn cần cập nhật để sử dụng Modrinth Hosting qua Ứng dụng Modrinth"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Tải xuống để cập nhật"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "Bot Modrinth đang phấn khích"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Yêu cầu cập nhật Ứng dụng Modrinth"
   },
   "app.install.phase.downloading_content": {
     "message": "Đang tải nội dung"
@@ -3443,38 +3428,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "Gói tài nguyên đã đồng bộ"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "Ứng dụng Modrinth v{version} đã tải xong. Tải lại để cập nhật ngay hoặc ứng dụng sẽ tự cập nhật khi bạn đóng Modrinth."
-  },
-  "app.update-popup.body.linux": {
-    "message": "Ứng dụng Modrinth v{version} đã có sẵn. Hãy dùng trình quản lý gói để cập nhật và nhận các tính năng cùng bản sửa lỗi mới nhất!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "Ứng dụng Modrinth v{version} hiện đã có sẵn! Vì bạn đang dùng mạng tính phí theo lưu lượng nên chúng tôi không tự động tải xuống."
-  },
-  "app.update-popup.changelog": {
-    "message": "Nhật ký thay đổi"
-  },
-  "app.update-popup.download": {
-    "message": "Tải xuống ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Tải xuống hoàn tất"
-  },
-  "app.update-popup.reload": {
-    "message": "Tải lại để cập nhật"
-  },
-  "app.update-popup.title": {
-    "message": "Có bản cập nhật"
-  },
   "app.update.complete-toast.text": {
     "message": "Nhấp vào đây để xem nhật ký thay đổi."
   },
   "app.update.complete-toast.title": {
     "message": "Đã cài đặt thành công phiên bản {version}!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "Không thể tải bản cập nhật: không có phiên bản khả dụng"
   },
   "app.user.project.install-to-instance": {
     "message": "Cài vào bản cài đặt"

@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "주요 인스턴스"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "다시 불러와 업데이트"
-  },
   "app.action-bar.show-downloads": {
     "message": "다운로드 목록 보기"
   },
@@ -493,18 +490,6 @@
   },
   "app.home.jump-back-in.view-instance": {
     "message": "인스턴스 보기"
-  },
-  "app.hosting.update-required.description": {
-    "message": "업데이트해야 Modrinth 앱을 통해 Modrinth 호스팅을 사용할 수 있습니다"
-  },
-  "app.hosting.update-required.download": {
-    "message": "다운로드하여 업데이트"
-  },
-  "app.hosting.update-required.rinthbot-alt": {
-    "message": "신난 Modrinth Bot"
-  },
-  "app.hosting.update-required.title": {
-    "message": "3vhy Client 업데이트 필요"
   },
   "app.install.phase.downloading_content": {
     "message": "콘텐츠 다운로드 중"
@@ -3443,38 +3428,11 @@
   "app.synced-packs.resource-packs.title": {
     "message": "동기화된 리소스 팩"
   },
-  "app.update-popup.body.download-complete": {
-    "message": "3vhy Client v{version} 다운로드가 완료되었습니다. 새로고침하거나 3vhy Client을 종료하면 자동으로 업데이트됩니다."
-  },
-  "app.update-popup.body.linux": {
-    "message": "Modrinth 앱 v{version}을 사용할 수 있습니다. 최신 기능과 오류 수정을 적용하려면 패키지 관리자를 통해 업데이트하세요!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "Modrinth 앱 v{version}을 지금 사용할 수 있습니다! 데이터 통신 연결을 사용 중이므로, 자동으로 다운로드하지 않았습니다."
-  },
-  "app.update-popup.changelog": {
-    "message": "변경 내역"
-  },
-  "app.update-popup.download": {
-    "message": "다운로드 ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "다운로드 완료"
-  },
-  "app.update-popup.reload": {
-    "message": "새로고침하여 업데이트"
-  },
-  "app.update-popup.title": {
-    "message": "업데이트 가능"
-  },
   "app.update.complete-toast.text": {
     "message": "변경 내역을 보려면 클릭하세요."
   },
   "app.update.complete-toast.title": {
     "message": "{version} 버전이 성공적으로 설치되었습니다!"
-  },
-  "app.update.download-error.missing-version": {
-    "message": "업데이트 다운로드 실패: 사용 가능한 버전 없음"
   },
   "app.user.project.install-to-instance": {
     "message": "인스턴스에 설치"

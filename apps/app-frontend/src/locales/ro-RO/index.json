@@ -107,9 +107,6 @@
   "app.action-bar.primary-instance": {
     "message": "Instanță principală"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Reîncarcă pentru a actualiza"
-  },
   "app.action-bar.show-downloads": {
     "message": "Vezi descărcările active"
   },
@@ -488,15 +485,6 @@
   "app.home.jump-back-in.view-instance": {
     "message": "Vizualizează instanța"
   },
-  "app.hosting.update-required.description": {
-    "message": "Trebuie să efectuați o actualizare pentru a putea utiliza serviciul Modrinth Hosting prin intermediul aplicației Modrinth"
-  },
-  "app.hosting.update-required.download": {
-    "message": "Descărcați pentru a actualiza"
-  },
-  "app.hosting.update-required.title": {
-    "message": "Este necesară actualizarea aplicației Modrinth"
-  },
   "app.install.phase.downloading_content": {
     "message": "Descărcarea conținutului"
   },
@@ -625,27 +613,6 @@
   },
   "app.settings.tabs.resource-management": {
     "message": "Administrare resurse"
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "Aplicația Modrinth v{version} a terminat descărcarea. Reîncărcați pentru a actualiza acum sau automat când închideți aplicația Modrinth."
-  },
-  "app.update-popup.body.linux": {
-    "message": "Aplicația Modrinth v{version} este disponibil. Utilizați managerul de pachete pentru a actualiza pentru cele mai recente funcții și remedieri!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "Aplicația Modrinth v{version} este disponibil acum! Deoarece sunteți într-o rețea cu contorizare, nu am descărcat-o automat."
-  },
-  "app.update-popup.changelog": {
-    "message": "Jurnalul modificărilor"
-  },
-  "app.update-popup.download": {
-    "message": "Descărcați ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Descărcare finalizată"
-  },
-  "app.update-popup.title": {
-    "message": "Actualizare disponibilă"
   },
   "app.update.complete-toast.text": {
     "message": "Apasă aici pentru a vedea istoricul de modificări."

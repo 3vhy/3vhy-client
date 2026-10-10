@@ -53,9 +53,6 @@
   "app.action-bar.primary-instance": {
     "message": "Pangunahing instansiya"
   },
-  "app.action-bar.reload-to-update": {
-    "message": "Mag-reload upang ma-update"
-  },
   "app.action-bar.show-more-running-instances": {
     "message": "Ipakita ang mas marami pang tumatakbong instansiya"
   },
@@ -283,27 +280,6 @@
   },
   "app.skins.section.modrinth-pride": {
     "message": "Modrinth Pride"
-  },
-  "app.update-popup.body.download-complete": {
-    "message": "Tapos nang ma-download ang 3vhy Client v{version}. Mag-reload upang ma-update ngayon, o awtomatiko sa pagsara ng 3vhy Client."
-  },
-  "app.update-popup.body.linux": {
-    "message": "Magagamit na ngayon ang 3vhy Client v{version}. Gamitin ang iyong package manager upang i-update sa pinabagong tampok at pag-aayos!"
-  },
-  "app.update-popup.body.metered": {
-    "message": "Magagamit na ngayon ang 3vhy Client v{version}! Hindi namin dinanload kaagad dahil naka-metro ang inyong network."
-  },
-  "app.update-popup.changelog": {
-    "message": "Changelog"
-  },
-  "app.update-popup.download": {
-    "message": "I-download ({size})"
-  },
-  "app.update-popup.download-complete": {
-    "message": "Nakumpleto ang pagdownload"
-  },
-  "app.update-popup.title": {
-    "message": "May bagong update"
   },
   "app.update.complete-toast.text": {
     "message": "Dito pumindot upang matingnan ang changelog."

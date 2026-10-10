@@ -82,6 +82,7 @@ reqwest = { workspace = true, features = [
 ] }
 rgb = { workspace = true }
 same-file = { workspace = true }
+semver = "1.0.28"
 serde = { workspace = true, features = ["derive", "rc"] }
 serde-binhum = { workspace = true }
 serde_ini = { workspace = true }

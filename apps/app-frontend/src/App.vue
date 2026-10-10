@@ -59,7 +59,6 @@ import {
 	TeleportOverflowMenu,
 	TooltipDirective,
 	useDebugLogger,
-	useFormatBytes,
 	useHostingIntercom,
 	UserRoleIcon,
 	useVIntl,
@@ -73,7 +72,6 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { type } from '@tauri-apps/plugin-os'
-import { saveWindowState, StateFlags } from '@tauri-apps/plugin-window-state'
 import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
@@ -84,10 +82,10 @@ import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
 import ErrorModal from '@/components/ui/ErrorModal.vue'
 import FriendsList from '@/components/ui/friends/FriendsList.vue'
-import HostingUpdateRequired from '@/components/ui/HostingUpdateRequired.vue'
 import AddServerToInstanceModal from '@/components/ui/install_flow/AddServerToInstanceModal.vue'
 import UnknownPackWarningModal from '@/components/ui/install_flow/UnknownPackWarningModal.vue'
 import IconEditorModal from '@/components/ui/instance_settings/icon-editor-modal/index.vue'
+import LauncherUpdateToast from '@/components/ui/launcher-update/LauncherUpdateToast.vue'
 import MinecraftAuthErrorModal from '@/components/ui/minecraft-auth-error-modal/MinecraftAuthErrorModal.vue'
 import MinecraftRequiredModal from '@/components/ui/minecraft-required-modal/MinecraftRequiredModal.vue'
 import AppSettingsModal from '@/components/ui/modal/AppSettingsModal.vue'
@@ -160,17 +158,7 @@ import { syncedPackQueryOptions } from '@/helpers/synced-packs'
 import { hasActivePride26Midas, hasMidasBadge } from '@/helpers/user-campaigns.ts'
 import { get_user_preferences } from '@/helpers/user-preferences.ts'
 import { parse_modrinth_user_link } from '@/helpers/users'
-import {
-	areUpdatesEnabled,
-	enqueueUpdateForInstallation,
-	getOS,
-	getUpdateSize,
-	isDev,
-	isNetworkMetered,
-	setRestartAfterPendingUpdate,
-	showInstanceInFolder,
-	showLauncherLogsFolder,
-} from '@/helpers/utils.js'
+import { getOS, isDev, showInstanceInFolder, showLauncherLogsFolder } from '@/helpers/utils.js'
 import { start_join_server, start_join_singleplayer_world } from '@/helpers/worlds.ts'
 import i18n, { setLocale } from '@/i18n.config'
 import {
@@ -180,20 +168,12 @@ import {
 } from '@/pages/instance/query-options'
 import {
 	appUpdateState,
-	downloadAvailableAppUpdate,
-	getNextAppUpdatePopupTime,
-	installAvailableAppUpdate,
-	markAppUpdateActionable,
-	markAppUpdatePopupShown,
-	openAppUpdateChangelog,
-	setAppUpdateActions,
+	checkForAppUpdate,
+	isAppUpdateSnoozed,
+	trackAppUpdateDownload,
 } from '@/providers/app-update.ts'
 import { createBreadcrumbManager, provideBreadcrumbManager } from '@/providers/breadcrumbs'
 import { createContentInstall, provideContentInstall } from '@/providers/content-install'
-import {
-	provideAppUpdateDownloadProgress,
-	subscribeToDownloadProgress,
-} from '@/providers/download-progress.ts'
 import { createServerInstall, provideServerInstall } from '@/providers/server-install'
 import { setupProviders } from '@/providers/setup'
 import { setupAppEventsProvider } from '@/providers/setup/app-events'
@@ -270,12 +250,6 @@ const forceSidebar = computed(
 )
 const sidebarVisible = computed(() => sidebarToggled.value || forceSidebar.value)
 const hostingRouteActive = computed(() => route.path.startsWith('/hosting'))
-const hostingUpdateRequired = computed(
-	() =>
-		hostingRouteActive.value &&
-		!!appUpdateState.availableUpdate.value &&
-		appUpdateState.updatesEnabled.value,
-)
 const prideFundraiserEnabled = computed(
 	() => appSettings.getFeatureFlag('pride_fundraiser') && Date.now() < PRIDE_FUNDRAISER_END_DATE,
 )
@@ -286,9 +260,7 @@ const hostingIntercomIdentityKey = computed(() => {
 	return `${userId}:${serverId ?? 'hosting'}`
 })
 const hostingIntercom = useHostingIntercom({
-	enabled: computed(
-		() => hostingRouteActive.value && !hostingUpdateRequired.value && !!credentials.value?.session,
-	),
+	enabled: computed(() => hostingRouteActive.value && !!credentials.value?.session),
 	appId: 'ykeritl9',
 	fetchToken: fetchIntercomToken,
 	identityKey: hostingIntercomIdentityKey,
@@ -469,7 +441,6 @@ window.addEventListener('online', () => {
 })
 
 const os = ref('')
-const isDevEnvironment = ref(false)
 
 const stateInitialized = ref(false)
 const globalSyncedOptionsQuery = useQuery({
@@ -556,7 +527,7 @@ onMounted(async () => {
 	document.querySelector('body').addEventListener('contextmenu', handleContextMenu)
 	document.addEventListener('fullscreenchange', handleFullscreenChange)
 
-	checkUpdates()
+	startAppUpdateChecks()
 })
 
 onUnmounted(async () => {
@@ -565,17 +536,15 @@ onUnmounted(async () => {
 	document.querySelector('body').removeEventListener('contextmenu', handleContextMenu)
 	document.removeEventListener('fullscreenchange', handleFullscreenChange)
 	unlistenEditMenu?.()
-	clearDelayedUpdatePopup()
+	stopAppUpdateChecks()
 
 	if (fullscreenAdsWindowHold) {
 		fullscreenAdsWindowHold = false
 		await release_ads_window_hold().catch(handleError)
 	}
-	await unlistenUpdateDownload?.()
 })
 
 const { formatMessage } = useVIntl()
-const formatBytes = useFormatBytes()
 
 // 3vhy Client: labeled S.A.M-style navigation
 const navMessages = defineMessages({
@@ -622,10 +591,6 @@ const messages = defineMessages({
 	goBack: { id: 'app.navigation.go-back', defaultMessage: 'Go back' },
 	goForward: { id: 'app.navigation.go-forward', defaultMessage: 'Go forward' },
 	nextImage: { id: 'app.navigation.next-image', defaultMessage: 'Next image' },
-	updateDownloadMissingVersion: {
-		id: 'app.update.download-error.missing-version',
-		defaultMessage: 'Failed to download update: no version available',
-	},
 	updateInstalledToastTitle: {
 		id: 'app.update.complete-toast.title',
 		defaultMessage: 'Version {version} was successfully installed!',
@@ -835,7 +800,6 @@ async function setupApp() {
 	)
 	os.value = await traceStartupStep('Read operating system', getOS)
 	const dev = await traceStartupStep('Read development mode', isDev)
-	isDevEnvironment.value = dev
 	const version = await traceStartupStep('Read app version', getVersion)
 	appSettings.nativeDecorations = native_decorations
 	if (os.value !== 'MacOS') {
@@ -924,11 +888,6 @@ traceStartupStep('Initialize backend state', () => initialize_state(appEventChan
 		console.error('Failed to initialize app', err)
 		error.showError(err, null, false, 'state_init')
 	})
-
-const handleClose = async () => {
-	await saveWindowState(StateFlags.ALL)
-	await getCurrentWindow().close()
-}
 
 const loading = setupLoadingStateProvider(() => ({
 	stateInitialized: stateInitialized.value,
@@ -1743,320 +1702,57 @@ async function handleCommand(e) {
 	}
 }
 
-const appUpdateDownload = {
-	progress: appUpdateState.progress,
-	version: ref(),
-}
-let unlistenUpdateDownload
+const APP_UPDATE_FIRST_CHECK_DELAY_MS = 10 * 1000
+const APP_UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
 
-const {
-	metered,
-	finishedDownloading,
-	downloading,
-	restarting,
-	availableUpdate,
-	updateSize,
-	updatesEnabled,
-} = appUpdateState
-let delayedUpdatePopupTimeout = null
+const { restarting } = appUpdateState
+let appUpdateToastId = null
+let appUpdateCheckTimeout = null
+let stopTrackingAppUpdateDownload = null
 
-const updatePopupMessages = defineMessages({
-	updateAvailable: {
-		id: 'app.update-popup.title',
-		defaultMessage: 'Update available',
-	},
-	downloadComplete: {
-		id: 'app.update-popup.download-complete',
-		defaultMessage: 'Download complete',
-	},
-	meteredBody: {
-		id: 'app.update-popup.body.metered',
-		defaultMessage: `3vhy Client v{version} is available now! Since you're on a metered network, we didn't automatically download it.`,
-	},
-	downloadedBody: {
-		id: 'app.update-popup.body.download-complete',
-		defaultMessage: `3vhy Client v{version} has finished downloading. Reload to update now, or automatically when you close 3vhy Client.`,
-	},
-	linuxBody: {
-		id: 'app.update-popup.body.linux',
-		defaultMessage:
-			'3vhy Client v{version} is available. Use your package manager to update for the latest features and fixes!',
-	},
-	reload: {
-		id: 'app.update-popup.reload',
-		defaultMessage: 'Reload to update',
-	},
-	download: {
-		id: 'app.update-popup.download',
-		defaultMessage: 'Download ({size})',
-	},
-	changelog: {
-		id: 'app.update-popup.changelog',
-		defaultMessage: 'Changelog',
-	},
-})
-
-function clearDelayedUpdatePopup() {
-	if (delayedUpdatePopupTimeout !== null) {
-		clearTimeout(delayedUpdatePopupTimeout)
-		delayedUpdatePopupTimeout = null
+function showAppUpdateToast() {
+	const toastOpen =
+		appUpdateToastId !== null &&
+		popupNotificationManager.getNotifications().some((item) => item.id === appUpdateToastId)
+	if (toastOpen) {
+		return
 	}
+
+	const notification = addPopupNotification({
+		contentType: 'custom',
+		component: LauncherUpdateToast,
+		autoCloseMs: null,
+	})
+	appUpdateToastId = notification.id
 }
 
-function getCurrentUpdatePromptStage() {
-	return finishedDownloading.value ? 'downloaded' : 'available'
-}
-
-function scheduleDelayedUpdatePopup() {
-	clearDelayedUpdatePopup()
-
-	const version = availableUpdate.value?.version
-	if (!version) {
-		return
-	}
-
-	const nextPopupTime = getNextAppUpdatePopupTime(version, getCurrentUpdatePromptStage())
-	if (nextPopupTime === null) {
-		return
-	}
-
-	const delay = nextPopupTime - Date.now()
-	if (delay <= 0) {
-		showDelayedUpdatePopup()
-		return
-	}
-
-	delayedUpdatePopupTimeout = setTimeout(showDelayedUpdatePopup, Math.min(delay, 2_147_483_647))
-}
-
-function showDelayedUpdatePopup() {
-	const update = availableUpdate.value
-	if (!update) {
-		return
-	}
-
-	const stage = getCurrentUpdatePromptStage()
-	const nextPopupTime = getNextAppUpdatePopupTime(update.version, stage)
-	if (nextPopupTime === null) {
-		return
-	}
-
-	if (Date.now() < nextPopupTime) {
-		scheduleDelayedUpdatePopup()
-		return
-	}
-
-	if (metered.value && !finishedDownloading.value) {
-		addPopupNotification({
-			contentType: 'standard',
-			title: formatMessage(updatePopupMessages.updateAvailable),
-			text: formatMessage(updatePopupMessages.meteredBody, { version: update.version }),
-			type: 'info',
-			autoCloseMs: null,
-			buttons: [
-				{
-					label: formatMessage(updatePopupMessages.download, {
-						size: formatBytes(updateSize.value ?? 0),
-					}),
-					action: () => downloadAvailableAppUpdate(),
-					color: 'brand',
-				},
-				{
-					label: formatMessage(updatePopupMessages.changelog),
-					action: () => openAppUpdateChangelog(),
-					keepOpen: true,
-				},
-			],
-		})
-	} else if (finishedDownloading.value) {
-		addPopupNotification({
-			contentType: 'standard',
-			title: formatMessage(updatePopupMessages.downloadComplete),
-			text: formatMessage(updatePopupMessages.downloadedBody, {
-				version: update.version,
-			}),
-			type: 'success',
-			autoCloseMs: null,
-			buttons: [
-				{
-					label: formatMessage(updatePopupMessages.reload),
-					action: () => installAvailableAppUpdate(),
-					color: 'brand',
-				},
-				{
-					label: formatMessage(updatePopupMessages.changelog),
-					action: () => openAppUpdateChangelog(),
-					keepOpen: true,
-				},
-			],
-		})
-	} else {
-		scheduleDelayedUpdatePopup()
-		return
-	}
-
-	markAppUpdatePopupShown(update.version, stage)
-}
-
-const UPDATES_DISABLED_IN_FORK = true
-
-async function checkUpdates() {
-	// 3vhy Client: never check Modrinth's update server; it would offer the Modrinth App instead
-	if (UPDATES_DISABLED_IN_FORK) {
-		updatesEnabled.value = false
-		return
-	}
-
-	if (!(await areUpdatesEnabled())) {
-		console.log('Skipping update check as updates are disabled in this build or environment')
-		updatesEnabled.value = false
-
-		if (os.value === 'Linux' && !isDevEnvironment.value) {
-			checkLinuxUpdates()
-			setInterval(checkLinuxUpdates, 5 * 60 * 1000)
-		}
-		return
-	}
-
-	async function performCheck() {
-		const update = await invoke('plugin:updater|check')
-		if (!update) {
-			console.log('No update available')
-			return
-		}
-
-		const isExistingUpdate = update.version === availableUpdate.value?.version
-
-		if (isExistingUpdate) {
-			console.log('Update is already known')
-			scheduleDelayedUpdatePopup()
-			return
-		}
-
-		appUpdateDownload.progress.value = 0
-		finishedDownloading.value = false
-		downloading.value = false
-		updateSize.value = null
-		availableUpdate.value = update
-
-		console.log(`Update ${update.version} is available.`)
-
-		metered.value = await isNetworkMetered()
-		if (!metered.value) {
-			console.log('Starting download of update')
-			downloadUpdate(update)
-		} else {
-			console.log(`Metered connection detected, not auto-downloading update.`)
-			markAppUpdateActionable(update.version)
-			scheduleDelayedUpdatePopup()
-		}
-
-		getUpdateSize(update.rid).then((size) => (updateSize.value = size))
-	}
-
-	await performCheck()
-	setTimeout(
-		() => {
-			checkUpdates()
-		},
-		5 /* min */ * 60 /* sec */ * 1000 /* ms */,
-	)
-}
-
-async function checkLinuxUpdates() {
+async function checkForAppUpdateInBackground() {
 	try {
-		const [response, currentVersion] = await Promise.all([
-			fetch('https://launcher-files.modrinth.com/updates.json'),
-			getVersion(),
-		])
-		const updates = await response.json()
-		const latestVersion = updates?.version
-
-		if (latestVersion && latestVersion !== currentVersion) {
-			markAppUpdateActionable(latestVersion)
-			const nextPopupTime = getNextAppUpdatePopupTime(latestVersion)
-			if (nextPopupTime !== null && Date.now() >= nextPopupTime) {
-				addPopupNotification({
-					contentType: 'standard',
-					title: formatMessage(updatePopupMessages.updateAvailable),
-					text: formatMessage(updatePopupMessages.linuxBody, { version: latestVersion }),
-					type: 'info',
-					autoCloseMs: null,
-				})
-				markAppUpdatePopupShown(latestVersion)
-			}
+		const update = await checkForAppUpdate()
+		if (update && !isAppUpdateSnoozed(update.version)) {
+			showAppUpdateToast()
 		}
-	} catch (e) {
-		console.error('Failed to check for updates:', e)
+	} catch (error) {
+		console.warn('Failed to check for 3vhy Client updates:', error)
 	}
 }
 
-async function downloadAvailableUpdate() {
-	return downloadUpdate(availableUpdate.value)
+function startAppUpdateChecks() {
+	stopTrackingAppUpdateDownload = trackAppUpdateDownload(appEvents)
+
+	const runCheck = async () => {
+		await checkForAppUpdateInBackground()
+		appUpdateCheckTimeout = setTimeout(runCheck, APP_UPDATE_CHECK_INTERVAL_MS)
+	}
+	appUpdateCheckTimeout = setTimeout(runCheck, APP_UPDATE_FIRST_CHECK_DELAY_MS)
 }
 
-async function downloadUpdate(versionToDownload) {
-	if (!versionToDownload) {
-		handleError(formatMessage(messages.updateDownloadMissingVersion))
-		return
-	}
-
-	if (downloading.value || appUpdateDownload.progress.value !== 0) {
-		console.error(`Update ${versionToDownload.version} already downloading`)
-		return
-	}
-
-	console.log(`Downloading update ${versionToDownload.version}`)
-	downloading.value = true
-
-	try {
-		enqueueUpdateForInstallation(versionToDownload.rid)
-			.then(() => {
-				downloading.value = false
-				finishedDownloading.value = true
-				unlistenUpdateDownload?.()
-				unlistenUpdateDownload = null
-				console.log('Finished downloading!')
-				markAppUpdateActionable(versionToDownload.version, 'downloaded')
-				scheduleDelayedUpdatePopup()
-			})
-			.catch((e) => {
-				downloading.value = false
-				appUpdateDownload.progress.value = 0
-				handleError(e)
-			})
-		unlistenUpdateDownload = await subscribeToDownloadProgress(
-			appEvents,
-			appUpdateDownload,
-			versionToDownload.version,
-		)
-	} catch (e) {
-		downloading.value = false
-		appUpdateDownload.progress.value = 0
-		handleError(e)
-	}
+function stopAppUpdateChecks() {
+	clearTimeout(appUpdateCheckTimeout)
+	appUpdateCheckTimeout = null
+	stopTrackingAppUpdateDownload?.()
+	stopTrackingAppUpdateDownload = null
 }
-
-async function installUpdate() {
-	restarting.value = true
-
-	try {
-		await setRestartAfterPendingUpdate(true)
-	} catch (e) {
-		restarting.value = false
-		handleError(e)
-		return
-	}
-	setTimeout(async () => {
-		await handleClose()
-	}, 250)
-}
-
-setAppUpdateActions({
-	download: downloadAvailableUpdate,
-	install: installUpdate,
-	changelog: () => openUrl('https://modrinth.com/news/changelog?filter=app'),
-})
 
 async function openModrinthProjectLinkInApp(parsed) {
 	const { slug, pathSuffix, url } = parsed
@@ -2148,8 +1844,6 @@ function handleContextMenu(event) {
 
 	event.preventDefault()
 }
-
-provideAppUpdateDownloadProgress(appUpdateDownload)
 </script>
 
 <template>
@@ -2452,8 +2146,7 @@ provideAppUpdateDownloadProgress(appUpdateDownload)
 			>
 				{{ formatMessage(messages.authUnreachableBody) }}
 			</Admonition>
-			<HostingUpdateRequired v-if="hostingUpdateRequired" />
-			<RouterView v-else v-slot="{ Component }">
+			<RouterView v-slot="{ Component }">
 				<template v-if="Component">
 					<Suspense @pending="onSuspensePending" @resolve="onSuspenseResolve">
 						<component :is="Component"></component>

@@ -86,6 +86,7 @@
 		"auth:default",
 		"import:default",
 		"jre:default",
+		"launcher-update:default",
 		"logs:default",
 		"metadata:default",
 		"minecraft-skins:default",
