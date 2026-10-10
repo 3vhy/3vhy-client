@@ -120,10 +120,26 @@ public abstract class HudWidget {
 		return Math.max(0.0, Math.min(1.0, value));
 	}
 
-	/** Whether this widget's module wants its dark box. */
+	/** The box's opacity, 0..255, from the module's Background setting. */
+	protected int backgroundAlpha() {
+		Setting.Slider slider = module.sliderSetting("background");
+		double percent = slider == null ? 60 : slider.get();
+		return (int) Math.round(percent / 100.0 * 255);
+	}
+
+	/** Whether the box is there at all. */
 	protected boolean background() {
-		Setting.Toggle toggle = module.toggleSetting("background");
-		return toggle == null || toggle.get();
+		return backgroundAlpha() > 0;
+	}
+
+	/** Text gets a shadow once the box is too faint to read it against the world. */
+	protected boolean textShadow() {
+		return backgroundAlpha() < 90;
+	}
+
+	/** A key or slot fill at the widget's opacity. */
+	protected int backgroundColor() {
+		return (backgroundAlpha() << 24) | 0x060E2B;
 	}
 
 	protected boolean showLabel() {
@@ -138,9 +154,10 @@ public abstract class HudWidget {
 
 	/** The box behind a widget: dark navy glass with a thin ice edge on the left. */
 	protected void panel(Draw d, int x, int y, int w, int h) {
-		if (!background()) return;
-		d.fill(x, y, x + w, y + h, Theme.PANEL);
-		d.fill(x, y, x + 1, y + h, Theme.CYAN);
+		int alpha = backgroundAlpha();
+		if (alpha <= 0) return;
+		d.fill(x, y, x + w, y + h, backgroundColor());
+		d.fill(x, y, x + 1, y + h, (Math.min(255, alpha + 60) << 24) | 0x5BC8E6);
 	}
 
 	protected static int textWidth(Minecraft mc, String text) {

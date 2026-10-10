@@ -18,12 +18,18 @@ public final class Modules {
 	private Modules() {
 	}
 
-	/** A HUD module: every one can hide its label, drop its background and pick a colour. */
+	/** A text HUD module: every one can hide its label, fade its background and pick a colour. */
 	private static Module hud(String id, String name, String description, boolean on) {
 		Module module = new Module(id, name, description, Category.HUD, on);
 		module.add(new Toggle("label", "Show label", "The grey name in front of the value", true));
-		module.add(new Toggle("background", "Background", "The dark box behind the text", true));
+		background(module);
 		module.add(new Color("color", "Text colour", "Colour of the value", 0xFFE3F3FC));
+		return module;
+	}
+
+	/** How see-through a HUD widget's box is. 0% removes the box and gives the text a shadow. */
+	private static Module background(Module module) {
+		module.add(new Slider("background", "Background", "0% makes the box fully transparent", 0, 100, 5, 60, "%"));
 		return module;
 	}
 
@@ -41,19 +47,19 @@ public final class Modules {
 	public static final Toggle CLOCK_SECONDS = CLOCK.add(new Toggle("seconds", "Seconds", "Show seconds too", false));
 	public static final Module COORDS = hud("coords", "Coordinates", "Shows your current coordinates and facing", false);
 	public static final Toggle COORDS_FACING = COORDS.add(new Toggle("facing", "Facing", "Which way you're looking", true));
-	public static final Module KEYSTROKES = new Module("keystrokes", "Keystrokes",
-			"Shows WASD, jump and your mouse buttons as you press them", Category.HUD, true);
+	public static final Module KEYSTROKES = background(new Module("keystrokes", "Keystrokes",
+			"Shows WASD, jump and your mouse buttons as you press them", Category.HUD, true));
 	public static final Toggle KEYSTROKES_MOUSE = KEYSTROKES.add(new Toggle("mouse", "Mouse buttons", "LMB and RMB with CPS", true));
 	public static final Toggle KEYSTROKES_SPACE = KEYSTROKES.add(new Toggle("space", "Space bar", "The jump key", true));
-	public static final Module ARMOR = new Module("armor", "Armor Status",
-			"Displays the durability and status of your equipped armor", Category.HUD, true);
+	public static final Module ARMOR = background(new Module("armor", "Armor Status",
+			"Displays the durability and status of your equipped armor", Category.HUD, true));
 	public static final Choice ARMOR_LAYOUT = ARMOR.add(new Choice("layout", "Layout",
 			"A column at the side, or a row like an armor bar", 0, "Column", "Row"));
 	public static final Choice ARMOR_DURABILITY = ARMOR.add(new Choice("durability", "Durability",
 			"How durability is shown", 0, "Percent", "Points", "Hidden"));
 	public static final Toggle ARMOR_HAND = ARMOR.add(new Toggle("hand", "Held item", "Also show the item in your hand", false));
-	public static final Module ITEMS = new Module("items", "Item Counter",
-			"Counts the PvP items in your inventory", Category.HUD, true);
+	public static final Module ITEMS = background(new Module("items", "Item Counter",
+			"Counts the PvP items in your inventory", Category.HUD, true));
 	public static final Toggle ITEMS_TOTEMS = ITEMS.add(new Toggle("totem", "Totems", "Totems of Undying", true));
 	public static final Toggle ITEMS_CRYSTALS = ITEMS.add(new Toggle("crystal", "End crystals", "End crystals", true));
 	public static final Toggle ITEMS_OBSIDIAN = ITEMS.add(new Toggle("obsidian", "Obsidian", "Obsidian", true));
@@ -61,17 +67,17 @@ public final class Modules {
 	public static final Toggle ITEMS_GAPPLES = ITEMS.add(new Toggle("gapple", "Golden apples", "Golden and enchanted golden apples", true));
 	public static final Toggle ITEMS_PEARLS = ITEMS.add(new Toggle("pearl", "Ender pearls", "Ender pearls", false));
 	public static final Toggle ITEMS_ANCHORS = ITEMS.add(new Toggle("anchor", "Anchors", "Respawn anchors and glowstone", false));
-	public static final Module POPS = new Module("pops", "Totem Pops", "Who popped how many totems", Category.HUD, true);
-	public static final Module TARGET_HUD = new Module("target_hud", "Target HUD",
-			"Health, armor and totem of who you're fighting", Category.HUD, true);
+	public static final Module POPS = background(new Module("pops", "Totem Pops", "Who popped how many totems", Category.HUD, true));
+	public static final Module TARGET_HUD = background(new Module("target_hud", "Target HUD",
+			"Health, armor and totem of who you're fighting", Category.HUD, true));
 	public static final Toggle TARGET_ARMOR = TARGET_HUD.add(new Toggle("armor", "Armor", "Their armor and held items", true));
 	public static final Module COMBO = hud("combo", "Combo Counter", "Flex on your opponent with the combo you land", false).markNew();
 	public static final Module SCOREBOARD = new Module("scoreboard", "Scoreboard",
 			"Move the server scoreboard, hide its red numbers, or hide it", Category.HUD, true).markNew();
 	public static final Toggle SCOREBOARD_HIDE_NUMBERS = SCOREBOARD.add(new Toggle("numbers", "Hide numbers",
 			"Hide the red score numbers on the right", false));
-	public static final Module JUMP_RESET = new Module("jump_reset", "Jump Reset",
-			"Shows how well you timed your jump after being hit, to take less knockback", Category.HUD, false).markNew();
+	public static final Module JUMP_RESET = background(new Module("jump_reset", "Jump Reset",
+			"Shows how well you timed your jump after being hit, to take less knockback", Category.HUD, false).markNew());
 
 	// PvP
 	public static final Module CRYSTAL_OPTIMIZER = new Module("crystal_optimizer", "Crystal Optimizer",

@@ -87,6 +87,10 @@ public final class Module {
 		return find(settingId, Setting.Toggle.class);
 	}
 
+	public Setting.Slider sliderSetting(String settingId) {
+		return find(settingId, Setting.Slider.class);
+	}
+
 	public Setting.Color colorSetting(String settingId) {
 		return find(settingId, Setting.Color.class);
 	}

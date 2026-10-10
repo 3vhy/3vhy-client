@@ -76,7 +76,7 @@ public final class HudWidgets {
 			String value = value(mc, preview);
 			int w = 10 + (label.isEmpty() ? 0 : textWidth(mc, label) + 4) + textWidth(mc, value);
 			panel(d, x, y, w, 14);
-			boolean shadow = !background();
+			boolean shadow = textShadow();
 			int tx = x + 6;
 			if (!label.isEmpty()) {
 				d.text(label, tx, y + 3, Theme.MUTED, shadow);
@@ -224,7 +224,7 @@ public final class HudWidgets {
 				facing = dir.isEmpty() ? dir : Character.toUpperCase(dir.charAt(0)) + dir.substring(1);
 			}
 			panel(d, x, y, width(mc), height(mc));
-			boolean shadow = !background();
+			boolean shadow = textShadow();
 			int labelW = showLabel() ? textWidth(mc, "Facing") + 4 : 0;
 			if (showLabel()) d.text("XYZ", x + 6, y + 3, Theme.MUTED, shadow);
 			d.text(xyz, x + 6 + labelW, y + 3, valueColor(), shadow);
@@ -269,7 +269,7 @@ public final class HudWidgets {
 			}
 			if (Modules.KEYSTROKES_SPACE.get()) {
 				boolean jump = o.keyJump.isDown();
-				d.fill(x, row, x + width(mc), row + 10, jump ? Theme.KEY_DOWN : Theme.KEY_IDLE);
+				d.fill(x, row, x + width(mc), row + 10, jump ? Theme.KEY_DOWN : backgroundColor());
 				int barW = width(mc) / 3;
 				d.fill(x + (width(mc) - barW) / 2, row + 4, x + (width(mc) + barW) / 2, row + 6,
 						jump ? Theme.NIGHT : Theme.SKY);
@@ -278,24 +278,24 @@ public final class HudWidgets {
 
 		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
 			boolean down = key.isDown();
-			d.fill(x, y, x + w, y + h, down ? Theme.KEY_DOWN : Theme.KEY_IDLE);
+			d.fill(x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
 			int tw = textWidth(mc, label);
-			d.text(label, x + (w - tw) / 2, y + (h - 8) / 2, down ? Theme.NIGHT : Theme.ICE, false);
+			d.text(label, x + (w - tw) / 2, y + (h - 8) / 2, down ? Theme.NIGHT : Theme.ICE, !down && textShadow());
 		}
 
 		private void mouse(Draw d, Minecraft mc, int x, int y, int w, int h, String label, int cps, KeyMapping key) {
 			boolean down = key.isDown();
-			d.fill(x, y, x + w, y + h, down ? Theme.KEY_DOWN : Theme.KEY_IDLE);
+			d.fill(x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
 			int color = down ? Theme.NIGHT : Theme.ICE;
 			int tw = textWidth(mc, label);
-			d.text(label, x + (w - tw) / 2, y + 3, color, false);
+			d.text(label, x + (w - tw) / 2, y + 3, color, !down && textShadow());
 			String c = cps + " CPS";
 			d.push();
 			float s = 0.75f;
 			int cw = textWidth(mc, c);
 			d.translate(x + (w - cw * s) / 2f, y + 13);
 			d.scale(s);
-			d.text(c, 0, 0, down ? Theme.NIGHT : Theme.SKY, false);
+			d.text(c, 0, 0, down ? Theme.NIGHT : Theme.SKY, !down && textShadow());
 			d.pop();
 		}
 	};
@@ -435,7 +435,7 @@ public final class HudWidgets {
 				} else {
 					d.text(label, ix + 17 - textWidth(mc, label), y + 11, Theme.ICE, true);
 				}
-				if (count == 0) d.fill(ix, y + 2, ix + 16, y + 18, 0x80060E2B);
+				if (count == 0) d.fill(ix, y + 2, ix + 16, y + 18, background() ? 0x80060E2B : 0x60000000);
 			}
 		}
 
@@ -475,7 +475,7 @@ public final class HudWidgets {
 		public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 			List<PopTracker.Entry> entries = PopTracker.top(MAX);
 			panel(d, x, y, width(mc), height(mc));
-			d.text("Totem pops", x + 6, y + 3, Theme.MUTED, false);
+			d.text("Totem pops", x + 6, y + 3, Theme.MUTED, textShadow());
 			if (entries.isEmpty() && preview) {
 				d.text("Steve", x + 6, y + 14, Theme.ICE, false);
 				d.text("3", x + width(mc) - 12, y + 14, Theme.CYAN, false);
@@ -490,9 +490,9 @@ public final class HudWidgets {
 				while (textWidth(mc, name) > width(mc) - 30 && name.length() > 3) {
 					name = name.substring(0, name.length() - 1);
 				}
-				d.text(name, x + 6, rowY, Theme.ICE, false);
+				d.text(name, x + 6, rowY, Theme.ICE, textShadow());
 				String pops = Integer.toString(entry.pops());
-				d.text(pops, x + width(mc) - 6 - textWidth(mc, pops), rowY, Theme.CYAN, false);
+				d.text(pops, x + width(mc) - 6 - textWidth(mc, pops), rowY, Theme.CYAN, textShadow());
 			}
 		}
 	};
@@ -533,9 +533,9 @@ public final class HudWidgets {
 			while (textWidth(mc, name) > W - 50 && name.length() > 3) {
 				name = name.substring(0, name.length() - 1);
 			}
-			d.text(name, x + 6, y + 4, Theme.ICE, !background());
+			d.text(name, x + 6, y + 4, Theme.ICE, textShadow());
 			String dist = String.format(Locale.ROOT, "%.1fm", distance);
-			d.text(dist, x + W - 6 - textWidth(mc, dist), y + 4, Theme.MUTED, !background());
+			d.text(dist, x + W - 6 - textWidth(mc, dist), y + 4, Theme.MUTED, textShadow());
 
 			int barX = x + 6;
 			int barY = y + 15;
@@ -602,10 +602,10 @@ public final class HudWidgets {
 			panel(d, cx, y, w, 14);
 			int tx = cx + 6;
 			if (!label.isEmpty()) {
-				d.text(label, tx, y + 3, Theme.MUTED, !background());
+				d.text(label, tx, y + 3, Theme.MUTED, textShadow());
 				tx += textWidth(mc, label) + 4;
 			}
-			d.text(text, tx, y + 3, color, !background());
+			d.text(text, tx, y + 3, color, textShadow());
 		}
 	};
 

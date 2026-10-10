@@ -58,6 +58,8 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				Modules.SHINY_POTS.set(true);
 				Modules.CROSSHAIR.set(true);
 				Modules.NAMETAGS.set(true);
+				Modules.CPS.sliderSetting("background").set(0);
+				Modules.KEYSTROKES.sliderSetting("background").set(25);
 			});
 
 			var server = singleplayer.getServer();
