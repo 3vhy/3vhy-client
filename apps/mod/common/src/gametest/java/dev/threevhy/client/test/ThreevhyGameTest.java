@@ -12,6 +12,8 @@ import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.ChatTweaks;
 import dev.threevhy.client.module.ConfirmDisconnect;
+import dev.threevhy.client.module.CustomSkins;
+import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Freelook;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.NameProtect;
@@ -40,7 +42,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	/** A song as the Windows helper reports it, with a tiny 8x8 cover, since CI can't play real music. */
 	private static final String SAMPLE_SONG = "{\"key\":\"test\",\"app\":\"Spotify.exe\",\"title\":\"Snowfall\","
 			+ "\"artist\":\"3vhy Test Band\",\"album\":\"CI\",\"playing\":true,\"position\":61,\"duration\":235,"
-			+ "\"art\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\"}";
+			+ "\"art\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\","
+			+ "\"icon\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\"}";
+	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
+	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
 
 	@Override
 	public void runTest(ClientGameTestContext context) {
@@ -121,6 +126,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					MusicBridge.current() != null && MusicBridge.current().title().equals("Snowfall")
 							&& HudWidgets.MUSIC.visible(client)));
 			check(failed, "music cover uploaded as a texture (NativeImage, DynamicTexture)", Hooks.musicArtUploaded);
+			check(failed, "music app icon uploaded as a texture", Hooks.musicIconUploaded);
 			server.runCommand("bossbar add threevhy:test \"Boss\"");
 			server.runCommand("bossbar set threevhy:test players @a");
 			context.waitTicks(10);
@@ -151,12 +157,25 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-target-hud");
 			check(failed, "target HUD picks up who you hit", context.computeOnClient(client -> Target.get() != null));
 
-			// Name Protect and Skin Protect stay on through freelook, so the third person view shows them
+			// Name Protect (with text changes) and Skin Protect (with a skin file) stay on through freelook,
+			// so the third person view shows them
 			context.runOnClient(client -> {
+				try {
+					java.nio.file.Files.createDirectories(CustomSkins.folder());
+					java.nio.file.Files.write(CustomSkins.folder().resolve("ci-skin.png"),
+							java.util.Base64.getDecoder().decode(LEGACY_SKIN));
+				} catch (java.io.IOException e) {
+					throw new RuntimeException(e);
+				}
+				Config.get().skinFile = "ci-skin.png";
+				while (!Modules.SKIN_PROTECT_SOURCE.is(CustomSkins.SOURCE_FILE)) Modules.SKIN_PROTECT_SOURCE.next();
 				Modules.NAME_PROTECT.set(true);
 				Modules.NAME_PROTECT_NAME.set("Streamer");
+				TextRules.add("Money: #", "Money: 1T");
+				TextRules.add("vhys", "team");
 				Modules.SKIN_PROTECT.set(true);
 				Compat.chat(net.minecraft.network.chat.Component.literal(client.getUser().getName() + " is streaming"));
+				Compat.chat(net.minecraft.network.chat.Component.literal("Money: 500.9T  Team: vhys"));
 			});
 			context.waitTicks(10);
 			shot(context, "3vhy-name-protect");
@@ -164,6 +183,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					NameProtect.apply("<" + client.getUser().getName() + "> hi").equals("<Streamer> hi")
 							&& NameProtect.apply(client.getUser().getName() + "son").equals(client.getUser().getName() + "son")));
 			check(failed, "name protect hook (StringDecomposer)", Hooks.nameProtectRan);
+			check(failed, "text changes apply to plain text", context.computeOnClient(client ->
+					dev.threevhy.client.module.NameProtect.apply("Money: 500.9T, Team: vhys").equals("Money: 1T, Team: team")));
+			check(failed, "text changes apply across coloured pieces", context.computeOnClient(client -> {
+				var line = net.minecraft.network.chat.Component.literal("Money: ").withStyle(net.minecraft.ChatFormatting.YELLOW)
+						.append(net.minecraft.network.chat.Component.literal("500.9T").withStyle(net.minecraft.ChatFormatting.GREEN));
+				return TextRules.apply(line).getString().equals("Money: 1T") && Hooks.textRuleRan;
+			}));
+			check(failed, "skin protect wears a 64x32 skin file", context.computeOnClient(client ->
+					Hooks.customSkinLoaded && CustomSkins.current() != null));
 
 			int normalFov = context.computeOnClient(client -> client.options.fov().get());
 			context.getInput().holdKey(ThreevhyClient.zoomKey);
@@ -188,6 +216,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "freelook puts the camera back", context.computeOnClient(client ->
 					!Freelook.active() && client.options.getCameraType() == CameraType.FIRST_PERSON));
 			check(failed, "skin protect hook (PlayerInfo.getSkin)", Hooks.skinProtectRan);
+			context.runOnClient(client -> {
+				Modules.SKIN_PROTECT_PLAYER.set("jeb_");
+				while (!Modules.SKIN_PROTECT_SOURCE.is(CustomSkins.SOURCE_PLAYER)) Modules.SKIN_PROTECT_SOURCE.next();
+			});
+			context.waitTicks(100);
+			ThreevhyClient.LOG.info("3vhy-check: skin by player name: {}", context.computeOnClient(client -> CustomSkins.status()));
 			context.runOnClient(client -> {
 				Modules.NAME_PROTECT.set(false);
 				Modules.SKIN_PROTECT.set(false);
@@ -216,6 +250,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new InventoryScreen(net.minecraft.client.Minecraft.getInstance().player));
 			context.waitTicks(10);
 			shot(context, "3vhy-inventory-highlight");
+			check(failed, "name tag in the corner of the inventory", Hooks.menuNameDrawn);
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 
@@ -251,9 +286,16 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.PLAYER_LIST));
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-player-list");
+			context.runOnClient(client -> TextRules.add("Kills: #", "Kills: 9999"));
 			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.NAME_PROTECT));
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-name-protect");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.SKIN_PROTECT));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-skin-protect");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.MUSIC));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-music");
 			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.SCOREBOARD));
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-scoreboard");

@@ -22,6 +22,10 @@ public final class Hooks {
 	public static volatile boolean skinProtectRan = false;
 	public static volatile boolean playerListTicked = false;
 	public static volatile boolean musicArtUploaded = false;
+	public static volatile boolean musicIconUploaded = false;
+	public static volatile boolean textRuleRan = false;
+	public static volatile boolean customSkinLoaded = false;
+	public static volatile boolean menuNameDrawn = false;
 
 	private Hooks() {
 	}

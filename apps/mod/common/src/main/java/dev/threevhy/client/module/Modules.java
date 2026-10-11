@@ -157,11 +157,21 @@ public final class Modules {
 	public static final Module SHINY_POTS = new Module("shiny_pots", "Shiny Pots",
 			"Adds an enchantment glint to potions", Category.VISUAL, false).markNew();
 	public static final Module SKIN_PROTECT = new Module("skin_protect", "Skin Protect",
-			"Shows default skins instead of real ones, for streams and videos", Category.VISUAL, false).markNew();
+			"Wear a different skin: a default one, any player's, or your own file", Category.VISUAL, false).markNew();
 	public static final Toggle SKIN_PROTECT_OWN = SKIN_PROTECT.add(new Toggle("own", "Your skin",
 			"You look like a default Steve or Alex", true));
 	public static final Toggle SKIN_PROTECT_OTHERS = SKIN_PROTECT.add(new Toggle("others", "Other players",
-			"Everyone else looks default too", false));
+			"Everyone else gets the same skin too", false));
+	public static final Choice SKIN_PROTECT_SOURCE = SKIN_PROTECT.add(new Choice("source", "Show as",
+			"Minecraft's default skins, any player's skin, or a skin file", 0,
+			CustomSkins.SOURCE_DEFAULT, CustomSkins.SOURCE_PLAYER, CustomSkins.SOURCE_FILE));
+	public static final Text SKIN_PROTECT_PLAYER = SKIN_PROTECT.add(new Text("player", "Player",
+			"Whose skin to wear, for A player's skin", "", 16));
+	public static final Choice SKIN_PROTECT_ARMS = SKIN_PROTECT.add(new Choice("arms", "Arms",
+			"Classic or slim arms, for skin files", 0, "Classic", "Slim"));
+	public static final Module MENU_NAME = new Module("menu_name", "Menu Name Tag",
+			"Your head and name in the bottom right of menus, chests and your inventory", Category.VISUAL, true).markNew();
+	public static final Toggle MENU_NAME_HEAD = MENU_NAME.add(new Toggle("head", "Show your head", "Your skin's face next to your name", true));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
 			"The 3vhy title screen instead of Minecraft's", Category.VISUAL, true);
 	public static final Module THEME = new Module("theme", "Theme",
@@ -205,7 +215,7 @@ public final class Modules {
 	public static final Module BORDERLESS = new Module("borderless", "Borderless Fullscreen",
 			"Fullscreen as a borderless window, so alt-tab is instant", Category.UTILITY, false).markNew();
 	public static final Module NAME_PROTECT = new Module("name_protect", "Name Protect",
-			"Hides your username everywhere on screen, for streams and videos", Category.UTILITY, false).markNew();
+			"Hides your name and changes any text on screen, like your stats", Category.UTILITY, false).markNew();
 	public static final Text NAME_PROTECT_NAME = NAME_PROTECT.add(new Text("name", "Show me as",
 			"The name shown instead of yours", "You", 16));
 	public static final Toggle NAME_PROTECT_OTHERS = NAME_PROTECT.add(new Toggle("others", "Hide other players",
@@ -224,7 +234,7 @@ public final class Modules {
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD, COMBO, SCOREBOARD, JUMP_RESET,
 			MUSIC, PLAYER_LIST,
 			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM,
-			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SKIN_PROTECT, MAIN_MENU, THEME,
+			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SKIN_PROTECT, MENU_NAME, MAIN_MENU, THEME,
 			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, NAME_PROTECT, WAYPOINTS,
 			PROFILES, DISCORD);
 
@@ -249,6 +259,8 @@ public final class Modules {
 		JumpReset.tick(mc);
 		ConfirmDisconnect.tick();
 		NameProtect.tick(mc);
+		TextRules.tick();
+		CustomSkins.tick();
 		PlayerList.tick(mc);
 		MusicBridge.tick();
 	}

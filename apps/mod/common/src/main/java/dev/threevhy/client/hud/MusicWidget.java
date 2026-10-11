@@ -18,7 +18,7 @@ final class MusicWidget extends HudWidget {
 	private static final int W = 176;
 	private static final int PAD = 7;
 	private static final int ART = 34;
-	private static final int BADGE = 12;
+	private static final int BADGE = 14;
 
 	MusicWidget() {
 		super("music", Modules.MUSIC, Anchor.TOP_CENTER);
@@ -34,7 +34,7 @@ final class MusicWidget extends HudWidget {
 		if (song != null || !preview) return song;
 		String title = MusicBridge.supported() ? "Nothing playing" : "Music HUD";
 		String artist = MusicBridge.supported() ? "Play a song on Spotify, YouTube..." : "Works on Windows";
-		return new NowPlaying("sample", "", title, artist, "", false, 42, 175, System.nanoTime(), null, -1);
+		return new NowPlaying("sample", "", title, artist, "", false, 42, 175, System.nanoTime(), null, -1, null, -1, "");
 	}
 
 	@Override
@@ -69,9 +69,9 @@ final class MusicWidget extends HudWidget {
 		if (Modules.MUSIC_ART.get()) {
 			int ax = x + PAD;
 			int ay = y + PAD;
-			Identifier cover = MusicArt.texture(song);
+			Identifier cover = MusicArt.COVER.texture(song.art(), song.artVersion());
 			if (cover != null) {
-				int[] size = MusicArt.size();
+				int[] size = MusicArt.COVER.size();
 				d.texture(cover, ax, ay, ART, ART, size[0], size[1]);
 			} else {
 				box(d, ax, ay, ax + ART, ay + ART, 0xFF0E2159);
@@ -81,8 +81,14 @@ final class MusicWidget extends HudWidget {
 		}
 
 		int bx = x + W - PAD - BADGE;
-		int by = y + PAD;
-		badge(d, bx, by, accent, song.playing());
+		int by = y + PAD - 1;
+		Identifier icon = MusicArt.ICON.texture(song.icon(), song.iconVersion());
+		if (icon != null) {
+			int[] size = MusicArt.ICON.size();
+			d.texture(icon, bx, by, BADGE, BADGE, size[0], size[1]);
+		} else {
+			badge(d, bx, by, accent, song.playing());
+		}
 
 		int textW = bx - 4 - textX;
 		String state = song.playing() ? "NOW PLAYING" : "PAUSED";
@@ -108,14 +114,14 @@ final class MusicWidget extends HudWidget {
 		bar(d, barX1, barX2, rowY + 4, fraction, accent, song.playing());
 	}
 
-	/** A small circle in the app's colour with three bars that bounce while music plays. */
+	/** Until the app's icon arrives: a circle in the app's colour with three bars that bounce while music plays. */
 	private static void badge(Draw d, int x, int y, int color, boolean playing) {
 		d.roundRect(x, y, x + BADGE, y + BADGE, BADGE / 2, color);
 		double time = System.currentTimeMillis() / 140.0;
 		for (int i = 0; i < 3; i++) {
 			int height = playing ? 3 + (int) Math.round(3 * Math.abs(Math.sin(time + i * 1.7))) : 3;
-			int bx = x + 2 + i * 3;
-			d.fill(bx, y + 9 - height, bx + 2, y + 9, 0xFF061D3C);
+			int bx = x + 3 + i * 3;
+			d.fill(bx, y + 10 - height, bx + 2, y + 10, 0xFF061D3C);
 		}
 	}
 

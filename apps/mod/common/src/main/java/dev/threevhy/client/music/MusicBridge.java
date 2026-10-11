@@ -50,7 +50,10 @@ public final class MusicBridge {
 
 	/** A short line for the settings page: running, nothing playing, or what went wrong. */
 	public static String status() {
-		return supported() ? status : "Needs Windows";
+		if (!supported()) return "Needs Windows";
+		NowPlaying song = current;
+		if (song != null && song.art() == null && !song.artProblem().isEmpty()) return "No cover: " + song.artProblem();
+		return status;
 	}
 
 	/** Starts or stops the script to match the Music HUD switch, and restarts it if it stopped. */
@@ -135,6 +138,7 @@ public final class MusicBridge {
 		}
 		NowPlaying previous = current;
 		String key = text(json, "key");
+		String app = text(json, "app");
 		boolean sameSong = previous != null && previous.key().equals(key);
 		byte[] art = sameSong ? previous.art() : null;
 		long artVersion = sameSong ? previous.artVersion() : ART_VERSIONS.incrementAndGet();
@@ -143,9 +147,24 @@ public final class MusicBridge {
 			art = encoded.isEmpty() ? null : Base64.getDecoder().decode(encoded);
 			artVersion = ART_VERSIONS.incrementAndGet();
 		}
-		current = new NowPlaying(key, text(json, "app"), text(json, "title"), text(json, "artist"), text(json, "album"),
+		boolean sameApp = previous != null && previous.app().equals(app);
+		byte[] icon = sameApp ? previous.icon() : null;
+		long iconVersion = sameApp ? previous.iconVersion() : ART_VERSIONS.incrementAndGet();
+		if (json.has("icon")) {
+			String encoded = text(json, "icon");
+			icon = encoded.isEmpty() ? null : Base64.getDecoder().decode(encoded);
+			iconVersion = ART_VERSIONS.incrementAndGet();
+		}
+		String artProblem = json.has("artError") ? text(json, "artError") : sameSong ? previous.artProblem() : "";
+		if (json.has("artError") && (previous == null || !artProblem.equals(previous.artProblem()))) {
+			ThreevhyClient.LOG.info("Music HUD: no cover for \"{}\" yet: {}", text(json, "title"), artProblem);
+		}
+		if (json.has("iconError") && !sameApp) {
+			ThreevhyClient.LOG.info("Music HUD: no icon for {}: {}", app, text(json, "iconError"));
+		}
+		current = new NowPlaying(key, app, text(json, "title"), text(json, "artist"), text(json, "album"),
 				json.has("playing") && json.get("playing").getAsBoolean(), number(json, "position"),
-				number(json, "duration"), System.nanoTime(), art, artVersion);
+				number(json, "duration"), System.nanoTime(), art, artVersion, icon, iconVersion, artProblem);
 		status = "Connected";
 	}
 

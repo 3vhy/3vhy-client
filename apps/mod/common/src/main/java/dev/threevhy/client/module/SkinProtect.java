@@ -8,7 +8,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.world.entity.player.PlayerSkin;
 
-/** Skin Protect: your skin, and optionally everyone's, shows as Minecraft's default Steve, Alex and friends. */
+/**
+ * Skin Protect: your skin, and optionally everyone's, shows as something else: Minecraft's default
+ * Steve, Alex and friends, another player's skin, or a skin file (see CustomSkins).
+ */
 public final class SkinProtect {
 	private SkinProtect() {
 	}
@@ -21,7 +24,8 @@ public final class SkinProtect {
 		boolean own = id.equals(ownId());
 		if (own ? !Modules.SKIN_PROTECT_OWN.get() : !Modules.SKIN_PROTECT_OTHERS.get()) return null;
 		Hooks.skinProtectRan = true;
-		return DefaultPlayerSkin.get(id);
+		PlayerSkin custom = CustomSkins.current();
+		return custom != null ? custom : DefaultPlayerSkin.get(id);
 	}
 
 	private static UUID ownId() {

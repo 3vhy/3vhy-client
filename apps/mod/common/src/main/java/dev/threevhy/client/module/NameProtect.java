@@ -67,8 +67,12 @@ public final class NameProtect {
 		replacements = Map.copyOf(next);
 	}
 
-	/** The text with protected names swapped, or the very same string when nothing matched. */
+	/** The text with protected names swapped and the text rules applied, or the very same string when nothing matched. */
 	public static String apply(String text) {
+		return TextRules.apply(applyNames(text));
+	}
+
+	private static String applyNames(String text) {
 		Map<String, String> map = replacements;
 		if (map.isEmpty() || text == null || text.length() < shortest) return text;
 		int min = shortest;

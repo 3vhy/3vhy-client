@@ -96,31 +96,22 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		drawCard(ui, mc, (w - cardW) / 2, y, cardW);
 		d.pop();
 
-		String left = "3vhy Client " + ThreevhyClient.version() + "  ·  Minecraft " + ThreevhyClient.minecraftVersion();
-		d.text(left, 8, h - 13, 0xFF0B2A6E, false);
-		String right = "Not affiliated with Mojang or Microsoft";
-		d.text(right, w - 8 - mc.font.width(right), h - 13, 0xFF0B2A6E, false);
+		String version = "3vhy Client " + ThreevhyClient.version() + "  ·  Minecraft " + ThreevhyClient.minecraftVersion();
+		d.text(version, 8, h - 23, 0xFF0B2A6E, false);
+		d.text("Not affiliated with Mojang or Microsoft", 8, h - 13, 0xFF0B2A6E, false);
 	}
 
 	private static final int CARD_H = 10 + 26 + 7 + 22 + 8 + 12 + 8;
 	private static final int GLASS = 0x8C061654;
 	private static final int GLASS_EDGE = 0x33A9D8F2;
 
-	/** The installer's title bar: the 3 app icon and the name on the left, who's playing on the right. */
+	/** The installer's title bar: the 3 app icon and the name. Who's playing is at the bottom right (MenuNameTag). */
 	private void drawTitleBar(Ui ui, Minecraft mc, int w) {
 		Draw d = ui.d;
 		d.roundRect(8, 7, 24, 23, 4, 0xFF1A4FBA);
 		d.roundOutline(8, 7, 24, 23, 4, 0x4DE3F3FC);
 		Wordmark.drawGlyph(d, 11, 9, 1, Theme.ICE);
 		d.text(Ui.bold("3vhy Client"), 30, 11, 0xE6CFE8F7, false);
-
-		String player = mc.getUser().getName();
-		int pw = mc.font.width(player) + 22;
-		int px = w - 8 - pw;
-		d.roundRect(px, 7, px + pw, 23, 8, GLASS);
-		d.roundOutline(px, 7, px + pw, 23, 8, GLASS_EDGE);
-		ui.dot(px + 7, 12, 6, 0xFF4ADE80);
-		d.text(player, px + 16, 11, Theme.ICE, false);
 	}
 
 	/** Glass pills like the installer's feature chips: the game version, how many mods are on, the profile. */

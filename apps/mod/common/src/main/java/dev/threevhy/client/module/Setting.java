@@ -150,6 +150,10 @@ public abstract class Setting {
 			return options[index()];
 		}
 
+		public java.util.List<String> options() {
+			return java.util.List.of(options);
+		}
+
 		public boolean is(String option) {
 			return get().equals(option);
 		}

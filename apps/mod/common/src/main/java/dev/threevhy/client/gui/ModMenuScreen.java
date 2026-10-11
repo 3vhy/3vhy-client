@@ -11,7 +11,9 @@ import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.CustomSkins;
 import dev.threevhy.client.module.PlayerList;
+import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Setting;
 import dev.threevhy.client.module.Waypoints;
 import dev.threevhy.client.music.MusicBridge;
@@ -48,7 +50,9 @@ public final class ModMenuScreen extends CompatScreen {
 		PROFILE_NAME,
 		WAYPOINT_NAME,
 		SETTING_TEXT,
-		PLAYER_NAME
+		PLAYER_NAME,
+		RULE_FIND,
+		RULE_REPLACE
 	}
 
 	private static final int CARD_H = 42;
@@ -69,6 +73,8 @@ public final class ModMenuScreen extends CompatScreen {
 	private String waypointName = "";
 	private Setting.Text editingText = null;
 	private String playerName = "";
+	private String ruleFind = "";
+	private String ruleReplace = "";
 	private String notice = null;
 	private long noticeAt = 0;
 
@@ -371,7 +377,9 @@ public final class ModMenuScreen extends CompatScreen {
 		HudWidget widget = HudWidgets.ALL.stream().filter(each -> each.module == module).findFirst().orElse(null);
 		int count = settings.size() + (widget != null ? 1 : 0) + (module == Modules.THEME ? 1 : 0)
 				+ (module == Modules.MUSIC ? 1 : 0);
-		int contentH = count * (ROW_H + 4) + (module == Modules.PLAYER_LIST ? playersHeight() : 0);
+		int contentH = count * (ROW_H + 4) + (module == Modules.PLAYER_LIST ? playersHeight() : 0)
+				+ (module == Modules.SKIN_PROTECT ? 2 * (ROW_H + 4) : 0)
+				+ (module == Modules.NAME_PROTECT ? rulesHeight() : 0);
 		maxScroll = Math.max(0, contentH - listH);
 		scroll = Math.max(0, Math.min(scroll, maxScroll));
 		shownScroll = Math.max(0, Math.min(shownScroll, maxScroll));
@@ -408,15 +416,22 @@ public final class ModMenuScreen extends CompatScreen {
 			y += ROW_H + 4;
 		}
 		if (module == Modules.PLAYER_LIST) drawPlayers(ui, cx, y, rowW);
+		if (module == Modules.SKIN_PROTECT) drawSkinFile(ui, cx, y, rowW);
+		if (module == Modules.NAME_PROTECT) drawRules(ui, cx, y, rowW);
 		ui.endClip();
 		ui.scrollbar(cx + cw - 2, listY, listH, shownScroll, maxScroll, contentH);
 	}
 
 	private void row(Ui ui, int x, int y, int w, String name, String description) {
+		row(ui, x, y, w, name, description, 142);
+	}
+
+	/** A settings row whose controls take {@code reserved} pixels on the right. */
+	private void row(Ui ui, int x, int y, int w, String name, String description, int reserved) {
 		boolean hover = ui.hover(x, y, x + w, y + ROW_H);
 		ui.card(x, y, x + w, y + ROW_H, hover ? ui.t.cardHover() : ui.t.card(), ui.t.edge());
-		ui.text(name, x + 8, y + 5, ui.t.text());
-		ui.small(ui.trim(description, (int) ((w - 150) / 0.75f)), x + 8, y + 16, 0.75f, ui.t.muted());
+		ui.text(ui.trim(name, w - reserved - 16), x + 8, y + 5, ui.t.text());
+		ui.small(ui.trim(description, (int) ((w - reserved - 16) / 0.75f)), x + 8, y + 16, 0.75f, ui.t.muted());
 	}
 
 	private void settingRow(Ui ui, Setting setting, int x, int y, int w) {
@@ -440,7 +455,9 @@ public final class ModMenuScreen extends CompatScreen {
 				slider.setFraction((ui.mouseX - trackX) / (double) trackW);
 			});
 		} else if (setting instanceof Setting.Choice choice) {
-			int boxW = 92;
+			int widest = 0;
+			for (String option : choice.options()) widest = Math.max(widest, ui.width(option.toUpperCase(Locale.ROOT)));
+			int boxW = Math.max(92, widest + 30);
 			int bx = right - boxW;
 			boolean hover = ui.hover(bx, y + 6, bx + boxW, y + 20);
 			ui.d.roundRect(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
@@ -543,6 +560,106 @@ public final class ModMenuScreen extends CompatScreen {
 					online ? t.good() : t.muted());
 			y += PLAYER_ROW + 4;
 		}
+	}
+
+	/** Skin Protect: which skin file to wear (from the skins folder), and how loading the chosen skin went. */
+	private void drawSkinFile(Ui ui, int x, int y, int w) {
+		MenuTheme t = ui.t;
+		int right = x + w - 8;
+		int openW = ui.titleWidth("Open folder") + 16;
+		row(ui, x, y, w, "Skin file", "PNG skins in the 3vhy/skins folder", openW + 126 + 8);
+		ui.button(right - openW, y + 6, openW, 14, "Open folder", false, CustomSkins::openFolder);
+		List<String> files = CustomSkins.files();
+		int boxW = 120;
+		int bx = right - openW - 6 - boxW;
+		boolean hover = ui.hover(bx, y + 6, bx + boxW, y + 20);
+		ui.d.roundRect(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
+		ui.d.roundOutline(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.edgeStrong() : t.edge());
+		String current = Config.get().skinFile;
+		String shown = files.isEmpty() ? "No files yet" : current.isBlank() || !files.contains(current) ? "Pick one" : current;
+		shown = ui.trim(shown, boxW - 24);
+		ui.text(shown, bx + (boxW - ui.width(shown)) / 2, y + 9, files.isEmpty() ? t.muted() : t.text());
+		if (!files.isEmpty()) {
+			ui.text("<", bx + 4, y + 9, t.muted());
+			ui.text(">", bx + boxW - 9, y + 9, t.muted());
+			ui.hit(bx, y + 6, bx + boxW / 2, y + 20, () -> pickSkinFile(files, -1));
+			ui.hit(bx + boxW / 2, y + 6, bx + boxW, y + 20, () -> pickSkinFile(files, 1));
+		}
+		y += ROW_H + 4;
+		row(ui, x, y, w, "Status", "What Skin Protect is showing right now");
+		String status = ui.trim(CustomSkins.status(), w / 2);
+		ui.text(status, right - ui.width(status), y + 9, t.muted());
+	}
+
+	private void pickSkinFile(List<String> files, int step) {
+		int index = files.indexOf(Config.get().skinFile);
+		index = index < 0 ? (step > 0 ? 0 : files.size() - 1) : Math.floorMod(index + step, files.size());
+		Config.get().skinFile = files.get(index);
+		Config.saveSoon();
+		if (!Modules.SKIN_PROTECT_SOURCE.is(CustomSkins.SOURCE_FILE)) {
+			while (!Modules.SKIN_PROTECT_SOURCE.is(CustomSkins.SOURCE_FILE)) Modules.SKIN_PROTECT_SOURCE.next();
+		}
+	}
+
+	private static final int RULE_ROW = 22;
+
+	private int rulesHeight() {
+		return 14 + 22 + 12 + Math.max(1, Config.get().textRules.size()) * (RULE_ROW + 4);
+	}
+
+	/** Name Protect: change any text on screen, like the stats on a server's scoreboard. */
+	private void drawRules(Ui ui, int x, int y, int w) {
+		MenuTheme t = ui.t;
+		ui.small("CHANGE TEXT ON SCREEN", x + 2, y + 3, 0.75f, t.muted());
+		y += 14;
+		int addW = 56;
+		int fieldW = (w - addW - 12) / 2;
+		ui.field(x, y, fieldW, 16, ruleFind, "Find, like Money: #", focus == Focus.RULE_FIND, PixelIcons.PENCIL);
+		ui.hit(x, y, x + fieldW, y + 16, () -> focus = Focus.RULE_FIND);
+		int rx = x + fieldW + 6;
+		ui.field(rx, y, fieldW, 16, ruleReplace, "Show instead, like Money: 1T", focus == Focus.RULE_REPLACE, null);
+		ui.hit(rx, y, rx + fieldW, y + 16, () -> focus = Focus.RULE_REPLACE);
+		ui.button(x + w - addW, y, addW, 16, "+ Add", true, this::addRule);
+		y += 22;
+		String hint = "# matches any number and * any word. Works on scoreboards, chat, tab and nametags.";
+		ui.small(ui.trim(hint, (int) ((w - 4) / 0.75f)), x + 2, y, 0.75f, t.muted());
+		y += 12;
+		List<Config.TextRule> rules = new ArrayList<>(Config.get().textRules);
+		if (rules.isEmpty()) {
+			ui.text(ui.trim("No changes yet. Try Kills: # -> Kills: 9999", w - 8), x + 4, y + 7, t.muted());
+			return;
+		}
+		for (Config.TextRule rule : rules) {
+			boolean hover = ui.hover(x, y, x + w, y + RULE_ROW);
+			ui.card(x, y, x + w, y + RULE_ROW, hover ? t.cardHover() : t.card(), t.edge());
+			int half = (w - 40) / 2;
+			ui.text(ui.trim(rule.find, half - 10), x + 8, y + 7, t.text());
+			ui.text("->", x + 8 + half - 6, y + 7, t.accent());
+			ui.text(ui.trim(rule.replace.isEmpty() ? "(nothing)" : rule.replace, half - 10), x + 8 + half + 10, y + 7,
+					rule.replace.isEmpty() ? t.muted() : t.text());
+			int dx = x + w - 24;
+			boolean delHover = ui.hover(dx, y + 3, dx + 16, y + 19);
+			if (delHover) ui.d.roundRect(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 5, 1, delHover ? t.bad() : t.muted());
+			ui.hit(dx, y + 3, dx + 16, y + 19, () -> {
+				TextRules.remove(rule);
+				notice("Removed " + rule.find);
+			});
+			y += RULE_ROW + 4;
+		}
+	}
+
+	private void addRule() {
+		if (ruleFind.isBlank()) {
+			notice("Type what to find first");
+			focus = Focus.RULE_FIND;
+			return;
+		}
+		TextRules.add(ruleFind, ruleReplace);
+		notice("Changing " + ruleFind.trim());
+		ruleFind = "";
+		ruleReplace = "";
+		focus = Focus.RULE_FIND;
 	}
 
 	private void addPlayer() {
@@ -743,15 +860,21 @@ public final class ModMenuScreen extends CompatScreen {
 				Runnable action = button == 0 ? hit.action() : hit.rightAction();
 				if (action == null) continue;
 				if (focus == Focus.WAYPOINT_NAME) finishRename();
-				if (focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME) focus = Focus.SEARCH;
+				if (typingField()) focus = Focus.SEARCH;
 				minecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
 				action.run();
 				return true;
 			}
 		}
 		if (focus == Focus.WAYPOINT_NAME) finishRename();
-		if (focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME) focus = Focus.SEARCH;
+		if (typingField()) focus = Focus.SEARCH;
 		return super.mouseClicked(event, doubleClick);
+	}
+
+	/** Fields that let go of the keyboard when you click somewhere else. */
+	private boolean typingField() {
+		return focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME || focus == Focus.RULE_FIND
+				|| focus == Focus.RULE_REPLACE;
 	}
 
 	@Override
@@ -795,6 +918,12 @@ public final class ModMenuScreen extends CompatScreen {
 			case PLAYER_NAME -> {
 				if (playerName.length() < 16 && typed.matches("[A-Za-z0-9_]")) playerName += typed;
 			}
+			case RULE_FIND -> {
+				if (ruleFind.length() < 48) ruleFind += typed;
+			}
+			case RULE_REPLACE -> {
+				if (ruleReplace.length() < 48) ruleReplace += typed;
+			}
 			case SEARCH -> {
 				if (tab != Tab.MODS || page != null) {
 					tab = Tab.MODS;
@@ -818,6 +947,8 @@ public final class ModMenuScreen extends CompatScreen {
 					if (editingText != null) editingText.set(dropLast(editingText.get()));
 				}
 				case PLAYER_NAME -> playerName = dropLast(playerName);
+				case RULE_FIND -> ruleFind = dropLast(ruleFind);
+				case RULE_REPLACE -> ruleReplace = dropLast(ruleReplace);
 				case SEARCH -> {
 					search = dropLast(search);
 					resetScroll();
@@ -830,10 +961,12 @@ public final class ModMenuScreen extends CompatScreen {
 			if (focus == Focus.WAYPOINT_NAME) finishRename();
 			if (focus == Focus.PLAYER_NAME) addPlayer();
 			if (focus == Focus.SETTING_TEXT) focus = Focus.SEARCH;
+			if (focus == Focus.RULE_REPLACE) addRule();
+			else if (focus == Focus.RULE_FIND) focus = Focus.RULE_REPLACE;
 			return true;
 		}
 		if (key == GLFW.GLFW_KEY_ESCAPE) {
-			if (focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME) {
+			if (typingField()) {
 				focus = Focus.SEARCH;
 				return true;
 			}

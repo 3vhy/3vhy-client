@@ -3,8 +3,9 @@ package dev.threevhy.client.music;
 import java.util.Locale;
 
 /**
- * What Windows says is playing, as of {@code receivedAt} (System.nanoTime). {@code artVersion} goes up
- * whenever the cover changes, so the texture is only uploaded once per song.
+ * What Windows says is playing, as of {@code receivedAt} (System.nanoTime). {@code artVersion} and
+ * {@code iconVersion} go up whenever the cover or the app's icon changes, so each texture is only
+ * uploaded once. {@code artProblem} says why there's no cover, when there isn't one.
  */
 public record NowPlaying(
 		String key,
@@ -17,7 +18,10 @@ public record NowPlaying(
 		double duration,
 		long receivedAt,
 		byte[] art,
-		long artVersion) {
+		long artVersion,
+		byte[] icon,
+		long iconVersion,
+		String artProblem) {
 
 	/** Seconds into the song right now, counting time since the last update while it plays. */
 	public double positionNow() {

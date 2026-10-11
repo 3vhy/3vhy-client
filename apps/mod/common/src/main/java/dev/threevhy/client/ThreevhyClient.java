@@ -5,6 +5,7 @@ import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
 import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.gui.MenuNameTag;
 import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.hud.CpsTracker;
 import dev.threevhy.client.hud.HudRenderer;
@@ -106,6 +107,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			if (screen instanceof PauseScreen) PauseMenuButton.add(client, screen);
+			if (MenuNameTag.shows(screen)) Compat.afterScreen(screen, d -> MenuNameTag.draw(d, screen));
 		});
 
 		LOG.info("3vhy Client {} loaded on Minecraft {}", version, minecraftVersion);

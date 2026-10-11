@@ -78,4 +78,10 @@ public final class Compat {
 			return null;
 		}
 	}
+
+	/** Draws on top of a screen after it has drawn itself. */
+	public static void afterScreen(Screen screen, Consumer<Draw> drawer) {
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen).register(
+				(drawn, graphics, mouseX, mouseY, delta) -> drawer.accept(new DrawImpl(graphics)));
+	}
 }

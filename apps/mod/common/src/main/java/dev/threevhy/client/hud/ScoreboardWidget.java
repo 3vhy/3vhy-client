@@ -4,6 +4,7 @@ import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.TextRules;
 import java.util.Comparator;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -73,12 +74,13 @@ public final class ScoreboardWidget extends HudWidget {
 				.sorted(ORDER)
 				.limit(MAX_LINES)
 				.map(entry -> {
-					Component name = PlayerTeam.formatNameForTeam(scoreboard.getPlayersTeam(entry.owner()), entry.ownerName());
-					Component score = hideNumbers ? Component.empty() : entry.formatValue(format);
+					Component name = TextRules.apply(
+							PlayerTeam.formatNameForTeam(scoreboard.getPlayersTeam(entry.owner()), entry.ownerName()));
+					Component score = hideNumbers ? Component.empty() : TextRules.apply(entry.formatValue(format));
 					return new Line(name, score, hideNumbers ? 0 : mc.font.width(score));
 				})
 				.toList();
-		Component title = objective.getDisplayName();
+		Component title = TextRules.apply(objective.getDisplayName());
 		int width = mc.font.width(title);
 		int colon = mc.font.width(": ");
 		for (Line line : lines) {

@@ -41,6 +41,10 @@ public final class Config {
 
 	/** Names on the Player List, in the order they were added. */
 	public List<String> players = new ArrayList<>();
+	/** Name Protect's text changes: what to look for on screen and what to show instead. */
+	public List<TextRule> textRules = new ArrayList<>();
+	/** The skin file (in 3vhy/skins) Skin Protect shows when set to use a file. */
+	public String skinFile = "";
 
 	/** Overrides the Discord application ID the mod was built with. */
 	public String discordAppId = "";
@@ -53,6 +57,12 @@ public final class Config {
 		public Map<String, Boolean> modules = new LinkedHashMap<>();
 		public Map<String, String> settings = new LinkedHashMap<>();
 		public Map<String, double[]> hud = new LinkedHashMap<>();
+	}
+
+	/** One Name Protect text change. In {@code find}, # stands for any number and * for any word. */
+	public static final class TextRule {
+		public String find = "";
+		public String replace = "";
 	}
 
 	/** A marked place in one world. */
@@ -90,6 +100,12 @@ public final class Config {
 				if (loaded.waypoints == null) loaded.waypoints = new LinkedHashMap<>();
 				if (loaded.discordAppId == null) loaded.discordAppId = "";
 				if (loaded.players == null) loaded.players = new ArrayList<>();
+				if (loaded.textRules == null) loaded.textRules = new ArrayList<>();
+				loaded.textRules.removeIf(rule -> rule == null || rule.find == null || rule.find.isBlank());
+				loaded.textRules.forEach(rule -> {
+					if (rule.replace == null) rule.replace = "";
+				});
+				if (loaded.skinFile == null) loaded.skinFile = "";
 				instance = loaded;
 			}
 		} catch (Exception e) {
