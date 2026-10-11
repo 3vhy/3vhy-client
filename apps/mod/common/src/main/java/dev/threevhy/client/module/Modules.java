@@ -106,6 +106,10 @@ public final class Modules {
 			"Grey names for players who aren't on", false));
 	public static final Toggle PLAYER_LIST_ALERTS = PLAYER_LIST.add(new Toggle("alerts", "Join alerts",
 			"A chat message when someone on your list joins or leaves", true));
+	public static final Toggle PLAYER_LIST_ASK = PLAYER_LIST.add(new Toggle("ask", "Ask the server",
+			"For servers like DonutSMP whose tab list doesn't show everyone: checks /msg name suggestions", true));
+	public static final Text PLAYER_LIST_COMMAND = PLAYER_LIST.add(new Text("command", "Check with",
+			"The command whose name suggestions show who's online, like msg or tpa", "msg", 16));
 	public static final Module JUMP_RESET = background(new Module("jump_reset", "Jump Reset",
 			"Shows how well you timed your jump after being hit, to take less knockback", Category.HUD, false).markNew());
 

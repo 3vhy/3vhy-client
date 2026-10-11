@@ -139,6 +139,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "player list sees who is online", context.computeOnClient(client ->
 					Hooks.playerListTicked && PlayerList.isOnline(client.getUser().getName()) && !PlayerList.isOnline("Steve")
 							&& HudWidgets.PLAYER_LIST.visible(client)));
+			context.runOnClient(client -> PlayerList.askAbout(client.getConnection(), "msg", client.getUser().getName()));
+			context.waitTicks(20);
+			check(failed, "player list asks the server who's online (/msg suggestions)", context.computeOnClient(client ->
+					Hooks.playerListAskedServer && PlayerList.checkedWithServer("Steve") && !PlayerList.seenByServer("Steve")
+							&& PlayerList.seenByServer(client.getUser().getName())));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
 			server.runCommand("damage @p 1000 minecraft:generic");

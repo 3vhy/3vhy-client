@@ -21,6 +21,7 @@ public final class Hooks {
 	public static volatile boolean nameProtectRan = false;
 	public static volatile boolean skinProtectRan = false;
 	public static volatile boolean playerListTicked = false;
+	public static volatile boolean playerListAskedServer = false;
 	public static volatile boolean musicArtUploaded = false;
 	public static volatile boolean musicIconUploaded = false;
 	public static volatile boolean textRuleRan = false;

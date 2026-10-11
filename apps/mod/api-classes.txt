@@ -126,3 +126,6 @@ net.minecraft.Util$OS
 net.minecraft.util.Util$OS
 net.minecraft.network.chat.FormattedText
 net.minecraft.network.chat.Style
+net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket
+net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket
+net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl
