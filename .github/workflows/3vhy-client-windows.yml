@@ -92,7 +92,10 @@ jobs:
           # Optional: set a repository variable with your own Discord application ID
           # to turn on Discord Rich Presence ("Playing 3vhy Client").
           THREEVHY_DISCORD_APP_ID: ${{ vars.THREEVHY_DISCORD_APP_ID }}
-        run: pnpm --filter=@modrinth/app run tauri build --bundles nsis
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm --filter=@modrinth/app run tauri build --bundles nsis 2>&1 | tee "$RUNNER_TEMP/build.log"
 
       # The interactive "3vhy Client Setup" wraps the installer built above
       - name: Build 3vhy Client Setup
@@ -118,3 +121,29 @@ jobs:
         with:
           files: dist/*.exe
           generate_release_notes: true
+
+      # How the build went (and the end of the build log) goes to the ci-report/windows branch,
+      # so it can be checked without a GitHub login
+      - name: Publish build report
+        if: always()
+        shell: bash
+        run: |
+          report="$RUNNER_TEMP/windows-report"
+          mkdir -p "$report"
+          {
+            echo "ref: $GITHUB_REF"
+            echo "commit: $GITHUB_SHA"
+            echo "status: ${{ job.status }}"
+            echo "installers:"
+            ls -la dist 2>/dev/null || echo "  none"
+          } > "$report/status.txt"
+          if [ -f "$RUNNER_TEMP/build.log" ]; then
+            grep -n -E "error(\[|:)|warning: unused|ERROR|failed" "$RUNNER_TEMP/build.log" | head -n 200 > "$report/problems.txt" || true
+            tail -n 300 "$RUNNER_TEMP/build.log" > "$report/build-tail.log"
+          fi
+          cd "$report"
+          git init -q
+          git checkout -q -b report
+          git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Windows build report for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" report:refs/heads/ci-report/windows
