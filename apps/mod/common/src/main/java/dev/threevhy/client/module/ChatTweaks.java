@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FormattedCharSequence;
 
 /** Chat timestamps, stacked repeats and a longer history. Called from the chat mixin. */
 public final class ChatTweaks {
@@ -44,6 +45,21 @@ public final class ChatTweaks {
 			result = stamp.append(result);
 		}
 		return result;
+	}
+
+	/** The chat's wrapped lines as plain text, newest first. ChatComponentMixin adds it to the chat (for the in-game test). */
+	public interface ShownLines {
+		List<String> threevhy$shownLines();
+	}
+
+	/** A wrapped chat line as plain text. */
+	public static String plain(FormattedCharSequence line) {
+		StringBuilder text = new StringBuilder();
+		line.accept((index, style, codepoint) -> {
+			text.appendCodePoint(codepoint);
+			return true;
+		});
+		return text.toString();
 	}
 
 	/** Whether {@code shown} is the previous message, so it's the one a repeat replaces. */

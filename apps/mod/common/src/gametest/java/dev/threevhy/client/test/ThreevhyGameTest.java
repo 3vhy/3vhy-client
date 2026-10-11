@@ -51,24 +51,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 
 	/** How many of the chat's wrapped lines contain {@code text}. */
 	private static int chatLinesWith(net.minecraft.client.Minecraft client, String text) {
-		try {
-			Object chat = client.gui.getChat();
-			java.lang.reflect.Field field = chat.getClass().getDeclaredField("trimmedMessages");
-			field.setAccessible(true);
-			int count = 0;
-			for (Object line : (List<?>) field.get(chat)) {
-				var content = (net.minecraft.util.FormattedCharSequence) line.getClass().getMethod("content").invoke(line);
-				StringBuilder shown = new StringBuilder();
-				content.accept((index, style, codepoint) -> {
-					shown.appendCodePoint(codepoint);
-					return true;
-				});
-				if (shown.toString().contains(text)) count++;
-			}
-			return count;
-		} catch (ReflectiveOperationException e) {
-			throw new RuntimeException(e);
+		int count = 0;
+		for (String line : ((ChatTweaks.ShownLines) client.gui.getChat()).threevhy$shownLines()) {
+			if (line.contains(text)) count++;
 		}
+		return count;
 	}
 
 	/**

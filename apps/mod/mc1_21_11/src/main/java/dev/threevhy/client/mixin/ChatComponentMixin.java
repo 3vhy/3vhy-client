@@ -1,6 +1,7 @@
 package dev.threevhy.client.mixin;
 
 import dev.threevhy.client.module.ChatTweaks;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.gui.components.ChatComponent;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 /** Chat: timestamps, stacked repeats and a longer history. */
 @Mixin(ChatComponent.class)
-public abstract class ChatComponentMixin {
+public abstract class ChatComponentMixin implements ChatTweaks.ShownLines {
 	@Shadow @Final private List<GuiMessage> allMessages;
 	@Shadow @Final private List<GuiMessage.Line> trimmedMessages;
 
@@ -27,6 +28,13 @@ public abstract class ChatComponentMixin {
 				ChatTweaks.removeNewestLines(trimmedMessages, GuiMessage.Line::endOfEntry);
 			}
 		});
+	}
+
+	@Override
+	public List<String> threevhy$shownLines() {
+		List<String> lines = new ArrayList<>();
+		for (GuiMessage.Line line : trimmedMessages) lines.add(ChatTweaks.plain(line.content()));
+		return lines;
 	}
 
 	@ModifyConstant(method = {"addMessageToQueue", "addMessageToDisplayQueue"}, constant = @Constant(intValue = 100))
