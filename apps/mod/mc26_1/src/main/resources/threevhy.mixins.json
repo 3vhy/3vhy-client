@@ -19,6 +19,7 @@
 		"PlayerInfoMixin",
 		"PlayerTabOverlayMixin",
 		"StringDecomposerMixin",
+		"StringSplitterMixin",
 		"WindowAccessor",
 		"WindowMixin"
 	],

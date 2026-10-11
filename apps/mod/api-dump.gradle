@@ -1,5 +1,6 @@
 // Prints the signatures of the Minecraft classes 3vhy Client touches (javap -p),
 // so API differences between game versions are easy to check from CI.
+// A line like "some.Class#method" prints that method's bytecode instead (javap -c).
 tasks.register('dumpApi') {
 	def classpath = sourceSets.main.compileClasspath
 	def outFile = layout.buildDirectory.file('api.txt')
@@ -9,20 +10,37 @@ tasks.register('dumpApi') {
 		out.parentFile.mkdirs()
 		def jars = classpath.files.findAll { it.name.endsWith('.jar') }
 		def text = new StringBuilder()
-		classNames.each { className ->
+		classNames.each { line ->
+			def parts = line.split('#', 2)
+			def className = parts[0]
+			def methodName = parts.length > 1 ? parts[1] : null
 			def entry = className.replace('.', '/') + '.class'
 			def jar = jars.find { candidate ->
 				def zip = new java.util.zip.ZipFile(candidate)
 				try { zip.getEntry(entry) != null } finally { zip.close() }
 			}
 			if (jar == null) {
-				text.append("## ${className}: NOT FOUND\n\n")
+				text.append("## ${line}: NOT FOUND\n\n")
 				return
 			}
-			def process = ['javap', '-p', '-cp', jar.absolutePath, className].execute()
+			def command = methodName
+					? ['javap', '-p', '-c', '-cp', jar.absolutePath, className]
+					: ['javap', '-p', '-cp', jar.absolutePath, className]
+			def process = command.execute()
 			def stdout = process.inputStream.text
 			process.waitFor()
-			text.append("## ${className}\n").append(stdout).append('\n')
+			if (methodName) {
+				def kept = new StringBuilder()
+				def inside = false
+				stdout.eachLine { row ->
+					if (row.startsWith('  ') && !row.startsWith('   ') && row.contains('(')) {
+						inside = row.contains(" ${methodName}(")
+					}
+					if (inside) kept.append(row).append('\n')
+				}
+				stdout = kept.toString()
+			}
+			text.append("## ${line}\n").append(stdout).append('\n')
 		}
 		out.text = text.toString()
 	}

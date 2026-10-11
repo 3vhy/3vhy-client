@@ -205,6 +205,12 @@ public final class PlayerList {
 		return true;
 	}
 
+	/** What the server checks are doing, for the in-game test's log. */
+	public static String describeChecks() {
+		return "asked " + (NEXT_REQUEST.get() - 0x3B0000) + ", waiting " + PENDING + ", checked " + CHECKED + ", seen " + SEEN.keySet()
+				+ ", answers received " + Hooks.suggestionPackets + " (last id " + Hooks.lastSuggestionId + ")";
+	}
+
 	/** Whether the server has answered about this name since joining (for the in-game test). */
 	public static boolean checkedWithServer(String name) {
 		return CHECKED.contains(name.toLowerCase(Locale.ROOT));

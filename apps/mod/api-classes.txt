@@ -129,3 +129,13 @@ net.minecraft.network.chat.Style
 net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket
 net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket
 net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl
+net.minecraft.client.StringSplitter
+net.minecraft.client.StringSplitter$LineBreakFinder
+net.minecraft.client.StringSplitter$WidthLimitedCharSink
+net.minecraft.client.StringSplitter$FlatComponents
+net.minecraft.client.gui.components.CommandSuggestions
+net.minecraft.server.network.ServerGamePacketListenerImpl
+net.minecraft.client.StringSplitter#splitLines
+net.minecraft.client.StringSplitter$LineBreakFinder#accept
+net.minecraft.server.network.ServerGamePacketListenerImpl#handleCustomCommandSuggestions
+net.minecraft.client.multiplayer.ClientPacketListener#handleCommandSuggestions

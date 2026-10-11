@@ -47,6 +47,43 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
 	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
 
+	/**
+	 * Wraps, cuts and measures a line holding the player's name at many widths, the way chat,
+	 * tooltips and floating text do. Returns what went wrong, or null.
+	 */
+	private static String nameWrapProblem(net.minecraft.client.Minecraft client) {
+		String own = client.getUser().getName();
+		String text = "§6[Practice] §f" + own + " §7- §a12 kills §7- best friends: " + own + ", Steve, " + own;
+		net.minecraft.network.chat.Style plain = net.minecraft.network.chat.Style.EMPTY;
+		try {
+			for (int width = 1; width <= 420; width += 3) {
+				client.font.split(net.minecraft.network.chat.Component.literal(text), width);
+				for (var line : client.font.getSplitter().splitLines(net.minecraft.network.chat.Component.literal(text), width, plain)) {
+					if (line.getString().contains(own)) return "your real name in a wrapped line at width " + width + ": " + line.getString();
+				}
+				client.font.getSplitter().splitLines(text, width, plain);
+				client.font.getSplitter().findLineBreak(text, width, plain);
+				if (client.font.substrByWidth(net.minecraft.network.chat.Component.literal(text), width).getString().contains(own)) {
+					return "your real name in cut text at width " + width;
+				}
+				String head = client.font.plainSubstrByWidth(text, width);
+				if (!text.startsWith(head)) return "cut text isn't the start of the text at width " + width;
+			}
+			for (int skip = 0; skip <= text.length(); skip++) {
+				int from = skip;
+				int[] bad = {-1};
+				net.minecraft.util.StringDecomposer.iterateFormatted(text, skip, plain, plain, (index, style, codepoint) -> {
+					if (index < from || index + Character.charCount(codepoint) > text.length()) bad[0] = index;
+					return true;
+				});
+				if (bad[0] >= 0) return "position " + bad[0] + " reported when reading from " + skip;
+			}
+		} catch (RuntimeException e) {
+			return e.toString();
+		}
+		return null;
+	}
+
 	@Override
 	public void runTest(ClientGameTestContext context) {
 		List<String> failed = new ArrayList<>();
@@ -141,6 +178,16 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 							&& HudWidgets.PLAYER_LIST.visible(client)));
 			context.runOnClient(client -> PlayerList.askAbout(client.getConnection(), "msg", client.getUser().getName()));
 			context.waitTicks(20);
+			String checks = context.computeOnClient(client -> PlayerList.describeChecks());
+			ThreevhyClient.LOG.info("3vhy-check: player list server checks: {}", checks);
+			server.runOnServer(minecraftServer -> {
+				var dispatcher = minecraftServer.getCommands().getDispatcher();
+				String name = minecraftServer.getPlayerList().getPlayers().isEmpty() ? "?"
+						: Compat.profileName(minecraftServer.getPlayerList().getPlayers().get(0).getGameProfile());
+				var parse = dispatcher.parse("msg " + name, minecraftServer.createCommandSourceStack());
+				String suggested = String.valueOf(dispatcher.getCompletionSuggestions(parse).join().getList());
+				ThreevhyClient.LOG.info("3vhy-check: server suggests for \"msg {}\": {}", name, suggested);
+			});
 			check(failed, "player list asks the server who's online (/msg suggestions)", context.computeOnClient(client ->
 					Hooks.playerListAskedServer && PlayerList.checkedWithServer("Steve") && !PlayerList.seenByServer("Steve")
 							&& PlayerList.seenByServer(client.getUser().getName())));
@@ -195,6 +242,33 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 						.append(net.minecraft.network.chat.Component.literal("500.9T").withStyle(net.minecraft.ChatFormatting.GREEN));
 				return TextRules.apply(line).getString().equals("Money: 1T") && Hooks.textRuleRan;
 			}));
+			// A swapped name longer or shorter than the real one, in text that gets wrapped and cut, like
+			// the text floating above players on CrystalPractice (which crashed 3vhy 0.4.1)
+			for (String shownAs : new String[] {"A much longer streamer name", "Me"}) {
+				context.runOnClient(client -> Modules.NAME_PROTECT_NAME.set(shownAs));
+				context.waitTicks(2);
+				String problem = context.computeOnClient(ThreevhyGameTest::nameWrapProblem);
+				ThreevhyClient.LOG.info("3vhy-check: wrapping text with your name shown as \"{}\": {}", shownAs,
+						problem == null ? "fine" : problem);
+				check(failed, "name protect with a " + (shownAs.length() > 8 ? "longer" : "shorter") + " name wraps and cuts text safely",
+						problem == null);
+			}
+			context.runOnClient(client -> Modules.NAME_PROTECT_NAME.set("A much longer streamer name"));
+			context.runOnClient(client -> client.player.setXRot(0f));
+			context.waitTicks(2);
+			String ownName = context.computeOnClient(client -> client.getUser().getName());
+			server.runCommand("execute at @p run summon text_display ^ ^1.6 ^3 {line_width:40,billboard:\"center\",text:\"[Practice] "
+					+ ownName + " - 12 kills - " + ownName + "\"}");
+			context.waitTicks(10);
+			shot(context, "3vhy-name-protect-wrapped");
+			check(failed, "floating text with your name in it draws (text display, line wrapping)",
+					context.computeOnClient(client -> Hooks.wrapProtectRan && client.level != null));
+			server.runCommand("kill @e[type=text_display]");
+			context.runOnClient(client -> {
+				Modules.NAME_PROTECT_NAME.set("Streamer");
+				client.player.setXRot(10f);
+			});
+			context.waitTicks(2);
 			check(failed, "skin protect wears a 64x32 skin file", context.computeOnClient(client ->
 					Hooks.customSkinLoaded && CustomSkins.current() != null));
 

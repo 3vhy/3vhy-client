@@ -40,6 +40,8 @@ public abstract class ClientPacketListenerMixin {
 	/** Answers to the Player List's "/msg name" questions are taken here, before the chat box sees them. */
 	@Inject(method = "handleCommandSuggestions", at = @At("HEAD"), cancellable = true)
 	private void threevhy$suggestions(ClientboundCommandSuggestionsPacket packet, CallbackInfo ci) {
+		dev.threevhy.client.Hooks.suggestionPackets++;
+		dev.threevhy.client.Hooks.lastSuggestionId = packet.id();
 		java.util.List<String> texts = new java.util.ArrayList<>();
 		for (var suggestion : packet.toSuggestions().getList()) texts.add(suggestion.getText());
 		if (PlayerList.onSuggestions(packet.id(), texts)) ci.cancel();

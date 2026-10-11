@@ -13,8 +13,8 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 
 /**
  * Name Protect: your username, and optionally everyone else's, is swapped for another name in all
- * text on screen (StringDecomposerMixin calls {@link #apply}). Only whole names are swapped, so
- * "Steve" changes but "Stevenson" doesn't. Other players get stable numbers for the session.
+ * text on screen (see {@link ProtectedText}). Only whole names are swapped, so "Steve" changes but
+ * "Stevenson" doesn't. Other players get stable numbers for the session.
  */
 public final class NameProtect {
 	/** Name -> what to show instead. Replaced as a whole every tick, so drawing never sees it half built. */
@@ -67,18 +67,25 @@ public final class NameProtect {
 		replacements = Map.copyOf(next);
 	}
 
-	/** The text with protected names swapped and the text rules applied, or the very same string when nothing matched. */
-	public static String apply(String text) {
-		return TextRules.apply(applyNames(text));
+	/** Whether Name Protect changes any text right now. */
+	public static boolean active() {
+		return !replacements.isEmpty() || TextRules.active();
 	}
 
-	private static String applyNames(String text) {
+	/** The text with protected names swapped and the text rules applied, or the very same string when nothing matched. */
+	public static String apply(String text) {
+		ProtectedText swap = ProtectedText.of(text, 0);
+		return swap == null ? text : swap.text;
+	}
+
+	/** Swaps protected names in the text so far ({@code original} when {@code rewrite} is still null). */
+	static ProtectedText.Rewrite rewrite(ProtectedText.Rewrite rewrite, String original) {
+		String text = rewrite == null ? original : rewrite.text;
 		Map<String, String> map = replacements;
-		if (map.isEmpty() || text == null || text.length() < shortest) return text;
+		if (map.isEmpty() || text.length() < shortest) return rewrite;
 		int min = shortest;
 		int max = longest;
-		StringBuilder out = null;
-		int copied = 0;
+		ProtectedText.Edits edits = null;
 		int length = text.length();
 		int i = 0;
 		while (i < length) {
@@ -95,15 +102,17 @@ public final class NameProtect {
 			while (i < length && isNameChar(text.charAt(i))) i++;
 			int size = i - start;
 			if (size < min || size > max) continue;
-			String replacement = map.get(text.substring(start, i));
-			if (replacement == null) continue;
-			if (out == null) out = new StringBuilder(length + 16);
-			out.append(text, copied, start).append(replacement);
-			copied = i;
+			String name = text.substring(start, i);
+			String replacement = map.get(name);
+			if (replacement == null || replacement.equals(name)) continue;
+			if (edits == null) edits = new ProtectedText.Edits();
+			edits.add(start, i, replacement);
 		}
-		if (out == null) return text;
+		if (edits == null) return rewrite;
 		Hooks.nameProtectRan = true;
-		return out.append(text, copied, length).toString();
+		if (rewrite == null) rewrite = new ProtectedText.Rewrite(original);
+		rewrite.apply(edits);
+		return rewrite;
 	}
 
 	private static boolean isNameChar(char c) {

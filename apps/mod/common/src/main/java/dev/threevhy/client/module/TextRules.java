@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Style;
 /**
  * Name Protect's text changes: anything on screen matching a rule shows as something else, e.g.
  * "Money: #" becomes "Money: 1T". # matches any number (500.9T, 1,234, 5.1K) and * any word.
- * Single pieces of text are changed where Minecraft draws text (see NameProtect); scoreboard lines are
+ * Single pieces of text are changed where Minecraft draws text (see ProtectedText); scoreboard lines are
  * changed whole, because servers often colour the label and the number as separate pieces.
  */
 public final class TextRules {
@@ -74,18 +74,29 @@ public final class TextRules {
 		return Modules.NAME_PROTECT.enabled() && !rules.isEmpty();
 	}
 
-	/** The text with every rule applied, or the very same string when none matched. */
-	public static String apply(String text) {
-		if (text == null || !active()) return text;
-		String result = text;
+	/** Applies every rule to the text so far ({@code original} when {@code rewrite} is still null). */
+	static ProtectedText.Rewrite rewrite(ProtectedText.Rewrite rewrite, String original) {
+		if (!active()) return rewrite;
 		for (Rule rule : rules) {
-			if (!rule.literal().isEmpty() && !result.contains(rule.literal())) continue;
-			Matcher matcher = rule.pattern().matcher(result);
-			if (matcher.find()) result = matcher.replaceAll(Matcher.quoteReplacement(rule.replacement()));
+			String text = rewrite == null ? original : rewrite.text;
+			if (!rule.literal().isEmpty() && !text.contains(rule.literal())) continue;
+			Matcher matcher = rule.pattern().matcher(text);
+			ProtectedText.Edits edits = null;
+			String replacement = rule.replacement();
+			while (matcher.find()) {
+				int start = matcher.start();
+				int end = matcher.end();
+				if (end == start) continue;
+				if (end - start == replacement.length() && text.startsWith(replacement, start)) continue;
+				if (edits == null) edits = new ProtectedText.Edits();
+				edits.add(start, end, replacement);
+			}
+			if (edits == null) continue;
+			Hooks.textRuleRan = true;
+			if (rewrite == null) rewrite = new ProtectedText.Rewrite(original);
+			rewrite.apply(edits);
 		}
-		if (result.equals(text)) return text;
-		Hooks.textRuleRan = true;
-		return result;
+		return rewrite;
 	}
 
 	/**

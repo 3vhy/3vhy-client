@@ -22,6 +22,10 @@ public final class Hooks {
 	public static volatile boolean skinProtectRan = false;
 	public static volatile boolean playerListTicked = false;
 	public static volatile boolean playerListAskedServer = false;
+	public static volatile boolean wrapProtectRan = false;
+	/** Command suggestion answers that reached the client, and the id of the last one (for the in-game test). */
+	public static volatile int suggestionPackets = 0;
+	public static volatile int lastSuggestionId = -1;
 	public static volatile boolean musicArtUploaded = false;
 	public static volatile boolean musicIconUploaded = false;
 	public static volatile boolean textRuleRan = false;
