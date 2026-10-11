@@ -93,6 +93,8 @@ jobs:
           $code = $LASTEXITCODE
           $line = ($out -split "`n" | Where-Object { $_.Trim().StartsWith('{') } | Select-Object -Last 1)
           Write-Output "Exit code $code, output: $out"
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP/music-report" | Out-Null
+          Set-Content -Path "$env:RUNNER_TEMP/music-report/result.txt" -Value "exit code: $code`n$out"
           if (-not $line) {
             Write-Output "::error title=Music HUD script::No JSON line. Output: $($out.Trim() -replace "`r?`n", ' | ')"
             exit 1
@@ -103,6 +105,21 @@ jobs:
           } else {
             Write-Output "::notice title=Music HUD script::$($line.Trim())"
           }
+
+      # The result goes to the ci-report/music-script branch, like the in-game test reports
+      - name: Publish result
+        if: always() && github.ref_type == 'branch'
+        shell: bash
+        run: |
+          report="$RUNNER_TEMP/music-report"
+          mkdir -p "$report"
+          [ -f "$report/result.txt" ] || echo "The script step failed before writing a result" > "$report/result.txt"
+          cd "$report"
+          git init -q
+          git checkout -q -b report
+          git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Music script result for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" report:refs/heads/ci-report/music-script
 
   gametest:
     name: In-game test (${{ matrix.project }})

@@ -21,7 +21,7 @@ final class MusicWidget extends HudWidget {
 	private static final int BADGE = 12;
 
 	MusicWidget() {
-		super("music", Modules.MUSIC, Anchor.TOP_RIGHT);
+		super("music", Modules.MUSIC, Anchor.TOP_CENTER);
 	}
 
 	private static boolean progress(NowPlaying song) {

@@ -3,6 +3,7 @@ package dev.threevhy.client.hud;
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.mixin.BossHealthOverlayAccessor;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.Setting;
@@ -18,6 +19,7 @@ public abstract class HudWidget {
 	public enum Anchor {
 		TOP_LEFT,
 		TOP_RIGHT,
+		TOP_CENTER,
 		MIDDLE_RIGHT,
 		BOTTOM_RIGHT,
 		BELOW_CROSSHAIR,
@@ -101,12 +103,23 @@ public abstract class HudWidget {
 				int y = MARGIN + stackedBefore(mc);
 				yield new int[] {anchor == Anchor.TOP_LEFT ? MARGIN : screenWidth - w - MARGIN, y};
 			}
+			case TOP_CENTER -> new int[] {(screenWidth - w) / 2, bossBarsBottom(mc) + MARGIN + stackedBefore(mc)};
 			case BOTTOM_RIGHT -> new int[] {screenWidth - w - MARGIN, screenHeight - h - MARGIN - stackedBefore(mc)};
 			case ABOVE_HOTBAR -> new int[] {(screenWidth - w) / 2, screenHeight - 58 - h - stackedBefore(mc)};
 			case MIDDLE_RIGHT -> new int[] {screenWidth - w - MARGIN, (screenHeight - h) / 2};
 			case BELOW_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 + 20};
 			case ABOVE_CROSSHAIR -> new int[] {(screenWidth - w) / 2, screenHeight / 2 - 22 - h};
 		};
+	}
+
+	/** Where the server's boss bars end at the top of the screen (0 when there are none). */
+	private static int bossBarsBottom(Minecraft mc) {
+		try {
+			int bars = ((BossHealthOverlayAccessor) mc.gui.getBossOverlay()).threevhy$events().size();
+			return bars == 0 ? 0 : 12 + (bars - 1) * 19 + 5;
+		} catch (RuntimeException | LinkageError e) {
+			return 0;
+		}
 	}
 
 	/** Height taken by the earlier widgets stacked at the same anchor. */

@@ -381,7 +381,9 @@ public final class ModMenuScreen extends CompatScreen {
 		int rowW = cw - 6;
 		if (widget != null) {
 			row(ui, cx, y, rowW, "Position", "Drag it anywhere on screen in the hub (Right Shift)");
-			ui.button(cx + rowW - 96, y + 6, 88, 14, "Move on screen", false, () -> minecraft().setScreen(new HubScreen(this)));
+			int moveW = ui.titleWidth("Move on screen") + 16;
+			ui.button(cx + rowW - 8 - moveW, y + 6, moveW, 14, "Move on screen", false,
+					() -> minecraft().setScreen(new HubScreen(this)));
 			y += ROW_H + 4;
 		}
 		for (Setting setting : settings) {
@@ -390,7 +392,8 @@ public final class ModMenuScreen extends CompatScreen {
 		}
 		if (module == Modules.THEME) {
 			row(ui, cx, y, rowW, "HUD layout", "Put every HUD widget back where it started");
-			ui.button(cx + rowW - 96, y + 6, 88, 14, "Reset layout", false, () -> {
+			int resetW = ui.titleWidth("Reset layout") + 16;
+			ui.button(cx + rowW - 8 - resetW, y + 6, resetW, 14, "Reset layout", false, () -> {
 				for (HudWidget each : HudWidgets.ALL) each.resetPosition();
 				notice("HUD layout reset");
 			});

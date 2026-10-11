@@ -121,6 +121,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					MusicBridge.current() != null && MusicBridge.current().title().equals("Snowfall")
 							&& HudWidgets.MUSIC.visible(client)));
 			check(failed, "music cover uploaded as a texture (NativeImage, DynamicTexture)", Hooks.musicArtUploaded);
+			server.runCommand("bossbar add threevhy:test \"Boss\"");
+			server.runCommand("bossbar set threevhy:test players @a");
+			context.waitTicks(10);
+			int musicY = context.computeOnClient(client -> HudWidgets.MUSIC.position(client,
+					client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight())[1]);
+			ThreevhyClient.LOG.info("3vhy-check: music HUD top with a boss bar: {}", musicY);
+			check(failed, "music HUD moves below boss bars (BossHealthOverlay)", musicY > 17);
+			shot(context, "3vhy-music-under-bossbar");
+			server.runCommand("bossbar remove threevhy:test");
 			check(failed, "player list sees who is online", context.computeOnClient(client ->
 					Hooks.playerListTicked && PlayerList.isOnline(client.getUser().getName()) && !PlayerList.isOnline("Steve")
 							&& HudWidgets.PLAYER_LIST.visible(client)));

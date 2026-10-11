@@ -31,7 +31,7 @@ public final class Modules {
 
 	/** How big one widget is drawn, on top of the HUD size in Theme. Scroll over it in the hub to change it. */
 	private static Module sized(Module module) {
-		module.add(new Slider("size", "Size", "Bigger or smaller. You can also scroll over it in the hub", 50, 200, 5, 100, "%"));
+		module.add(new Slider("size", "Size", "Or scroll over it in the hub", 50, 200, 5, 100, "%"));
 		return module;
 	}
 
@@ -85,7 +85,7 @@ public final class Modules {
 	public static final Toggle SCOREBOARD_HIDE_NUMBERS = SCOREBOARD.add(new Toggle("numbers", "Hide numbers",
 			"Hide the red score numbers on the right", false));
 	public static final Slider SCOREBOARD_SIZE = SCOREBOARD.add(new Slider("size", "Size",
-			"Bigger or smaller. You can also scroll over it in the hub", 50, 200, 5, 100, "%"));
+			"Or scroll over it in the hub", 50, 200, 5, 100, "%"));
 	public static final Slider SCOREBOARD_BACKGROUND = SCOREBOARD.add(new Slider("background", "Background",
 			"How dark the box behind it is. 0% removes it", 0, 100, 5, 30, "%"));
 	public static final Color SCOREBOARD_COLOR = SCOREBOARD.add(new Color("color", "Background colour",

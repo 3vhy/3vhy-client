@@ -175,7 +175,7 @@ public final class Ui {
 	 */
 	public void button(int x, int y, int w, int h, String label, boolean primary, Runnable action) {
 		boolean hover = hover(x, y, x + w, y + h);
-		String text = label.toUpperCase(Locale.ROOT);
+		String text = trimTitle(label, w - 8);
 		if (primary) {
 			int face = hover ? Draw.mix(t.accent(), 0xFFFFFFFF, 0.12) : t.accent();
 			d.roundRect(x, y, x + w, y + h, R_CONTROL, Draw.mix(t.accent(), 0xFF000000, 0.45));

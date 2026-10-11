@@ -76,7 +76,7 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		drawTitleBar(ui, mc, w);
 
 		int cell = Math.max(2, Math.min(5, Math.min(w / 150, (h - 190) / 15)));
-		int cardW = Math.min(250, w - 40);
+		int cardW = Math.min(300, w - 24);
 		int blockH = 15 * cell + 8 + 9 + 10 + 14 + 12 + CARD_H;
 		int top = Math.max(30, (h - blockH) / 2);
 
