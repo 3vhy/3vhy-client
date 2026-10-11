@@ -221,7 +221,8 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				while (!Modules.SKIN_PROTECT_SOURCE.is(CustomSkins.SOURCE_PLAYER)) Modules.SKIN_PROTECT_SOURCE.next();
 			});
 			context.waitTicks(100);
-			ThreevhyClient.LOG.info("3vhy-check: skin by player name: {}", context.computeOnClient(client -> CustomSkins.status()));
+			String playerSkinStatus = context.computeOnClient(client -> CustomSkins.status());
+			ThreevhyClient.LOG.info("3vhy-check: skin by player name: {}", playerSkinStatus);
 			context.runOnClient(client -> {
 				Modules.NAME_PROTECT.set(false);
 				Modules.SKIN_PROTECT.set(false);

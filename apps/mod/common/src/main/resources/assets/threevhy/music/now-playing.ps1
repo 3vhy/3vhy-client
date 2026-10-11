@@ -38,6 +38,12 @@ $asTaskMethod = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Obj
 	$_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'
 } | Select-Object -First 1
 
+# WinRT objects in Windows PowerShell don't always have Dispose(); a failed clean-up mustn't lose a cover
+function Close-Quietly($object) {
+	if ($null -eq $object) { return }
+	try { $object.Dispose() } catch { try { $object.Close() } catch { } }
+}
+
 function Wait-Async($operation, [Type]$resultType) {
 	$task = $asTaskMethod.MakeGenericMethod($resultType).Invoke($null, @($operation))
 	if (-not $task.Wait(4000)) { return $null }
@@ -58,7 +64,7 @@ function Read-StreamBytes($stream) {
 			$reader.ReadBytes($bytes)
 			return , $bytes
 		} finally {
-			$reader.Dispose()
+			Close-Quietly $reader
 		}
 	} catch {
 		$firstProblem = $_.Exception.Message
@@ -68,7 +74,7 @@ function Read-StreamBytes($stream) {
 		$netStream = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($stream)
 		$copy = New-Object System.IO.MemoryStream
 		$netStream.CopyTo($copy)
-		$netStream.Dispose()
+		Close-Quietly $netStream
 		return , $copy.ToArray()
 	} catch {
 		throw "couldn't read the image ($firstProblem; $($_.Exception.Message))"
@@ -94,7 +100,7 @@ function Convert-ToPng([byte[]]$bytes, [int]$size) {
 		$bitmap.Save($output, [System.Drawing.Imaging.ImageFormat]::Png)
 		return [Convert]::ToBase64String($output.ToArray())
 	} finally {
-		foreach ($item in @($graphics, $bitmap, $image, $output, $memory)) { if ($null -ne $item) { $item.Dispose() } }
+		foreach ($item in @($graphics, $bitmap, $image, $output, $memory)) { Close-Quietly $item }
 	}
 }
 
@@ -105,7 +111,7 @@ function Get-Cover($properties) {
 	try {
 		$bytes = Read-StreamBytes $stream
 	} finally {
-		$stream.Dispose()
+		Close-Quietly $stream
 	}
 	return Convert-ToPng $bytes 64
 }
@@ -187,9 +193,9 @@ function Get-AppIcon([string]$app) {
 		$bitmap.Save($output, [System.Drawing.Imaging.ImageFormat]::Png)
 		return Convert-ToPng $output.ToArray() 32
 	} finally {
-		$output.Dispose()
-		$bitmap.Dispose()
-		$icon.Dispose()
+		Close-Quietly $output
+		Close-Quietly $bitmap
+		Close-Quietly $icon
 	}
 }
 
