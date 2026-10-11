@@ -17,18 +17,14 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(ChatComponent.class)
 public abstract class ChatComponentMixin {
 	@Shadow @Final private List<GuiMessage> allMessages;
-
-	@Shadow
-	private void refreshTrimmedMessages() {
-		throw new AssertionError();
-	}
+	@Shadow @Final private List<GuiMessage.Line> trimmedMessages;
 
 	@ModifyVariable(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
 	private Component threevhy$decorate(Component message) {
 		return ChatTweaks.decorate(message, () -> {
-			if (!allMessages.isEmpty()) {
+			if (!allMessages.isEmpty() && ChatTweaks.isPrevious(allMessages.get(0).content())) {
 				allMessages.remove(0);
-				refreshTrimmedMessages();
+				ChatTweaks.removeNewestLines(trimmedMessages, GuiMessage.Line::endOfEntry);
 			}
 		});
 	}

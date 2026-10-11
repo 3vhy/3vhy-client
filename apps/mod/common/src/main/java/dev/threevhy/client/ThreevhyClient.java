@@ -7,7 +7,6 @@ import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MenuNameTag;
 import dev.threevhy.client.gui.PauseMenuButton;
-import dev.threevhy.client.hud.CpsTracker;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.hud.ScoreboardWidget;
@@ -80,7 +79,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
 			WindowBranding.apply();
-			CpsTracker.install();
+			FreezeWatch.start();
 		});
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			Zoom.restore(client);
@@ -114,6 +113,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 	}
 
 	private static void tick(Minecraft mc) {
+		FreezeWatch.tick();
 		while (openSettingsKey.consumeClick()) {
 			if (mc.screen == null) {
 				mc.setScreen(new HubScreen(null));

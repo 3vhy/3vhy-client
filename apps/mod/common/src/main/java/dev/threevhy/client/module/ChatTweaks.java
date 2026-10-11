@@ -2,7 +2,9 @@ package dev.threevhy.client.module;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -42,6 +44,23 @@ public final class ChatTweaks {
 			result = stamp.append(result);
 		}
 		return result;
+	}
+
+	/** Whether {@code shown} is the previous message, so it's the one a repeat replaces. */
+	public static boolean isPrevious(Component shown) {
+		return lastText != null && shown != null && shown.getString().contains(lastText);
+	}
+
+	/**
+	 * Takes the newest message's lines off the chat. Minecraft puts each new message's lines at the
+	 * front of the list, last line first, so they run up to the first line that ends an entry.
+	 * Only those lines go; re-wrapping the whole chat for every repeat froze the game for a moment
+	 * with a long history.
+	 */
+	public static <L> void removeNewestLines(List<L> lines, Predicate<L> endsEntry) {
+		if (lines.isEmpty()) return;
+		lines.remove(0);
+		while (!lines.isEmpty() && !endsEntry.test(lines.get(0))) lines.remove(0);
 	}
 
 	/** How many times the latest message has repeated in a row. */

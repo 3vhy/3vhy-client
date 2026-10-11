@@ -9,6 +9,8 @@ import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.ModMenuScreen;
 import dev.threevhy.client.gui.PauseMenuButton;
+import dev.threevhy.client.FreezeWatch;
+import dev.threevhy.client.hud.CpsTracker;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.ChatTweaks;
 import dev.threevhy.client.module.ConfirmDisconnect;
@@ -46,6 +48,28 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			+ "\"icon\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\"}";
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
 	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
+
+	/** How many of the chat's wrapped lines contain {@code text}. */
+	private static int chatLinesWith(net.minecraft.client.Minecraft client, String text) {
+		try {
+			Object chat = client.gui.getChat();
+			java.lang.reflect.Field field = chat.getClass().getDeclaredField("trimmedMessages");
+			field.setAccessible(true);
+			int count = 0;
+			for (Object line : (List<?>) field.get(chat)) {
+				var content = (net.minecraft.util.FormattedCharSequence) line.getClass().getMethod("content").invoke(line);
+				StringBuilder shown = new StringBuilder();
+				content.accept((index, style, codepoint) -> {
+					shown.appendCodePoint(codepoint);
+					return true;
+				});
+				if (shown.toString().contains(text)) count++;
+			}
+			return count;
+		} catch (ReflectiveOperationException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/**
 	 * Wraps, cuts and measures a line holding the player's name at many widths, the way chat,
@@ -145,6 +169,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					+ "equipment:{head:{id:\"minecraft:diamond_helmet\",count:1},offhand:{id:\"minecraft:totem_of_undying\",count:1}}}");
 			server.runCommand("tellraw @a \"3vhy chat test\"");
 			server.runCommand("tellraw @a \"3vhy chat test\"");
+			String longLine = "3vhy-long-start " + "the quick brown fox jumps over the lazy dog ".repeat(8) + "3vhy-long-end";
+			server.runCommand("tellraw @a \"" + longLine + "\"");
+			server.runCommand("tellraw @a \"" + longLine + "\"");
 			context.runOnClient(client -> {
 				client.player.setYRot(0f);
 				client.player.setXRot(10f);
@@ -159,6 +186,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(40);
 			shot(context, "3vhy-hud");
 			check(failed, "chat stacks repeated messages", context.computeOnClient(client -> ChatTweaks.repeats() >= 2));
+			check(failed, "a stacked repeat takes only its own lines off the chat", context.computeOnClient(client ->
+					chatLinesWith(client, "3vhy chat test") == 1 && chatLinesWith(client, "3vhy-long-start") == 1
+							&& chatLinesWith(client, "3vhy-long-end") == 1));
 			check(failed, "music HUD shows the playing song", context.computeOnClient(client ->
 					MusicBridge.current() != null && MusicBridge.current().title().equals("Snowfall")
 							&& HudWidgets.MUSIC.visible(client)));
@@ -198,6 +228,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(10);
+			check(failed, "CPS counts clicks (MouseHandler.onButton)", context.computeOnClient(client -> CpsTracker.left() >= 1));
 			shot(context, "3vhy-target-hud");
 			check(failed, "target HUD picks up who you hit", context.computeOnClient(client -> Target.get() != null));
 
@@ -446,6 +477,16 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.waitTicks(10);
 		check(failed, "3vhy main menu after leaving a world",
 				context.computeOnClient(client -> client.screen instanceof MainMenuScreen));
+		int freezesBefore = FreezeWatch.freezes();
+		context.runOnClient(client -> {
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		});
+		context.waitTicks(10);
+		check(failed, "freeze watch logs what a frozen game was doing", FreezeWatch.freezes() > freezesBefore);
 		check(failed, "window title hook (Minecraft.updateTitle)", Hooks.titleHookRan);
 		String title = dev.threevhy.client.WindowBranding.title();
 		ThreevhyClient.LOG.info("3vhy-check: window title is \"{}\"", title);

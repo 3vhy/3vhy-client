@@ -139,3 +139,7 @@ net.minecraft.client.StringSplitter#splitLines
 net.minecraft.client.StringSplitter$LineBreakFinder#accept
 net.minecraft.server.network.ServerGamePacketListenerImpl#handleCustomCommandSuggestions
 net.minecraft.client.multiplayer.ClientPacketListener#handleCommandSuggestions
+net.minecraft.client.input.MouseButtonInfo
+net.minecraft.client.GuiMessage$Line
+net.minecraft.client.multiplayer.chat.GuiMessage$Line
+net.minecraft.client.gui.components.ChatComponent#addMessageToDisplayQueue
