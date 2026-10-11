@@ -17,9 +17,9 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
 /**
- * The server's sidebar scoreboard as a HUD widget. 3vhy draws it the way Minecraft does (same lines,
- * order and layout), so it can also be moved, resized, given another background or rounded corners,
- * have its red numbers hidden, or be hidden altogether.
+ * The server's sidebar scoreboard as a HUD widget. 3vhy draws it the way Minecraft does (same square
+ * box, lines, order and layout), so it can also be moved, resized, given another background colour or
+ * darkness, have its red numbers hidden, or be hidden altogether.
  */
 public final class ScoreboardWidget extends HudWidget {
 	private static final int SAMPLE_W = 96;
@@ -162,24 +162,14 @@ public final class ScoreboardWidget extends HudWidget {
 		}
 	}
 
-	/** The box behind it: the chosen colour and darkness, a slightly darker title strip, square or rounded. */
+	/** The square box behind it, in the chosen colour and darkness, with a slightly darker title strip. */
 	private static void background(Draw d, int x, int y, int w, int h) {
 		int alpha = (int) Math.round(Modules.SCOREBOARD_BACKGROUND.get() / 100.0 * 255);
 		if (alpha <= 0) return;
 		int rgb = Modules.SCOREBOARD_COLOR.get() & 0xFFFFFF;
-		int body = (alpha << 24) | rgb;
-		boolean rounded = Modules.SCOREBOARD_ROUNDED.get();
-		if (rounded) d.roundRect(x, y, x + w, y + h, 4, body);
-		else d.fill(x, y, x + w, y + h, body);
-		if (!Modules.SCOREBOARD_TITLE_BAR.get()) return;
-		int extra = (Math.min(255, Math.max(26, alpha / 3)) << 24) | rgb;
-		if (!rounded) {
-			d.fill(x, y, x + w, y + TITLE - 1, extra);
-			return;
+		d.fill(x, y, x + w, y + h, (alpha << 24) | rgb);
+		if (Modules.SCOREBOARD_TITLE_BAR.get()) {
+			d.fill(x, y, x + w, y + TITLE - 1, (Math.min(255, Math.max(26, alpha / 3)) << 24) | rgb);
 		}
-		// The same top corners as the rounded box, so the strip lines up with it
-		d.fill(x + 2, y, x + w - 2, y + 1, extra);
-		d.fill(x + 1, y + 1, x + w - 1, y + 2, extra);
-		d.fill(x, y + 2, x + w, y + TITLE - 1, extra);
 	}
 }

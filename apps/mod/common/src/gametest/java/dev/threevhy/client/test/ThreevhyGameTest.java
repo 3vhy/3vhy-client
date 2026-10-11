@@ -199,17 +199,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-tab-list");
 			context.getInput().releaseKey(options -> options.keyPlayerList);
 
-			// The scoreboard made bigger, rounded and blue
+			// The scoreboard made bigger and blue
 			context.runOnClient(client -> {
 				Modules.SCOREBOARD_SIZE.set(150);
-				Modules.SCOREBOARD_ROUNDED.set(true);
 				Modules.SCOREBOARD_BACKGROUND.set(65);
 				Modules.SCOREBOARD_COLOR.set(0xFF1A4FBA);
 			});
 			context.waitTicks(5);
 			shot(context, "3vhy-scoreboard-styled");
 			context.runOnClient(client -> {
-				Modules.SCOREBOARD_ROUNDED.reset();
 				Modules.SCOREBOARD_BACKGROUND.reset();
 				Modules.SCOREBOARD_COLOR.reset();
 			});

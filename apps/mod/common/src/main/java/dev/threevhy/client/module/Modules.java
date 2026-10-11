@@ -92,8 +92,6 @@ public final class Modules {
 			"Colour of the box behind it", 0xFF000000));
 	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
 			"A darker strip behind the title, like Minecraft's", true));
-	public static final Toggle SCOREBOARD_ROUNDED = SCOREBOARD.add(new Toggle("rounded", "Rounded corners",
-			"Soft corners instead of a sharp box", false));
 	public static final Module MUSIC = sized(background(new Module("music", "Music HUD",
 			"Shows the song playing on Spotify, YouTube or any other app", Category.HUD, false).markNew()));
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
