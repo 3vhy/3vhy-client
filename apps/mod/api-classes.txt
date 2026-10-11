@@ -112,3 +112,17 @@ net.minecraft.network.chat.CommonComponents
 net.minecraft.client.User
 net.minecraft.core.UUIDUtil
 net.minecraft.client.resources.ClientAsset
+net.minecraft.core.ClientAsset
+net.minecraft.core.ClientAsset$Texture
+net.minecraft.core.ClientAsset$ResourceTexture
+net.minecraft.core.ClientAsset$DownloadedTexture
+net.minecraft.world.entity.player.PlayerModelType
+net.minecraft.client.resources.SkinManager
+net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterRender
+net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterExtract
+net.minecraft.Util
+net.minecraft.util.Util
+net.minecraft.Util$OS
+net.minecraft.util.Util$OS
+net.minecraft.network.chat.FormattedText
+net.minecraft.network.chat.Style
