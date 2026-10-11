@@ -156,11 +156,21 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		heroButton(ui, bx, by, inner, 26, "Multiplayer", () -> mc.setScreen(new JoinMultiplayerScreen(this)));
 		by += 26 + 7;
 		int gap = 6;
-		int third = (inner - gap * 2) / 3;
-		glassButton(ui, bx, by, third, 22, "Singleplayer", () -> mc.setScreen(new SelectWorldScreen(this)));
-		glassButton(ui, bx + third + gap, by, third, 22, "Options", () -> mc.setScreen(Compat.optionsScreen(this)));
-		glassButton(ui, bx + (third + gap) * 2, by, inner - (third + gap) * 2, 22, "3vhy Mods",
-				() -> mc.setScreen(new ModMenuScreen(this)));
+		String[] labels = {"Singleplayer", "Options", "3vhy Mods"};
+		Runnable[] actions = {
+				() -> mc.setScreen(new SelectWorldScreen(this)),
+				() -> mc.setScreen(Compat.optionsScreen(this)),
+				() -> mc.setScreen(new ModMenuScreen(this))
+		};
+		int textTotal = 0;
+		for (String label : labels) textTotal += ui.titleWidth(label);
+		int padding = Math.max(0, (inner - gap * (labels.length - 1) - textTotal) / labels.length);
+		int sx = bx;
+		for (int i = 0; i < labels.length; i++) {
+			int bw = i == labels.length - 1 ? bx + inner - sx : ui.titleWidth(labels[i]) + padding;
+			glassButton(ui, sx, by, bw, 22, labels[i], actions[i]);
+			sx += bw + gap;
+		}
 		by += 22 + 8;
 		String quit = "Quit Game";
 		int qw = mc.font.width(quit);
