@@ -159,7 +159,7 @@ public final class Modules {
 	public static final Module SKIN_PROTECT = new Module("skin_protect", "Skin Protect",
 			"Wear a different skin: a default one, any player's, or your own file", Category.VISUAL, false).markNew();
 	public static final Toggle SKIN_PROTECT_OWN = SKIN_PROTECT.add(new Toggle("own", "Your skin",
-			"You look like a default Steve or Alex", true));
+			"Change how you look", true));
 	public static final Toggle SKIN_PROTECT_OTHERS = SKIN_PROTECT.add(new Toggle("others", "Other players",
 			"Everyone else gets the same skin too", false));
 	public static final Choice SKIN_PROTECT_SOURCE = SKIN_PROTECT.add(new Choice("source", "Show as",
