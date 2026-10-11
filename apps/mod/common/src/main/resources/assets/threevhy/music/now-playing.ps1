@@ -28,6 +28,8 @@ try {
 	$null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties, Windows.Media.Control, ContentType = WindowsRuntime]
 	$null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
 	$null = [Windows.Storage.Streams.DataReader, Windows.Storage.Streams, ContentType = WindowsRuntime]
+	$null = [Windows.Storage.Streams.IRandomAccessStream, Windows.Storage.Streams, ContentType = WindowsRuntime]
+	$null = [Windows.Storage.Streams.IInputStream, Windows.Storage.Streams, ContentType = WindowsRuntime]
 } catch {
 	Write-Problem "Windows media controls aren't available: $($_.Exception.Message)"
 	exit 1
@@ -50,13 +52,29 @@ function Wait-Async($operation, [Type]$resultType) {
 	return $task.Result
 }
 
-# Reads a whole WinRT stream into a byte array, two ways in case one isn't available
+# Reads a whole WinRT stream into a byte array. Windows PowerShell can't see the members of a
+# stream it only knows by interface, so they're reached through .NET (two ways, in case one fails).
 function Read-StreamBytes($stream) {
 	$firstProblem = $null
 	try {
-		$size = [uint32]$stream.Size
+		$netStream = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead([Windows.Storage.Streams.IInputStream]$stream)
+		$copy = New-Object System.IO.MemoryStream
+		try {
+			$netStream.CopyTo($copy)
+		} finally {
+			Close-Quietly $netStream
+		}
+		if ($copy.Length -eq 0) { throw 'the image is empty' }
+		return , $copy.ToArray()
+	} catch {
+		$firstProblem = $_.Exception.Message
+	}
+	try {
+		$streamType = [Windows.Storage.Streams.IRandomAccessStream]
+		$size = [uint32]$streamType.GetProperty('Size').GetValue($stream)
 		if ($size -eq 0) { throw 'the image is empty' }
-		$reader = [Windows.Storage.Streams.DataReader]::new($stream.GetInputStreamAt(0))
+		$inputStream = $streamType.GetMethod('GetInputStreamAt').Invoke($stream, @([uint64]0))
+		$reader = [Windows.Storage.Streams.DataReader]::new($inputStream)
 		try {
 			$loaded = Wait-Async ($reader.LoadAsync($size)) ([uint32])
 			if ($null -eq $loaded -or $loaded -eq 0) { throw 'reading the image timed out' }
@@ -66,16 +84,6 @@ function Read-StreamBytes($stream) {
 		} finally {
 			Close-Quietly $reader
 		}
-	} catch {
-		$firstProblem = $_.Exception.Message
-	}
-	try {
-		$stream.Seek(0)
-		$netStream = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($stream)
-		$copy = New-Object System.IO.MemoryStream
-		$netStream.CopyTo($copy)
-		Close-Quietly $netStream
-		return , $copy.ToArray()
 	} catch {
 		throw "couldn't read the image ($firstProblem; $($_.Exception.Message))"
 	}
