@@ -180,14 +180,6 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(20);
 			String checks = context.computeOnClient(client -> PlayerList.describeChecks());
 			ThreevhyClient.LOG.info("3vhy-check: player list server checks: {}", checks);
-			server.runOnServer(minecraftServer -> {
-				var dispatcher = minecraftServer.getCommands().getDispatcher();
-				String name = minecraftServer.getPlayerList().getPlayers().isEmpty() ? "?"
-						: Compat.profileName(minecraftServer.getPlayerList().getPlayers().get(0).getGameProfile());
-				var parse = dispatcher.parse("msg " + name, minecraftServer.createCommandSourceStack());
-				String suggested = String.valueOf(dispatcher.getCompletionSuggestions(parse).join().getList());
-				ThreevhyClient.LOG.info("3vhy-check: server suggests for \"msg {}\": {}", name, suggested);
-			});
 			check(failed, "player list asks the server who's online (/msg suggestions)", context.computeOnClient(client ->
 					Hooks.playerListAskedServer && PlayerList.checkedWithServer("Steve") && !PlayerList.seenByServer("Steve")
 							&& PlayerList.seenByServer(client.getUser().getName())));

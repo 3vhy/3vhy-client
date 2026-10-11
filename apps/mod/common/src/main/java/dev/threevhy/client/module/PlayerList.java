@@ -22,7 +22,7 @@ import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 /**
  * The Player List: names the player added, and which of them are on the current server right now.
  * Someone counts as online when they're in the server's player list, or, for servers like DonutSMP
- * whose tab list doesn't show everyone, when the server suggests their name for "/msg name" (the
+ * whose tab list doesn't show everyone, when the server suggests their name after "/msg " (the
  * same suggestions you get by pressing Tab in chat). Can post a chat line when one joins or leaves.
  */
 public final class PlayerList {
@@ -165,7 +165,7 @@ public final class PlayerList {
 		return ASK_EVERY_MS * (names().size() + 2) * 3L;
 	}
 
-	/** Asks the server to complete "/msg name" for the next listed name that isn't in the tab list. */
+	/** Asks the server about the next listed name that isn't in the tab list. */
 	private static void askNext(ClientPacketListener current) {
 		List<String> list = names();
 		if (list.isEmpty()) return;
@@ -180,11 +180,16 @@ public final class PlayerList {
 		}
 	}
 
-	/** Sends one "/command name" suggestion request. Public for the in-game test. */
+	/**
+	 * Asks the server to complete "/command nam" for {@code name}. The last letter is left off on
+	 * purpose: Minecraft never suggests exactly what was already typed, so asking with the whole name
+	 * would get no answer even when they're online. Public for the in-game test.
+	 */
 	public static void askAbout(ClientPacketListener current, String command, String name) {
 		int id = NEXT_REQUEST.getAndIncrement();
 		PENDING.put(id, name.toLowerCase(Locale.ROOT));
-		current.send(new ServerboundCommandSuggestionPacket(id, "/" + command + " " + name));
+		String typed = name.substring(0, Math.max(0, name.length() - 1));
+		current.send(new ServerboundCommandSuggestionPacket(id, "/" + command + " " + typed));
 	}
 
 	/**
