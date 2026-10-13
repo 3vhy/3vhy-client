@@ -1,0 +1,23 @@
+package dev.threevhy.client.mixin;
+
+import dev.threevhy.client.compat.DrawImpl;
+import dev.threevhy.client.gui.TitleScreenStyle;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/** 3vhy main menu: the 3vhy sky, emblem and name behind the title screen, instead of the panorama. */
+@Mixin(TitleScreen.class)
+public abstract class TitleScreenMixin {
+	@Inject(method = "extractBackground", at = @At("HEAD"), cancellable = true)
+	private void threevhy$background(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+		if (!TitleScreenStyle.enabled()) return;
+		Screen screen = (Screen) (Object) this;
+		TitleScreenStyle.drawBackground(new DrawImpl(graphics), screen.width, screen.height);
+		ci.cancel();
+	}
+}

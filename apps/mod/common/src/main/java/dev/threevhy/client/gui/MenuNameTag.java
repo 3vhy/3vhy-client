@@ -23,6 +23,8 @@ public final class MenuNameTag {
 	private static final int HEIGHT = 19;
 	private static final int FILL = 0xD8161719;
 	private static final int EDGE = 0x30FFFFFF;
+	/** The title screen's copyright line along the bottom, which the pill sits above. */
+	private static final int COPYRIGHT_LINE = 10;
 	/** Your own entry, for your skin when you're not in a world. */
 	private static PlayerInfo offline = null;
 
@@ -48,7 +50,7 @@ public final class MenuNameTag {
 		int nameW = mc.font.width(player) + (head ? 13 : 0);
 		int w = 16 + (logo ? logoW : 0) + (logo && name ? 13 : 0) + (name ? nameW : 0);
 		int x = d.width() - MARGIN - w;
-		int y = d.height() - MARGIN - HEIGHT;
+		int y = d.height() - MARGIN - HEIGHT - (screen instanceof TitleScreen ? COPYRIGHT_LINE : 0);
 		d.roundRect(x, y, x + w, y + HEIGHT, HEIGHT / 2, FILL);
 		d.roundOutline(x, y, x + w, y + HEIGHT, HEIGHT / 2, EDGE);
 

@@ -187,7 +187,7 @@ public final class Modules {
 	public static final Toggle SWING_SPEED_OTHERS = SWING_SPEED.add(new Toggle("others", "Other players too",
 			"Everyone's swing on your screen, not just yours", false));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
-			"The 3vhy title screen instead of Minecraft's", Category.VISUAL, true);
+			"The 3vhy look on the title screen; buttons from other mods still show", Category.VISUAL, true);
 	public static final Module THEME = new Module("theme", "Theme",
 			"Switch between light and dark colours and the snow for 3vhy's menus", Category.VISUAL, true).alwaysOn();
 	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark glass or light frost", 0, "Dark", "Light"));

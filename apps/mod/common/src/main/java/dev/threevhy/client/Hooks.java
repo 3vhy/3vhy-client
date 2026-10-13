@@ -10,6 +10,8 @@ public final class Hooks {
 	public static volatile boolean titleHookRan = false;
 	public static volatile boolean entityEventHookRan = false;
 	public static volatile boolean mainMenuShown = false;
+	public static volatile boolean minecraftLogoHidden = false;
+	public static volatile boolean titleButtonsStyled = false;
 	public static volatile boolean tabPingRan = false;
 	public static volatile boolean slotHighlightRan = false;
 	public static volatile boolean freelookCameraRan = false;

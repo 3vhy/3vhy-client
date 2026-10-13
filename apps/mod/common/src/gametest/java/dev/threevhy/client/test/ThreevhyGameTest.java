@@ -7,8 +7,8 @@ import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.gui.ClickGuiScreen;
 import dev.threevhy.client.gui.HubScreen;
-import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.ModMenuScreen;
+import dev.threevhy.client.gui.TitleScreenStyle;
 import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.FreezeWatch;
 import dev.threevhy.client.hud.CpsTracker;
@@ -33,6 +33,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.lwjgl.glfw.GLFW;
@@ -102,18 +103,46 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 
 		context.waitTicks(40);
 		shot(context, "3vhy-main-menu");
-		check(failed, "3vhy main menu replaces the title screen",
-				context.computeOnClient(client -> client.screen instanceof MainMenuScreen) && Hooks.mainMenuShown);
-		context.setScreen(() -> new ModMenuScreen(new MainMenuScreen()));
+		check(failed, "3vhy main menu styles the title screen",
+				context.computeOnClient(client -> client.screen instanceof TitleScreen) && Hooks.mainMenuShown);
+		check(failed, "main menu hides Minecraft's logo (LogoRenderer)", Hooks.minecraftLogoHidden);
+		check(failed, "main menu buttons drawn as 3vhy glass (AbstractWidget)", Hooks.titleButtonsStyled);
+		int menuScale = context.computeOnClient(client -> client.getWindow().getGuiScale());
+		int[] modsButton = context.computeOnClient(client -> {
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				if (widget.getMessage().getString().equals(TitleScreenStyle.MODS_LABEL)) {
+					return new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
+				}
+			}
+			return null;
+		});
+		check(failed, "main menu has the 3vhy Mods button", modsButton != null);
+		if (modsButton != null) {
+			context.getInput().setCursorPos(modsButton[0] * menuScale, modsButton[1] * menuScale);
+			context.waitTicks(2);
+			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			context.waitTicks(10);
+		}
+		check(failed, "3vhy Mods button opens the mod menu",
+				context.computeOnClient(client -> client.screen instanceof ModMenuScreen || client.screen instanceof ClickGuiScreen));
+		context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+		context.waitTicks(5);
+		check(failed, "closing the mod menu goes back to the main menu",
+				context.computeOnClient(client -> client.screen instanceof TitleScreen));
+		context.getInput().pressKey(ThreevhyClient.openSettingsKey);
+		context.waitTicks(5);
+		check(failed, "Right Shift on the main menu opens the mod menu",
+				context.computeOnClient(client -> client.screen instanceof ModMenuScreen || client.screen instanceof ClickGuiScreen));
+		context.setScreen(() -> new ModMenuScreen(new TitleScreen()));
 		context.waitTicks(10);
 		shot(context, "3vhy-modmenu-from-menu");
-		context.setScreen(() -> new HubScreen(new MainMenuScreen()));
+		context.setScreen(() -> new HubScreen(new TitleScreen()));
 		context.waitTicks(10);
 		shot(context, "3vhy-hub-from-menu");
-		context.setScreen(() -> new ClickGuiScreen(new MainMenuScreen()).expand(Modules.FREELOOK));
+		context.setScreen(() -> new ClickGuiScreen(new TitleScreen()).expand(Modules.FREELOOK));
 		context.waitTicks(10);
 		shot(context, "3vhy-panels-from-menu");
-		context.setScreen(MainMenuScreen::new);
+		context.setScreen(TitleScreen::new);
 		context.waitTicks(5);
 
 		try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
@@ -492,7 +521,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 
 		context.waitTicks(10);
 		check(failed, "3vhy main menu after leaving a world",
-				context.computeOnClient(client -> client.screen instanceof MainMenuScreen));
+				context.computeOnClient(client -> client.screen instanceof TitleScreen));
 		int freezesBefore = FreezeWatch.freezes();
 		context.runOnClient(client -> {
 			try {

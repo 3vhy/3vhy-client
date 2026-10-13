@@ -3,7 +3,7 @@ package dev.threevhy.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
-import dev.threevhy.client.gui.MainMenuScreen;
+import dev.threevhy.client.gui.TitleScreenStyle;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MenuNameTag;
 import dev.threevhy.client.gui.PauseMenuButton;
@@ -33,7 +33,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.PauseScreen;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionResult;
 import org.lwjgl.glfw.GLFW;
@@ -106,6 +105,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			if (screen instanceof PauseScreen) PauseMenuButton.add(client, screen);
+			TitleScreenStyle.prepare(screen);
 			if (MenuNameTag.shows(screen)) Compat.afterScreen(screen, d -> MenuNameTag.draw(d, screen));
 		});
 
@@ -121,12 +121,6 @@ public final class ThreevhyClient implements ClientModInitializer {
 		}
 		if (Borderless.needsReapply() && mc.getWindow().isFullscreen()) {
 			((dev.threevhy.client.mixin.WindowAccessor) (Object) mc.getWindow()).threevhy$setMode();
-		}
-		// Backup for the setScreen hook, and switches menus when the module is toggled
-		if (mc.screen != null && mc.screen.getClass() == TitleScreen.class && Modules.MAIN_MENU.enabled()) {
-			mc.setScreen(new MainMenuScreen());
-		} else if (mc.screen instanceof MainMenuScreen && !Modules.MAIN_MENU.enabled()) {
-			mc.setScreen(new TitleScreen());
 		}
 		Modules.tick(mc);
 		WindowBranding.tick();

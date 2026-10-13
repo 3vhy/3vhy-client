@@ -143,3 +143,6 @@ net.minecraft.client.input.MouseButtonInfo
 net.minecraft.client.GuiMessage$Line
 net.minecraft.client.multiplayer.chat.GuiMessage$Line
 net.minecraft.client.gui.components.ChatComponent#addMessageToDisplayQueue
+net.minecraft.client.gui.components.LogoRenderer
+net.minecraft.client.gui.components.PlainTextButton
+net.minecraft.client.gui.components.SpriteIconButton

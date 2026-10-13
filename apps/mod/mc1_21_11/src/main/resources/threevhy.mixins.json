@@ -6,6 +6,7 @@
 	"refmap": "threevhy-refmap.json",
 	"client": [
 		"AbstractContainerScreenMixin",
+		"AbstractWidgetMixin",
 		"AvatarRendererMixin",
 		"BossHealthOverlayAccessor",
 		"CameraMixin",
@@ -15,6 +16,7 @@
 		"ItemStackMixin",
 		"LivingEntityMixin",
 		"LivingEntityRendererMixin",
+		"LogoRendererMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",
@@ -22,6 +24,8 @@
 		"PlayerTabOverlayMixin",
 		"StringDecomposerMixin",
 		"StringSplitterMixin",
+		"TitleScreenAccessor",
+		"TitleScreenMixin",
 		"WindowAccessor",
 		"WindowMixin"
 	],

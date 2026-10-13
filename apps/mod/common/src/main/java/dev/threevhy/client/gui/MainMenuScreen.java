@@ -37,14 +37,6 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		super();
 	}
 
-	/** Swaps Minecraft's own title screen for this one, when the main menu module is on. */
-	public static Screen replace(Screen screen) {
-		if (screen != null && screen.getClass() == TitleScreen.class && Modules.MAIN_MENU.enabled()) {
-			return new MainMenuScreen();
-		}
-		return screen;
-	}
-
 	@Override
 	protected void init() {
 		Hooks.mainMenuShown = true;
