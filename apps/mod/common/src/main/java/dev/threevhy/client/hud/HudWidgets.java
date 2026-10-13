@@ -15,8 +15,10 @@ import dev.threevhy.client.module.TpsTracker;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -240,12 +242,18 @@ public final class HudWidgets {
 
 	public static final HudWidget KEYSTROKES = new HudWidget("keystrokes", Modules.KEYSTROKES, Anchor.TOP_LEFT) {
 		private static final int K = 20;
-		private static final int GAP = 2;
-		private static final int SPACE_H = 10;
-		private static final float TEXT = 0.8f;
-		private static final int KEY_FILL = 0x141417;
-		private static final int DOWN_FILL = 0xF2FFFFFF;
-		private static final int DOWN_TEXT = 0xFF141417;
+		private static final int GAP = 3;
+		private static final int SPACE_H = 13;
+		private static final float RADIUS = 4.5f;
+		private static final float TEXT = 0.75f;
+		private static final float DASH = 1.4f;
+		private static final int KEY_FILL = 0x17161B;
+		private static final int KEY_TEXT = 0xFFD4D2DA;
+		private static final int DASH_COLOR = 0xFF97969E;
+		private static final int DOWN_FILL = 0xFFF2F2F2;
+		private static final int DOWN_TEXT = 0xFF17161B;
+		private static final float FADE_SECONDS = 0.08f;
+		private final Map<KeyMapping, float[]> pressed = new IdentityHashMap<>();
 
 		@Override
 		public int width(Minecraft mc) {
@@ -276,12 +284,13 @@ public final class HudWidgets {
 				row += K + GAP;
 			}
 			if (Modules.KEYSTROKES_SPACE.get()) {
-				boolean jump = o.keyJump.isDown();
+				float t = held(o.keyJump);
 				int w = width(mc);
-				Smooth.roundRect(d, x, row, x + w, row + SPACE_H, 3, jump ? DOWN_FILL : fill());
-				int barW = w / 3;
-				Smooth.roundRect(d, x + (w - barW) / 2f, row + SPACE_H / 2f - 0.75f, x + (w + barW) / 2f, row + SPACE_H / 2f + 0.75f, 0.75f,
-						jump ? DOWN_TEXT : 0xFFFFFFFF);
+				Smooth.roundRect(d, x, row, x + w, row + SPACE_H, RADIUS, Draw.mix(fill(), DOWN_FILL, t));
+				float dashW = w * 0.47f;
+				float mid = row + SPACE_H / 2f;
+				Smooth.roundRect(d, x + (w - dashW) / 2f, mid - DASH / 2f, x + (w + dashW) / 2f, mid + DASH / 2f, DASH / 2f,
+						Draw.mix(DASH_COLOR, DOWN_TEXT, t));
 			}
 		}
 
@@ -289,16 +298,26 @@ public final class HudWidgets {
 			return (backgroundAlpha() << 24) | KEY_FILL;
 		}
 
-		/** A rounded key: dark with a white label, or white with a dark label while it's held. */
+		/** How far a key has faded to white: 0 when up, 1 once it's been held for a moment. */
+		private float held(KeyMapping key) {
+			float[] state = pressed.computeIfAbsent(key, k -> new float[] {0f, 0f});
+			float now = System.nanoTime() / 1.0e9f;
+			float step = state[1] == 0f ? 1f : Math.min(1f, (now - state[1]) / FADE_SECONDS);
+			state[1] = now;
+			state[0] = key.isDown() ? Math.min(1f, state[0] + step) : Math.max(0f, state[0] - step);
+			return state[0];
+		}
+
+		/** A rounded key: dark with a light label, fading to white with a dark label while it's held. */
 		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
-			boolean down = key.isDown();
-			Smooth.roundRect(d, x, y, x + w, y + h, 4, down ? DOWN_FILL : fill());
+			float t = held(key);
+			Smooth.roundRect(d, x, y, x + w, y + h, RADIUS, Draw.mix(fill(), DOWN_FILL, t));
 			Component text = UiFont.clean() ? UiFont.bold(label) : Component.literal(label);
 			float tw = mc.font.width(text) * TEXT;
 			d.push();
-			d.translate(x + (w - tw) / 2f, y + (h - 7 * TEXT) / 2f);
+			d.translate(x + (w - tw) / 2f, y + (h - 6.8f * TEXT) / 2f);
 			d.scale(TEXT);
-			d.text(text, 0, 0, down ? DOWN_TEXT : 0xFFFFFFFF, !down && textShadow());
+			d.text(text, 0, 0, Draw.mix(KEY_TEXT, DOWN_TEXT, t), t < 0.5f && textShadow());
 			d.pop();
 		}
 	};

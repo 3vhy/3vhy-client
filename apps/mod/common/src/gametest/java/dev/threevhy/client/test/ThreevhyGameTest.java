@@ -64,7 +64,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
 	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
 
-	/** One HUD widget on its own, half again its size, low on the 3vhy sky (clear of toasts), for close-up screenshots. */
+	/**
+	 * One HUD widget on its own, half again its size, for close-up screenshots: the music HUD low on
+	 * the 3vhy sky (clear of toasts), the others on plain grey like 67's pictures, the module list in
+	 * the top right corner where it sits in game.
+	 */
 	private static final class MusicShowcase extends CompatScreen {
 		private final HudWidget widget;
 
@@ -79,7 +83,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 
 		@Override
 		protected void drawBackdrop(Draw d) {
-			MainMenuScreen.drawBackdrop(d, this.width, this.height);
+			if (widget == HudWidgets.MUSIC) {
+				MainMenuScreen.drawBackdrop(d, this.width, this.height);
+			} else {
+				d.fill(0, 0, this.width, this.height, 0xFF4B4C4F);
+			}
 		}
 
 		@Override
@@ -89,7 +97,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			int w = Math.round(widget.width(mc) * scale);
 			int h = Math.round(widget.height(mc) * scale);
 			d.push();
-			d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
+			if (widget == HudWidgets.MODULE_LIST) {
+				d.translate(this.width - widget.width(mc) * scale, 0);
+			} else if (widget == HudWidgets.MUSIC) {
+				d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
+			} else {
+				d.translate((this.width - w) / 2f, (this.height - h) / 2f);
+			}
 			d.scale(scale);
 			widget.draw(d, 0, 0, mc, widget != HudWidgets.MUSIC);
 			d.pop();
@@ -309,8 +323,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-music-closeup-pink");
 			context.runOnClient(client -> Modules.MUSIC_COLOR.reset());
 			context.setScreen(() -> new MusicShowcase(HudWidgets.KEYSTROKES));
+			context.runOnClient(client -> client.options.keyAttack.setDown(true));
 			context.waitTicks(5);
 			shot(context, "3vhy-keystrokes-closeup");
+			context.runOnClient(client -> client.options.keyAttack.setDown(false));
 			context.setScreen(() -> new MusicShowcase(HudWidgets.PLAYER_LIST));
 			context.waitTicks(5);
 			shot(context, "3vhy-player-list-closeup");
@@ -318,7 +334,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			shot(context, "3vhy-module-list-closeup");
 			check(failed, "module list shows the mods that are on", context.computeOnClient(client ->
-					HudWidgets.MODULE_LIST.visible(client) && HudWidgets.MODULE_LIST.height(client) >= 9 * 5));
+					HudWidgets.MODULE_LIST.visible(client) && HudWidgets.MODULE_LIST.height(client) >= 8 * 5));
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 			check(failed, "player list sees who is online", context.computeOnClient(client ->

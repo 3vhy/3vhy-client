@@ -16,18 +16,33 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 
 /**
- * The Player List on the HUD, like 67's staff list: a small title with a red badge counting who's
- * on, then each listed player with their head and their name in capitals.
+ * The Player List on the HUD, like 67's staff list: a dark rounded box with a small title and a dark
+ * red badge counting who's on, then each listed player's head (where 67 has a star) and their name
+ * in capitals. Every size is a share of the names' capital height, measured off 67's.
  */
 final class PlayerListWidget extends HudWidget {
-	private static final int ROW = 11;
-	private static final int TOP = 17;
-	private static final int PAD = 7;
+	private static final float NAME = 0.76f;
+	private static final float TITLE = 0.48f;
+	private static final float COUNT = 0.5f;
+	private static final float C = 6.8f * NAME;
+	private static final float PAD = 0.9f * C;
+	private static final float HEAD = 1.1f * C;
+	private static final float HEAD_GAP = 0.55f * C;
+	private static final float TITLE_TOP = 1.45f * C;
+	private static final float TITLE_MID = TITLE_TOP + 3.4f * TITLE;
+	private static final float FIRST_ROW = TITLE_MID + 2.6f * C;
+	private static final float ROW = 2.05f * C;
+	private static final float END_PAD = 1.9f * C;
+	private static final float BADGE_R = 0.75f * C;
+	private static final float BADGE_PAD = 0.8f * C;
+	private static final float RADIUS = 0.67f * C;
 	private static final int MAX_ROWS = 12;
-	private static final float TITLE = 0.62f;
-	private static final float NAME = 0.78f;
-	private static final int FILL = 0x111216;
-	private static final int BADGE = 0xFFE5484D;
+	private static final int FILL = 0x111116;
+	private static final int TITLE_COLOR = 0xFFD9DADF;
+	private static final int NAME_COLOR = 0xFFF1F1F3;
+	private static final int OFFLINE_COLOR = 0xFF6E7380;
+	private static final int BADGE = 0xFF5C1717;
+	private static final int BADGE_TEXT = 0xFFF07070;
 	private static final String[] SAMPLE = {"Steve", "Alex", "Player372"};
 
 	private record Row(String name, PlayerInfo info, boolean online) {
@@ -69,8 +84,8 @@ final class PlayerListWidget extends HudWidget {
 		return UiFont.clean() ? UiFont.bold(text) : Component.literal(text);
 	}
 
-	private static int width(Minecraft mc, Component text, float scale) {
-		return Math.round(mc.font.width(text) * scale);
+	private static float width(Minecraft mc, Component text, float scale) {
+		return mc.font.width(text) * scale;
 	}
 
 	@Override
@@ -80,15 +95,18 @@ final class PlayerListWidget extends HudWidget {
 
 	@Override
 	public int width(Minecraft mc) {
-		List<Row> rows = rows(mc, true);
-		int widest = width(mc, bold(title()), TITLE) + 18;
-		for (Row row : rows) widest = Math.max(widest, width(mc, bold(row.name().toUpperCase(Locale.ROOT)), NAME) + 12);
-		return Math.max(70, widest + PAD * 2);
+		float widest = PAD + width(mc, bold(title()), TITLE) + 2 * C + 2 * BADGE_R + BADGE_PAD;
+		for (Row row : rows(mc, true)) {
+			float name = width(mc, bold(row.name().toUpperCase(Locale.ROOT)), NAME);
+			widest = Math.max(widest, PAD + HEAD + HEAD_GAP + name + END_PAD);
+		}
+		return (int) Math.ceil(widest);
 	}
 
 	@Override
 	public int height(Minecraft mc) {
-		return TOP + rows(mc, true).size() * ROW + 4;
+		int rows = Math.max(1, rows(mc, true).size());
+		return (int) Math.ceil(FIRST_ROW + (rows - 1) * ROW + ROW);
 	}
 
 	@Override
@@ -96,30 +114,37 @@ final class PlayerListWidget extends HudWidget {
 		List<Row> rows = rows(mc, preview);
 		int w = width(mc);
 		int alpha = backgroundAlpha();
-		if (alpha > 0) Smooth.roundRect(d, x, y, x + w, y + height(mc), 5, (alpha << 24) | FILL);
+		if (alpha > 0) Smooth.roundRect(d, x, y, x + w, y + height(mc), RADIUS, (alpha << 24) | FILL);
 		boolean shadow = textShadow();
-		small(d, bold(title()), x + PAD, y + 6, TITLE, 0xFFFFFFFF, shadow);
-		String count = Integer.toString(online(rows));
-		float badgeX = x + w - PAD - 3.5f;
-		Smooth.circle(d, badgeX, y + 8, 4f, BADGE);
-		Component countText = bold(count);
-		float countW = mc.font.width(countText) * 0.55f;
-		small(d, countText, badgeX - countW / 2f, y + 6.3f, 0.55f, 0xFFFFFFFF, false);
-		int rowY = y + TOP;
+		text(d, bold(title()), x + PAD, y + TITLE_TOP, TITLE, TITLE_COLOR, shadow);
+
+		float badgeX = x + w - BADGE_PAD - BADGE_R;
+		float badgeY = y + TITLE_MID;
+		Smooth.circle(d, badgeX, badgeY, BADGE_R, BADGE);
+		Component count = bold(Integer.toString(online(rows)));
+		text(d, count, badgeX - width(mc, count, COUNT) / 2f, badgeY - 3.4f * COUNT, COUNT, BADGE_TEXT, false);
+
+		float mid = y + FIRST_ROW;
 		for (Row row : rows) {
+			float headX = x + PAD;
+			float headY = mid - HEAD / 2f;
+			d.push();
+			d.translate(headX, headY);
+			d.scale(HEAD / 8f);
 			if (row.info() != null) {
-				d.face(row.info().getSkin(), x + PAD, rowY, 8);
+				d.face(row.info().getSkin(), 0, 0, 8);
 			} else {
-				d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), x + PAD, rowY, 8);
-				if (!row.online()) d.fill(x + PAD, rowY, x + PAD + 8, rowY + 8, 0x90111216);
+				d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), 0, 0, 8);
+				if (!row.online()) d.fill(0, 0, 8, 8, 0x90111216);
 			}
-			small(d, bold(row.name().toUpperCase(Locale.ROOT)), x + PAD + 12, rowY + 1.5f, NAME,
-					row.online() ? 0xFFFFFFFF : 0xFF7D838F, shadow);
-			rowY += ROW;
+			d.pop();
+			text(d, bold(row.name().toUpperCase(Locale.ROOT)), headX + HEAD + HEAD_GAP, mid - C / 2f, NAME,
+					row.online() ? NAME_COLOR : OFFLINE_COLOR, shadow);
+			mid += ROW;
 		}
 	}
 
-	private static void small(Draw d, Component text, float x, float y, float scale, int color, boolean shadow) {
+	private static void text(Draw d, Component text, float x, float y, float scale, int color, boolean shadow) {
 		d.push();
 		d.translate(x, y);
 		d.scale(scale);

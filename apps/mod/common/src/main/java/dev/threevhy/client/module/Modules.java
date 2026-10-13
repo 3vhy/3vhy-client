@@ -60,7 +60,7 @@ public final class Modules {
 	public static final Module COORDS = hud("coords", "Coordinates", "Shows your current coordinates and facing", false);
 	public static final Toggle COORDS_FACING = COORDS.add(new Toggle("facing", "Facing", "Which way you're looking", true));
 	public static final Module KEYSTROKES = background(new Module("keystrokes", "Keystrokes",
-			"Shows WASD, jump and your mouse buttons as you press them", Category.HUD, true));
+			"Shows WASD, jump and your mouse buttons as you press them", Category.HUD, true), 85);
 	public static final Toggle KEYSTROKES_MOUSE = KEYSTROKES.add(new Toggle("mouse", "Mouse buttons", "LMB and RMB with CPS", true));
 	public static final Toggle KEYSTROKES_SPACE = KEYSTROKES.add(new Toggle("space", "Space bar", "The jump key", true));
 	public static final Module ARMOR = background(new Module("armor", "Armor Status",
@@ -105,9 +105,9 @@ public final class Modules {
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
 	public static final Module MODULE_LIST = sized(background(new Module("module_list", "Module List",
-			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew()));
+			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew(), 85));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
-			"Add players and see when they're online on your server", Category.HUD, true).markNew()));
+			"Add players and see when they're online on your server", Category.HUD, true).markNew(), 90));
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
 			"Players", 16));
 	public static final Toggle PLAYER_LIST_OFFLINE = PLAYER_LIST.add(new Toggle("offline", "Show offline players",

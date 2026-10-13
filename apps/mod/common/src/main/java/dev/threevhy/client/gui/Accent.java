@@ -25,7 +25,12 @@ public final class Accent {
 
 	/** The colour right now (opaque). */
 	public static int get() {
-		if (Modules.THEME_RAINBOW.get()) return rainbow((System.currentTimeMillis() % 6000L) / 6000f);
+		return get(0f);
+	}
+
+	/** The colour right now, a little further round the rainbow when Rainbow is on, so a list of lines ripples. */
+	public static int get(float offset) {
+		if (Modules.THEME_RAINBOW.get()) return rainbow((System.currentTimeMillis() % 6000L) / 6000f + offset);
 		return Modules.THEME_PANEL_COLOR.get() | 0xFF000000;
 	}
 
