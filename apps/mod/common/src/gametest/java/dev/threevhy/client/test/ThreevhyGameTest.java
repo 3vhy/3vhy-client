@@ -12,6 +12,7 @@ import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.ModMenuScreen;
 import dev.threevhy.client.gui.TitleScreenStyle;
+import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.FreezeWatch;
 import dev.threevhy.client.hud.CpsTracker;
@@ -147,6 +148,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.waitTicks(3);
 		shot(context, "3vhy-main-menu");
 		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Auto"));
+		int[] fontWidths = context.computeOnClient(client -> new int[] {
+				client.font.width(UiFont.bold("PANELS AND MUSIC")),
+				client.font.width(Component.literal("PANELS AND MUSIC").withStyle(net.minecraft.ChatFormatting.BOLD))});
+		ThreevhyClient.LOG.info("3vhy-check: \"PANELS AND MUSIC\" is {} wide in the clean font, {} in Minecraft's bold", fontWidths[0],
+				fontWidths[1]);
+		check(failed, "clean font (Titillium Web) loads from the mod's resources", fontWidths[0] > 20 && fontWidths[0] != fontWidths[1]);
 		check(failed, "3vhy main menu styles the title screen",
 				context.computeOnClient(client -> client.screen instanceof TitleScreen) && Hooks.mainMenuShown);
 		check(failed, "main menu hides Minecraft's logo (LogoRenderer)", Hooks.minecraftLogoHidden);

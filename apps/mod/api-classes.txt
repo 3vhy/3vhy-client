@@ -146,3 +146,5 @@ net.minecraft.client.gui.components.ChatComponent#addMessageToDisplayQueue
 net.minecraft.client.gui.components.LogoRenderer
 net.minecraft.client.gui.components.PlainTextButton
 net.minecraft.client.gui.components.SpriteIconButton
+net.minecraft.network.chat.FontDescription
+net.minecraft.network.chat.FontDescription$Resource

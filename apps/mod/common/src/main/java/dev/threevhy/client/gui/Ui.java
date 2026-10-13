@@ -35,6 +35,8 @@ public final class Ui {
 	private final List<Hit> hits;
 	/** Clip rectangle for clicks (scrolling lists), or null. */
 	private int[] clip = null;
+	/** Whether text goes in the clean font ({@link UiFont}) instead of Minecraft's. */
+	private boolean clean = false;
 
 	public Ui(Draw d, int mouseX, int mouseY, List<Hit> hits) {
 		this.d = d;
@@ -42,6 +44,12 @@ public final class Ui {
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 		this.hits = hits;
+	}
+
+	/** Draws this frame's text in the clean font ({@link UiFont}) when {@code on}. */
+	public Ui cleanFont(boolean on) {
+		clean = on;
+		return this;
 	}
 
 	public static List<Hit> newHits() {
@@ -82,7 +90,7 @@ public final class Ui {
 	// Text
 
 	public int width(String text) {
-		return mc.font.width(text);
+		return clean ? mc.font.width(UiFont.semibold(text)) : mc.font.width(text);
 	}
 
 	public static Component bold(String text) {
@@ -90,16 +98,18 @@ public final class Ui {
 	}
 
 	public int boldWidth(String text) {
-		return mc.font.width(bold(text));
+		return mc.font.width(clean ? UiFont.bold(text) : bold(text));
 	}
 
 	public void text(String text, int x, int y, int color) {
-		d.text(text, x, y, color, false);
+		if (clean) d.text(UiFont.semibold(text), x, y, color, false);
+		else d.text(text, x, y, color, false);
 	}
 
 	/** Uppercase bold, like NoRisk's titles. */
 	public void title(String text, int x, int y, int color) {
-		d.text(bold(text.toUpperCase(Locale.ROOT)), x, y, color, false);
+		String upper = text.toUpperCase(Locale.ROOT);
+		d.text(clean ? UiFont.bold(upper) : bold(upper), x, y, color, false);
 	}
 
 	public int titleWidth(String text) {
@@ -111,7 +121,8 @@ public final class Ui {
 		d.push();
 		d.translate(x, y);
 		d.scale(scale);
-		d.text(text, 0, 0, color, false);
+		if (clean) d.text(UiFont.semibold(text), 0, 0, color, false);
+		else d.text(text, 0, 0, color, false);
 		d.pop();
 	}
 

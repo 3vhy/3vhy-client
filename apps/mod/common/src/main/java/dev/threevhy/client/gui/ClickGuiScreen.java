@@ -184,7 +184,7 @@ public final class ClickGuiScreen extends CompatScreen {
 		hits.clear();
 		boxes.clear();
 		status = null;
-		Ui ui = new Ui(d, mouseX, mouseY, hits);
+		Ui ui = new Ui(d, mouseX, mouseY, hits).cleanFont(UiFont.clean());
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 200f);
 		d.push();
 		d.translate(0, (1 - (1 - (1 - intro) * (1 - intro))) * -6);

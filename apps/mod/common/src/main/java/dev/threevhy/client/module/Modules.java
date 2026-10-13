@@ -199,6 +199,9 @@ public final class Modules {
 	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark glass or light frost", 0, "Dark", "Light"));
 	public static final Choice THEME_MENU_STYLE = THEME.add(new Choice("menu_style", "Mod menu",
 			"Cards like Lunar's, or a floating panel for each category", 0, "Classic", "Panels"));
+	public static final Choice THEME_FONT = THEME.add(new Choice("font", "Menu font",
+			"The font in the Panels menu and the Music HUD: a clean sans-serif, or Minecraft's pixel font", 0, "Clean",
+			"Minecraft"));
 	public static final Color THEME_PANEL_COLOR = THEME.add(new Color("panel_color", "Panels colour",
 			"The colour of mods that are on in the Panels mod menu", 0xFF74D46E));
 	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Snow", "Pixel snow behind 3vhy's menus", true));

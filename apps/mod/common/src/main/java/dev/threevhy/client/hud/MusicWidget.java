@@ -2,11 +2,13 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.PixelIcons;
+import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.music.MusicArt;
 import dev.threevhy.client.music.MusicBridge;
 import dev.threevhy.client.music.NowPlaying;
 import java.util.Locale;
+import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -16,6 +18,7 @@ import net.minecraft.resources.Identifier;
  * The Music HUD, like a media player: the cover (with the music app's logo on its corner), the title
  * in bold and the artist in the accent colour under it, previous / play-pause / next on the right, a
  * progress bar between the time played and the song's length, and Windows' volume along the bottom.
+ * Text is in the clean font ({@link UiFont}) unless Theme's Menu font is set to Minecraft.
  */
 final class MusicWidget extends HudWidget {
 	private static final int W = 200;
@@ -97,10 +100,9 @@ final class MusicWidget extends HudWidget {
 
 		int textW = controlsX - 6 - textX;
 		String title = song.title().isBlank() ? "Unknown song" : song.title();
-		Component bold = Component.literal(trimBold(mc, title.toUpperCase(Locale.ROOT), textW)).withStyle(Style.EMPTY.withBold(true));
-		d.text(bold, textX, y + PAD + 2, WHITE, shadow);
-		small(d, trim(mc, song.artist().toUpperCase(Locale.ROOT), Math.round(textW / 0.8f)), textX, y + PAD + 13, 0.8f, accent,
-				shadow);
+		d.text(heading(fit(mc, title.toUpperCase(Locale.ROOT), textW, MusicWidget::heading)), textX, y + PAD + 2, WHITE, shadow);
+		small(d, fit(mc, song.artist().toUpperCase(Locale.ROOT), Math.round(textW / 0.8f), MusicWidget::plain), textX, y + PAD + 13,
+				0.8f, accent, shadow);
 
 		if (progress(song)) {
 			double position = song.positionNow();
@@ -109,7 +111,7 @@ final class MusicWidget extends HudWidget {
 			String played = NowPlaying.time(position);
 			String length = NowPlaying.time(song.duration());
 			small(d, played, barX1, y + PAD + 23, 0.6f, GREY, shadow);
-			small(d, length, barX2 - Math.round(mc.font.width(length) * 0.6f), y + PAD + 23, 0.6f, GREY, shadow);
+			small(d, length, barX2 - Math.round(mc.font.width(plain(length)) * 0.6f), y + PAD + 23, 0.6f, GREY, shadow);
 			double fraction = song.duration() > 0 ? Math.max(0, Math.min(1, position / song.duration())) : 0;
 			slider(d, barX1, barX2, y + PAD + 32, fraction, accent);
 		}
@@ -119,7 +121,7 @@ final class MusicWidget extends HudWidget {
 			boolean silent = song.muted() || song.volume() == 0;
 			speaker(d, x + PAD + 1, rowY, silent);
 			String level = song.muted() ? "MUTED" : song.volume() + "%";
-			int levelW = Math.round(mc.font.width(level) * 0.7f);
+			int levelW = Math.round(mc.font.width(plain(level)) * 0.7f);
 			int barX1 = x + PAD + 17;
 			int barX2 = x + W - PAD - Math.max(levelW, 18) - 8;
 			slider(d, barX1, barX2, rowY + 3, song.muted() ? 0 : song.volume() / 100.0, accent);
@@ -211,27 +213,26 @@ final class MusicWidget extends HudWidget {
 		d.push();
 		d.translate(x, y);
 		d.scale(scale);
-		d.text(text, 0, 0, color, shadow);
+		d.text(plain(text), 0, 0, color, shadow);
 		d.pop();
 	}
 
-	private static String trim(Minecraft mc, String text, int maxWidth) {
-		if (maxWidth <= 0) return "";
-		if (mc.font.width(text) <= maxWidth) return text;
-		String cut = text;
-		while (!cut.isEmpty() && mc.font.width(cut + "...") > maxWidth) cut = cut.substring(0, cut.length() - 1);
-		return cut.stripTrailing() + "...";
+	/** The song's title: bold, in the clean font or Minecraft's. */
+	private static Component heading(String text) {
+		return UiFont.clean() ? UiFont.bold(text) : Component.literal(text).withStyle(Style.EMPTY.withBold(true));
 	}
 
-	private static String trimBold(Minecraft mc, String text, int maxWidth) {
-		if (maxWidth <= 0) return "";
-		if (boldWidth(mc, text) <= maxWidth) return text;
-		String cut = text;
-		while (!cut.isEmpty() && boldWidth(mc, cut + "...") > maxWidth) cut = cut.substring(0, cut.length() - 1);
-		return cut.stripTrailing() + "...";
+	/** Everything else: the clean font's semibold, or Minecraft's font. */
+	private static Component plain(String text) {
+		return UiFont.clean() ? UiFont.semibold(text) : Component.literal(text);
 	}
 
-	private static int boldWidth(Minecraft mc, String text) {
-		return mc.font.width(Component.literal(text).withStyle(Style.EMPTY.withBold(true)));
+	/** {@code text} cut down with "..." to fit {@code maxWidth} when drawn in {@code style}. */
+	private static String fit(Minecraft mc, String text, int maxWidth, Function<String, Component> style) {
+		if (maxWidth <= 0) return "";
+		if (mc.font.width(style.apply(text)) <= maxWidth) return text;
+		String cut = text;
+		while (!cut.isEmpty() && mc.font.width(style.apply(cut + "...")) > maxWidth) cut = cut.substring(0, cut.length() - 1);
+		return cut.stripTrailing() + "...";
 	}
 }
