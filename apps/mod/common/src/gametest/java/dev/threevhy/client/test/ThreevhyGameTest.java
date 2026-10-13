@@ -326,6 +326,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new MusicShowcase(HudWidgets.KEYSTROKES));
 			context.runOnClient(client -> {
 				client.getToastManager().clear();
+				Modules.KEYSTROKES.sliderSetting("background").reset();
 				client.options.keyAttack.setDown(true);
 			});
 			context.waitTicks(5);
