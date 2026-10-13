@@ -220,6 +220,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(10);
 			check(failed, "CPS counts clicks (MouseHandler.onButton)", context.computeOnClient(client -> CpsTracker.left() >= 1));
+			context.runOnClient(client -> Modules.SWING_SPEED.set(true));
+			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			context.waitTicks(5);
+			check(failed, "swing speed changes your arm swing (LivingEntity.getCurrentSwingDuration)", Hooks.swingSpeedRan);
+			context.runOnClient(client -> Modules.SWING_SPEED.set(false));
 			shot(context, "3vhy-target-hud");
 			check(failed, "target HUD picks up who you hit", context.computeOnClient(client -> Target.get() != null));
 
@@ -422,6 +427,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new ClickGuiScreen(null).search("totem"));
 			context.waitTicks(5);
 			shot(context, "3vhy-panels-search");
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.set(0xFF6FE3A1));
+			context.setScreen(() -> new ClickGuiScreen(null).expand(Modules.SWING_SPEED));
+			context.waitTicks(10);
+			shot(context, "3vhy-panels-green");
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
 			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Classic"));
 
 			// Pause menu: the mod menu button, then Confirm Disconnect

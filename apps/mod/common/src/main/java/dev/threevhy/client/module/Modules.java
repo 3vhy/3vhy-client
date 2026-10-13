@@ -97,6 +97,7 @@ public final class Modules {
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
 	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
 	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", true));
+	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The artist, progress bar and volume bar", 0xFF8CC4EA));
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
@@ -174,9 +175,17 @@ public final class Modules {
 			"Whose skin to wear, for A player's skin", "", 16));
 	public static final Choice SKIN_PROTECT_ARMS = SKIN_PROTECT.add(new Choice("arms", "Arms",
 			"Classic or slim arms, for skin files", 0, "Classic", "Slim"));
-	public static final Module MENU_NAME = new Module("menu_name", "Menu Name Tag",
-			"Your head and name in the bottom right of menus, chests and your inventory", Category.VISUAL, true).markNew();
+	public static final Module MENU_NAME = new Module("menu_name", "Menu Logo",
+			"The 3vhy Client logo in the bottom right of menus, chests and your inventory", Category.VISUAL, true).markNew();
+	public static final Choice MENU_NAME_SHOW = MENU_NAME.add(new Choice("show", "Show", "The logo, your name, or both", 0,
+			"Logo", "Logo and name", "Name"));
 	public static final Toggle MENU_NAME_HEAD = MENU_NAME.add(new Toggle("head", "Show your head", "Your skin's face next to your name", true));
+	public static final Module SWING_SPEED = new Module("swing_speed", "Swing Speed",
+			"Slows down (or speeds up) your arm swing when you hit, place and use things", Category.VISUAL, false).markNew();
+	public static final Slider SWING_SPEED_SPEED = SWING_SPEED.add(new Slider("speed", "Speed",
+			"How fast your arm swings: under 1x is slower than normal", 0.2, 2.0, 0.05, 0.5, "x"));
+	public static final Toggle SWING_SPEED_OTHERS = SWING_SPEED.add(new Toggle("others", "Other players too",
+			"Everyone's swing on your screen, not just yours", false));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
 			"The 3vhy title screen instead of Minecraft's", Category.VISUAL, true);
 	public static final Module THEME = new Module("theme", "Theme",
@@ -184,6 +193,8 @@ public final class Modules {
 	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark glass or light frost", 0, "Dark", "Light"));
 	public static final Choice THEME_MENU_STYLE = THEME.add(new Choice("menu_style", "Mod menu",
 			"Cards like Lunar's, or a floating panel for each category", 0, "Classic", "Panels"));
+	public static final Color THEME_PANEL_COLOR = THEME.add(new Color("panel_color", "Panels colour",
+			"The colour of mods that are on in the Panels mod menu", 0xFF5BC8E6));
 	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Snow", "Pixel snow behind 3vhy's menus", true));
 	public static final Slider THEME_SNOW_AMOUNT = THEME.add(new Slider("snow_amount", "Snow amount", "How much snow falls",
 			10, 100, 10, 50, "%"));
@@ -241,7 +252,8 @@ public final class Modules {
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD, COMBO, SCOREBOARD, JUMP_RESET,
 			MUSIC, PLAYER_LIST,
 			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM,
-			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SKIN_PROTECT, MENU_NAME, MAIN_MENU, THEME,
+			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SWING_SPEED, SKIN_PROTECT, MENU_NAME, MAIN_MENU,
+			THEME,
 			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, NAME_PROTECT, WAYPOINTS,
 			PROFILES, DISCORD);
 

@@ -13,6 +13,7 @@
 		"ClientPacketListenerMixin",
 		"EntityMixin",
 		"ItemStackMixin",
+		"LivingEntityMixin",
 		"LivingEntityRendererMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

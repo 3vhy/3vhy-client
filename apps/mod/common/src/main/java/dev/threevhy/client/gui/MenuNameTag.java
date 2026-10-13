@@ -14,12 +14,15 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.player.PlayerSkin;
 
 /**
- * Your head and name in a small glass pill at the bottom right of the main menu, the pause menu,
- * your inventory and chests. Name Protect and Skin Protect apply to it like everywhere else.
+ * The 3vhy Client logo in a small dark pill at the bottom right of the main menu, the pause menu,
+ * your inventory and chests: the pixel wordmark and CLIENT. It can also show your head and name
+ * (Name Protect and Skin Protect apply to them like everywhere else), or only those.
  */
 public final class MenuNameTag {
 	private static final int MARGIN = 6;
-	private static final int HEIGHT = 16;
+	private static final int HEIGHT = 19;
+	private static final int FILL = 0xD8161719;
+	private static final int EDGE = 0x30FFFFFF;
 	/** Your own entry, for your skin when you're not in a world. */
 	private static PlayerInfo offline = null;
 
@@ -35,19 +38,41 @@ public final class MenuNameTag {
 	public static void draw(Draw d, Screen screen) {
 		if (!Modules.MENU_NAME.enabled() || !shows(screen)) return;
 		Minecraft mc = Minecraft.getInstance();
-		String name = mc.getUser().getName();
+		boolean logo = !Modules.MENU_NAME_SHOW.is("Name");
+		boolean name = !Modules.MENU_NAME_SHOW.is("Logo");
 		boolean head = Modules.MENU_NAME_HEAD.get();
-		int w = mc.font.width(name) + (head ? 26 : 14);
+		String player = mc.getUser().getName();
+		String client = "CLIENT";
+
+		int logoW = Wordmark.COLUMNS + 5 + mc.font.width(client);
+		int nameW = mc.font.width(player) + (head ? 13 : 0);
+		int w = 16 + (logo ? logoW : 0) + (logo && name ? 13 : 0) + (name ? nameW : 0);
 		int x = d.width() - MARGIN - w;
 		int y = d.height() - MARGIN - HEIGHT;
-		d.roundRect(x, y, x + w, y + HEIGHT, 8, 0xC0051246);
-		d.roundOutline(x, y, x + w, y + HEIGHT, 8, 0x40A9D8F2);
-		int textX = x + 7;
-		if (head) {
-			d.face(ownSkin(mc), x + 4, y + 3, 10);
-			textX = x + 18;
+		d.roundRect(x, y, x + w, y + HEIGHT, HEIGHT / 2, FILL);
+		d.roundOutline(x, y, x + w, y + HEIGHT, HEIGHT / 2, EDGE);
+
+		int cx = x + 8;
+		if (logo) {
+			Wordmark.draw(d, cx, y + 2, 1, Theme.ICE, 0);
+			cx += Wordmark.COLUMNS + 2;
+			d.fill(cx, y + 9, cx + 2, y + 11, Theme.CYAN);
+			cx += 3;
+			d.text(client, cx, y + 6, 0xFFB8C0CC, false);
+			cx += mc.font.width(client);
 		}
-		d.text(name, textX, y + 4, Theme.ICE, false);
+		if (logo && name) {
+			cx += 6;
+			d.fill(cx, y + 5, cx + 1, y + HEIGHT - 5, EDGE);
+			cx += 7;
+		}
+		if (name) {
+			if (head) {
+				d.face(ownSkin(mc), cx, y + 4, 10);
+				cx += 13;
+			}
+			d.text(player, cx, y + 6, Theme.ICE, false);
+		}
 		Hooks.menuNameDrawn = true;
 	}
 

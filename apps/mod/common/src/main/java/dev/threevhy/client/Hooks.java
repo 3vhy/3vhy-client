@@ -23,6 +23,7 @@ public final class Hooks {
 	public static volatile boolean playerListTicked = false;
 	public static volatile boolean playerListAskedServer = false;
 	public static volatile boolean wrapProtectRan = false;
+	public static volatile boolean swingSpeedRan = false;
 	/** Command suggestion answers that reached the client, and the id of the last one (for the in-game test). */
 	public static volatile int suggestionPackets = 0;
 	public static volatile int lastSuggestionId = -1;

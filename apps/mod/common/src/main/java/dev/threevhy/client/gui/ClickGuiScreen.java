@@ -33,10 +33,14 @@ import org.lwjgl.glfw.GLFW;
  * are and which are folded is saved.
  */
 public final class ClickGuiScreen extends CompatScreen {
-	private static final int PANEL_W = 116;
-	private static final int HEADER_H = 18;
-	private static final int ROW_H = 14;
-	private static final int RADIUS = 5;
+	private static final int PANEL_W = 128;
+	private static final int HEADER_H = 20;
+	private static final int ROW_H = 15;
+	private static final int RADIUS = 7;
+	private static final int PANEL = 0xF2232529;
+	private static final int ROW_TEXT = 0xFFD5D8DE;
+	private static final int MUTED = 0xFF8B9099;
+	private static final int BOX_OFF = 0xFF3A3D45;
 	private static final String CLIENT = "client";
 	/** Mods whose extra options (lists, files, status) only fit the Classic page. */
 	private static final Set<Module> MORE_OPTIONS = Set.of(Modules.PLAYER_LIST, Modules.NAME_PROTECT, Modules.SKIN_PROTECT,
@@ -198,12 +202,26 @@ public final class ClickGuiScreen extends CompatScreen {
 		ui.small(shown, hx, this.height - 10, scale, MenuTheme.alpha(ui.t.text(), 0xD0));
 	}
 
+	/** The search bar: a dark pill with a magnifier, like the panels. */
 	private void drawSearch(Ui ui) {
-		int w = Math.min(180, this.width - 20);
+		int w = Math.min(170, this.width - 20);
+		int h = 16;
 		int x = (this.width - w) / 2;
-		int y = 7;
-		ui.field(x, y, w, 15, search, "Search modules...", editingText == null, SEARCH_ICON);
-		ui.hit(x, y, x + w, y + 15, () -> editingText = null);
+		int y = 6;
+		boolean focused = editingText == null;
+		ui.d.roundRect(x, y, x + w, y + h, h / 2, PANEL);
+		ui.d.roundOutline(x, y, x + w, y + h, h / 2, focused && !search.isEmpty() ? MenuTheme.alpha(accent(), 0xC0) : 0x30FFFFFF);
+		PixelIcons.draw(ui.d, SEARCH_ICON, x + 7, y + 3, 1, search.isEmpty() ? MUTED : accent());
+		int tx = x + 22;
+		int max = w - 30;
+		String shown = search.isEmpty() ? "SEARCH MODULES..." : search.toUpperCase(Locale.ROOT);
+		while (!shown.isEmpty() && ui.width(shown) > max) shown = shown.substring(1);
+		ui.text(shown, tx, y + 4, search.isEmpty() ? MUTED : 0xFFFFFFFF);
+		if (focused && !search.isEmpty() && (System.currentTimeMillis() / 500) % 2 == 0) {
+			int cx = tx + ui.width(shown) + 1;
+			ui.d.fill(cx, y + 3, cx + 1, y + h - 3, 0xFFFFFFFF);
+		}
+		ui.hit(x, y, x + w, y + h, () -> editingText = null);
 	}
 
 	private static final String[] SEARCH_ICON = {
@@ -244,14 +262,13 @@ public final class ClickGuiScreen extends CompatScreen {
 		int bottom = y + HEADER_H + bodyH;
 		boxes.put(key, new int[] {x, y, x + PANEL_W, bottom});
 
-		ui.d.roundRect(x, y, x + PANEL_W, bottom, RADIUS, t.panel());
-		ui.d.roundOutline(x, y, x + PANEL_W, bottom, RADIUS, dragging != null && dragging.equals(key) ? t.edgeStrong() : t.edge());
-		ui.d.roundRect(x + 1, y + 1, x + PANEL_W - 1, y + HEADER_H, RADIUS - 1, MenuTheme.alpha(0x000000, 0x50));
-		if (!folded) ui.d.fill(x + 1, y + HEADER_H, x + PANEL_W - 1, y + HEADER_H + 1, t.edge());
-		PixelIcons.draw(ui.d, icon(key), x + 5, y + 3, 1, t.accent());
-		ui.title(title(key), x + 21, y + 5, t.text());
+		ui.d.roundRect(x, y, x + PANEL_W, bottom, RADIUS, PANEL);
+		if (dragging != null && dragging.equals(key)) ui.d.roundOutline(x, y, x + PANEL_W, bottom, RADIUS, MenuTheme.alpha(accent(), 0xA0));
+		ui.d.fill(x + 6, y + HEADER_H - 2, x + PANEL_W - 6, y + HEADER_H - 1, accent());
+		PixelIcons.draw(ui.d, icon(key), x + 6, y + 3, 1, accent());
+		ui.title(title(key), x + 22, y + 6, 0xFFFFFFFF);
 		boolean arrowHover = ui.hover(x + PANEL_W - 17, y + 2, x + PANEL_W - 3, y + HEADER_H - 2);
-		chevron(ui.d, x + PANEL_W - 13, y + 7, !folded, arrowHover ? t.accent() : t.muted());
+		chevron(ui.d, x + PANEL_W - 14, y + 7, !folded, arrowHover ? accent() : MUTED);
 		ui.hit(x, y, x + PANEL_W, y + HEADER_H, () -> startDrag(key, x, y));
 		ui.hit(x + PANEL_W - 17, y + 2, x + PANEL_W - 3, y + HEADER_H - 2, () -> {
 			spot[2] = folded ? 0 : 1;
@@ -260,7 +277,7 @@ public final class ClickGuiScreen extends CompatScreen {
 		if (folded) return;
 
 		int top = y + HEADER_H + 3;
-		ui.clip(x + 1, y + HEADER_H + 1, x + PANEL_W - 1, bottom - 1);
+		ui.clip(x + 1, y + HEADER_H, x + PANEL_W - 1, bottom - 2);
 		int ry = top - (int) Math.round(scroll);
 		if (CLIENT.equals(key)) {
 			for (ClientAction action : actions) {
@@ -280,7 +297,13 @@ public final class ClickGuiScreen extends CompatScreen {
 			if (modules.isEmpty()) emptyRow(ui, x, ry);
 		}
 		ui.endClip();
-		if (maxScroll > 0) ui.scrollbar(x + PANEL_W - 3, y + HEADER_H + 2, bodyH - 4, scroll, maxScroll, contentH);
+		if (maxScroll > 0) {
+			int trackY = y + HEADER_H + 2;
+			int trackH = bodyH - 6;
+			int thumb = Math.max(14, trackH * trackH / Math.max(1, contentH));
+			int thumbY = trackY + (int) Math.round((trackH - thumb) * (scroll / maxScroll));
+			ui.d.roundRect(x + PANEL_W - 3, thumbY, x + PANEL_W - 1, thumbY + thumb, 1, MenuTheme.alpha(accent(), 0xC0));
+		}
 	}
 
 	private static void chevron(Draw d, int x, int y, boolean open, int color) {
@@ -292,51 +315,60 @@ public final class ClickGuiScreen extends CompatScreen {
 	}
 
 	private void emptyRow(Ui ui, int x, int y) {
-		ui.small("NO MATCHES", x + 8, y + 4, 0.75f, ui.t.muted());
+		ui.text("NO MATCHES", x + 10, y + 4, MUTED);
 	}
 
 	private void moduleRow(Ui ui, Module module, int x, int y) {
-		MenuTheme t = ui.t;
 		boolean on = module.enabled();
 		boolean toggleable = module.toggleable();
 		boolean open = expanded.contains(module);
-		int x1 = x + 3;
-		int x2 = x + PANEL_W - 3;
-		boolean hover = ui.hover(x1, y, x2, y + ROW_H - 1);
+		int x1 = x + 5;
+		int x2 = x + PANEL_W - 5;
+		int h = ROW_H - 2;
+		boolean hover = ui.hover(x1, y, x2, y + h);
 		if (toggleable && on) {
-			ui.d.roundRect(x1, y, x2, y + ROW_H - 1, 3, hover ? Draw.mix(onFill(t), 0xFFFFFFFF, 0.1) : onFill(t));
+			ui.d.roundRect(x1, y, x2, y + h, 4, hover ? Draw.mix(onFill(), 0xFFFFFFFF, 0.1) : onFill());
 		} else if (hover || open) {
-			ui.d.roundRect(x1, y, x2, y + ROW_H - 1, 3, t.cardHover());
+			ui.d.roundRect(x1, y, x2, y + h, 4, 0x18FFFFFF);
 		}
-		String name = module.name.toUpperCase(Locale.ROOT);
-		int nameColor = !toggleable || on ? 0xFFFFFFFF : MenuTheme.alpha(t.text(), 0xB0);
-		ui.small(ui.trim(name, (int) ((PANEL_W - 26) / 0.75f)), x1 + 5, y + 4, 0.75f, nameColor);
+		String name = ui.trim(module.name.toUpperCase(Locale.ROOT), x2 - x1 - 18);
+		ui.text(name, x1 + 5, y + 2, toggleable && on ? onText() : ROW_TEXT);
 		if (toggleable) {
-			ui.dot(x2 - 9, y + 4, 5, on ? t.accent() : MenuTheme.alpha(t.muted(), 0x70));
+			ui.dot(x2 - 8, y + 4, 4, on ? 0xE6FFFFFF : 0x55FFFFFF);
 		} else {
-			chevron(ui.d, x2 - 10, y + 4, open, t.muted());
+			chevron(ui.d, x2 - 10, y + 3, open, MUTED);
 		}
 		if (hover) status = module.name + ": " + module.description;
 		Runnable toggleOpen = () -> {
 			if (!expanded.remove(module)) expanded.add(module);
 		};
-		ui.hit(x1, y, x2, y + ROW_H - 1, toggleable ? module::toggle : toggleOpen, toggleOpen);
+		ui.hit(x1, y, x2, y + h, toggleable ? module::toggle : toggleOpen, toggleOpen);
 	}
 
-	/** Rows that are switched on: the accent, darkened so white text stays readable. */
-	private static int onFill(MenuTheme t) {
-		return MenuTheme.alpha(Draw.mix(t.accent(), 0xFF0A1846, 0.45), 0xE0);
+	/** The colour picked in Theme > Panels colour. */
+	private static int accent() {
+		return Modules.THEME_PANEL_COLOR.get() | 0xFF000000;
+	}
+
+	/** A switched-on row: the colour, a little deeper. */
+	private static int onFill() {
+		return Draw.mix(accent(), 0xFF000000, 0.22);
+	}
+
+	/** Text on a switched-on row: a pale tint of the colour. */
+	private static int onText() {
+		return Draw.mix(accent(), 0xFFFFFFFF, 0.85);
 	}
 
 	private void actionRow(Ui ui, int x, int y, String label, Runnable action) {
-		MenuTheme t = ui.t;
-		int x1 = x + 3;
-		int x2 = x + PANEL_W - 3;
-		boolean hover = ui.hover(x1, y, x2, y + ROW_H - 1);
-		if (hover) ui.d.roundRect(x1, y, x2, y + ROW_H - 1, 3, t.cardHover());
-		ui.small(label.toUpperCase(Locale.ROOT), x1 + 5, y + 4, 0.75f, hover ? 0xFFFFFFFF : MenuTheme.alpha(t.text(), 0xD0));
-		chevron(ui.d, x2 - 9, y + 4, false, hover ? t.accent() : t.muted());
-		ui.hit(x1, y, x2, y + ROW_H - 1, action);
+		int x1 = x + 5;
+		int x2 = x + PANEL_W - 5;
+		int h = ROW_H - 2;
+		boolean hover = ui.hover(x1, y, x2, y + h);
+		if (hover) ui.d.roundRect(x1, y, x2, y + h, 4, 0x18FFFFFF);
+		ui.text(ui.trim(label.toUpperCase(Locale.ROOT), x2 - x1 - 18), x1 + 5, y + 2, hover ? 0xFFFFFFFF : ROW_TEXT);
+		chevron(ui.d, x2 - 9, y + 3, false, hover ? accent() : MUTED);
+		ui.hit(x1, y, x2, y + h, action);
 	}
 
 	private boolean hasWidget(Module module) {
@@ -344,34 +376,34 @@ public final class ClickGuiScreen extends CompatScreen {
 	}
 
 	private int settingHeight(Setting setting) {
-		if (setting instanceof Setting.Slider) return 18;
-		if (setting instanceof Setting.Choice choice) return choiceFits(choice) ? 19 : 13;
-		if (setting instanceof Setting.Color) return 19;
-		if (setting instanceof Setting.Text) return 24;
-		return 13;
+		if (setting instanceof Setting.Slider) return 19;
+		if (setting instanceof Setting.Choice choice) return choiceFits(choice) ? 21 : 14;
+		if (setting instanceof Setting.Color) return 20;
+		if (setting instanceof Setting.Text) return 25;
+		return 14;
 	}
 
 	private int settingsHeight(Module module) {
 		int h = 4;
 		for (Setting setting : module.settings()) h += settingHeight(setting);
-		if (hasWidget(module)) h += 13;
-		if (MORE_OPTIONS.contains(module)) h += 13;
-		if (module.settings().isEmpty() && !hasWidget(module) && !MORE_OPTIONS.contains(module)) h += 13;
+		if (hasWidget(module)) h += 14;
+		if (MORE_OPTIONS.contains(module)) h += 14;
+		if (module.settings().isEmpty() && !hasWidget(module) && !MORE_OPTIONS.contains(module)) h += 14;
 		return h + 2;
 	}
 
 	private boolean choiceFits(Setting.Choice choice) {
 		int total = 0;
-		for (String option : choice.options()) total += Math.round(Minecraft.getInstance().font.width(option.toUpperCase(Locale.ROOT)) * 0.7f) + 6;
-		return total <= PANEL_W - 16;
+		for (String option : choice.options()) total += Math.round(Minecraft.getInstance().font.width(option.toUpperCase(Locale.ROOT)) * 0.75f) + 8;
+		return total <= PANEL_W - 24;
 	}
 
 	private void drawSettings(Ui ui, Module module, int x, int y) {
 		MenuTheme t = ui.t;
 		int h = settingsHeight(module);
-		ui.d.fill(x + 5, y, x + 6, y + h - 2, MenuTheme.alpha(t.accent(), 0x90));
-		int left = x + 10;
-		int right = x + PANEL_W - 7;
+		ui.d.fill(x + 10, y + 1, x + 11, y + h - 3, 0x50FFFFFF);
+		int left = x + 16;
+		int right = x + PANEL_W - 8;
 		int sy = y + 2;
 		for (Setting setting : module.settings()) {
 			drawSetting(ui, setting, left, right, sy);
@@ -380,55 +412,45 @@ public final class ClickGuiScreen extends CompatScreen {
 		Minecraft mc = Minecraft.getInstance();
 		if (hasWidget(module)) {
 			linkRow(ui, left, right, sy, "Move on screen", () -> mc.setScreen(new HubScreen(this)));
-			sy += 13;
+			sy += 14;
 		}
 		if (MORE_OPTIONS.contains(module)) {
 			linkRow(ui, left, right, sy, "More options", () -> mc.setScreen(new ModMenuScreen(this).openModule(module)));
-			sy += 13;
+			sy += 14;
 		}
 		if (module.settings().isEmpty() && !hasWidget(module) && !MORE_OPTIONS.contains(module)) {
-			ui.small("NO SETTINGS", left, sy + 3, 0.7f, t.muted());
+			ui.small("NO SETTINGS", left, sy + 3, 0.75f, MUTED);
 		}
 	}
 
 	private void linkRow(Ui ui, int left, int right, int y, String label, Runnable action) {
-		boolean hover = ui.hover(left - 2, y, right + 2, y + 12);
-		ui.small(label.toUpperCase(Locale.ROOT), left, y + 3, 0.7f, hover ? ui.t.accent() : ui.t.text());
-		chevron(ui.d, right - 5, y + 3, false, hover ? ui.t.accent() : ui.t.muted());
-		ui.hit(left - 2, y, right + 2, y + 12, action);
+		boolean hover = ui.hover(left - 2, y, right + 2, y + 13);
+		ui.small(label.toUpperCase(Locale.ROOT), left, y + 3, 0.75f, hover ? accent() : ROW_TEXT);
+		chevron(ui.d, right - 5, y + 3, false, hover ? accent() : MUTED);
+		ui.hit(left - 2, y, right + 2, y + 13, action);
 	}
 
 	private void drawSetting(Ui ui, Setting setting, int left, int right, int y) {
-		MenuTheme t = ui.t;
-		float scale = 0.7f;
+		float scale = 0.75f;
 		String label = setting.name.toUpperCase(Locale.ROOT);
 		boolean rowHover = ui.hover(left - 2, y, right + 2, y + settingHeight(setting));
 		if (rowHover) status = setting.name + ": " + setting.description;
 		if (setting instanceof Setting.Toggle toggle) {
-			ui.small(ui.trim(label, (int) ((right - left - 14) / scale)), left, y + 3, scale, t.text());
-			int bx = right - 8;
-			boolean on = toggle.get();
-			ui.d.roundRect(bx, y + 2, bx + 8, y + 10, 2, on ? t.accent() : MenuTheme.alpha(0x000000, 0x60));
-			ui.d.roundOutline(bx, y + 2, bx + 8, y + 10, 2, on ? t.accent() : t.edgeStrong());
-			if (on) {
-				ui.d.fill(bx + 2, y + 6, bx + 3, y + 7, t.onAccent());
-				ui.d.fill(bx + 3, y + 7, bx + 4, y + 8, t.onAccent());
-				ui.d.fill(bx + 4, y + 6, bx + 5, y + 7, t.onAccent());
-				ui.d.fill(bx + 5, y + 5, bx + 6, y + 6, t.onAccent());
-			}
-			ui.hit(left - 2, y, right + 2, y + 12, toggle::toggle);
+			ui.small(ui.trim(label, (int) ((right - left - 16) / scale)), left, y + 3, scale, ROW_TEXT);
+			checkbox(ui.d, right - 9, y + 1, toggle.get());
+			ui.hit(left - 2, y, right + 2, y + 13, toggle::toggle);
 		} else if (setting instanceof Setting.Slider slider) {
 			String value = slider.format();
 			int valueW = Math.round(ui.width(value) * scale);
-			ui.small(ui.trim(label, (int) ((right - left - valueW - 4) / scale)), left, y + 2, scale, t.text());
-			ui.small(value, right - valueW, y + 2, scale, t.muted());
-			int trackY = y + 11;
+			ui.small(ui.trim(label, (int) ((right - left - valueW - 4) / scale)), left, y + 2, scale, ROW_TEXT);
+			ui.small(value, right - valueW, y + 2, scale, MUTED);
+			int trackY = y + 12;
 			int trackW = right - left;
-			ui.d.roundRect(left, trackY, right, trackY + 3, 1, MenuTheme.alpha(t.muted(), 0x50));
+			ui.d.roundRect(left, trackY, right, trackY + 3, 1, BOX_OFF);
 			int filled = (int) Math.round(trackW * slider.fraction());
-			ui.d.roundRect(left, trackY, left + filled, trackY + 3, 1, t.accent());
-			int knob = left + filled - 2;
-			ui.d.roundRect(knob, trackY - 2, knob + 5, trackY + 5, 2, 0xFFFFFFFF);
+			if (filled > 0) ui.d.roundRect(left, trackY, left + filled, trackY + 3, 1, accent());
+			int knob = left + filled - 3;
+			ui.d.roundRect(knob, trackY - 2, knob + 7, trackY + 5, 3, 0xFFFFFFFF);
 			ui.hit(left - 2, trackY - 4, right + 2, trackY + 7, () -> {
 				draggingSlider = slider;
 				sliderX = left;
@@ -437,29 +459,29 @@ public final class ClickGuiScreen extends CompatScreen {
 			});
 		} else if (setting instanceof Setting.Choice choice) {
 			if (choiceFits(choice)) {
-				ui.small(ui.trim(label, (int) ((right - left) / scale)), left, y + 2, scale, t.text());
+				ui.small(ui.trim(label, (int) ((right - left) / scale)), left, y + 2, scale, ROW_TEXT);
 				int ox = left;
 				for (String option : choice.options()) {
 					String text = option.toUpperCase(Locale.ROOT);
-					int ow = Math.round(ui.width(text) * scale) + 6;
+					int ow = Math.round(ui.width(text) * scale) + 8;
 					boolean active = choice.is(option);
-					boolean hover = ui.hover(ox, y + 10, ox + ow, y + 18);
-					if (active) ui.d.roundRect(ox, y + 10, ox + ow, y + 18, 2, onFill(t));
-					ui.small(text, ox + 3, y + 11, scale, active ? 0xFFFFFFFF : hover ? t.text() : t.muted());
-					ui.hit(ox, y + 10, ox + ow, y + 18, () -> choice.set(option));
-					ox += ow + 2;
+					boolean hover = ui.hover(ox, y + 10, ox + ow, y + 19);
+					ui.d.roundRect(ox, y + 10, ox + ow, y + 19, 3, active ? onFill() : hover ? 0x24FFFFFF : 0x12FFFFFF);
+					ui.small(text, ox + 4, y + 12, scale, active ? onText() : hover ? 0xFFFFFFFF : MUTED);
+					ui.hit(ox, y + 10, ox + ow, y + 19, () -> choice.set(option));
+					ox += ow + 3;
 				}
 			} else {
 				String value = choice.get().toUpperCase(Locale.ROOT);
 				int valueW = Math.round(ui.width(value) * scale);
-				ui.small(ui.trim(label, (int) ((right - left - valueW - 12) / scale)), left, y + 3, scale, t.text());
-				boolean hover = ui.hover(right - valueW - 10, y, right + 2, y + 12);
-				ui.small(value, right - valueW - 4, y + 3, scale, hover ? t.accent() : t.muted());
-				chevron(ui.d, right - 3, y + 3, false, hover ? t.accent() : t.muted());
-				ui.hit(left - 2, y, right + 2, y + 12, choice::next, choice::previous);
+				ui.small(ui.trim(label, (int) ((right - left - valueW - 12) / scale)), left, y + 3, scale, ROW_TEXT);
+				boolean hover = ui.hover(right - valueW - 10, y, right + 2, y + 13);
+				ui.small(value, right - valueW - 5, y + 3, scale, hover ? accent() : MUTED);
+				chevron(ui.d, right - 3, y + 3, false, hover ? accent() : MUTED);
+				ui.hit(left - 2, y, right + 2, y + 13, choice::next, choice::previous);
 			}
 		} else if (setting instanceof Setting.Color color) {
-			ui.small(ui.trim(label, (int) ((right - left) / scale)), left, y + 2, scale, t.text());
+			ui.small(ui.trim(label, (int) ((right - left) / scale)), left, y + 2, scale, ROW_TEXT);
 			int sx = left;
 			for (int swatch : Setting.Color.SWATCHES) {
 				boolean selected = (color.get() | 0xFF000000) == swatch;
@@ -467,14 +489,44 @@ public final class ClickGuiScreen extends CompatScreen {
 				ui.d.roundRect(sx, y + 11, sx + 7, y + 18, 2, swatch);
 				int pick = swatch;
 				ui.hit(sx, y + 11, sx + 7, y + 18, () -> color.set(pick));
-				sx += 9;
+				sx += 10;
 				if (sx + 7 > right) break;
 			}
 		} else if (setting instanceof Setting.Text text) {
-			ui.small(ui.trim(label, (int) ((right - left) / scale)), left, y + 2, scale, t.text());
+			ui.small(ui.trim(label, (int) ((right - left) / scale)), left, y + 2, scale, ROW_TEXT);
 			boolean focused = editingText == text;
-			ui.field(left, y + 10, right - left, 12, text.get(), "Type here", focused, null);
-			ui.hit(left, y + 10, right, y + 22, () -> editingText = text);
+			int fy = y + 11;
+			ui.d.roundRect(left, fy, right, fy + 12, 3, BOX_OFF);
+			if (focused) ui.d.roundOutline(left, fy, right, fy + 12, 3, accent());
+			String value = text.get();
+			String shown = value.isEmpty() && !focused ? "Type here" : value;
+			while (!shown.isEmpty() && ui.width(shown) * scale > right - left - 8) shown = shown.substring(1);
+			ui.small(shown, left + 4, fy + 3, scale, value.isEmpty() ? MUTED : 0xFFFFFFFF);
+			if (focused && (System.currentTimeMillis() / 500) % 2 == 0) {
+				int cx = left + 4 + Math.round(ui.width(value.isEmpty() ? "" : shown) * scale) + 1;
+				ui.d.fill(cx, fy + 2, cx + 1, fy + 10, 0xFFFFFFFF);
+			}
+			ui.hit(left, fy, right, fy + 12, () -> editingText = text);
+		}
+	}
+
+	/** A small check box: filled with the panel colour and ticked when on, a dark box with an x when off. */
+	private static void checkbox(Draw d, int x, int y, boolean on) {
+		d.roundRect(x, y, x + 10, y + 10, 2, on ? accent() : BOX_OFF);
+		int mark = on ? 0xFF101318 : MUTED;
+		if (on) {
+			d.fill(x + 2, y + 5, x + 3, y + 6, mark);
+			d.fill(x + 3, y + 6, x + 4, y + 7, mark);
+			d.fill(x + 4, y + 7, x + 5, y + 8, mark);
+			d.fill(x + 5, y + 6, x + 6, y + 7, mark);
+			d.fill(x + 6, y + 5, x + 7, y + 6, mark);
+			d.fill(x + 7, y + 4, x + 8, y + 5, mark);
+			d.fill(x + 8, y + 3, x + 9, y + 4, mark);
+		} else {
+			for (int i = 0; i < 4; i++) {
+				d.fill(x + 3 + i, y + 3 + i, x + 4 + i, y + 4 + i, mark);
+				d.fill(x + 6 - i, y + 3 + i, x + 7 - i, y + 4 + i, mark);
+			}
 		}
 	}
 
