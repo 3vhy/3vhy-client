@@ -45,6 +45,8 @@ public final class Config {
 	public List<String> players = new ArrayList<>();
 	/** Name Protect's text changes: what to look for on screen and what to show instead. */
 	public List<TextRule> textRules = new ArrayList<>();
+	/** Text Hotkeys: each key and the chat message or /command it sends. */
+	public List<TextHotkey> textHotkeys = new ArrayList<>();
 	/** The skin file (in 3vhy/skins) Skin Protect shows when set to use a file. */
 	public String skinFile = "";
 
@@ -65,6 +67,13 @@ public final class Config {
 	public static final class TextRule {
 		public String find = "";
 		public String replace = "";
+	}
+
+	/** One Text Hotkey: a GLFW key (or mouse button when {@code mouse}) and what it sends. */
+	public static final class TextHotkey {
+		public int key = -1;
+		public boolean mouse = false;
+		public String text = "";
 	}
 
 	/** A marked place in one world. */
@@ -109,6 +118,8 @@ public final class Config {
 				loaded.textRules.forEach(rule -> {
 					if (rule.replace == null) rule.replace = "";
 				});
+				if (loaded.textHotkeys == null) loaded.textHotkeys = new ArrayList<>();
+				loaded.textHotkeys.removeIf(hotkey -> hotkey == null || hotkey.key < 0 || hotkey.text == null || hotkey.text.isBlank());
 				if (loaded.skinFile == null) loaded.skinFile = "";
 				instance = loaded;
 			}

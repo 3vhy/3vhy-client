@@ -59,7 +59,7 @@ public final class ClickGuiScreen extends CompatScreen {
 	private static final String THEMES = "themes";
 	/** Mods whose extra options (lists, files, status) only fit the Classic page. */
 	private static final Set<Module> MORE_OPTIONS = Set.of(Modules.PLAYER_LIST, Modules.NAME_PROTECT, Modules.SKIN_PROTECT,
-			Modules.MUSIC, Modules.THEME);
+			Modules.MUSIC, Modules.THEME, Modules.TEXT_HOTKEYS);
 
 	private record ClientAction(String label, Runnable action) {
 	}

@@ -13,6 +13,7 @@ import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.CustomSkins;
 import dev.threevhy.client.module.PlayerList;
+import dev.threevhy.client.module.TextHotkeys;
 import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Setting;
 import dev.threevhy.client.module.Waypoints;
@@ -58,7 +59,10 @@ public final class ModMenuScreen extends CompatScreen {
 		SETTING_TEXT,
 		PLAYER_NAME,
 		RULE_FIND,
-		RULE_REPLACE
+		RULE_REPLACE,
+		HOTKEY_TEXT,
+		/** Waiting for the key (or extra mouse button) a new Text Hotkey goes on. */
+		HOTKEY_KEY
 	}
 
 	private static final int CARD_W = 80;
@@ -83,6 +87,10 @@ public final class ModMenuScreen extends CompatScreen {
 	private String playerName = "";
 	private String ruleFind = "";
 	private String ruleReplace = "";
+	private String hotkeyText = "";
+	private int hotkeyKey = -1;
+	private boolean hotkeyMouse = false;
+	private long hotkeyPickedAt = 0;
 	private String notice = null;
 	private long noticeAt = 0;
 
@@ -449,7 +457,8 @@ public final class ModMenuScreen extends CompatScreen {
 				+ (module == Modules.MUSIC ? 1 : 0);
 		int contentH = count * (ROW_H + 4) + (module == Modules.PLAYER_LIST ? playersHeight() : 0)
 				+ (module == Modules.SKIN_PROTECT ? 2 * (ROW_H + 4) : 0)
-				+ (module == Modules.NAME_PROTECT ? rulesHeight() : 0);
+				+ (module == Modules.NAME_PROTECT ? rulesHeight() : 0)
+				+ (module == Modules.TEXT_HOTKEYS ? hotkeysHeight() : 0);
 		maxScroll = Math.max(0, contentH - listH);
 		scroll = Math.max(0, Math.min(scroll, maxScroll));
 		shownScroll = Math.max(0, Math.min(shownScroll, maxScroll));
@@ -488,6 +497,7 @@ public final class ModMenuScreen extends CompatScreen {
 		if (module == Modules.PLAYER_LIST) drawPlayers(ui, cx, y, rowW);
 		if (module == Modules.SKIN_PROTECT) drawSkinFile(ui, cx, y, rowW);
 		if (module == Modules.NAME_PROTECT) drawRules(ui, cx, y, rowW);
+		if (module == Modules.TEXT_HOTKEYS) drawHotkeys(ui, cx, y, rowW);
 		ui.endClip();
 		ui.scrollbar(cx + cw - 2, listY, listH, shownScroll, maxScroll, contentH);
 	}
@@ -733,6 +743,84 @@ public final class ModMenuScreen extends CompatScreen {
 		focus = Focus.RULE_FIND;
 	}
 
+	private int hotkeysHeight() {
+		return 14 + 22 + 12 + Math.max(1, Config.get().textHotkeys.size()) * (RULE_ROW + 4);
+	}
+
+	/** Text Hotkeys: pick a key, type a message or /command, then every hotkey with its key. */
+	private void drawHotkeys(Ui ui, int x, int y, int w) {
+		MenuTheme t = ui.t;
+		ui.small("YOUR HOTKEYS", x + 2, y + 3, 0.75f, t.muted());
+		y += 14;
+		int keyW = 86;
+		int addW = 56;
+		boolean picking = focus == Focus.HOTKEY_KEY;
+		String keyLabel = picking ? "Press a key..." : hotkeyKey < 0 ? "Pick a key" : "Key: " + TextHotkeys.keyName(hotkeyKey, hotkeyMouse);
+		ui.button(x, y, keyW, 16, ui.trim(keyLabel, keyW - 10), picking, () -> focus = Focus.HOTKEY_KEY);
+		int fx = x + keyW + 6;
+		int fieldW = w - keyW - addW - 12;
+		ui.field(fx, y, fieldW, 16, hotkeyText, "Message or /command, like /home", focus == Focus.HOTKEY_TEXT, PixelIcons.PENCIL);
+		ui.hit(fx, y, fx + fieldW, y + 16, () -> focus = Focus.HOTKEY_TEXT);
+		ui.button(x + w - addW, y, addW, 16, "+ Add", true, this::addHotkey);
+		y += 22;
+		String hint = "Start with / to run a command. Works in game with no menu or chat open. Mouse side buttons work too.";
+		ui.small(ui.trim(hint, (int) ((w - 4) / 0.75f)), x + 2, y, 0.75f, t.muted());
+		y += 12;
+		List<Config.TextHotkey> hotkeys = new ArrayList<>(Config.get().textHotkeys);
+		if (hotkeys.isEmpty()) {
+			ui.text(ui.trim("No hotkeys yet. Try F6 -> /spawn or G -> gg", w - 8), x + 4, y + 7, t.muted());
+			return;
+		}
+		for (Config.TextHotkey hotkey : hotkeys) {
+			boolean hover = ui.hover(x, y, x + w, y + RULE_ROW);
+			ui.card(x, y, x + w, y + RULE_ROW, hover ? t.cardHover() : t.card(), t.edge());
+			String key = TextHotkeys.keyName(hotkey).toUpperCase(Locale.ROOT);
+			int pw = ui.pillWidth(key);
+			ui.pill(x + 6, y + 5, key, MenuTheme.alpha(t.accent(), 0x40), t.accent());
+			boolean command = hotkey.text.startsWith("/");
+			int textX = x + 6 + pw + 8;
+			ui.text(ui.trim(hotkey.text, x + w - 32 - textX), textX, y + 7, command ? t.accent() : t.text());
+			int dx = x + w - 24;
+			boolean delHover = ui.hover(dx, y + 3, dx + 16, y + 19);
+			if (delHover) ui.d.roundRect(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 5, 1, delHover ? t.bad() : t.muted());
+			ui.hit(dx, y + 3, dx + 16, y + 19, () -> {
+				TextHotkeys.remove(hotkey);
+				notice("Removed the " + TextHotkeys.keyName(hotkey) + " hotkey");
+			});
+			y += RULE_ROW + 4;
+		}
+	}
+
+	private void addHotkey() {
+		if (hotkeyKey < 0) {
+			notice("Pick a key first");
+			focus = Focus.HOTKEY_KEY;
+			return;
+		}
+		if (hotkeyText.isBlank()) {
+			notice("Type a message or command first");
+			focus = Focus.HOTKEY_TEXT;
+			return;
+		}
+		TextHotkeys.add(hotkeyKey, hotkeyMouse, hotkeyText);
+		notice(TextHotkeys.keyName(hotkeyKey, hotkeyMouse) + " sends " + hotkeyText.trim());
+		hotkeyText = "";
+		hotkeyKey = -1;
+		hotkeyMouse = false;
+		focus = Focus.SEARCH;
+	}
+
+	/** Takes the key (or extra mouse button) for a new Text Hotkey; Escape cancels. */
+	private void pickHotkey(int key, boolean mouse) {
+		if (key >= 0) {
+			hotkeyKey = key;
+			hotkeyMouse = mouse;
+			hotkeyPickedAt = System.currentTimeMillis();
+		}
+		focus = Focus.HOTKEY_TEXT;
+	}
+
 	private void addPlayer() {
 		String name = playerName.trim();
 		if (name.isEmpty()) {
@@ -875,6 +963,10 @@ public final class ModMenuScreen extends CompatScreen {
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		int button = event.button();
+		if (focus == Focus.HOTKEY_KEY && button >= 2) {
+			pickHotkey(button, true);
+			return true;
+		}
 		if (button == 0 || button == 1) {
 			for (int i = hits.size() - 1; i >= 0; i--) {
 				Ui.Hit hit = hits.get(i);
@@ -896,7 +988,8 @@ public final class ModMenuScreen extends CompatScreen {
 	/** Fields that let go of the keyboard when you click somewhere else. */
 	private boolean typingField() {
 		return focus == Focus.PROFILE_NAME || focus == Focus.SETTING_TEXT || focus == Focus.PLAYER_NAME
-				|| focus == Focus.RULE_FIND || focus == Focus.RULE_REPLACE;
+				|| focus == Focus.RULE_FIND || focus == Focus.RULE_REPLACE || focus == Focus.HOTKEY_TEXT
+				|| focus == Focus.HOTKEY_KEY;
 	}
 
 	@Override
@@ -927,6 +1020,7 @@ public final class ModMenuScreen extends CompatScreen {
 	public boolean charTyped(CharacterEvent event) {
 		String typed = event.codepointAsString();
 		if (typed.isEmpty() || typed.codePointAt(0) < 32 || typed.codePointAt(0) == 127) return false;
+		if (System.currentTimeMillis() - hotkeyPickedAt < 150) return true;
 		switch (focus) {
 			case PROFILE_NAME -> {
 				if (profileName.length() < 24) profileName += typed;
@@ -946,6 +1040,11 @@ public final class ModMenuScreen extends CompatScreen {
 			case RULE_REPLACE -> {
 				if (ruleReplace.length() < 48) ruleReplace += typed;
 			}
+			case HOTKEY_TEXT -> {
+				if (hotkeyText.length() < TextHotkeys.MAX_LENGTH) hotkeyText += typed;
+			}
+			case HOTKEY_KEY -> {
+			}
 			case SEARCH -> {
 				if (tab != Tab.MODS || page != null) {
 					tab = Tab.MODS;
@@ -961,6 +1060,10 @@ public final class ModMenuScreen extends CompatScreen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int key = event.key();
+		if (focus == Focus.HOTKEY_KEY) {
+			pickHotkey(key == GLFW.GLFW_KEY_ESCAPE ? -1 : key, false);
+			return true;
+		}
 		if (key == GLFW.GLFW_KEY_BACKSPACE) {
 			switch (focus) {
 				case PROFILE_NAME -> profileName = dropLast(profileName);
@@ -971,6 +1074,9 @@ public final class ModMenuScreen extends CompatScreen {
 				case PLAYER_NAME -> playerName = dropLast(playerName);
 				case RULE_FIND -> ruleFind = dropLast(ruleFind);
 				case RULE_REPLACE -> ruleReplace = dropLast(ruleReplace);
+				case HOTKEY_TEXT -> hotkeyText = dropLast(hotkeyText);
+				case HOTKEY_KEY -> {
+				}
 				case SEARCH -> {
 					search = dropLast(search);
 					resetScroll();
@@ -983,6 +1089,7 @@ public final class ModMenuScreen extends CompatScreen {
 			if (focus == Focus.WAYPOINT_NAME) finishRename();
 			if (focus == Focus.PLAYER_NAME) addPlayer();
 			if (focus == Focus.SETTING_TEXT) focus = Focus.SEARCH;
+			if (focus == Focus.HOTKEY_TEXT) addHotkey();
 			if (focus == Focus.RULE_REPLACE) addRule();
 			else if (focus == Focus.RULE_FIND) focus = Focus.RULE_REPLACE;
 			return true;

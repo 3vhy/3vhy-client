@@ -239,6 +239,8 @@ public final class Modules {
 	public static final Toggle CHAT_TIMESTAMPS = CHAT.add(new Toggle("timestamps", "Timestamps", "[14:05] in front of every message", true));
 	public static final Toggle CHAT_STACK = CHAT.add(new Toggle("stack", "Stack spam", "Repeated messages become one with (x3)", true));
 	public static final Toggle CHAT_HISTORY = CHAT.add(new Toggle("history", "Longer history", "Keep 1000 lines instead of 100", true));
+	public static final Module TEXT_HOTKEYS = new Module("text_hotkeys", "Text Hotkeys",
+			"Press a key to send a chat message or run a command, like gg or /home", Category.UTILITY, false).markNew();
 	public static final Module TAB_EDITOR = new Module("tab_editor", "Tab Editor",
 			"Customise the tab list: ping as numbers, hide parts", Category.UTILITY, true).markNew();
 	public static final Toggle TAB_PING_NUMBERS = TAB_EDITOR.add(new Toggle("ping", "Ping as numbers", "137ms instead of bars", true));
@@ -269,7 +271,7 @@ public final class Modules {
 			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM,
 			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SWING_SPEED, SKIN_PROTECT, MENU_NAME, MAIN_MENU,
 			THEME,
-			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, NAME_PROTECT, WAYPOINTS,
+			ZOOM, FREELOOK, TOGGLE_SPRINT, CHAT, TEXT_HOTKEYS, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS, NAME_PROTECT, WAYPOINTS,
 			PROFILES, DISCORD);
 
 	private static Boolean appliedToggleSprint = null;
@@ -294,6 +296,7 @@ public final class Modules {
 		ConfirmDisconnect.tick();
 		NameProtect.tick(mc);
 		TextRules.tick();
+		TextHotkeys.tick(mc);
 		CustomSkins.tick();
 		PlayerList.tick(mc);
 		MusicBridge.tick();

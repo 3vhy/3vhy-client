@@ -21,6 +21,7 @@ import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.ChatTweaks;
 import dev.threevhy.client.module.ConfirmDisconnect;
 import dev.threevhy.client.module.CustomSkins;
+import dev.threevhy.client.module.TextHotkeys;
 import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Freelook;
 import dev.threevhy.client.module.Modules;
@@ -502,6 +503,26 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 
+			context.runOnClient(client -> {
+				TextHotkeys.add(GLFW.GLFW_KEY_F6, false, "/me 3vhy hotkey command");
+				TextHotkeys.add(GLFW.GLFW_KEY_G, false, "3vhy hotkey chat");
+				TextHotkeys.add(GLFW.GLFW_MOUSE_BUTTON_4, true, "gg");
+				TextHotkeys.update(client, hotkey -> false);
+				TextHotkeys.update(client, hotkey -> !hotkey.mouse && hotkey.key == GLFW.GLFW_KEY_F6);
+				TextHotkeys.update(client, hotkey -> !hotkey.mouse && hotkey.key == GLFW.GLFW_KEY_F6);
+				TextHotkeys.update(client, hotkey -> false);
+				TextHotkeys.update(client, hotkey -> !hotkey.mouse && hotkey.key == GLFW.GLFW_KEY_G);
+			});
+			context.waitTicks(10);
+			check(failed, "text hotkeys run a command once per press", context.computeOnClient(client ->
+					chatLinesWith(client, "3vhy hotkey command") == 1));
+			check(failed, "text hotkeys send a chat message", context.computeOnClient(client ->
+					chatLinesWith(client, "3vhy hotkey chat") == 1));
+			check(failed, "text hotkeys turn the mod on and name their keys", context.computeOnClient(client ->
+					Modules.TEXT_HOTKEYS.enabled() && Config.get().textHotkeys.size() == 3
+							&& TextHotkeys.keyName(GLFW.GLFW_KEY_F6, false).equals("F6")
+							&& TextHotkeys.keyName(GLFW.GLFW_MOUSE_BUTTON_4, true).equals("Mouse 4")));
+
 			// The hub: HUD drawn sharp over the blur, with the logo and mod menu button
 			context.getInput().pressKey(ThreevhyClient.openSettingsKey);
 			context.waitTicks(15);
@@ -538,6 +559,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.NAME_PROTECT));
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-name-protect");
+			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.TEXT_HOTKEYS));
+			context.waitTicks(10);
+			shot(context, "3vhy-modmenu-text-hotkeys");
+			context.runOnClient(client -> List.copyOf(Config.get().textHotkeys).forEach(TextHotkeys::remove));
 			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.SKIN_PROTECT));
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-skin-protect");
