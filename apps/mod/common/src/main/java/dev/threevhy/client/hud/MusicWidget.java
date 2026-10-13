@@ -2,6 +2,7 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.PixelIcons;
+import dev.threevhy.client.gui.Smooth;
 import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.music.MusicArt;
@@ -30,6 +31,7 @@ final class MusicWidget extends HudWidget {
 	private static final int GREY = 0xFFA3A9B6;
 	private static final int TRACK = 0x38FFFFFF;
 	private static final int FILL = 0x16171B;
+	private static final int BADGE = 0xFF16171B;
 
 	MusicWidget() {
 		super("music", Modules.MUSIC, Anchor.TOP_CENTER);
@@ -85,7 +87,7 @@ final class MusicWidget extends HudWidget {
 		int h = heightFor(song);
 		int alpha = backgroundAlpha();
 		int fill = (alpha << 24) | FILL;
-		if (alpha > 0) d.roundRect(x, y, x + W, y + h, 8, fill);
+		if (alpha > 0) Smooth.roundRect(d, x, y, x + W, y + h, 8, fill);
 		boolean shadow = textShadow();
 		int accent = accent();
 
@@ -129,84 +131,49 @@ final class MusicWidget extends HudWidget {
 		}
 	}
 
-	/** The cover with soft corners, and the music app's logo on its bottom right corner. */
+	/** The cover with soft corners, and the music app's logo in a round badge on its bottom right corner. */
 	private static void drawCover(Draw d, NowPlaying song, int x, int y, int behind) {
 		Identifier cover = MusicArt.COVER.texture(song.art(), song.artVersion());
 		if (cover != null) {
 			int[] size = MusicArt.COVER.size();
 			d.texture(cover, x, y, ART, ART, size[0], size[1]);
-			if (behind != 0) roundCorners(d, x, y, ART, ART, behind);
+			if (behind != 0) Smooth.cornerCovers(d, x, y, x + ART, y + ART, 5, behind);
 		} else {
-			d.roundRect(x, y, x + ART, y + ART, 4, 0xFF2A2D35);
+			Smooth.roundRect(d, x, y, x + ART, y + ART, 5, 0xFF2A2D35);
 			PixelIcons.draw(d, PixelIcons.forModule(Modules.MUSIC), x + (ART - 24) / 2, y + (ART - 24) / 2, 2, Theme.SKY);
 		}
 		Identifier icon = MusicArt.ICON.texture(song.icon(), song.iconVersion());
 		if (icon != null) {
 			int bx = x + ART - 10;
 			int by = y + ART - 10;
-			d.roundRect(bx - 2, by - 2, bx + 14, by + 14, 4, 0xFF16171B);
+			Smooth.circle(d, bx + 6, by + 6, 8, BADGE);
 			int[] size = MusicArt.ICON.size();
 			d.texture(icon, bx, by, 12, 12, size[0], size[1]);
+			Smooth.cornerCovers(d, bx, by, bx + 12, by + 12, 6, BADGE);
 		}
 	}
 
-	/** Paints the panel's colour over a square's corner pixels, so it looks rounded. */
-	private static void roundCorners(Draw d, int x, int y, int w, int h, int color) {
-		int right = x + w;
-		int bottom = y + h;
-		d.fill(x, y, x + 2, y + 1, color);
-		d.fill(x, y + 1, x + 1, y + 2, color);
-		d.fill(right - 2, y, right, y + 1, color);
-		d.fill(right - 1, y + 1, right, y + 2, color);
-		d.fill(x, bottom - 1, x + 2, bottom, color);
-		d.fill(x, bottom - 2, x + 1, bottom - 1, color);
-		d.fill(right - 2, bottom - 1, right, bottom, color);
-		d.fill(right - 1, bottom - 2, right, bottom - 1, color);
-	}
-
-	/** Previous, play or pause in a ring, and next: what's playing, like a media player shows it. */
+	/** Previous, play or pause in a ring, and next, like a media player. */
 	private static void drawControls(Draw d, int x, int y, boolean playing, int accent) {
-		int cy = y + 8;
-		// Previous: a bar and a triangle pointing left
-		d.fill(x, cy - 3, x + 1, cy + 4, WHITE);
-		for (int i = 0; i < 4; i++) d.fill(x + 2 + i, cy - i, x + 3 + i, cy + 1 + i, WHITE);
-		// Play / pause in a ring
-		int rx = x + 11;
-		d.roundOutline(rx, y, rx + 16, y + 16, 8, accent);
-		d.roundOutline(rx + 1, y + 1, rx + 15, y + 15, 7, accent);
-		if (playing) {
-			d.fill(rx + 5, y + 5, rx + 7, y + 11, WHITE);
-			d.fill(rx + 9, y + 5, rx + 11, y + 11, WHITE);
-		} else {
-			for (int i = 0; i < 4; i++) d.fill(rx + 6 + i, y + 4 + i, rx + 7 + i, y + 12 - i, WHITE);
-		}
-		// Next: a triangle pointing right and a bar
-		int nx = x + 32;
-		for (int i = 0; i < 4; i++) d.fill(nx + i, cy - 3 + i, nx + 1 + i, cy + 4 - i, WHITE);
-		d.fill(nx + 5, cy - 3, nx + 6, cy + 4, WHITE);
+		float cy = y + 8;
+		Smooth.icon(d, "prev", x - 1, cy - 5, 10, WHITE);
+		float rx = x + 19;
+		Smooth.ring(d, rx, cy, 8, 1.3f, accent);
+		Smooth.icon(d, playing ? "pause" : "play", rx - 4.5f, cy - 4.5f, 9, WHITE);
+		Smooth.icon(d, "next", x + 29, cy - 5, 10, WHITE);
 	}
 
-	/** A speaker with sound waves, or with an X when muted. */
+	/** A speaker with sound waves, or with an x when muted. */
 	private static void speaker(Draw d, int x, int y, boolean muted) {
-		d.fill(x, y + 2, x + 2, y + 5, WHITE);
-		for (int i = 0; i < 3; i++) d.fill(x + 2 + i, y + 2 - i, x + 3 + i, y + 5 + i, WHITE);
-		if (muted) {
-			for (int i = 0; i < 3; i++) {
-				d.fill(x + 6 + i, y + 2 + i, x + 7 + i, y + 3 + i, GREY);
-				d.fill(x + 8 - i, y + 2 + i, x + 9 - i, y + 3 + i, GREY);
-			}
-		} else {
-			d.fill(x + 6, y + 2, x + 7, y + 5, WHITE);
-			d.fill(x + 8, y + 1, x + 9, y + 6, WHITE);
-		}
+		Smooth.icon(d, muted ? "speaker_muted" : "speaker", x - 1, y - 1.5f, 10, WHITE);
 	}
 
-	/** A thin track, coloured up to {@code fraction}, with a round white knob there. */
+	/** A thin rounded track, coloured up to {@code fraction}, with a round white knob there. */
 	private static void slider(Draw d, int x1, int x2, int y, double fraction, int color) {
-		d.roundRect(x1, y, x2, y + 3, 1, TRACK);
-		int at = x1 + (int) Math.round((x2 - x1) * fraction);
-		if (at > x1) d.roundRect(x1, y, at, y + 3, 1, color);
-		d.roundRect(at - 3, y - 2, at + 4, y + 5, 3, WHITE);
+		Smooth.roundRect(d, x1, y, x2, y + 3, 1.5f, TRACK);
+		float at = (float) (x1 + (x2 - x1) * fraction);
+		if (at > x1) Smooth.roundRect(d, x1, y, at, y + 3, 1.5f, color);
+		Smooth.circle(d, at, y + 1.5f, 3.5f, WHITE);
 	}
 
 	private static void small(Draw d, String text, float x, float y, float scale, int color, boolean shadow) {

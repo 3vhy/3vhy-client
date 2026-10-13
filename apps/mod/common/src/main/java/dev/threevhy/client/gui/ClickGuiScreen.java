@@ -27,19 +27,26 @@ import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * The mod menu's Panels style, like a PvP client's click GUI: a floating panel for each category and
- * a search bar on top. Left click a mod to switch it on or off, right click to open its settings
- * right under it. Panels are moved by dragging their title and folded with the arrow; where they
- * are and which are folded is saved.
+ * The mod menu's Panels style, like 67 Client's click GUI: a floating panel for each category and a
+ * search bar on top. Left click a mod to switch it on or off, right click to open its settings right
+ * under it. Panels are moved by dragging their title and folded with the arrow; where they are and
+ * which are folded is saved.
+ *
+ * <p>Like 67's, it's the same real size whatever Minecraft's GUI scale is: it's laid out in its own
+ * units, {@link #UNITS_PER_SCREEN} to the window's height, and drawn with {@link Smooth} shapes so
+ * nothing is pixelated.
  */
 public final class ClickGuiScreen extends CompatScreen {
+	/** How many layout units tall the window is: 540 makes a unit two pixels on a 1080p screen. */
+	private static final float UNITS_PER_SCREEN = 540f;
 	private static final int PANEL_W = 160;
-	private static final int HEADER_H = 24;
+	private static final int HEADER_H = 26;
 	private static final int ROW_H = 19;
 	private static final int RADIUS = 8;
-	/** Saved panel spots from before this layout are laid out again, since panels got wider. */
-	private static final int LAYOUT = 2;
-	private static final int PANEL = 0xF2232529;
+	/** Saved panel spots from before this layout are laid out again. */
+	private static final int LAYOUT = 3;
+	private static final int TOP = 36;
+	private static final int PANEL = 0xF224262B;
 	private static final int ROW_TEXT = 0xFFD5D8DE;
 	private static final int MUTED = 0xFF8B9099;
 	private static final int BOX_OFF = 0xFF3A3D45;
@@ -68,11 +75,25 @@ public final class ClickGuiScreen extends CompatScreen {
 	private Setting.Slider draggingSlider = null;
 	private int sliderX;
 	private int sliderW = 1;
-	private String status = null;
+
+	/** GUI units per layout unit, and the screen's size in layout units, worked out each frame. */
+	private float unit = 1;
+	private int vw = 1;
+	private int vh = 1;
 
 	public ClickGuiScreen(Screen parent) {
 		super(Component.literal("3vhy Mod Menu"));
 		this.parent = parent;
+	}
+
+	/** Works out the layout unit for this window: the same real size at any GUI scale. */
+	private void measure() {
+		Minecraft mc = Minecraft.getInstance();
+		float guiScale = (float) mc.getWindow().getGuiScale();
+		float pixelsPerUnit = Math.max(1f, mc.getWindow().getHeight() / UNITS_PER_SCREEN);
+		unit = pixelsPerUnit / guiScale;
+		vw = Math.max(1, Math.round(this.width / unit));
+		vh = Math.max(1, Math.round(this.height / unit));
 	}
 
 	private static List<String> panelKeys() {
@@ -94,18 +115,18 @@ public final class ClickGuiScreen extends CompatScreen {
 		return category == null ? "CLIENT" : category.label.toUpperCase(Locale.ROOT);
 	}
 
-	private static String[] icon(String key) {
+	private static String icon(String key) {
 		Category category = category(key);
-		if (category == null) return PixelIcons.SNOWFLAKE;
+		if (category == null) return "spark";
 		return switch (category) {
-			case HUD -> PixelIcons.LAYOUT;
-			case PVP -> PixelIcons.forModule(Modules.CRYSTAL_OPTIMIZER);
-			case VISUAL -> PixelIcons.EYE;
-			case UTILITY -> PixelIcons.GEAR;
+			case HUD -> "grid";
+			case PVP -> "target";
+			case VISUAL -> "eye";
+			case UTILITY -> "sliders";
 		};
 	}
 
-	/** A panel's saved spot {x, y, folded}; panels without one are laid out first. */
+	/** A panel's saved spot {x, y, folded, layout}; panels without one are laid out first. */
 	private int[] spot(String key) {
 		int[] saved = Config.get().panels.get(key);
 		if (saved != null && saved.length >= 4 && saved[3] == LAYOUT) return saved;
@@ -119,24 +140,24 @@ public final class ClickGuiScreen extends CompatScreen {
 	 */
 	private void layOutNewPanels() {
 		List<String> keys = panelKeys();
-		int columns = Math.max(1, Math.min(keys.size(), (this.width - 8) / (PANEL_W + 8)));
-		int left = Math.max(4, (this.width - columns * (PANEL_W + 8) + 8) / 2);
+		int columns = Math.max(1, Math.min(keys.size(), (vw - 16) / (PANEL_W + 12)));
+		int left = Math.max(8, (vw - columns * (PANEL_W + 12) + 12) / 2);
 		int[] bottoms = new int[columns];
-		java.util.Arrays.fill(bottoms, 32);
+		java.util.Arrays.fill(bottoms, TOP);
 		for (String key : keys) {
 			int column = 0;
 			for (int i = 1; i < columns; i++) if (bottoms[i] < bottoms[column]) column = i;
 			int[] spot = Config.get().panels.get(key);
 			if (spot == null || spot.length < 4 || spot[3] != LAYOUT) {
-				spot = new int[] {left + column * (PANEL_W + 8), bottoms[column], 0, LAYOUT};
+				spot = new int[] {left + column * (PANEL_W + 12), bottoms[column], 0, LAYOUT};
 				Config.get().panels.put(key, spot);
 			}
-			bottoms[column] = spot[1] + HEADER_H + defaultHeight(key) + 8;
+			bottoms[column] = spot[1] + HEADER_H + defaultHeight(key) + 12;
 		}
 	}
 
 	private int defaultHeight(String key) {
-		return (CLIENT.equals(key) ? clientActions().size() : modules(key).size()) * ROW_H + 8;
+		return (CLIENT.equals(key) ? clientActions().size() : modules(key).size()) * ROW_H + 10;
 	}
 
 	private boolean matches(Module module) {
@@ -158,7 +179,7 @@ public final class ClickGuiScreen extends CompatScreen {
 	private List<ClientAction> clientActions() {
 		Minecraft mc = Minecraft.getInstance();
 		List<ClientAction> actions = new ArrayList<>(List.of(
-				new ClientAction("Edit HUD", () -> mc.setScreen(new HubScreen(this))),
+				new ClientAction("Edit HUD", () -> mc.setScreen(new HubScreen(this).editOnly())),
 				new ClientAction("Profiles", () -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.PROFILES))),
 				new ClientAction("Waypoints", () -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.WAYPOINTS))),
 				new ClientAction("Classic menu", () -> {
@@ -181,12 +202,13 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	@Override
 	protected void draw(Draw d, int mouseX, int mouseY, float delta) {
+		measure();
 		hits.clear();
 		boxes.clear();
-		status = null;
-		Ui ui = new Ui(d, mouseX, mouseY, hits).cleanFont(UiFont.clean());
-		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 200f);
 		d.push();
+		d.scale(unit);
+		Ui ui = new Ui(d, Math.round(mouseX / unit), Math.round(mouseY / unit), hits).cleanFont(UiFont.clean());
+		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 200f);
 		d.translate(0, (1 - (1 - (1 - intro) * (1 - intro))) * -6);
 		drawSearch(ui);
 		List<String> keys = panelKeys();
@@ -194,57 +216,35 @@ public final class ClickGuiScreen extends CompatScreen {
 		if (dragging != null && keys.remove(dragging)) keys.add(dragging);
 		for (String key : keys) drawPanel(ui, key);
 		d.pop();
-
-		String hint = status != null ? status : "LEFT CLICK: ON / OFF  ·  RIGHT CLICK: SETTINGS  ·  DRAG A TITLE TO MOVE IT";
-		float scale = this.height >= 360 ? 1f : 0.7f;
-		String shown = ui.trim(hint, (int) ((this.width - 30) / scale));
-		int hintW = Math.round(ui.width(shown) * scale);
-		int hintH = Math.round(8 * scale);
-		int hx = this.width / 2 - hintW / 2;
-		ui.d.roundRect(hx - 6, this.height - hintH - 7, hx + hintW + 6, this.height - 2, 5, 0xD0000000);
-		ui.small(shown, hx, this.height - hintH - 4, scale, MenuTheme.alpha(ui.t.text(), 0xD0));
 	}
 
-	/** The search bar: a dark pill with a magnifier, like the panels. */
+	/** The search bar: a dark pill with a magnifier, like 67's. */
 	private void drawSearch(Ui ui) {
-		int w = Math.min(220, this.width - 20);
-		int h = 18;
-		int x = (this.width - w) / 2;
-		int y = 6;
+		int w = Math.min(230, vw - 20);
+		int h = 20;
+		int x = (vw - w) / 2;
+		int y = 8;
 		boolean focused = editingText == null;
-		ui.d.roundRect(x, y, x + w, y + h, h / 2, PANEL);
-		ui.d.roundOutline(x, y, x + w, y + h, h / 2, focused && !search.isEmpty() ? MenuTheme.alpha(accent(), 0xC0) : 0x30FFFFFF);
-		PixelIcons.draw(ui.d, SEARCH_ICON, x + 8, y + 4, 1, search.isEmpty() ? MUTED : accent());
+		Smooth.roundRect(ui.d, x, y, x + w, y + h, h / 2f, PANEL);
+		Smooth.roundOutline(ui.d, x, y, x + w, y + h, h / 2f, 1, focused && !search.isEmpty() ? MenuTheme.alpha(accent(), 0xC0) : 0x30FFFFFF);
+		Smooth.icon(ui.d, "search", x + 8, y + 5, 10, search.isEmpty() ? MUTED : accent());
 		int tx = x + 24;
-		int max = w - 30;
+		int max = w - 32;
 		String shown = search.isEmpty() ? "SEARCH MODULES..." : search.toUpperCase(Locale.ROOT);
 		while (!shown.isEmpty() && ui.width(shown) > max) shown = shown.substring(1);
-		ui.text(shown, tx, y + 5, search.isEmpty() ? MUTED : 0xFFFFFFFF);
+		ui.text(shown, tx, y + 6, search.isEmpty() ? MUTED : 0xFFFFFFFF);
 		if (focused && !search.isEmpty() && (System.currentTimeMillis() / 500) % 2 == 0) {
 			int cx = tx + ui.width(shown) + 1;
-			ui.d.fill(cx, y + 4, cx + 1, y + h - 4, 0xFFFFFFFF);
+			ui.d.fill(cx, y + 5, cx + 1, y + h - 5, 0xFFFFFFFF);
 		}
 		ui.hit(x, y, x + w, y + h, () -> editingText = null);
 	}
 
-	private static final String[] SEARCH_ICON = {
-			"..####......",
-			".#....#.....",
-			"#......#....",
-			"#......#....",
-			"#......#....",
-			".#....#.....",
-			"..####.#....",
-			".......##...",
-			"........##..",
-	};
-
 	private void drawPanel(Ui ui, String key) {
-		MenuTheme t = ui.t;
 		int[] spot = spot(key);
 		boolean folded = spot[2] != 0;
-		int x = Math.max(0, Math.min(spot[0], this.width - PANEL_W));
-		int y = Math.max(30, Math.min(spot[1], this.height - HEADER_H - 14));
+		int x = Math.max(0, Math.min(spot[0], vw - PANEL_W));
+		int y = Math.max(TOP, Math.min(spot[1], vh - HEADER_H - 8));
 		List<Module> modules = modules(key);
 		List<ClientAction> actions = CLIENT.equals(key) ? clientActions() : List.of();
 
@@ -255,9 +255,9 @@ public final class ClickGuiScreen extends CompatScreen {
 				for (Module module : modules) contentH += ROW_H + (expanded.contains(module) ? settingsHeight(module) : 0);
 				if (modules.isEmpty()) contentH = ROW_H;
 			}
-			contentH += 8;
+			contentH += 10;
 		}
-		int maxBody = Math.max(ROW_H * 2, this.height - y - HEADER_H - 16);
+		int maxBody = Math.max(ROW_H * 2, vh - y - HEADER_H - 8);
 		int bodyH = Math.min(contentH, maxBody);
 		int maxScroll = Math.max(0, contentH - bodyH);
 		double scroll = Math.max(0, Math.min(scrolls.getOrDefault(key, 0.0), maxScroll));
@@ -265,22 +265,24 @@ public final class ClickGuiScreen extends CompatScreen {
 		int bottom = y + HEADER_H + bodyH;
 		boxes.put(key, new int[] {x, y, x + PANEL_W, bottom});
 
-		ui.d.roundRect(x, y, x + PANEL_W, bottom, RADIUS, PANEL);
-		if (dragging != null && dragging.equals(key)) ui.d.roundOutline(x, y, x + PANEL_W, bottom, RADIUS, MenuTheme.alpha(accent(), 0xA0));
-		ui.d.fill(x + 8, y + HEADER_H - 3, x + PANEL_W - 8, y + HEADER_H - 2, accent());
-		PixelIcons.draw(ui.d, icon(key), x + 8, y + 5, 1, accent());
-		ui.title(title(key), x + 25, y + 8, 0xFFFFFFFF);
-		boolean arrowHover = ui.hover(x + PANEL_W - 21, y + 3, x + PANEL_W - 4, y + HEADER_H - 3);
-		chevron(ui.d, x + PANEL_W - 17, y + 9, !folded, arrowHover ? accent() : MUTED);
+		Smooth.roundRect(ui.d, x, y, x + PANEL_W, bottom, RADIUS, PANEL);
+		if (dragging != null && dragging.equals(key)) {
+			Smooth.roundOutline(ui.d, x, y, x + PANEL_W, bottom, RADIUS, 1, MenuTheme.alpha(accent(), 0xA0));
+		}
+		ui.d.fill(x + 10, y + HEADER_H - 3, x + PANEL_W - 10, y + HEADER_H - 2, accent());
+		Smooth.icon(ui.d, icon(key), x + 10, y + 7, 11, accent());
+		ui.title(title(key), x + 27, y + 9, 0xFFFFFFFF);
+		boolean arrowHover = ui.hover(x + PANEL_W - 24, y + 3, x + PANEL_W - 4, y + HEADER_H - 4);
+		Smooth.icon(ui.d, folded ? "chevron_right" : "chevron_down", x + PANEL_W - 21, y + 7, 11, arrowHover ? accent() : MUTED);
 		ui.hit(x, y, x + PANEL_W, y + HEADER_H, () -> startDrag(key, x, y));
-		ui.hit(x + PANEL_W - 21, y + 3, x + PANEL_W - 4, y + HEADER_H - 3, () -> {
+		ui.hit(x + PANEL_W - 24, y + 3, x + PANEL_W - 4, y + HEADER_H - 4, () -> {
 			spot[2] = folded ? 0 : 1;
 			Config.saveSoon();
 		});
 		if (folded) return;
 
-		int top = y + HEADER_H + 4;
-		ui.clip(x + 1, y + HEADER_H, x + PANEL_W - 1, bottom - 2);
+		int top = y + HEADER_H + 5;
+		ui.clip(x + 1, y + HEADER_H, x + PANEL_W - 1, bottom - 3);
 		int ry = top - (int) Math.round(scroll);
 		if (CLIENT.equals(key)) {
 			for (ClientAction action : actions) {
@@ -301,48 +303,40 @@ public final class ClickGuiScreen extends CompatScreen {
 		}
 		ui.endClip();
 		if (maxScroll > 0) {
-			int trackY = y + HEADER_H + 2;
-			int trackH = bodyH - 6;
+			int trackY = y + HEADER_H + 3;
+			int trackH = bodyH - 8;
 			int thumb = Math.max(14, trackH * trackH / Math.max(1, contentH));
 			int thumbY = trackY + (int) Math.round((trackH - thumb) * (scroll / maxScroll));
-			ui.d.roundRect(x + PANEL_W - 3, thumbY, x + PANEL_W - 1, thumbY + thumb, 1, MenuTheme.alpha(accent(), 0xC0));
-		}
-	}
-
-	private static void chevron(Draw d, int x, int y, boolean open, int color) {
-		if (open) {
-			for (int i = 0; i < 4; i++) d.fill(x + i, y + i, x + 7 - i, y + i + 1, color);
-		} else {
-			for (int i = 0; i < 4; i++) d.fill(x + 2 + i, y - 1 + i, x + 3 + i, y + 6 - i, color);
+			Smooth.roundRect(ui.d, x + PANEL_W - 4, thumbY, x + PANEL_W - 2, thumbY + thumb, 1, MenuTheme.alpha(accent(), 0xC0));
 		}
 	}
 
 	private void emptyRow(Ui ui, int x, int y) {
-		ui.text("NO MATCHES", x + 14, y + 5, MUTED);
+		ui.text("NO MATCHES", x + 16, y + 5, MUTED);
 	}
 
 	private void moduleRow(Ui ui, Module module, int x, int y) {
 		boolean on = module.enabled();
 		boolean toggleable = module.toggleable();
 		boolean open = expanded.contains(module);
-		int x1 = x + 7;
-		int x2 = x + PANEL_W - 7;
+		int x1 = x + 8;
+		int x2 = x + PANEL_W - 8;
 		int h = ROW_H - 3;
 		boolean hover = ui.hover(x1, y, x2, y + h);
 		if (toggleable && on) {
-			ui.d.roundRect(x1, y, x2, y + h, 5, hover ? Draw.mix(onFill(), 0xFFFFFFFF, 0.1) : onFill());
+			Smooth.roundRect(ui.d, x1, y, x2, y + h, 5, hover ? Draw.mix(onFill(), 0xFFFFFFFF, 0.1) : onFill());
 		} else if (hover || open) {
-			ui.d.roundRect(x1, y, x2, y + h, 5, 0x18FFFFFF);
+			Smooth.roundRect(ui.d, x1, y, x2, y + h, 5, 0x18FFFFFF);
 		}
 		String name = ui.trimTitle(module.name, x2 - x1 - 24);
-		ui.title(name, x1 + 7, y + (h - 8) / 2 + 1, toggleable && on ? onText() : ROW_TEXT);
+		ui.title(name, x1 + 8, y + (h - 8) / 2 + 1, toggleable && on ? onText() : ROW_TEXT);
+		float cy = y + h / 2f;
 		if (toggleable) {
-			if (on) ui.dot(x2 - 11, y + h / 2 - 2, 4, 0xF0FFFFFF);
-			else ui.dot(x2 - 10, y + h / 2 - 1, 3, 0x55FFFFFF);
+			if (on) Smooth.circle(ui.d, x2 - 10, cy, 2.2f, 0xF0FFFFFF);
+			else Smooth.circle(ui.d, x2 - 10, cy, 1.6f, 0x66FFFFFF);
 		} else {
-			chevron(ui.d, x2 - 13, y + (h - 4) / 2, open, MUTED);
+			Smooth.icon(ui.d, open ? "chevron_down" : "chevron_right", x2 - 15, cy - 4.5f, 9, MUTED);
 		}
-		if (hover) status = module.name + ": " + module.description;
 		Runnable toggleOpen = () -> {
 			if (!expanded.remove(module)) expanded.add(module);
 		};
@@ -365,13 +359,13 @@ public final class ClickGuiScreen extends CompatScreen {
 	}
 
 	private void actionRow(Ui ui, int x, int y, String label, Runnable action) {
-		int x1 = x + 7;
-		int x2 = x + PANEL_W - 7;
+		int x1 = x + 8;
+		int x2 = x + PANEL_W - 8;
 		int h = ROW_H - 3;
 		boolean hover = ui.hover(x1, y, x2, y + h);
-		if (hover) ui.d.roundRect(x1, y, x2, y + h, 5, 0x18FFFFFF);
-		ui.title(ui.trimTitle(label, x2 - x1 - 24), x1 + 7, y + (h - 8) / 2 + 1, hover ? 0xFFFFFFFF : ROW_TEXT);
-		chevron(ui.d, x2 - 12, y + (h - 6) / 2, false, hover ? accent() : MUTED);
+		if (hover) Smooth.roundRect(ui.d, x1, y, x2, y + h, 5, 0x18FFFFFF);
+		ui.title(ui.trimTitle(label, x2 - x1 - 24), x1 + 8, y + (h - 8) / 2 + 1, hover ? 0xFFFFFFFF : ROW_TEXT);
+		Smooth.icon(ui.d, "chevron_right", x2 - 15, y + h / 2f - 4.5f, 9, hover ? accent() : MUTED);
 		ui.hit(x1, y, x2, y + h, action);
 	}
 
@@ -400,16 +394,15 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	private boolean choiceFits(Setting.Choice choice) {
 		int total = 0;
-		for (String option : choice.options()) total += Minecraft.getInstance().font.width(option.toUpperCase(Locale.ROOT)) + 11;
-		return total <= PANEL_W - 30;
+		for (String option : choice.options()) total += Minecraft.getInstance().font.width(UiFont.semibold(option.toUpperCase(Locale.ROOT))) + 11;
+		return total <= PANEL_W - 32;
 	}
 
 	private void drawSettings(Ui ui, Module module, int x, int y) {
-		MenuTheme t = ui.t;
 		int h = settingsHeight(module);
-		ui.d.fill(x + 13, y + 1, x + 14, y + h - 3, 0x50FFFFFF);
-		int left = x + 20;
-		int right = x + PANEL_W - 11;
+		ui.d.fill(x + 14, y + 1, x + 15, y + h - 3, 0x50FFFFFF);
+		int left = x + 21;
+		int right = x + PANEL_W - 12;
 		int sy = y + 2;
 		for (Setting setting : module.settings()) {
 			drawSetting(ui, setting, left, right, sy);
@@ -417,7 +410,7 @@ public final class ClickGuiScreen extends CompatScreen {
 		}
 		Minecraft mc = Minecraft.getInstance();
 		if (hasWidget(module)) {
-			linkRow(ui, left, right, sy, "Move on screen", () -> mc.setScreen(new HubScreen(this)));
+			linkRow(ui, left, right, sy, "Move on screen", () -> mc.setScreen(new HubScreen(this).editOnly()));
 			sy += LINE_H;
 		}
 		if (MORE_OPTIONS.contains(module)) {
@@ -431,18 +424,16 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	private void linkRow(Ui ui, int left, int right, int y, String label, Runnable action) {
 		boolean hover = ui.hover(left - 2, y, right + 2, y + LINE_H - 1);
-		ui.text(ui.trim(label.toUpperCase(Locale.ROOT), right - left - 10), left, y + 4, hover ? accent() : ROW_TEXT);
-		chevron(ui.d, right - 5, y + 4, false, hover ? accent() : MUTED);
+		ui.text(ui.trim(label.toUpperCase(Locale.ROOT), right - left - 12), left, y + 4, hover ? accent() : ROW_TEXT);
+		Smooth.icon(ui.d, "chevron_right", right - 8, y + 3.5f, 9, hover ? accent() : MUTED);
 		ui.hit(left - 2, y, right + 2, y + LINE_H - 1, action);
 	}
 
 	private void drawSetting(Ui ui, Setting setting, int left, int right, int y) {
 		String label = setting.name.toUpperCase(Locale.ROOT);
-		boolean rowHover = ui.hover(left - 2, y, right + 2, y + settingHeight(setting));
-		if (rowHover) status = setting.name + ": " + setting.description;
 		if (setting instanceof Setting.Toggle toggle) {
 			ui.text(ui.trim(label, right - left - 16), left, y + 4, ROW_TEXT);
-			checkbox(ui.d, right - 10, y + 2, toggle.get());
+			checkbox(ui.d, right - 11, y + 2.5f, toggle.get());
 			ui.hit(left - 2, y, right + 2, y + LINE_H - 1, toggle::toggle);
 		} else if (setting instanceof Setting.Slider slider) {
 			String value = slider.format();
@@ -451,11 +442,10 @@ public final class ClickGuiScreen extends CompatScreen {
 			ui.text(value, right - valueW, y + 2, MUTED);
 			int trackY = y + 15;
 			int trackW = right - left;
-			ui.d.roundRect(left, trackY, right, trackY + 3, 1, BOX_OFF);
-			int filled = (int) Math.round(trackW * slider.fraction());
-			if (filled > 0) ui.d.roundRect(left, trackY, left + filled, trackY + 3, 1, accent());
-			int knob = left + filled - 3;
-			ui.d.roundRect(knob, trackY - 2, knob + 7, trackY + 5, 3, 0xFFFFFFFF);
+			Smooth.roundRect(ui.d, left, trackY, right, trackY + 3, 1.5f, BOX_OFF);
+			float filled = (float) (trackW * slider.fraction());
+			if (filled > 0) Smooth.roundRect(ui.d, left, trackY, left + filled, trackY + 3, 1.5f, accent());
+			Smooth.circle(ui.d, left + filled, trackY + 1.5f, 3.5f, 0xFFFFFFFF);
 			ui.hit(left - 2, trackY - 4, right + 2, trackY + 7, () -> {
 				draggingSlider = slider;
 				sliderX = left;
@@ -471,7 +461,7 @@ public final class ClickGuiScreen extends CompatScreen {
 					int ow = ui.width(text) + 8;
 					boolean active = choice.is(option);
 					boolean hover = ui.hover(ox, y + 12, ox + ow, y + 24);
-					ui.d.roundRect(ox, y + 12, ox + ow, y + 24, 3, active ? onFill() : hover ? 0x24FFFFFF : 0x12FFFFFF);
+					Smooth.roundRect(ui.d, ox, y + 12, ox + ow, y + 24, 3, active ? onFill() : hover ? 0x24FFFFFF : 0x12FFFFFF);
 					ui.text(text, ox + 4, y + 14, active ? onText() : hover ? 0xFFFFFFFF : MUTED);
 					ui.hit(ox, y + 12, ox + ow, y + 24, () -> choice.set(option));
 					ox += ow + 3;
@@ -481,8 +471,8 @@ public final class ClickGuiScreen extends CompatScreen {
 				int valueW = ui.width(value);
 				ui.text(ui.trim(label, right - left - valueW - 14), left, y + 4, ROW_TEXT);
 				boolean hover = ui.hover(right - valueW - 10, y, right + 2, y + LINE_H - 1);
-				ui.text(value, right - valueW - 6, y + 4, hover ? accent() : MUTED);
-				chevron(ui.d, right - 3, y + 4, false, hover ? accent() : MUTED);
+				ui.text(value, right - valueW - 9, y + 4, hover ? accent() : MUTED);
+				Smooth.icon(ui.d, "chevron_right", right - 7, y + 3.5f, 9, hover ? accent() : MUTED);
 				ui.hit(left - 2, y, right + 2, y + LINE_H - 1, choice::next, choice::previous);
 			}
 		} else if (setting instanceof Setting.Color color) {
@@ -490,19 +480,19 @@ public final class ClickGuiScreen extends CompatScreen {
 			int sx = left;
 			for (int swatch : Setting.Color.SWATCHES) {
 				boolean selected = (color.get() | 0xFF000000) == swatch;
-				if (selected) ui.d.roundRect(sx - 1, y + 12, sx + 9, y + 22, 3, 0xFFFFFFFF);
-				ui.d.roundRect(sx, y + 13, sx + 8, y + 21, 2, swatch);
+				if (selected) Smooth.circle(ui.d, sx + 4, y + 17, 5.5f, 0xFFFFFFFF);
+				Smooth.circle(ui.d, sx + 4, y + 17, 4, swatch);
 				int pick = swatch;
 				ui.hit(sx, y + 13, sx + 8, y + 21, () -> color.set(pick));
-				sx += 11;
+				sx += 12;
 				if (sx + 8 > right) break;
 			}
 		} else if (setting instanceof Setting.Text text) {
 			ui.text(ui.trim(label, right - left), left, y + 2, ROW_TEXT);
 			boolean focused = editingText == text;
 			int fy = y + 13;
-			ui.d.roundRect(left, fy, right, fy + 14, 3, BOX_OFF);
-			if (focused) ui.d.roundOutline(left, fy, right, fy + 14, 3, accent());
+			Smooth.roundRect(ui.d, left, fy, right, fy + 14, 3, BOX_OFF);
+			if (focused) Smooth.roundOutline(ui.d, left, fy, right, fy + 14, 3, 1, accent());
 			String value = text.get();
 			String shown = value.isEmpty() && !focused ? "Type here" : value;
 			while (!shown.isEmpty() && ui.width(shown) > right - left - 8) shown = shown.substring(1);
@@ -515,24 +505,10 @@ public final class ClickGuiScreen extends CompatScreen {
 		}
 	}
 
-	/** A small check box: filled with the panel colour and ticked when on, a dark box with an x when off. */
-	private static void checkbox(Draw d, int x, int y, boolean on) {
-		d.roundRect(x, y, x + 10, y + 10, 3, on ? accent() : BOX_OFF);
-		int mark = on ? 0xFF101318 : MUTED;
-		if (on) {
-			d.fill(x + 2, y + 5, x + 3, y + 6, mark);
-			d.fill(x + 3, y + 6, x + 4, y + 7, mark);
-			d.fill(x + 4, y + 7, x + 5, y + 8, mark);
-			d.fill(x + 5, y + 6, x + 6, y + 7, mark);
-			d.fill(x + 6, y + 5, x + 7, y + 6, mark);
-			d.fill(x + 7, y + 4, x + 8, y + 5, mark);
-			d.fill(x + 8, y + 3, x + 9, y + 4, mark);
-		} else {
-			for (int i = 0; i < 4; i++) {
-				d.fill(x + 3 + i, y + 3 + i, x + 4 + i, y + 4 + i, mark);
-				d.fill(x + 6 - i, y + 3 + i, x + 7 - i, y + 4 + i, mark);
-			}
-		}
+	/** A check box: filled with the panel colour and ticked when on, dark with an x when off. */
+	private static void checkbox(Draw d, float x, float y, boolean on) {
+		Smooth.roundRect(d, x, y, x + 11, y + 11, 3, on ? accent() : BOX_OFF);
+		Smooth.icon(d, on ? "check" : "cross", x, y, 11, on ? 0xFF101318 : MUTED);
 	}
 
 	private void startDrag(String key, int x, int y) {
@@ -541,18 +517,21 @@ public final class ClickGuiScreen extends CompatScreen {
 		grabY = (int) Math.round(lastMouseY) - y;
 	}
 
+	/** Where the mouse was last pressed, in layout units. */
 	private double lastMouseX;
 	private double lastMouseY;
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		lastMouseX = event.x();
-		lastMouseY = event.y();
+		double mx = event.x() / unit;
+		double my = event.y() / unit;
+		lastMouseX = mx;
+		lastMouseY = my;
 		int button = event.button();
 		if (button == 0 || button == 1) {
 			for (int i = hits.size() - 1; i >= 0; i--) {
 				Ui.Hit hit = hits.get(i);
-				if (!hit.contains(event.x(), event.y())) continue;
+				if (!hit.contains(mx, my)) continue;
 				Runnable action = button == 0 ? hit.action() : hit.rightAction();
 				if (action == null) continue;
 				// Clicking anywhere lets go of a text field; clicking a field takes the keyboard again
@@ -570,14 +549,16 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+		double mx = event.x() / unit;
+		double my = event.y() / unit;
 		if (draggingSlider != null) {
-			draggingSlider.setFraction((event.x() - sliderX) / sliderW);
+			draggingSlider.setFraction((mx - sliderX) / sliderW);
 			return true;
 		}
 		if (dragging != null) {
 			int[] spot = spot(dragging);
-			spot[0] = Math.max(0, Math.min(this.width - PANEL_W, (int) Math.round(event.x()) - grabX));
-			spot[1] = Math.max(30, Math.min(this.height - HEADER_H - 14, (int) Math.round(event.y()) - grabY));
+			spot[0] = Math.max(0, Math.min(vw - PANEL_W, (int) Math.round(mx) - grabX));
+			spot[1] = Math.max(TOP, Math.min(vh - HEADER_H - 8, (int) Math.round(my) - grabY));
 			return true;
 		}
 		return super.mouseDragged(event, dragX, dragY);
@@ -599,9 +580,11 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	@Override
 	public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+		double mx = x / unit;
+		double my = y / unit;
 		for (Map.Entry<String, int[]> entry : boxes.entrySet()) {
 			int[] box = entry.getValue();
-			if (x < box[0] || x >= box[2] || y < box[1] || y >= box[3]) continue;
+			if (mx < box[0] || mx >= box[2] || my < box[1] || my >= box[3]) continue;
 			scrolls.put(entry.getKey(), Math.max(0, scrolls.getOrDefault(entry.getKey(), 0.0) - vertical * ROW_H * 2));
 			return true;
 		}

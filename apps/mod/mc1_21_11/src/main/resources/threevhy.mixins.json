@@ -13,6 +13,7 @@
 		"ChatComponentMixin",
 		"ClientPacketListenerMixin",
 		"EntityMixin",
+		"ItemInHandRendererMixin",
 		"ItemStackMixin",
 		"LivingEntityMixin",
 		"LivingEntityRendererMixin",

@@ -87,6 +87,16 @@ public final class DrawImpl implements Draw {
 	}
 
 	@Override
+	public void mask(Identifier texture, int x, int y, int u, int v, int w, int h, int textureWidth, int textureHeight, int argb) {
+		graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, (float) u, (float) v, w, h, w, h, textureWidth, textureHeight, argb);
+	}
+
+	@Override
+	public float poseScale() {
+		return graphics.pose().m00();
+	}
+
+	@Override
 	public void texture(Identifier texture, int x, int y, int w, int h, int textureWidth, int textureHeight) {
 		graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0, w, h, textureWidth, textureHeight,
 				textureWidth, textureHeight);

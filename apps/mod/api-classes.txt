@@ -148,3 +148,4 @@ net.minecraft.client.gui.components.PlainTextButton
 net.minecraft.client.gui.components.SpriteIconButton
 net.minecraft.network.chat.FontDescription
 net.minecraft.network.chat.FontDescription$Resource
+net.minecraft.client.renderer.ItemInHandRenderer#tick

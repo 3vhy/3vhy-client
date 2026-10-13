@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
 import dev.threevhy.client.gui.TitleScreenStyle;
+import dev.threevhy.client.gui.ClickGuiScreen;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MenuNameTag;
 import dev.threevhy.client.gui.PauseMenuButton;
@@ -116,7 +117,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 		FreezeWatch.tick();
 		while (openSettingsKey.consumeClick()) {
 			if (mc.screen == null) {
-				mc.setScreen(new HubScreen(null));
+				mc.setScreen(Modules.THEME_MENU_STYLE.is("Panels") ? new ClickGuiScreen(null) : new HubScreen(null));
 			}
 		}
 		if (Borderless.needsReapply() && mc.getWindow().isFullscreen()) {

@@ -37,10 +37,22 @@ public final class HubScreen extends CompatScreen {
 	private double grabY;
 	private int guideX = -1;
 	private int guideY = -1;
+	/** Just the HUD editor, without the emblem and buttons in the middle (the Panels style's Edit HUD). */
+	private boolean editOnly = false;
 
 	public HubScreen(Screen parent) {
 		super(Component.literal("3vhy Client"));
 		this.parent = parent;
+	}
+
+	/** Shows only the HUD widgets to drag, with no emblem or buttons in the middle. */
+	public HubScreen editOnly() {
+		editOnly = true;
+		return this;
+	}
+
+	public boolean isEditOnly() {
+		return editOnly;
 	}
 
 	@Override
@@ -65,7 +77,7 @@ public final class HubScreen extends CompatScreen {
 		}
 
 		int[] centre = centreBounds();
-		boolean overCentre = dragging == null && mouseX >= centre[0] && mouseX < centre[2]
+		boolean overCentre = !editOnly && dragging == null && mouseX >= centre[0] && mouseX < centre[2]
 				&& mouseY >= centre[1] && mouseY < centre[3];
 		HudWidget hovered = null;
 		for (HudWidget widget : HudWidgets.ALL) {
@@ -79,7 +91,7 @@ public final class HubScreen extends CompatScreen {
 		}
 
 		// The logo block sits on its own glass plate, and steps aside while something is dragged
-		if (dragging == null) drawCentre(ui, mc, centre);
+		if (dragging == null && !editOnly) drawCentre(ui, mc, centre);
 
 		// The widget being touched is drawn again on top, so it's never hidden behind the logo block
 		HudWidget active = dragging != null ? dragging : hovered;
@@ -88,7 +100,7 @@ public final class HubScreen extends CompatScreen {
 			if (dragging == null) controls(ui, mc, active);
 		}
 
-		String hint = "DRAG HUD MODS TO MOVE THEM  ·  PENCIL FOR SETTINGS  ·  X TO HIDE";
+		String hint = "DRAG HUD MODS TO MOVE THEM  ·  PENCIL FOR SETTINGS  ·  X TO HIDE" + (editOnly ? "  ·  ESC TO GO BACK" : "");
 		if (active != null && active.resizable()) {
 			hint += "  ·  SCROLL TO RESIZE (" + Math.round(active.sizeScale() * 100) + "%)";
 		}
@@ -141,7 +153,8 @@ public final class HubScreen extends CompatScreen {
 	private void controls(Ui ui, Minecraft mc, HudWidget widget) {
 		int[] box = box(mc, widget);
 		int y = box[1] - 12 >= 0 ? box[1] - 12 : box[3] + 2;
-		iconBox(ui, box[0], y, Icons.PENCIL, false, () -> mc.setScreen(new ModMenuScreen(this).openModule(widget.module)));
+		iconBox(ui, box[0], y, Icons.PENCIL, false, () -> mc.setScreen(Modules.THEME_MENU_STYLE.is("Panels")
+				? new ClickGuiScreen(this).expand(widget.module) : new ModMenuScreen(this).openModule(widget.module)));
 		iconBox(ui, box[2] - 10, y, Icons.CLOSE, true, () -> widget.module.set(false));
 	}
 

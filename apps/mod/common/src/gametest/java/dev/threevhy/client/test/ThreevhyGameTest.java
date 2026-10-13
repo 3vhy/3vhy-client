@@ -334,6 +334,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(5);
 			check(failed, "swing speed changes your arm swing (LivingEntity.getCurrentSwingDuration)", Hooks.swingSpeedRan);
+			check(failed, "swing speed slows pulling out an item (ItemInHandRenderer.tick)", Hooks.equipSpeedRan);
 			context.runOnClient(client -> Modules.SWING_SPEED.set(false));
 			shot(context, "3vhy-target-hud");
 			check(failed, "target HUD picks up who you hit", context.computeOnClient(client -> Target.get() != null));
@@ -528,13 +529,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Panels"));
 			check(failed, "Theme > Mod menu > Panels opens the panels menu",
 					context.computeOnClient(client -> ModMenuScreen.create(null) instanceof ClickGuiScreen));
-			// GUI scale 1 in this small test window looks like a 1080p screen at GUI scale 2
-			int guiScaleBefore = context.computeOnClient(client -> client.options.guiScale().get());
-			context.runOnClient(client -> {
-				client.options.guiScale().set(1);
-				Compat.resizeGui(client);
-				Config.get().panels.clear();
-			});
+			context.runOnClient(client -> Config.get().panels.clear());
 			context.setScreen(() -> new ClickGuiScreen(null));
 			context.waitTicks(10);
 			shot(context, "3vhy-panels");
@@ -548,11 +543,18 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new ClickGuiScreen(null).expand(Modules.SWING_SPEED));
 			context.waitTicks(10);
 			shot(context, "3vhy-panels-cyan");
-			context.runOnClient(client -> {
-				Modules.THEME_PANEL_COLOR.reset();
-				client.options.guiScale().set(guiScaleBefore);
-				Compat.resizeGui(client);
-			});
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
+			context.setScreen(() -> null);
+			context.waitTicks(3);
+			context.getInput().pressKey(ThreevhyClient.openSettingsKey);
+			context.waitTicks(5);
+			check(failed, "in the Panels style, Right Shift opens the panels (no hub)",
+					context.computeOnClient(client -> client.screen instanceof ClickGuiScreen));
+			context.setScreen(() -> new HubScreen(new ClickGuiScreen(null)).editOnly());
+			context.waitTicks(10);
+			shot(context, "3vhy-edit-hud");
+			check(failed, "Edit HUD is just the HUD editor", context.computeOnClient(client ->
+					client.screen instanceof HubScreen hub && hub.isEditOnly()));
 			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Classic"));
 
 			// Pause menu: the mod menu button, then Confirm Disconnect

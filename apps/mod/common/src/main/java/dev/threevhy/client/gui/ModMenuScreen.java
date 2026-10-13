@@ -278,7 +278,7 @@ public final class ModMenuScreen extends CompatScreen {
 		by += 20;
 		sideButton(ui, x + 3, by, w - 6, 16, "Save as new profile", false, this::createProfile);
 		by += 20;
-		sideButton(ui, x + 3, by, w - 6, 16, "Edit HUD layout", true, () -> minecraft().setScreen(new HubScreen(this)));
+		sideButton(ui, x + 3, by, w - 6, 16, "Edit HUD layout", true, () -> minecraft().setScreen(new HubScreen(this).editOnly()));
 	}
 
 	/** A sidebar button with its label in small capitals, so the whole label fits like Lunar's. */
@@ -461,7 +461,7 @@ public final class ModMenuScreen extends CompatScreen {
 			row(ui, cx, y, rowW, "Position", "Drag it anywhere on screen in the hub (Right Shift)");
 			int moveW = ui.titleWidth("Move on screen") + 16;
 			ui.button(cx + rowW - 8 - moveW, y + 6, moveW, 14, "Move on screen", false,
-					() -> minecraft().setScreen(new HubScreen(this)));
+					() -> minecraft().setScreen(new HubScreen(this).editOnly()));
 			y += ROW_H + 4;
 		}
 		for (Setting setting : settings) {

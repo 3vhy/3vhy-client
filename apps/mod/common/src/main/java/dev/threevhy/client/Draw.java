@@ -30,6 +30,15 @@ public interface Draw {
 	/** Draws a whole texture of the given size, stretched to w x h. */
 	void texture(Identifier texture, int x, int y, int w, int h, int textureWidth, int textureHeight);
 
+	/**
+	 * Draws a w x h piece of a texture, from (u, v), pixel for pixel and tinted with {@code argb}.
+	 * Used with white masks to draw smooth shapes in any colour.
+	 */
+	void mask(Identifier texture, int x, int y, int u, int v, int w, int h, int textureWidth, int textureHeight, int argb);
+
+	/** How much the current transform scales things up, in GUI units per unit. */
+	float poseScale();
+
 	/** A player's face (with the hat layer), size x size. */
 	void face(PlayerSkin skin, int x, int y, int size);
 
