@@ -2,16 +2,20 @@ package dev.threevhy.client.test;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.threevhy.client.Config;
+import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.Compat;
+import dev.threevhy.client.compat.CompatScreen;
 import dev.threevhy.client.gui.ClickGuiScreen;
 import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.ModMenuScreen;
 import dev.threevhy.client.gui.TitleScreenStyle;
 import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.FreezeWatch;
 import dev.threevhy.client.hud.CpsTracker;
+import dev.threevhy.client.hud.HudWidget;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.ChatTweaks;
 import dev.threevhy.client.module.ConfirmDisconnect;
@@ -31,11 +35,13 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -43,13 +49,45 @@ import org.lwjgl.glfw.GLFW;
  * takes screenshots of every 3vhy screen. Fails if one of 3vhy's features didn't work.
  */
 public final class ThreevhyGameTest implements FabricClientGameTest {
-	/** A song as the Windows helper reports it, with a tiny 8x8 cover, since CI can't play real music. */
+	/** A pixel-art cover and app icon, standing in for what Windows hands the music helper. */
+	private static final String SAMPLE_ART = "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAADBklEQVR4nO1XXUgUURg9d2asl6DHngoxDAtNa1ERXVxdMPvDyPIhDPpdwxSpBC2wCMk0ykgN08oW7EE0IzJSBDUxKQ1jSyhDiiAIfAkFCXwQe5p1Z+69M/furroPHfhg9/s535l755u5Q3ZsKVxCBEMhREEwNvy5XTpXtMaQFx99cgkAhnxtAICspFPCVzfka5PKDwYkIeaM8BYPfnyI7N1nV0SIzm3uQXZuLQrrPTgw8QBuxzlhvx1IYmzxqg/Jh09XkJxYI5RLdm0rXRWBY74Kbiw1qY4bU4iiItD6xxtg9okar9ZKnC6ex6kRohqSc9PKYfaJIpRaXh21gmbre3c76BXVTUggr19y/OUVvQdHx88L56an3Kd8ikIUyNjrtzVS+c7UZiFxztRmZr0mugU6DmZeE942GfA4FUJUrLSJoGf4OrPWdkhk7eWbq5TPleG1FOfK8CIv+wabM91xU3pIXgxU4pC7VrbMj6GR48hytgvxEWfyrYg+D1IPagDo7r8IAMjPqV9tPRSoKX7WV4YjufcA8CdLFIFcMjUAljW40hr9W9zVW4Kje5tCEhVuGKa4YH+z8LR29ZaELfeH2sOPuzNa1nxIptGNWOQzY1IfTR2vPEF9YFnZNLr9IllxqVfdsbwn4X/NLS7/ZHFriqYFzf114Sm2ry8MqT4Q3xY7KD5Ni2ILnJz3ImHDCesOCwCvXggLtMvMp6jrNLAMANOv2+S8138hVnl29WaY+TQ1it73iZkWAIDvzyM4NhXZLgSLQ0dFtZsTyTH8q6saQOvjw/Ccfm7wa/pqcZsz4uO/jCffiZkWpGxePjmXV2VacrJQUe3G999zVD9NDdjzpoZ9cBzYQ4lJiymzbaBGabhQmS4tzAz94u7WjgIAyPsvs/4HdWP9GEam7lBFzrhL/t+suI7O1s6QBZphEFjgKeAmuhLob9viUkfYBZlhEGhGXPRGW4Kpn3MhCbDrwZwQEWHmXFmhoj0MAmWE8RraCZXtQWb/Lq35acYKyloLsMN/gaEi4gX+A2HP4KtuJtSoAAAAAElFTkSuQmCC";
+	private static final String SAMPLE_ICON = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAb0lEQVR4nMWTQQ6AIAwEp8SHyi/kBfIL+SleIBJojJSDc2pId9k2IBTyfmQmkBQFwFnErUYs4ha3IgbYPnVd51P7sJigNZsy8GG43ZZgeYQOfYndnG+MCSbEuoGyKPWs8P9LdPVXWZAUxdXCIga4AUM9HdZO1//vAAAAAElFTkSuQmCC";
+	/** A song as the Windows helper reports it, since CI can't play real music. */
 	private static final String SAMPLE_SONG = "{\"key\":\"test\",\"app\":\"Spotify.exe\",\"title\":\"Snowfall\","
 			+ "\"artist\":\"3vhy Test Band\",\"album\":\"CI\",\"playing\":true,\"position\":61,\"duration\":235,\"volume\":64,\"muted\":false,"
-			+ "\"art\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\","
-			+ "\"icon\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\"}";
+			+ "\"art\":\"" + SAMPLE_ART + "\",\"icon\":\"" + SAMPLE_ICON + "\"}";
+	/** The same, paused with the sound muted, for the paused close-up. */
+	private static final String PAUSED_SONG = "{\"key\":\"test2\",\"app\":\"Spotify.exe\",\"title\":\"Midnight Drive\","
+			+ "\"artist\":\"Pixel Lights\",\"album\":\"CI\",\"playing\":false,\"position\":134,\"duration\":201,\"volume\":0,\"muted\":true,"
+			+ "\"art\":\"" + SAMPLE_ART + "\",\"icon\":\"" + SAMPLE_ICON + "\"}";
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
 	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
+
+	/** Just the Music HUD, twice its size, on the 3vhy sky, for close-up screenshots. */
+	private static final class MusicShowcase extends CompatScreen {
+		MusicShowcase() {
+			super(Component.literal("Music HUD"));
+		}
+
+		@Override
+		protected void drawBackdrop(Draw d) {
+			MainMenuScreen.drawBackdrop(d, this.width, this.height);
+		}
+
+		@Override
+		protected void draw(Draw d, int mouseX, int mouseY, float delta) {
+			Minecraft mc = Minecraft.getInstance();
+			HudWidget widget = HudWidgets.MUSIC;
+			float scale = 2f;
+			int w = Math.round(widget.width(mc) * scale);
+			int h = Math.round(widget.height(mc) * scale);
+			d.push();
+			d.translate((this.width - w) / 2f, (this.height - h) / 2f);
+			d.scale(scale);
+			widget.draw(d, 0, 0, mc, false);
+			d.pop();
+		}
+	}
 
 	/** How many of the chat's wrapped lines contain {@code text}. */
 	private static int chatLinesWith(net.minecraft.client.Minecraft client, String text) {
@@ -244,6 +282,21 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "music HUD moves below boss bars (BossHealthOverlay)", musicY > 17);
 			shot(context, "3vhy-music-under-bossbar");
 			server.runCommand("bossbar remove threevhy:test");
+			context.setScreen(MusicShowcase::new);
+			context.waitTicks(10);
+			shot(context, "3vhy-music-closeup");
+			context.runOnClient(client -> MusicBridge.simulate(PAUSED_SONG));
+			context.waitTicks(10);
+			shot(context, "3vhy-music-closeup-paused");
+			context.runOnClient(client -> {
+				MusicBridge.simulate(SAMPLE_SONG);
+				Modules.MUSIC_COLOR.set(0xFFF58AC8);
+			});
+			context.waitTicks(10);
+			shot(context, "3vhy-music-closeup-pink");
+			context.runOnClient(client -> Modules.MUSIC_COLOR.set(0xFF8CC4EA));
+			context.setScreen(() -> null);
+			context.waitTicks(5);
 			check(failed, "player list sees who is online", context.computeOnClient(client ->
 					Hooks.playerListTicked && PlayerList.isOnline(client.getUser().getName()) && !PlayerList.isOnline("Steve")
 							&& HudWidgets.PLAYER_LIST.visible(client)));
