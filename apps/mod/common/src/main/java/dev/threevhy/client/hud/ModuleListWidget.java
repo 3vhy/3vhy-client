@@ -37,12 +37,12 @@ final class ModuleListWidget extends HudWidget {
 		return UiFont.clean() ? UiFont.bold(name) : Component.literal(name);
 	}
 
-	private static float textWidth(Minecraft mc, String name) {
+	private static float nameWidth(Minecraft mc, String name) {
 		return mc.font.width(label(name)) * TEXT;
 	}
 
 	private static float lineWidth(Minecraft mc, String name) {
-		return PAD + textWidth(mc, name) + TO_BAR + BAR;
+		return PAD + nameWidth(mc, name) + TO_BAR + BAR;
 	}
 
 	private static List<String> names(Minecraft mc, boolean preview) {
@@ -88,7 +88,7 @@ final class ModuleListWidget extends HudWidget {
 		for (int i = 0; i < names.size(); i++) {
 			String name = names.get(i);
 			float top = y + i * LINE;
-			float textW = textWidth(mc, name);
+			float textW = nameWidth(mc, name);
 			float left = right - BAR - TO_BAR - textW - PAD;
 			int accent = Accent.get(i * 0.035f);
 			if (alpha > 0) Smooth.roundRect(d, left, top, right, top + LINE, 0, (alpha << 24) | FILL);
