@@ -108,7 +108,7 @@ public final class Smooth {
 	 */
 	public static void glowText(Draw d, Component text, float x, float y, float scale, int color) {
 		int rgb = color & 0xFFFFFF;
-		float[][] rings = {{0.8f * scale, 0.14f}, {1.6f * scale, 0.06f}};
+		float[][] rings = {{0.8f * scale, 0.14f}, {1.6f * scale, 0.08f}};
 		for (float[] ring : rings) {
 			int alpha = Math.max(4, Math.round(((color >>> 24) & 255) * ring[1]));
 			for (int i = 0; i < 8; i++) {

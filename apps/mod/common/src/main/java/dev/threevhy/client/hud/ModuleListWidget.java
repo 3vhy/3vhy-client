@@ -30,6 +30,8 @@ final class ModuleListWidget extends HudWidget {
 	private static final float BAR = 0.35f * CAP;
 	private static final float BAR_H = 0.78f * LINE;
 	private static final int FILL = 0x13101A;
+	/** The bar's glow: how far each faint copy reaches past it (in bar widths) and how strong it is. */
+	private static final float[][] BAR_GLOW = {{0.7f, 0.12f}, {0.35f, 0.25f}};
 	private static final String[] SAMPLE = {"CUSTOMCROSSHAIR", "KEYSTROKES", "FREELOOK", "ZOOM"};
 	private static final Set<Module> OUT_OF_GAME = Set.of(Modules.MENU_NAME, Modules.MAIN_MENU, Modules.DISCORD,
 			Modules.BORDERLESS, Modules.PROFILES);
@@ -90,6 +92,7 @@ final class ModuleListWidget extends HudWidget {
 		int right = x + width(mc);
 		int alpha = backgroundAlpha();
 		boolean shadow = textShadow();
+		boolean glow = Modules.MODULE_LIST_GLOW.get() && !shadow;
 		for (int i = 0; i < names.size(); i++) {
 			String name = names.get(i);
 			float top = y + i * LINE;
@@ -99,11 +102,18 @@ final class ModuleListWidget extends HudWidget {
 			int accent = Accent.get(i * 0.035f);
 			if (alpha > 0) Smooth.roundRect(d, left, top, stripRight, top + LINE, RADIUS, (alpha << 24) | FILL);
 			float barTop = top + (LINE - BAR_H) / 2f;
+			if (glow) {
+				for (float[] halo : BAR_GLOW) {
+					float grow = halo[0] * BAR;
+					Smooth.roundRect(d, right - BAR - grow, barTop - grow, right + grow, barTop + BAR_H + grow, BAR / 2f + grow,
+							Math.round(255 * halo[1]) << 24 | (accent & 0xFFFFFF));
+				}
+			}
 			Smooth.roundRect(d, right - BAR, barTop, right, barTop + BAR_H, BAR / 2f, accent);
 			float textX = left + PAD;
 			float textY = top + (LINE - CAP) / 2f;
 			int color = Draw.mix(accent, 0xFFFFFFFF, 0.3);
-			if (Modules.MODULE_LIST_GLOW.get() && !shadow) {
+			if (glow) {
 				Smooth.glowText(d, label(name), textX, textY, TEXT, color);
 			} else {
 				d.push();
