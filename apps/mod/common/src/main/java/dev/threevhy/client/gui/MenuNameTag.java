@@ -2,9 +2,11 @@ package dev.threevhy.client.gui;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
+import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.hud.Theme;
 import dev.threevhy.client.module.Modules;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -51,6 +53,10 @@ public final class MenuNameTag {
 		int w = 16 + (logo ? logoW : 0) + (logo && name ? 13 : 0) + (name ? nameW : 0);
 		int x = d.width() - MARGIN - w;
 		int y = d.height() - MARGIN - HEIGHT - (screen instanceof TitleScreen ? COPYRIGHT_LINE : 0);
+		if (coversButton(screen, x, y, w)) {
+			y = MARGIN;
+			if (coversButton(screen, x, y, w)) return;
+		}
 		d.roundRect(x, y, x + w, y + HEIGHT, HEIGHT / 2, FILL);
 		d.roundOutline(x, y, x + w, y + HEIGHT, HEIGHT / 2, EDGE);
 
@@ -76,6 +82,17 @@ public final class MenuNameTag {
 			d.text(player, cx, y + 6, Theme.ICE, false);
 		}
 		Hooks.menuNameDrawn = true;
+	}
+
+	/** Whether the pill at this spot would sit on one of the screen's buttons (small windows put buttons in the corners). */
+	private static boolean coversButton(Screen screen, int x, int y, int w) {
+		for (AbstractWidget widget : Compat.widgets(screen)) {
+			if (widget.visible && widget.getX() < x + w && widget.getX() + widget.getWidth() > x && widget.getY() < y + HEIGHT
+					&& widget.getY() + widget.getHeight() > y) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static PlayerSkin ownSkin(Minecraft mc) {

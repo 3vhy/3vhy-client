@@ -276,9 +276,22 @@ public final class ModMenuScreen extends CompatScreen {
 		ui.field(x + 3, by, w - 6, 16, profileName, "Profile name", focus == Focus.PROFILE_NAME, null);
 		ui.hit(x + 3, by, x + w - 3, by + 16, () -> focus = Focus.PROFILE_NAME);
 		by += 20;
-		ui.button(x + 3, by, w - 6, 16, "Save as new profile", false, this::createProfile);
+		sideButton(ui, x + 3, by, w - 6, 16, "Save as new profile", false, this::createProfile);
 		by += 20;
-		ui.button(x + 3, by, w - 6, 16, "Edit HUD layout", true, () -> minecraft().setScreen(new HubScreen(this)));
+		sideButton(ui, x + 3, by, w - 6, 16, "Edit HUD layout", true, () -> minecraft().setScreen(new HubScreen(this)));
+	}
+
+	/** A sidebar button with its label in small capitals, so the whole label fits like Lunar's. */
+	private static void sideButton(Ui ui, int x, int y, int w, int h, String label, boolean primary, Runnable action) {
+		MenuTheme t = ui.t;
+		boolean hover = ui.hover(x, y, x + w, y + h);
+		int fill = primary ? (hover ? Draw.mix(t.accent(), 0xFFFFFFFF, 0.12) : t.accent()) : hover ? t.cardHover() : t.card();
+		ui.card(x, y, x + w, y + h, fill, primary ? fill : hover ? t.edgeStrong() : t.edge());
+		float scale = 0.75f;
+		String text = ui.trim(label.toUpperCase(Locale.ROOT), (int) ((w - 6) / scale));
+		float textW = ui.width(text) * scale;
+		ui.small(text, x + (w - textW) / 2f, y + (h - 6) / 2f, scale, primary ? t.onAccent() : t.text());
+		ui.hit(x, y, x + w, y + h, action);
 	}
 
 	private static final String[] SEARCH_ICON = {
@@ -333,7 +346,7 @@ public final class ModMenuScreen extends CompatScreen {
 		}
 		int searchW = Math.max(60, Math.min(120, cx + cw - x - 6));
 		int searchX = cx + cw - searchW;
-		ui.field(searchX, cy - 1, searchW, 15, search, "Search...", focus == Focus.SEARCH, SEARCH_ICON);
+		ui.field(searchX, cy - 1, searchW, 15, search, "Search", focus == Focus.SEARCH, SEARCH_ICON);
 		ui.hit(searchX, cy - 1, searchX + searchW, cy + 14, () -> focus = Focus.SEARCH);
 		int gy = cy + 17;
 		int gh = ch - 17;
