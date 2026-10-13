@@ -241,7 +241,7 @@ public final class TitleScreenStyle {
 		boolean ours = widget.getMessage().getString().equals(MODS_LABEL);
 		boolean october = October.active();
 		if (october) {
-			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xFFFFFFFF : 0xD9FFFFFF);
+			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xFFFFFFFF : 0xF2FFFFFF);
 			d.roundOutline(x, y, x + w, y + h, 4, hover ? October.INK : ours ? 0xCCFF8A2B : 0x4D2A2238);
 		} else {
 			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xB0163056 : ours ? 0x9C0E2448 : 0x8C080C18);
