@@ -99,19 +99,38 @@ public final class ClickGuiScreen extends CompatScreen {
 		};
 	}
 
-	/** A panel's saved spot {x, y, folded}, or a default one laid out left to right. */
+	/** A panel's saved spot {x, y, folded}; panels without one are laid out first. */
 	private int[] spot(String key) {
 		int[] saved = Config.get().panels.get(key);
 		if (saved != null) return saved;
+		layOutNewPanels();
+		return Config.get().panels.get(key);
+	}
+
+	/**
+	 * Gives every panel without a spot one: as many columns as fit, centred, each panel going into
+	 * the column that's shortest so far, so short panels stack under each other.
+	 */
+	private void layOutNewPanels() {
 		List<String> keys = panelKeys();
-		int index = keys.indexOf(key);
-		int perRow = Math.max(1, (this.width - 8) / (PANEL_W + 8));
-		int column = index % perRow;
-		int row = index / perRow;
-		int left = Math.max(8, (this.width - Math.min(keys.size(), perRow) * (PANEL_W + 8) + 8) / 2);
-		int[] fresh = {left + column * (PANEL_W + 8), 30 + row * 170, 0};
-		Config.get().panels.put(key, fresh);
-		return fresh;
+		int columns = Math.max(1, Math.min(keys.size(), (this.width - 8) / (PANEL_W + 8)));
+		int left = Math.max(4, (this.width - columns * (PANEL_W + 8) + 8) / 2);
+		int[] bottoms = new int[columns];
+		java.util.Arrays.fill(bottoms, 30);
+		for (String key : keys) {
+			int column = 0;
+			for (int i = 1; i < columns; i++) if (bottoms[i] < bottoms[column]) column = i;
+			int[] spot = Config.get().panels.get(key);
+			if (spot == null) {
+				spot = new int[] {left + column * (PANEL_W + 8), bottoms[column], 0};
+				Config.get().panels.put(key, spot);
+			}
+			bottoms[column] = spot[1] + HEADER_H + Math.min(defaultHeight(key), 200) + 8;
+		}
+	}
+
+	private int defaultHeight(String key) {
+		return (CLIENT.equals(key) ? clientActions().size() : modules(key).size()) * ROW_H + 6;
 	}
 
 	private boolean matches(Module module) {
@@ -172,8 +191,11 @@ public final class ClickGuiScreen extends CompatScreen {
 
 		String hint = status != null ? status : "LEFT CLICK: ON / OFF  ·  RIGHT CLICK: SETTINGS  ·  DRAG A TITLE TO MOVE IT";
 		float scale = 0.7f;
-		String shown = ui.trim(hint, (int) ((this.width - 20) / scale));
-		ui.small(shown, this.width / 2f - ui.width(shown) * scale / 2, this.height - 10, scale, MenuTheme.alpha(ui.t.text(), 0xC0));
+		String shown = ui.trim(hint, (int) ((this.width - 30) / scale));
+		int hintW = Math.round(ui.width(shown) * scale);
+		int hx = this.width / 2 - hintW / 2;
+		ui.d.roundRect(hx - 6, this.height - 13, hx + hintW + 6, this.height - 2, 5, 0xD0000000);
+		ui.small(shown, hx, this.height - 10, scale, MenuTheme.alpha(ui.t.text(), 0xD0));
 	}
 
 	private void drawSearch(Ui ui) {

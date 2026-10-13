@@ -156,6 +156,8 @@ public final class HubScreen extends CompatScreen {
 	}
 
 	private void drawCentre(Ui ui, Minecraft mc, int[] bounds) {
+		// A soft plate keeps the emblem and buttons readable over HUD widgets placed in the middle
+		ui.d.roundRect(bounds[0], bounds[1], bounds[2], bounds[3], 10, MenuTheme.alpha(ui.t.panel(), 0xB0));
 		int cx = this.width / 2;
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 300f);
 		int drop = Math.round((1 - (1 - (1 - intro) * (1 - intro) * (1 - intro))) * -8);

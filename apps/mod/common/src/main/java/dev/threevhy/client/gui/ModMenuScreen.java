@@ -56,8 +56,8 @@ public final class ModMenuScreen extends CompatScreen {
 		RULE_REPLACE
 	}
 
-	private static final int CARD_W = 84;
-	private static final int CARD_H = 86;
+	private static final int CARD_W = 76;
+	private static final int CARD_H = 70;
 	private static final int ROW_H = 26;
 
 	private final Screen parent;
@@ -314,11 +314,11 @@ public final class ModMenuScreen extends CompatScreen {
 		if (module.isNew()) ui.small("NEW", x + 5, y + 4, 0.6f, t.badge());
 
 		int iconColor = !toggleable || on ? t.text() : t.muted();
-		PixelIcons.draw(ui.d, PixelIcons.forModule(module), x + (w - 36) / 2, y + 10, 3, iconColor);
+		PixelIcons.draw(ui.d, PixelIcons.forModule(module), x + (w - 24) / 2, y + 9, 2, iconColor);
 		String name = ui.trim(module.name, w - 8);
-		ui.text(name, x + (w - ui.width(name)) / 2, y + 52, !toggleable || on ? t.text() : MenuTheme.alpha(t.text(), 0xB8));
+		ui.text(name, x + (w - ui.width(name)) / 2, y + 37, !toggleable || on ? t.text() : MenuTheme.alpha(t.text(), 0xB8));
 
-		int barY = y + CARD_H - 20;
+		int barY = y + CARD_H - 19;
 		int barX = x + 5;
 		int barRight = x + w - 5;
 		Runnable openPage = () -> openModule(module);
