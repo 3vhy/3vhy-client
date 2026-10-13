@@ -117,6 +117,21 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			return null;
 		});
 		check(failed, "main menu has the 3vhy Mods button", modsButton != null);
+		check(failed, "3vhy Mods takes Minecraft Realms' place", context.computeOnClient(client -> {
+			boolean realmsShown = false;
+			int modsRow = -1;
+			int multiplayerRow = -1;
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				if (widget.getMessage().getString().equals(TitleScreenStyle.MODS_LABEL)) modsRow = widget.getY();
+				if (widget.getMessage().getContents() instanceof TranslatableContents key) {
+					if (key.getKey().equals("menu.online") && widget.visible) realmsShown = true;
+					if (key.getKey().equals("menu.multiplayer")) multiplayerRow = widget.getY();
+				}
+			}
+			ThreevhyClient.LOG.info("3vhy-check: main menu rows: multiplayer {}, 3vhy Mods {}, Realms shown {}", multiplayerRow, modsRow,
+					realmsShown);
+			return !realmsShown && multiplayerRow >= 0 && modsRow > multiplayerRow;
+		}));
 		if (modsButton != null) {
 			context.getInput().setCursorPos(modsButton[0] * menuScale, modsButton[1] * menuScale);
 			context.waitTicks(2);
