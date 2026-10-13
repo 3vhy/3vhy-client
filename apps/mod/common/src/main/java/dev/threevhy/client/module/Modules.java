@@ -37,7 +37,11 @@ public final class Modules {
 
 	/** How see-through a HUD widget's box is. 0% removes the box and gives the text a shadow. */
 	private static Module background(Module module) {
-		module.add(new Slider("background", "Background", "0% makes the box fully transparent", 0, 100, 5, 60, "%"));
+		return background(module, 60);
+	}
+
+	private static Module background(Module module, int percent) {
+		module.add(new Slider("background", "Background", "0% makes the box fully transparent", 0, 100, 5, percent, "%"));
 		return module;
 	}
 
@@ -93,7 +97,7 @@ public final class Modules {
 	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
 			"A darker strip behind the title, like Minecraft's", true));
 	public static final Module MUSIC = sized(background(new Module("music", "Music HUD",
-			"Shows the song playing on Spotify, YouTube or any other app", Category.HUD, false).markNew()));
+			"Shows the song playing on Spotify, YouTube or any other app", Category.HUD, false).markNew(), 90));
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
 	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
 	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", true));
@@ -196,7 +200,7 @@ public final class Modules {
 	public static final Choice THEME_MENU_STYLE = THEME.add(new Choice("menu_style", "Mod menu",
 			"Cards like Lunar's, or a floating panel for each category", 0, "Classic", "Panels"));
 	public static final Color THEME_PANEL_COLOR = THEME.add(new Color("panel_color", "Panels colour",
-			"The colour of mods that are on in the Panels mod menu", 0xFF5BC8E6));
+			"The colour of mods that are on in the Panels mod menu", 0xFF74D46E));
 	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Snow", "Pixel snow behind 3vhy's menus", true));
 	public static final Slider THEME_SNOW_AMOUNT = THEME.add(new Slider("snow_amount", "Snow amount", "How much snow falls",
 			10, 100, 10, 50, "%"));

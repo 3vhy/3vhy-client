@@ -40,6 +40,11 @@ public final class Compat {
 		Minecraft.getInstance().gui.getChat().addMessage(message);
 	}
 
+	/** Applies a changed GUI scale right away, like resizing the window does. */
+	public static void resizeGui(Minecraft mc) {
+		mc.resizeDisplay();
+	}
+
 	/** Minecraft's Options screen, opened from a menu (not from inside a world). */
 	public static Screen optionsScreen(Screen parent) {
 		return new OptionsScreen(parent, Minecraft.getInstance().options);

@@ -63,7 +63,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
 	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
 
-	/** Just the Music HUD, twice its size, on the 3vhy sky, for close-up screenshots. */
+	/** Just the Music HUD, half again its size, low on the 3vhy sky (clear of toasts), for close-up screenshots. */
 	private static final class MusicShowcase extends CompatScreen {
 		MusicShowcase() {
 			super(Component.literal("Music HUD"));
@@ -78,11 +78,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		protected void draw(Draw d, int mouseX, int mouseY, float delta) {
 			Minecraft mc = Minecraft.getInstance();
 			HudWidget widget = HudWidgets.MUSIC;
-			float scale = 2f;
+			float scale = 1.5f;
 			int w = Math.round(widget.width(mc) * scale);
 			int h = Math.round(widget.height(mc) * scale);
 			d.push();
-			d.translate((this.width - w) / 2f, (this.height - h) / 2f);
+			d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
 			d.scale(scale);
 			widget.draw(d, 0, 0, mc, false);
 			d.pop();
@@ -521,6 +521,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Panels"));
 			check(failed, "Theme > Mod menu > Panels opens the panels menu",
 					context.computeOnClient(client -> ModMenuScreen.create(null) instanceof ClickGuiScreen));
+			// GUI scale 1 in this small test window looks like a 1080p screen at GUI scale 2
+			int guiScaleBefore = context.computeOnClient(client -> client.options.guiScale().get());
+			context.runOnClient(client -> {
+				client.options.guiScale().set(1);
+				Compat.resizeGui(client);
+			});
 			context.setScreen(() -> new ClickGuiScreen(null));
 			context.waitTicks(10);
 			shot(context, "3vhy-panels");
@@ -530,11 +536,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.setScreen(() -> new ClickGuiScreen(null).search("totem"));
 			context.waitTicks(5);
 			shot(context, "3vhy-panels-search");
-			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.set(0xFF6FE3A1));
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.set(0xFF5BC8E6));
 			context.setScreen(() -> new ClickGuiScreen(null).expand(Modules.SWING_SPEED));
 			context.waitTicks(10);
-			shot(context, "3vhy-panels-green");
-			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
+			shot(context, "3vhy-panels-cyan");
+			context.runOnClient(client -> {
+				Modules.THEME_PANEL_COLOR.reset();
+				client.options.guiScale().set(guiScaleBefore);
+				Compat.resizeGui(client);
+			});
 			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Classic"));
 
 			// Pause menu: the mod menu button, then Confirm Disconnect
