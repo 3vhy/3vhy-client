@@ -526,6 +526,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.runOnClient(client -> {
 				client.options.guiScale().set(1);
 				Compat.resizeGui(client);
+				Config.get().panels.clear();
 			});
 			context.setScreen(() -> new ClickGuiScreen(null));
 			context.waitTicks(10);

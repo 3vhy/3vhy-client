@@ -33,7 +33,7 @@ import org.lwjgl.glfw.GLFW;
  * are and which are folded is saved.
  */
 public final class ClickGuiScreen extends CompatScreen {
-	private static final int PANEL_W = 150;
+	private static final int PANEL_W = 160;
 	private static final int HEADER_H = 24;
 	private static final int ROW_H = 19;
 	private static final int RADIUS = 8;
@@ -131,7 +131,7 @@ public final class ClickGuiScreen extends CompatScreen {
 				spot = new int[] {left + column * (PANEL_W + 8), bottoms[column], 0, LAYOUT};
 				Config.get().panels.put(key, spot);
 			}
-			bottoms[column] = spot[1] + HEADER_H + Math.min(defaultHeight(key), 220) + 8;
+			bottoms[column] = spot[1] + HEADER_H + defaultHeight(key) + 8;
 		}
 	}
 
@@ -196,12 +196,13 @@ public final class ClickGuiScreen extends CompatScreen {
 		d.pop();
 
 		String hint = status != null ? status : "LEFT CLICK: ON / OFF  ·  RIGHT CLICK: SETTINGS  ·  DRAG A TITLE TO MOVE IT";
-		float scale = 0.7f;
+		float scale = this.height >= 360 ? 1f : 0.7f;
 		String shown = ui.trim(hint, (int) ((this.width - 30) / scale));
 		int hintW = Math.round(ui.width(shown) * scale);
+		int hintH = Math.round(8 * scale);
 		int hx = this.width / 2 - hintW / 2;
-		ui.d.roundRect(hx - 6, this.height - 13, hx + hintW + 6, this.height - 2, 5, 0xD0000000);
-		ui.small(shown, hx, this.height - 10, scale, MenuTheme.alpha(ui.t.text(), 0xD0));
+		ui.d.roundRect(hx - 6, this.height - hintH - 7, hx + hintW + 6, this.height - 2, 5, 0xD0000000);
+		ui.small(shown, hx, this.height - hintH - 4, scale, MenuTheme.alpha(ui.t.text(), 0xD0));
 	}
 
 	/** The search bar: a dark pill with a magnifier, like the panels. */
@@ -382,7 +383,7 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	private int settingHeight(Setting setting) {
 		if (setting instanceof Setting.Slider) return 23;
-		if (setting instanceof Setting.Choice choice) return choiceFits(choice) ? 25 : LINE_H;
+		if (setting instanceof Setting.Choice choice) return choiceFits(choice) ? 26 : LINE_H;
 		if (setting instanceof Setting.Color) return 23;
 		if (setting instanceof Setting.Text) return 29;
 		return LINE_H;
@@ -399,7 +400,7 @@ public final class ClickGuiScreen extends CompatScreen {
 
 	private boolean choiceFits(Setting.Choice choice) {
 		int total = 0;
-		for (String option : choice.options()) total += Math.round(Minecraft.getInstance().font.width(option.toUpperCase(Locale.ROOT)) * 0.75f) + 8;
+		for (String option : choice.options()) total += Minecraft.getInstance().font.width(option.toUpperCase(Locale.ROOT)) + 11;
 		return total <= PANEL_W - 30;
 	}
 
@@ -436,7 +437,6 @@ public final class ClickGuiScreen extends CompatScreen {
 	}
 
 	private void drawSetting(Ui ui, Setting setting, int left, int right, int y) {
-		float scale = 0.75f;
 		String label = setting.name.toUpperCase(Locale.ROOT);
 		boolean rowHover = ui.hover(left - 2, y, right + 2, y + settingHeight(setting));
 		if (rowHover) status = setting.name + ": " + setting.description;
@@ -468,20 +468,20 @@ public final class ClickGuiScreen extends CompatScreen {
 				int ox = left;
 				for (String option : choice.options()) {
 					String text = option.toUpperCase(Locale.ROOT);
-					int ow = Math.round(ui.width(text) * scale) + 8;
+					int ow = ui.width(text) + 8;
 					boolean active = choice.is(option);
-					boolean hover = ui.hover(ox, y + 13, ox + ow, y + 23);
-					ui.d.roundRect(ox, y + 13, ox + ow, y + 23, 3, active ? onFill() : hover ? 0x24FFFFFF : 0x12FFFFFF);
-					ui.small(text, ox + 4, y + 15.5f, scale, active ? onText() : hover ? 0xFFFFFFFF : MUTED);
-					ui.hit(ox, y + 13, ox + ow, y + 23, () -> choice.set(option));
+					boolean hover = ui.hover(ox, y + 12, ox + ow, y + 24);
+					ui.d.roundRect(ox, y + 12, ox + ow, y + 24, 3, active ? onFill() : hover ? 0x24FFFFFF : 0x12FFFFFF);
+					ui.text(text, ox + 4, y + 14, active ? onText() : hover ? 0xFFFFFFFF : MUTED);
+					ui.hit(ox, y + 12, ox + ow, y + 24, () -> choice.set(option));
 					ox += ow + 3;
 				}
 			} else {
 				String value = choice.get().toUpperCase(Locale.ROOT);
-				int valueW = Math.round(ui.width(value) * scale);
+				int valueW = ui.width(value);
 				ui.text(ui.trim(label, right - left - valueW - 14), left, y + 4, ROW_TEXT);
 				boolean hover = ui.hover(right - valueW - 10, y, right + 2, y + LINE_H - 1);
-				ui.small(value, right - valueW - 6, y + 5, scale, hover ? accent() : MUTED);
+				ui.text(value, right - valueW - 6, y + 4, hover ? accent() : MUTED);
 				chevron(ui.d, right - 3, y + 4, false, hover ? accent() : MUTED);
 				ui.hit(left - 2, y, right + 2, y + LINE_H - 1, choice::next, choice::previous);
 			}
