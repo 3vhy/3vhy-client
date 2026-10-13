@@ -188,6 +188,8 @@ public final class Modules {
 			"Everyone's swing on your screen, not just yours", false));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
 			"The 3vhy look on the title screen; buttons from other mods still show", Category.VISUAL, true);
+	public static final Choice MAIN_MENU_SEASON = MAIN_MENU.add(new Choice("season", "October look",
+			"White with ghosts and pumpkins: on by itself in October, or always or never", 0, "Auto", "Always", "Never"));
 	public static final Module THEME = new Module("theme", "Theme",
 			"Switch between light and dark colours and the snow for 3vhy's menus", Category.VISUAL, true).alwaysOn();
 	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark glass or light frost", 0, "Dark", "Light"));

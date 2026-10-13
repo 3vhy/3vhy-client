@@ -33,7 +33,8 @@ import net.minecraft.network.chat.contents.TranslatableContents;
  * and so on) still show up. Only Minecraft's and Mod Menu's own buttons are restyled; anything
  * else keeps its own look. "3vhy Mods" takes the place of Minecraft Realms (or Right Shift) and
  * opens the 3vhy mod menu. The menu's column is spaced out evenly between the top and the
- * copyright line, so it doesn't feel cramped in small windows.
+ * copyright line, so it doesn't feel cramped in small windows. In October it wears {@link October}'s
+ * white, ghostly look instead.
  */
 public final class TitleScreenStyle {
 	public static final String MODS_LABEL = "3vhy Mods";
@@ -190,9 +191,14 @@ public final class TitleScreenStyle {
 
 	/** The background: the 3vhy sky and snow, a light dim like Lunar's blur, then the emblem and name. */
 	public static void drawBackground(Draw d, int w, int h) {
-		MainMenuScreen.drawBackdrop(d, w, h);
-		SNOW.draw(d, w, h);
-		d.fill(0, 0, w, h, 0x26000000);
+		boolean october = October.active();
+		if (october) {
+			October.drawBackdrop(d, w, h);
+		} else {
+			MainMenuScreen.drawBackdrop(d, w, h);
+			SNOW.draw(d, w, h);
+			d.fill(0, 0, w, h, 0x26000000);
+		}
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 400f);
 		int alpha = Math.round(255 * intro);
 		int cell = headerFor == h ? headerCell : h >= 300 ? 3 : 2;
@@ -200,7 +206,7 @@ public final class TitleScreenStyle {
 		int spot = headerFor == h ? headerTop : Math.max(4, h / 4 + 48 - 22 - 6 - size);
 		int top = spot + Math.round((1 - intro) * -6);
 		int nameY = spot + size + 6;
-		HubScreen.drawEmblem(d, (w - size) / 2, top, size, cell, alpha, 0xFFFFFFFF);
+		HubScreen.drawEmblem(d, (w - size) / 2, top, size, cell, alpha, october ? October.INK : 0xFFFFFFFF);
 		Minecraft mc = Minecraft.getInstance();
 		d.push();
 		d.translate(w / 2f, nameY);
@@ -209,9 +215,18 @@ public final class TitleScreenStyle {
 		String client = " CLIENT";
 		int brandW = mc.font.width(Ui.bold(brand));
 		int textW = brandW + mc.font.width(client);
-		d.text(Ui.bold(brand), -textW / 2, 0, MenuTheme.alpha(0xFFFFFF, alpha), true);
-		d.text(client, -textW / 2 + brandW, 0, MenuTheme.alpha(0xD8E3F3FC, alpha), true);
+		d.text(Ui.bold(brand), -textW / 2, 0, MenuTheme.alpha(october ? October.INK : 0xFFFFFF, alpha), !october);
+		d.text(client, -textW / 2 + brandW, 0, MenuTheme.alpha(october ? October.INK_SOFT : 0xE3F3FC, october ? alpha : alpha * 0xD8 / 255),
+				!october);
 		d.pop();
+		if (october) {
+			String tagline = "HAPPY HALLOWEEN";
+			d.push();
+			d.translate(w / 2f, nameY + 15);
+			d.scale(0.75f);
+			d.text(tagline, -mc.font.width(tagline) / 2, 0, MenuTheme.alpha(October.PUMPKIN, alpha), false);
+			d.pop();
+		}
 	}
 
 	/** Draws a restyled button in place of Minecraft's: slim smoked glass, an ice-blue edge on hover, uppercase text. */
@@ -224,8 +239,14 @@ public final class TitleScreenStyle {
 		boolean active = widget.active;
 		boolean hover = active && (widget.isFocused() || mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h);
 		boolean ours = widget.getMessage().getString().equals(MODS_LABEL);
-		d.roundRect(x, y, x + w, y + h, 4, hover ? 0xB0163056 : ours ? 0x9C0E2448 : 0x8C080C18);
-		d.roundOutline(x, y, x + w, y + h, 4, hover ? Theme.CYAN : ours ? 0x995BC8E6 : 0x59FFFFFF);
+		boolean october = October.active();
+		if (october) {
+			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xFFFFFFFF : 0xD9FFFFFF);
+			d.roundOutline(x, y, x + w, y + h, 4, hover ? October.INK : ours ? 0xCCFF8A2B : 0x4D2A2238);
+		} else {
+			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xB0163056 : ours ? 0x9C0E2448 : 0x8C080C18);
+			d.roundOutline(x, y, x + w, y + h, 4, hover ? Theme.CYAN : ours ? 0x995BC8E6 : 0x59FFFFFF);
+		}
 		Minecraft mc = Minecraft.getInstance();
 		String label = widget.getMessage().getString().toUpperCase(Locale.ROOT);
 		int max = w - 8;
@@ -233,7 +254,7 @@ public final class TitleScreenStyle {
 			while (!label.isEmpty() && mc.font.width(label + "...") > max) label = label.substring(0, label.length() - 1);
 			label = label + "...";
 		}
-		int color = !active ? 0x80FFFFFF : hover ? 0xFFFFFFFF : 0xFFE3F3FC;
+		int color = october ? (!active ? 0x802A2238 : October.INK) : !active ? 0x80FFFFFF : hover ? 0xFFFFFFFF : 0xFFE3F3FC;
 		d.text(label, x + (w - mc.font.width(label)) / 2, y + (h - 8) / 2, color, false);
 	}
 }

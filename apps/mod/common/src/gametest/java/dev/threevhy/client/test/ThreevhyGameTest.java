@@ -102,7 +102,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		List<String> failed = new ArrayList<>();
 
 		context.waitTicks(40);
+		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Always"));
+		context.waitTicks(3);
+		shot(context, "3vhy-main-menu-october");
+		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Never"));
+		context.waitTicks(3);
 		shot(context, "3vhy-main-menu");
+		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Auto"));
 		check(failed, "3vhy main menu styles the title screen",
 				context.computeOnClient(client -> client.screen instanceof TitleScreen) && Hooks.mainMenuShown);
 		check(failed, "main menu hides Minecraft's logo (LogoRenderer)", Hooks.minecraftLogoHidden);
