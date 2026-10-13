@@ -323,7 +323,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-music-closeup-pink");
 			context.runOnClient(client -> Modules.MUSIC_COLOR.reset());
 			context.setScreen(() -> new MusicShowcase(HudWidgets.KEYSTROKES));
-			context.runOnClient(client -> client.options.keyAttack.setDown(true));
+			context.runOnClient(client -> {
+				client.getToastManager().clear();
+				client.options.keyAttack.setDown(true);
+			});
 			context.waitTicks(5);
 			shot(context, "3vhy-keystrokes-closeup");
 			context.runOnClient(client -> client.options.keyAttack.setDown(false));
@@ -331,8 +334,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			shot(context, "3vhy-player-list-closeup");
 			context.setScreen(() -> new MusicShowcase(HudWidgets.MODULE_LIST));
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.set(0xFFFF5FA2));
 			context.waitTicks(5);
 			shot(context, "3vhy-module-list-closeup");
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
 			check(failed, "module list shows the mods that are on", context.computeOnClient(client ->
 					HudWidgets.MODULE_LIST.visible(client) && HudWidgets.MODULE_LIST.height(client) >= 8 * 5));
 			context.setScreen(() -> null);

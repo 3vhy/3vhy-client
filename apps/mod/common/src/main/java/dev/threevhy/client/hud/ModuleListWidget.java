@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -28,6 +29,8 @@ final class ModuleListWidget extends HudWidget {
 	private static final float BAR_INSET = 0.08f * CAP;
 	private static final int FILL = 0x12121A;
 	private static final String[] SAMPLE = {"CUSTOMCROSSHAIR", "KEYSTROKES", "FREELOOK", "ZOOM"};
+	private static final Set<Module> OUT_OF_GAME = Set.of(Modules.MENU_NAME, Modules.MAIN_MENU, Modules.DISCORD,
+			Modules.BORDERLESS, Modules.PROFILES);
 
 	ModuleListWidget() {
 		super("module_list", Modules.MODULE_LIST, Anchor.TOP_RIGHT);
@@ -45,11 +48,17 @@ final class ModuleListWidget extends HudWidget {
 		return PAD + nameWidth(mc, name) + TO_BAR + BAR;
 	}
 
+	/** Whether a mod that's on belongs in the list: not the menu and window ones, and HUD mods only if asked for. */
+	private static boolean listed(Module module) {
+		if (module == Modules.MODULE_LIST || !module.toggleable() || !module.enabled()) return false;
+		if (OUT_OF_GAME.contains(module)) return false;
+		return module.category != Module.Category.HUD || Modules.MODULE_LIST_HUD.get();
+	}
+
 	private static List<String> names(Minecraft mc, boolean preview) {
 		List<String> names = new ArrayList<>();
 		for (Module module : Modules.ALL) {
-			if (module == Modules.MODULE_LIST || !module.toggleable() || !module.enabled()) continue;
-			names.add(module.name.replace(" ", "").toUpperCase(Locale.ROOT));
+			if (listed(module)) names.add(module.name.replace(" ", "").toUpperCase(Locale.ROOT));
 		}
 		if (names.isEmpty() && preview) names.addAll(List.of(SAMPLE));
 		names.sort(Comparator.comparingDouble((String name) -> lineWidth(mc, name)).reversed());

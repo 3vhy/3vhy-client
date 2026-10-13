@@ -106,6 +106,8 @@ public final class Modules {
 			"Keep it on screen while the music is paused", true));
 	public static final Module MODULE_LIST = sized(background(new Module("module_list", "Module List",
 			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew(), 85));
+	public static final Toggle MODULE_LIST_HUD = MODULE_LIST.add(new Toggle("hud", "HUD mods",
+			"Also list the HUD mods you can already see, like FPS and Keystrokes", false));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
 			"Add players and see when they're online on your server", Category.HUD, true).markNew(), 90));
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
