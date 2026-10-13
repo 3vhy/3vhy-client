@@ -16,18 +16,20 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The Module List, like 67's: every mod you have on, longest name first, in small capitals down the
- * top right corner of the screen. Each name sits on its own dark strip, tinted with the client's
- * colour, with a short bar in that colour at the screen's edge.
+ * top right of the screen. Each name sits on its own dark rounded strip, tinted with the client's
+ * colour, with a short rounded bar in that colour just right of it. Sizes are shares of the capital
+ * height, measured off 67's.
  */
 final class ModuleListWidget extends HudWidget {
 	private static final float TEXT = 0.62f;
 	private static final float CAP = 6.8f * TEXT;
-	private static final float LINE = 2f * CAP;
-	private static final float PAD = 0.35f * CAP;
-	private static final float TO_BAR = 0.7f * CAP;
+	private static final float LINE = 2.07f * CAP;
+	private static final float PAD = 0.65f * CAP;
+	private static final float RADIUS = 0.4f * CAP;
+	private static final float BAR_GAP = 0.25f * CAP;
 	private static final float BAR = 0.35f * CAP;
-	private static final float BAR_INSET = 0.08f * CAP;
-	private static final int FILL = 0x12121A;
+	private static final float BAR_H = 0.78f * LINE;
+	private static final int FILL = 0x13101A;
 	private static final String[] SAMPLE = {"CUSTOMCROSSHAIR", "KEYSTROKES", "FREELOOK", "ZOOM"};
 	private static final Set<Module> OUT_OF_GAME = Set.of(Modules.MENU_NAME, Modules.MAIN_MENU, Modules.DISCORD,
 			Modules.BORDERLESS, Modules.PROFILES);
@@ -45,7 +47,7 @@ final class ModuleListWidget extends HudWidget {
 	}
 
 	private static float lineWidth(Minecraft mc, String name) {
-		return PAD + nameWidth(mc, name) + TO_BAR + BAR;
+		return PAD + nameWidth(mc, name) + PAD + BAR_GAP + BAR;
 	}
 
 	/** Whether a mod that's on belongs in the list: not the menu and window ones, and HUD mods only if asked for. */
@@ -82,12 +84,6 @@ final class ModuleListWidget extends HudWidget {
 		return (int) Math.ceil(Math.max(1, names(mc, true).size()) * LINE);
 	}
 
-	/** Flush with the top right corner of the screen, like 67's. */
-	@Override
-	protected int[] defaultPosition(Minecraft mc, int screenWidth, int screenHeight) {
-		return new int[] {screenWidth - width(mc), 0};
-	}
-
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 		List<String> names = names(mc, preview);
@@ -98,10 +94,12 @@ final class ModuleListWidget extends HudWidget {
 			String name = names.get(i);
 			float top = y + i * LINE;
 			float textW = nameWidth(mc, name);
-			float left = right - BAR - TO_BAR - textW - PAD;
+			float stripRight = right - BAR - BAR_GAP;
+			float left = stripRight - PAD - textW - PAD;
 			int accent = Accent.get(i * 0.035f);
-			if (alpha > 0) Smooth.roundRect(d, left, top, right, top + LINE, 0, (alpha << 24) | FILL);
-			Smooth.roundRect(d, right - BAR, top + BAR_INSET, right, top + LINE - BAR_INSET, 0, accent);
+			if (alpha > 0) Smooth.roundRect(d, left, top, stripRight, top + LINE, RADIUS, (alpha << 24) | FILL);
+			float barTop = top + (LINE - BAR_H) / 2f;
+			Smooth.roundRect(d, right - BAR, barTop, right, barTop + BAR_H, BAR / 2f, accent);
 			d.push();
 			d.translate(left + PAD, top + (LINE - CAP) / 2f);
 			d.scale(TEXT);

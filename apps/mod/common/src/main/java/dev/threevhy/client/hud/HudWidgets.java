@@ -245,13 +245,12 @@ public final class HudWidgets {
 		private static final int GAP = 3;
 		private static final int SPACE_H = 13;
 		private static final float RADIUS = 4.5f;
-		private static final float TEXT = 0.75f;
+		private static final float TEXT = 0.82f;
 		private static final float DASH = 1.4f;
 		private static final int KEY_FILL = 0x17161B;
 		private static final int KEY_TEXT = 0xFFD4D2DA;
 		private static final int DASH_COLOR = 0xFF97969E;
-		private static final int DOWN_FILL = 0xFFF2F2F2;
-		private static final int DOWN_TEXT = 0xFF17161B;
+		private static final int DOWN_FILL = 0xFFF6F6F7;
 		private static final float FADE_SECONDS = 0.08f;
 		private final Map<KeyMapping, float[]> pressed = new IdentityHashMap<>();
 
@@ -290,7 +289,7 @@ public final class HudWidgets {
 				float dashW = w * 0.47f;
 				float mid = row + SPACE_H / 2f;
 				Smooth.roundRect(d, x + (w - dashW) / 2f, mid - DASH / 2f, x + (w + dashW) / 2f, mid + DASH / 2f, DASH / 2f,
-						Draw.mix(DASH_COLOR, DOWN_TEXT, t));
+						DASH_COLOR);
 			}
 		}
 
@@ -308,7 +307,7 @@ public final class HudWidgets {
 			return state[0];
 		}
 
-		/** A rounded key: dark with a light label, fading to white with a dark label while it's held. */
+		/** A rounded key with a light label: dark, fading to white while it's held (the label stays light, like 67's). */
 		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
 			float t = held(key);
 			Smooth.roundRect(d, x, y, x + w, y + h, RADIUS, Draw.mix(fill(), DOWN_FILL, t));
@@ -317,7 +316,7 @@ public final class HudWidgets {
 			d.push();
 			d.translate(x + (w - tw) / 2f, y + (h - 6.8f * TEXT) / 2f);
 			d.scale(TEXT);
-			d.text(text, 0, 0, Draw.mix(KEY_TEXT, DOWN_TEXT, t), t < 0.5f && textShadow());
+			d.text(text, 0, 0, KEY_TEXT, t < 0.5f && textShadow());
 			d.pop();
 		}
 	};

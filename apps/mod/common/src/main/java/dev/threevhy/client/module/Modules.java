@@ -105,7 +105,7 @@ public final class Modules {
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
 	public static final Module MODULE_LIST = sized(background(new Module("module_list", "Module List",
-			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew(), 85));
+			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew(), 90));
 	public static final Toggle MODULE_LIST_HUD = MODULE_LIST.add(new Toggle("hud", "HUD mods",
 			"Also list the HUD mods you can already see, like FPS and Keystrokes", false));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",

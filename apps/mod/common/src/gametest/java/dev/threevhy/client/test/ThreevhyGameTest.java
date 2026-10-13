@@ -99,7 +99,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			int h = Math.round(widget.height(mc) * scale);
 			d.push();
 			if (widget == HudWidgets.MODULE_LIST) {
-				d.translate(this.width - widget.width(mc) * scale, 0);
+				d.translate(this.width - widget.width(mc) * scale - 6, 6);
 			} else if (widget == HudWidgets.MUSIC) {
 				d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
 			} else {
@@ -332,11 +332,29 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			shot(context, "3vhy-keystrokes-closeup");
 			context.runOnClient(client -> client.options.keyAttack.setDown(false));
+			List<String> listedPlayers = context.computeOnClient(client -> List.copyOf(PlayerList.names()));
+			context.runOnClient(client -> {
+				PlayerList.names().clear();
+				Modules.THEME_PANEL_COLOR.set(0xFFFF5FA2);
+			});
 			context.setScreen(() -> new MusicShowcase(HudWidgets.PLAYER_LIST));
 			context.waitTicks(5);
 			shot(context, "3vhy-player-list-closeup");
+			context.runOnClient(client -> {
+				PlayerList.names().addAll(listedPlayers);
+				for (String name : List.of("OGSummer", "BobIsFound", "Frenk_btw", "Munkerlich", "Napooo_", "U_vv")) {
+					PlayerList.names().add(name);
+				}
+			});
+			context.waitTicks(5);
+			shot(context, "3vhy-player-list-closeup-more");
+			check(failed, "player list shows six and +N MORE", context.computeOnClient(client ->
+					PlayerList.names().size() == listedPlayers.size() + 6 && HudWidgets.PLAYER_LIST.visible(client)));
+			context.runOnClient(client -> {
+				PlayerList.names().clear();
+				PlayerList.names().addAll(listedPlayers);
+			});
 			context.setScreen(() -> new MusicShowcase(HudWidgets.MODULE_LIST));
-			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.set(0xFFFF5FA2));
 			context.waitTicks(5);
 			shot(context, "3vhy-module-list-closeup");
 			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
