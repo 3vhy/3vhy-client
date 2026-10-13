@@ -100,11 +100,18 @@ final class ModuleListWidget extends HudWidget {
 			if (alpha > 0) Smooth.roundRect(d, left, top, stripRight, top + LINE, RADIUS, (alpha << 24) | FILL);
 			float barTop = top + (LINE - BAR_H) / 2f;
 			Smooth.roundRect(d, right - BAR, barTop, right, barTop + BAR_H, BAR / 2f, accent);
-			d.push();
-			d.translate(left + PAD, top + (LINE - CAP) / 2f);
-			d.scale(TEXT);
-			d.text(label(name), 0, 0, Draw.mix(accent, 0xFFFFFFFF, 0.3), shadow);
-			d.pop();
+			float textX = left + PAD;
+			float textY = top + (LINE - CAP) / 2f;
+			int color = Draw.mix(accent, 0xFFFFFFFF, 0.3);
+			if (Modules.MODULE_LIST_GLOW.get() && !shadow) {
+				Smooth.glowText(d, label(name), textX, textY, TEXT, color);
+			} else {
+				d.push();
+				d.translate(textX, textY);
+				d.scale(TEXT);
+				d.text(label(name), 0, 0, color, shadow);
+				d.pop();
+			}
 		}
 	}
 }

@@ -131,7 +131,8 @@ final class PlayerListWidget extends HudWidget {
 		int alpha = backgroundAlpha();
 		if (alpha > 0) Smooth.roundRect(d, x, y, x + w, y + height(mc), RADIUS, (alpha << 24) | FILL);
 		boolean shadow = textShadow();
-		text(d, bold(title()), x + PAD, y + TITLE_TOP, TITLE, TITLE_COLOR, shadow);
+		boolean glow = Modules.PLAYER_LIST_GLOW.get() && !shadow;
+		glowText(d, bold(title()), x + PAD, y + TITLE_TOP, TITLE, TITLE_COLOR, glow, shadow);
 
 		int accent = Accent.get();
 		float badgeX = x + w - BADGE_PAD - BADGE_R;
@@ -157,14 +158,19 @@ final class PlayerListWidget extends HudWidget {
 				d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), 0, 0, 8);
 			}
 			d.pop();
-			text(d, bold(row.name().toUpperCase(Locale.ROOT)), headX + HEAD + HEAD_GAP, mid - C / 2f, NAME,
-					NAME_COLOR, shadow);
+			glowText(d, bold(row.name().toUpperCase(Locale.ROOT)), headX + HEAD + HEAD_GAP, mid - C / 2f, NAME,
+					NAME_COLOR, glow, shadow);
 			mid += ROW;
 		}
 		if (rows.size() > SHOWN) {
 			float moreY = mid - ROW + MORE_GAP;
 			text(d, bold(more(rows)), x + PAD + HEAD + HEAD_GAP, moreY - 3.4f * MORE, MORE, MORE_COLOR, shadow);
 		}
+	}
+
+	private static void glowText(Draw d, Component text, float x, float y, float scale, int color, boolean glow, boolean shadow) {
+		if (glow) Smooth.glowText(d, text, x, y, scale, color);
+		else text(d, text, x, y, scale, color, shadow);
 	}
 
 	private static void text(Draw d, Component text, float x, float y, float scale, int color, boolean shadow) {

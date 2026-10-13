@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.zip.CRC32;
 import java.util.zip.Deflater;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -99,6 +100,31 @@ public final class Smooth {
 
 	public static void ring(Draw d, float cx, float cy, float radius, float thickness, int color) {
 		roundOutline(d, cx - radius, cy - radius, cx + radius, cy + radius, radius, thickness, color);
+	}
+
+	/**
+	 * Text with a soft glow in its own colour, like 67's HUD: faint copies of it nudged out in two
+	 * rings around it (sized to the text), then the text itself on top.
+	 */
+	public static void glowText(Draw d, Component text, float x, float y, float scale, int color) {
+		int rgb = color & 0xFFFFFF;
+		float[][] rings = {{0.8f * scale, 0.14f}, {1.6f * scale, 0.06f}};
+		for (float[] ring : rings) {
+			int alpha = Math.max(4, Math.round(((color >>> 24) & 255) * ring[1]));
+			for (int i = 0; i < 8; i++) {
+				double angle = i * Math.PI / 4;
+				d.push();
+				d.translate(x + (float) Math.cos(angle) * ring[0], y + (float) Math.sin(angle) * ring[0]);
+				d.scale(scale);
+				d.text(text, 0, 0, alpha << 24 | rgb, false);
+				d.pop();
+			}
+		}
+		d.push();
+		d.translate(x, y);
+		d.scale(scale);
+		d.text(text, 0, 0, color, false);
+		d.pop();
 	}
 
 	/** Covers a square's corners with {@code color}, so a picture under it looks rounded. */

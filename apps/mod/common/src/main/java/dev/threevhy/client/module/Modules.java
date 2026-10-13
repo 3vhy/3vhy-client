@@ -108,10 +108,14 @@ public final class Modules {
 			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew(), 90));
 	public static final Toggle MODULE_LIST_HUD = MODULE_LIST.add(new Toggle("hud", "HUD mods",
 			"Also list the HUD mods you can already see, like FPS and Keystrokes", false));
+	public static final Toggle MODULE_LIST_GLOW = MODULE_LIST.add(new Toggle("glow", "Glow",
+			"A soft glow around the names, like 67's", true));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
 			"Add players and see when they're online on your server", Category.HUD, true).markNew(), 90));
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
 			"Players", 16));
+	public static final Toggle PLAYER_LIST_GLOW = PLAYER_LIST.add(new Toggle("glow", "Glow",
+			"A soft glow around the names, like 67's", true));
 	public static final Toggle PLAYER_LIST_OFFLINE = PLAYER_LIST.add(new Toggle("offline", "Show offline players",
 			"Also list players who aren't on, after the ones who are", false));
 	public static final Toggle PLAYER_LIST_ALERTS = PLAYER_LIST.add(new Toggle("alerts", "Join alerts",
