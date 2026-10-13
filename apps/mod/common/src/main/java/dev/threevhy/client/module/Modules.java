@@ -96,6 +96,7 @@ public final class Modules {
 			"Shows the song playing on Spotify, YouTube or any other app", Category.HUD, false).markNew()));
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
 	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
+	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", true));
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
@@ -180,7 +181,9 @@ public final class Modules {
 			"The 3vhy title screen instead of Minecraft's", Category.VISUAL, true);
 	public static final Module THEME = new Module("theme", "Theme",
 			"Switch between light and dark colours and the snow for 3vhy's menus", Category.VISUAL, true).alwaysOn();
-	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark navy or light frost", 0, "Dark", "Light"));
+	public static final Choice THEME_MODE = THEME.add(new Choice("mode", "Colours", "Dark glass or light frost", 0, "Dark", "Light"));
+	public static final Choice THEME_MENU_STYLE = THEME.add(new Choice("menu_style", "Mod menu",
+			"Cards like Lunar's, or a floating panel for each category", 0, "Classic", "Panels"));
 	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Snow", "Pixel snow behind 3vhy's menus", true));
 	public static final Slider THEME_SNOW_AMOUNT = THEME.add(new Slider("snow_amount", "Snow amount", "How much snow falls",
 			10, 100, 10, 50, "%"));

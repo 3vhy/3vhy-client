@@ -151,7 +151,7 @@ public final class MainMenuScreen extends CompatTitleScreen {
 		Runnable[] actions = {
 				() -> mc.setScreen(new SelectWorldScreen(this)),
 				() -> mc.setScreen(Compat.optionsScreen(this)),
-				() -> mc.setScreen(new ModMenuScreen(this))
+				() -> mc.setScreen(ModMenuScreen.create(this))
 		};
 		int textTotal = 0;
 		for (String label : labels) textTotal += ui.titleWidth(label);

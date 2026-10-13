@@ -147,7 +147,7 @@ jobs:
           }
           if (-not $fake.HasExited) { Stop-Process -Id $fake.Id -Force }
           $verdict = if (-not $found) { 'fake song not seen' } else {
-            "song: $($found.title) / $($found.artist) / app $($found.app)`ncover: $(if ($found.art) { 'yes, ' + $found.art.Length + ' base64 chars' } else { 'no (' + $found.artError + ')' })`nicon: $(if ($found.icon) { 'yes, ' + $found.icon.Length + ' base64 chars' } else { 'no (' + $found.iconError + ')' })"
+            "song: $($found.title) / $($found.artist) / app $($found.app)`ncover: $(if ($found.art) { 'yes, ' + $found.art.Length + ' base64 chars' } else { 'no (' + $found.artError + ')' })`nicon: $(if ($found.icon) { 'yes, ' + $found.icon.Length + ' base64 chars' } else { 'no (' + $found.iconError + ')' })`nvolume: $(if ($null -ne $found.volume) { "$($found.volume)%, muted $($found.muted)" } else { 'no (' + $found.volumeError + ')' })"
           }
           $fakeOut = Get-Content (Join-Path $env:RUNNER_TEMP 'fake-out.txt') -Raw -ErrorAction SilentlyContinue
           $fakeErr = Get-Content (Join-Path $env:RUNNER_TEMP 'fake-err.txt') -Raw -ErrorAction SilentlyContinue

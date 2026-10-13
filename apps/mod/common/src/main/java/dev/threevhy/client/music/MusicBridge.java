@@ -164,7 +164,9 @@ public final class MusicBridge {
 		}
 		current = new NowPlaying(key, app, text(json, "title"), text(json, "artist"), text(json, "album"),
 				json.has("playing") && json.get("playing").getAsBoolean(), number(json, "position"),
-				number(json, "duration"), System.nanoTime(), art, artVersion, icon, iconVersion, artProblem);
+				number(json, "duration"), System.nanoTime(), art, artVersion, icon, iconVersion, artProblem,
+				json.has("volume") ? (int) Math.round(number(json, "volume")) : -1,
+				json.has("muted") && json.get("muted").getAsBoolean());
 		status = "Connected";
 	}
 

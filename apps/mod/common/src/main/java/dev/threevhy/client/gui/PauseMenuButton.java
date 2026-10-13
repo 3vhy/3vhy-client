@@ -30,7 +30,7 @@ public final class PauseMenuButton {
 				break;
 			}
 		}
-		Button.Builder builder = Button.builder(Component.literal(LABEL), button -> mc.setScreen(new ModMenuScreen(screen)));
+		Button.Builder builder = Button.builder(Component.literal(LABEL), button -> mc.setScreen(ModMenuScreen.create(screen)));
 		if (disconnect == null) {
 			Compat.addWidget(screen, builder.pos(6, 6).size(90, 20).build());
 			return;

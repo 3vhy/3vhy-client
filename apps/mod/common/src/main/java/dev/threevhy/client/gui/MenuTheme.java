@@ -3,8 +3,8 @@ package dev.threevhy.client.gui;
 import dev.threevhy.client.module.Modules;
 
 /**
- * Colours for 3vhy's menus. Laid out like NoRisk's glass panels, coloured like the 3vhy banner:
- * dark is navy glass with ice-blue edges, light is frosted white with royal-blue text.
+ * Colours for 3vhy's menus, in Lunar's style: dark is smoked glass with thin white edges and 3vhy's
+ * ice-blue as the accent, light is frosted white with royal-blue text.
  */
 public record MenuTheme(
 		int tint,
@@ -26,23 +26,23 @@ public record MenuTheme(
 		int snow) {
 
 	public static final MenuTheme DARK = new MenuTheme(
-			0x50040A20,
-			0xB80A1640,
-			0xB80A1640,
-			0x50A9D8F2,
-			0xC05BC8E6,
-			0x60132B6E,
-			0x901C3C8C,
-			0x70184C8A,
-			0xFFE3F3FC,
-			0xFF93AEDA,
+			0x66000000,
+			0xC00E1014,
+			0xC00B0D10,
+			0x2EFFFFFF,
+			0x8CFFFFFF,
+			0x8A16181D,
+			0xB0252830,
+			0xB0222A36,
+			0xFFFFFFFF,
+			0xFFA3A9B6,
 			0xFF5BC8E6,
 			0xFF061D3C,
-			0xC0050C26,
+			0xB0090B0E,
 			0xFF4ADE80,
-			0xFFFF6B81,
+			0xFFF05A5A,
 			0xFFFFD166,
-			0xFFE3F3FC);
+			0xFFFFFFFF);
 
 	public static final MenuTheme LIGHT = new MenuTheme(
 			0x40E3F3FC,

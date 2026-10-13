@@ -9,8 +9,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 /**
- * Drawing helpers shared by the hub and the mod menu: NoRisk-style glass panels with thin edges,
- * in 3vhy's colours. Every control records a click area; the screen runs the topmost one hit.
+ * Drawing helpers shared by the hub and the mod menus: Lunar-style smoked glass with thin edges and
+ * 3vhy's accent. Every control records a click area; the screen runs the topmost one hit.
  */
 public final class Ui {
 	/** A clickable area. Areas added later are on top. */
@@ -21,11 +21,11 @@ public final class Ui {
 	}
 
 	/** Corner radius of the big glass panels. */
-	public static final int R_PANEL = 8;
+	public static final int R_PANEL = 6;
 	/** Corner radius of cards and list rows. */
-	public static final int R_CARD = 6;
+	public static final int R_CARD = 4;
 	/** Corner radius of buttons, fields and other small controls. */
-	public static final int R_CONTROL = 5;
+	public static final int R_CONTROL = 4;
 
 	public final Draw d;
 	public final MenuTheme t;
@@ -220,11 +220,30 @@ public final class Ui {
 		return width(label) + 10;
 	}
 
-	/** An on/off switch, 22x10. */
+	/** An on/off switch, 22x10: green when on, like Lunar's. */
 	public void toggle(int x, int y, boolean on) {
-		d.roundRect(x, y, x + 22, y + 10, 5, on ? t.accent() : MenuTheme.alpha(t.muted(), 0x70));
+		d.roundRect(x, y, x + 22, y + 10, 5, on ? t.good() : MenuTheme.alpha(t.muted(), 0x70));
 		int knob = on ? x + 13 : x + 1;
-		d.roundRect(knob, y + 1, knob + 8, y + 9, 4, on ? t.onAccent() : 0xFFFFFFFF);
+		d.roundRect(knob, y + 1, knob + 8, y + 9, 4, 0xFFFFFFFF);
+	}
+
+	/**
+	 * Lunar's menu button: smoked glass with a thin light border that brightens on hover, and
+	 * plain uppercase text. {@code icon} draws a pixel icon instead of text (for square buttons).
+	 */
+	public void glassButton(int x, int y, int w, int h, String label, String[] icon, Runnable action) {
+		boolean hover = hover(x, y, x + w, y + h);
+		d.roundRect(x, y, x + w, y + h, R_CONTROL, hover ? 0x8C2A2E36 : 0x73000000);
+		d.roundOutline(x, y, x + w, y + h, R_CONTROL, hover ? 0xD9FFFFFF : 0x66FFFFFF);
+		if (icon != null) {
+			int scale = Math.min(w, h) >= 30 ? 2 : 1;
+			int size = PixelIcons.SIZE * scale;
+			PixelIcons.draw(d, icon, x + (w - size) / 2, y + (h - size) / 2, scale, 0xFFFFFFFF);
+		} else if (label != null) {
+			String text = label.toUpperCase(Locale.ROOT);
+			text(text, x + (w - width(text)) / 2, y + (h - 8) / 2 + 1, 0xFFFFFFFF);
+		}
+		hit(x, y, x + w, y + h, action);
 	}
 
 	/** A slider track with a round knob; fraction is 0..1. */

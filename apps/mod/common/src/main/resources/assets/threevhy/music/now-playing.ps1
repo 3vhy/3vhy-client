@@ -2,8 +2,9 @@
 # Works with any app that shows up in the Windows volume / media flyout (Spotify, browsers,
 # Apple Music, Media Player and so on). Exits when the game (ParentId) closes.
 #
-# Each line has the song, its position, and (once per song or app) the cover and the app's icon as
-# base64 PNGs. When a cover or icon can't be read, artError / iconError say why.
+# Each line has the song, its position, Windows' volume (0-100, and whether it's muted), and (once
+# per song or app) the cover and the app's icon as base64 PNGs. When a cover, icon or the volume
+# can't be read, artError / iconError / volumeError say why.
 param(
 	[int]$ParentId = 0,
 	[switch]$Once
@@ -33,6 +34,70 @@ try {
 } catch {
 	Write-Problem "Windows media controls aren't available: $($_.Exception.Message)"
 	exit 1
+}
+
+# Windows' main volume, through the Core Audio API. Without a sound device there's just no volume.
+$volumeError = $null
+try {
+	Add-Type -Language CSharp -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+namespace ThreevhyAudio {
+	[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	interface IAudioEndpointVolume {
+		int RegisterControlChangeNotify();
+		int UnregisterControlChangeNotify();
+		int GetChannelCount();
+		int SetMasterVolumeLevel();
+		int SetMasterVolumeLevelScalar(float level, Guid context);
+		int GetMasterVolumeLevel();
+		int GetMasterVolumeLevelScalar(out float level);
+		int SetChannelVolumeLevel();
+		int SetChannelVolumeLevelScalar();
+		int GetChannelVolumeLevel();
+		int GetChannelVolumeLevelScalar();
+		int SetMute([MarshalAs(UnmanagedType.Bool)] bool mute, Guid context);
+		int GetMute(out bool mute);
+	}
+	[Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	interface IMMDevice {
+		int Activate(ref Guid id, int context, int parameters, out IAudioEndpointVolume endpoint);
+	}
+	[Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	interface IMMDeviceEnumerator {
+		int EnumAudioEndpoints();
+		int GetDefaultAudioEndpoint(int flow, int role, out IMMDevice device);
+	}
+	[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+	class MMDeviceEnumerator {
+	}
+	public static class Volume {
+		static IAudioEndpointVolume Endpoint() {
+			IMMDeviceEnumerator devices = (IMMDeviceEnumerator) new MMDeviceEnumerator();
+			IMMDevice device;
+			Marshal.ThrowExceptionForHR(devices.GetDefaultAudioEndpoint(0, 1, out device));
+			IAudioEndpointVolume endpoint;
+			Guid id = typeof(IAudioEndpointVolume).GUID;
+			Marshal.ThrowExceptionForHR(device.Activate(ref id, 23, 0, out endpoint));
+			return endpoint;
+		}
+		public static float Level() {
+			float level;
+			Marshal.ThrowExceptionForHR(Endpoint().GetMasterVolumeLevelScalar(out level));
+			return level;
+		}
+		public static bool Muted() {
+			bool muted;
+			Marshal.ThrowExceptionForHR(Endpoint().GetMute(out muted));
+			return muted;
+		}
+	}
+}
+'@
+	$volumeReader = $true
+} catch {
+	$volumeReader = $false
+	$volumeError = $_.Exception.Message
 }
 
 $asTaskMethod = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
@@ -285,6 +350,19 @@ while ($true) {
 				} catch {
 					$line.iconError = $_.Exception.Message
 				}
+			}
+			if ($volumeReader) {
+				try {
+					$line.volume = [int][Math]::Round([ThreevhyAudio.Volume]::Level() * 100)
+					$line.muted = [ThreevhyAudio.Volume]::Muted()
+					$volumeError = $null
+				} catch {
+					if ($null -eq $volumeError) { $line.volumeError = $_.Exception.Message }
+					$volumeError = $_.Exception.Message
+				}
+			} elseif ($volumeError) {
+				$line.volumeError = $volumeError
+				$volumeError = ''
 			}
 			Write-Line ($line | ConvertTo-Json -Compress)
 		}

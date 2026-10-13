@@ -165,6 +165,13 @@ public abstract class Setting {
 		public void previous() {
 			store(options[(index() + options.length - 1) % options.length]);
 		}
+
+		/** Picks an option by name; does nothing for a name that isn't one of the options. */
+		public void set(String option) {
+			for (String each : options) {
+				if (each.equals(option)) store(each);
+			}
+		}
 	}
 
 	/** A short piece of text the player types, like the name Name Protect shows. */

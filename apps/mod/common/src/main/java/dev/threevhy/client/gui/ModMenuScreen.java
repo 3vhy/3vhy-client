@@ -34,9 +34,10 @@ import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * The 3vhy mod menu, laid out like NoRisk's: a sidebar, MODS / PROFILES / WAYPOINTS tabs, a theme
- * switch and search along the top, and wide mod cards. A card toggles its mod; "..." (or right
- * click) opens the mod's settings.
+ * The 3vhy mod menu in its Classic style, laid out like Lunar's: MODS / PROFILES / WAYPOINTS tabs
+ * and search along the top, and a grid of mod cards, each with a big icon, its name and an
+ * ENABLED / DISABLED bar. The bar switches the mod; the card (or right click) opens its options.
+ * The other style, Panels, is {@link ClickGuiScreen}.
  */
 public final class ModMenuScreen extends CompatScreen {
 	public enum Tab {
@@ -55,7 +56,8 @@ public final class ModMenuScreen extends CompatScreen {
 		RULE_REPLACE
 	}
 
-	private static final int CARD_H = 42;
+	private static final int CARD_W = 84;
+	private static final int CARD_H = 86;
 	private static final int ROW_H = 26;
 
 	private final Screen parent;
@@ -90,6 +92,11 @@ public final class ModMenuScreen extends CompatScreen {
 	public ModMenuScreen(Screen parent) {
 		super(Component.literal("3vhy Mod Menu"));
 		this.parent = parent;
+	}
+
+	/** The mod menu in the style picked in Theme: Classic cards or floating Panels. */
+	public static Screen create(Screen parent) {
+		return Modules.THEME_MENU_STYLE.is("Panels") ? new ClickGuiScreen(parent) : new ModMenuScreen(parent);
 	}
 
 	/** Opens a mod's settings page. Returns this, for use when creating the screen. */
@@ -141,26 +148,22 @@ public final class ModMenuScreen extends CompatScreen {
 
 		Ui ui = new Ui(d, mouseX, mouseY, hits);
 		MenuTheme t = ui.t;
-		int w = Math.min(this.width - 20, 520);
-		int h = Math.min(this.height - 20, 320);
+		int w = Math.min(this.width - 20, 560);
+		int h = Math.min(this.height - 20, 330);
 		int x0 = (this.width - w) / 2;
 		int y0 = (this.height - h) / 2;
-		int sideW = 46;
-		int px = x0 + sideW + 6;
-		int pw = w - sideW - 6;
 
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 200f);
 		d.push();
 		d.translate(0, (1 - (1 - (1 - intro) * (1 - intro))) * 10);
 
-		drawSidebar(ui, x0, y0, sideW, h);
-		ui.panel(px, y0, px + pw, y0 + h, t.panel());
-		drawHeader(ui, px, y0, pw);
-		d.fill(px + 8, y0 + 30, px + pw - 8, y0 + 31, t.edge());
+		ui.panel(x0, y0, x0 + w, y0 + h, t.panel());
+		drawHeader(ui, x0, y0, w);
+		d.fill(x0 + 8, y0 + 30, x0 + w - 8, y0 + 31, t.edge());
 
-		int cx = px + 8;
+		int cx = x0 + 10;
 		int cy = y0 + 37;
-		int cw = pw - 16;
+		int cw = w - 20;
 		int ch = h - 37 - 22;
 		switch (tab) {
 			case MODS -> {
@@ -170,74 +173,56 @@ public final class ModMenuScreen extends CompatScreen {
 			case PROFILES -> drawProfiles(ui, cx, cy, cw, ch);
 			case WAYPOINTS -> drawWaypoints(ui, cx, cy, cw, ch);
 		}
-		d.fill(px + 8, y0 + h - 21, px + pw - 8, y0 + h - 20, t.edge());
-		drawFooter(ui, px, y0 + h - 15, pw);
+		d.fill(x0 + 8, y0 + h - 21, x0 + w - 8, y0 + h - 20, t.edge());
+		drawFooter(ui, x0, y0 + h - 15, w);
 		d.pop();
-	}
-
-	private void drawSidebar(Ui ui, int x, int y, int w, int h) {
-		ui.panel(x, y, x + w, y + h, ui.t.sidebar());
-		record Item(String label, String[] icon, Runnable action, boolean active) {
-		}
-		List<Item> items = List.of(
-				new Item("Hub", PixelIcons.SNOWFLAKE, () -> minecraft().setScreen(new HubScreen(this)), false),
-				new Item("Crosshair", PixelIcons.forModule(Modules.CROSSHAIR), () -> openModule(Modules.CROSSHAIR),
-						page == Modules.CROSSHAIR),
-				new Item("Theme", PixelIcons.forModule(Modules.THEME), () -> openModule(Modules.THEME), page == Modules.THEME),
-				new Item("Discord", PixelIcons.forModule(Modules.DISCORD), () -> openModule(Modules.DISCORD),
-						page == Modules.DISCORD),
-				new Item("Options", PixelIcons.GEAR, () -> minecraft().setScreen(dev.threevhy.client.compat.Compat.optionsScreen(this)),
-						false));
-		int iy = y + 8;
-		for (Item item : items) {
-			boolean hover = ui.hover(x + 3, iy, x + w - 3, iy + 38);
-			if (item.active() || hover) {
-				ui.d.roundRect(x + 3, iy, x + w - 3, iy + 38, Ui.R_CARD, item.active() ? ui.t.cardOn() : ui.t.cardHover());
-			}
-			int color = item.active() ? ui.t.accent() : hover ? ui.t.text() : MenuTheme.alpha(ui.t.text(), 0xD0);
-			PixelIcons.draw(ui.d, item.icon(), x + (w - 24) / 2, iy + 4, 2, color);
-			String label = item.label().toUpperCase(Locale.ROOT);
-			float scale = 0.5f;
-			ui.small(label, x + w / 2f - ui.width(label) * scale / 2f, iy + 31, scale, color);
-			ui.hit(x + 3, iy, x + w - 3, iy + 38, item.action());
-			iy += 42;
-			if (iy + 38 > y + h) break;
-		}
 	}
 
 	private void drawHeader(Ui ui, int px, int y0, int pw) {
 		int y = y0 + 8;
-		int x = px + 8;
+		HubScreen.drawEmblem(ui.d, px + 8, y, 16, 1, 255);
+		int x = px + 32;
 		for (Tab each : Tab.values()) {
 			String label = each.name();
-			int tw = ui.titleWidth(label) + 14;
+			int tw = ui.titleWidth(label);
 			boolean active = tab == each;
-			boolean hover = ui.hover(x, y, x + tw, y + 16);
-			if (active) {
-				ui.d.roundRect(x, y, x + tw, y + 16, 8, ui.t.cardOn());
-				ui.d.roundOutline(x, y, x + tw, y + 16, 8, ui.t.edgeStrong());
-			}
-			ui.title(label, x + 7, y + 4, active || hover ? ui.t.text() : ui.t.muted());
-			ui.hit(x, y, x + tw, y + 16, () -> openTab(each));
-			x += tw + 4;
+			boolean hover = ui.hover(x - 4, y, x + tw + 4, y + 16);
+			ui.title(label, x, y + 4, active ? ui.t.text() : hover ? MenuTheme.alpha(ui.t.text(), 0xE0) : ui.t.muted());
+			if (active) ui.d.fill(x, y + 15, x + tw, y + 17, ui.t.accent());
+			ui.hit(x - 4, y, x + tw + 4, y + 16, () -> openTab(each));
+			x += tw + 14;
 		}
 
-		int searchW = Math.max(70, Math.min(120, pw / 4));
-		int searchX = px + pw - 8 - searchW;
+		int right = px + pw - 8;
+		boolean closeHover = ui.hover(right - 16, y, right, y + 16);
+		if (closeHover) ui.d.roundRect(right - 16, y, right, y + 16, Ui.R_CONTROL, MenuTheme.alpha(ui.t.bad(), 0x60));
+		Icons.draw(ui.d, Icons.CLOSE, right - 12, y + 4, closeHover ? 0xFFFFFFFF : ui.t.muted());
+		ui.hit(right - 16, y, right, y + 16, this::onClose);
+
+		int optionsX = right - 36;
+		boolean optionsHover = ui.hover(optionsX, y, optionsX + 16, y + 16);
+		if (optionsHover) ui.d.roundRect(optionsX, y, optionsX + 16, y + 16, Ui.R_CONTROL, ui.t.cardHover());
+		PixelIcons.draw(ui.d, PixelIcons.GEAR, optionsX + 2, y + 2, 1, optionsHover ? ui.t.accent() : ui.t.text());
+		ui.hit(optionsX, y, optionsX + 16, y + 16,
+				() -> minecraft().setScreen(dev.threevhy.client.compat.Compat.optionsScreen(this)));
+		if (optionsHover) ui.tooltip("Minecraft options", optionsX + 8, y + 19);
+
+		int themeX = optionsX - 20;
+		boolean light = ui.t.isLight();
+		boolean hover = ui.hover(themeX, y, themeX + 16, y + 16);
+		if (hover) ui.d.roundRect(themeX, y, themeX + 16, y + 16, Ui.R_CONTROL, ui.t.cardHover());
+		PixelIcons.draw(ui.d, light ? PixelIcons.MOON : PixelIcons.SUN, themeX + 2, y + 2, 1, hover ? ui.t.accent() : ui.t.text());
+		ui.hit(themeX, y, themeX + 16, y + 16, () -> Modules.THEME_MODE.next());
+		if (hover) ui.tooltip(light ? "Dark theme" : "Light theme", themeX + 8, y + 19);
+
+		int searchW = Math.max(70, Math.min(130, pw / 4));
+		int searchX = themeX - 6 - searchW;
 		ui.field(searchX, y, searchW, 16, search, "Search...", tab == Tab.MODS && focus == Focus.SEARCH, SEARCH_ICON);
 		ui.hit(searchX, y, searchX + searchW, y + 16, () -> {
 			if (tab != Tab.MODS) openTab(Tab.MODS);
 			page = null;
 			focus = Focus.SEARCH;
 		});
-
-		int themeX = searchX - 20;
-		boolean light = ui.t.isLight();
-		boolean hover = ui.hover(themeX, y, themeX + 16, y + 16);
-		if (hover) ui.d.roundRect(themeX, y, themeX + 16, y + 16, 8, ui.t.cardHover());
-		PixelIcons.draw(ui.d, light ? PixelIcons.MOON : PixelIcons.SUN, themeX + 2, y + 2, 1, hover ? ui.t.accent() : ui.t.text());
-		ui.hit(themeX, y, themeX + 16, y + 16, () -> Modules.THEME_MODE.next());
-		if (hover) ui.tooltip(light ? "Dark theme" : "Light theme", themeX + 8, y + 19);
 	}
 
 	private static final String[] SEARCH_ICON = {
@@ -289,8 +274,9 @@ public final class ModMenuScreen extends CompatScreen {
 		int gh = ch - 17;
 		List<Module> shown = shownModules();
 		int gap = 6;
-		int colW = (cw - 6 - gap) / 2;
-		int rows = (shown.size() + 1) / 2;
+		int cols = Math.max(2, (cw - 6 + gap) / (CARD_W + gap));
+		int cardW = (cw - 6 - (cols - 1) * gap) / cols;
+		int rows = (shown.size() + cols - 1) / cols;
 		int contentH = Math.max(0, rows * (CARD_H + gap) - gap);
 		maxScroll = Math.max(0, contentH - gh);
 		scroll = Math.max(0, Math.min(scroll, maxScroll));
@@ -303,49 +289,62 @@ public final class ModMenuScreen extends CompatScreen {
 		}
 		ui.clip(cx, gy, cx + cw, gy + gh);
 		for (int i = 0; i < shown.size(); i++) {
-			int x1 = cx + (i % 2) * (colW + gap);
-			int y1 = gy + (i / 2) * (CARD_H + gap) - (int) Math.round(shownScroll);
+			int x1 = cx + (i % cols) * (cardW + gap);
+			int y1 = gy + (i / cols) * (CARD_H + gap) - (int) Math.round(shownScroll);
 			if (y1 + CARD_H < gy || y1 > gy + gh) continue;
-			card(ui, shown.get(i), x1, y1, colW);
+			card(ui, shown.get(i), x1, y1, cardW);
 		}
 		ui.endClip();
 		ui.scrollbar(cx + cw - 2, gy, gh, shownScroll, maxScroll, contentH);
 	}
 
+	static boolean hasPage(Module module) {
+		return !module.settings().isEmpty() || !module.toggleable()
+				|| HudWidgets.ALL.stream().anyMatch(widget -> widget.module == module);
+	}
+
+	/** A Lunar-style card: big icon, name, and a bar along the bottom that switches the mod. */
 	private void card(Ui ui, Module module, int x, int y, int w) {
 		MenuTheme t = ui.t;
 		boolean on = module.enabled();
 		boolean toggleable = module.toggleable();
+		boolean hasPage = hasPage(module);
 		boolean hover = ui.hover(x, y, x + w, y + CARD_H);
-		int fill = hover ? t.cardHover() : toggleable && on ? t.cardOn() : t.card();
-		ui.card(x, y, x + w, y + CARD_H, fill, toggleable && on ? t.edgeStrong() : t.edge());
+		ui.card(x, y, x + w, y + CARD_H, hover ? t.cardHover() : t.card(), hover ? t.edgeStrong() : t.edge());
+		if (module.isNew()) ui.small("NEW", x + 5, y + 4, 0.6f, t.badge());
 
 		int iconColor = !toggleable || on ? t.text() : t.muted();
-		PixelIcons.draw(ui.d, PixelIcons.forModule(module), x + 8, y + (CARD_H - 24) / 2, 2, iconColor);
-		if (module.isNew()) ui.small("NEW", x + 4, y + 3, 0.6f, t.badge());
+		PixelIcons.draw(ui.d, PixelIcons.forModule(module), x + (w - 36) / 2, y + 10, 3, iconColor);
+		String name = ui.trim(module.name, w - 8);
+		ui.text(name, x + (w - ui.width(name)) / 2, y + 52, !toggleable || on ? t.text() : MenuTheme.alpha(t.text(), 0xB8));
 
-		boolean hasPage = !module.settings().isEmpty() || !toggleable || HudWidgets.ALL.stream().anyMatch(widget -> widget.module == module);
-		int textX = x + 40;
-		int textW = w - 40 - (hasPage ? 22 : 8);
-		ui.title(ui.trimTitle(module.name, textW), textX, y + 7, !toggleable || on ? t.text() : MenuTheme.alpha(t.text(), 0xB0));
-		List<String> lines = ui.wrap(module.description, textW, 0.75f, 2);
-		for (int i = 0; i < lines.size(); i++) ui.small(lines.get(i), textX, y + 19 + i * 8, 0.75f, t.muted());
-
-		if (toggleable) {
-			ui.dot(x + w - 10, y + 5, 5, on ? t.good() : MenuTheme.alpha(t.muted(), 0x80));
-		}
-		if (hasPage) {
-			int bx = x + w - 19;
-			int by = y + (CARD_H - 12) / 2;
-			boolean dotsHover = ui.hover(bx, by, bx + 14, by + 12);
-			if (dotsHover) ui.d.roundRect(bx, by, bx + 14, by + 12, 4, t.cardOn());
-			for (int i = 0; i < 3; i++) ui.d.fill(bx + 3 + i * 3, by + 7, bx + 5 + i * 3, by + 9, dotsHover ? t.accent() : t.text());
-		}
-
-		// Clicks: the card toggles (or opens the page); the dots, added last so they're on top, open the page
+		int barY = y + CARD_H - 20;
+		int barX = x + 5;
+		int barRight = x + w - 5;
 		Runnable openPage = () -> openModule(module);
-		ui.hit(x, y, x + w, y + CARD_H, toggleable ? module::toggle : openPage, openPage);
-		if (hasPage) ui.hit(x + w - 19, y + (CARD_H - 12) / 2, x + w - 5, y + (CARD_H + 12) / 2, openPage);
+		ui.hit(x, y, x + w, y + CARD_H, hasPage ? openPage : module::toggle, openPage);
+		if (hasPage && toggleable) {
+			boolean gearHover = ui.hover(barX, barY, barX + 15, barY + 15);
+			ui.d.roundRect(barX, barY, barX + 15, barY + 15, Ui.R_CONTROL, gearHover ? t.cardOn() : MenuTheme.alpha(0x000000, 0x50));
+			ui.d.roundOutline(barX, barY, barX + 15, barY + 15, Ui.R_CONTROL, gearHover ? t.edgeStrong() : t.edge());
+			Icons.draw(ui.d, Icons.GEAR, barX + 4, barY + 4, gearHover ? t.accent() : t.text());
+			ui.hit(barX, barY, barX + 15, barY + 15, openPage);
+			barX += 18;
+		}
+		String label;
+		int fill;
+		if (!toggleable) {
+			label = "OPTIONS";
+			fill = MenuTheme.alpha(t.accent(), 0x55);
+		} else {
+			label = on ? "ENABLED" : "DISABLED";
+			fill = MenuTheme.alpha(on ? t.good() : t.bad(), 0xB0);
+		}
+		boolean barHover = ui.hover(barX, barY, barRight, barY + 15);
+		ui.d.roundRect(barX, barY, barRight, barY + 15, Ui.R_CONTROL, barHover ? Draw.mix(fill, 0xFFFFFFFF, 0.15) : fill);
+		String shownLabel = ui.trimTitle(label, barRight - barX - 4);
+		ui.d.text(Ui.bold(shownLabel), barX + (barRight - barX - ui.boldWidth(shownLabel)) / 2, barY + 4, 0xFFFFFFFF, false);
+		ui.hit(barX, barY, barRight, barY + 15, toggleable ? module::toggle : openPage, openPage);
 	}
 
 	private void drawPage(Ui ui, int cx, int cy, int cw, int ch) {
@@ -426,10 +425,11 @@ public final class ModMenuScreen extends CompatScreen {
 		row(ui, x, y, w, name, description, 142);
 	}
 
-	/** A settings row whose controls take {@code reserved} pixels on the right. */
+	/** A settings row whose controls take {@code reserved} pixels on the right; rows are split by thin lines, like Lunar's. */
 	private void row(Ui ui, int x, int y, int w, String name, String description, int reserved) {
 		boolean hover = ui.hover(x, y, x + w, y + ROW_H);
-		ui.card(x, y, x + w, y + ROW_H, hover ? ui.t.cardHover() : ui.t.card(), ui.t.edge());
+		if (hover) ui.d.roundRect(x, y, x + w, y + ROW_H, Ui.R_CARD, ui.t.cardHover());
+		ui.d.fill(x + 4, y + ROW_H + 1, x + w - 4, y + ROW_H + 2, ui.t.edge());
 		ui.text(ui.trim(name, w - reserved - 16), x + 8, y + 5, ui.t.text());
 		ui.small(ui.trim(description, (int) ((w - reserved - 16) / 0.75f)), x + 8, y + 16, 0.75f, ui.t.muted());
 	}
@@ -833,12 +833,19 @@ public final class ModMenuScreen extends CompatScreen {
 				: enabled + " / " + total + " MODS ON  ·  PROFILE " + Config.get().profile.toUpperCase(Locale.ROOT);
 		ui.small(ui.trim(left, (int) ((pw / 2 - 8) / 0.75f)), px + 8, y + 1, 0.75f, t.muted());
 
+		String edit = "EDIT HUD LAYOUT";
+		float scale = 0.75f;
+		int editW = Math.round(ui.width(edit) * scale);
+		int editX = px + pw - 8 - editW;
+		boolean editHover = ui.hover(editX - 4, y - 2, editX + editW + 4, y + 9);
+		ui.small(edit, editX, y + 1, scale, editHover ? t.accent() : t.text());
+		ui.hit(editX - 4, y - 2, editX + editW + 4, y + 9, () -> minecraft().setScreen(new HubScreen(this)));
+
 		boolean connected = DiscordPresence.connected();
 		String status = !Modules.DISCORD.enabled() ? "DISCORD OFF"
 				: connected ? "DISCORD CONNECTED" : "DISCORD NOT OPEN";
-		float scale = 0.75f;
 		float textW = ui.width(status) * scale;
-		float sx = px + pw - 8 - textW;
+		float sx = editX - 14 - textW;
 		ui.small(status, sx, y + 1, scale, t.muted());
 		int dot = (int) sx - 8;
 		ui.dot(dot, y + 1, 5, connected ? t.good() : MenuTheme.alpha(t.muted(), 0x90));

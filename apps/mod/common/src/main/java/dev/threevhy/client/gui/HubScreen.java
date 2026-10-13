@@ -19,9 +19,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 
 /**
- * The 3vhy hub (Right Shift), like NoRisk's: the game blurs behind falling snow, the 3vhy logo and
- * a MOD MENU button sit in the middle, and the HUD stays on screen to be dragged around. Hovering
- * a widget shows a pencil (its settings) and an X (turn it off).
+ * The 3vhy hub (Right Shift), like Lunar's: the game dims behind falling snow, the 3vhy emblem and
+ * name sit in the middle over a row of glass buttons (Profiles, MODS, Waypoints), and the HUD stays
+ * on screen to be dragged around. Hovering a widget shows a pencil (its settings) and an X (turn it off).
  */
 public final class HubScreen extends CompatScreen {
 	private static final int SNAP = 4;
@@ -88,7 +88,7 @@ public final class HubScreen extends CompatScreen {
 			if (dragging == null) controls(ui, mc, active);
 		}
 
-		String hint = "DRAG TO MOVE  ·  PENCIL FOR SETTINGS  ·  X TO HIDE";
+		String hint = "DRAG HUD MODS TO MOVE THEM  ·  PENCIL FOR SETTINGS  ·  X TO HIDE";
 		if (active != null && active.resizable()) {
 			hint += "  ·  SCROLL TO RESIZE (" + Math.round(active.sizeScale() * 100) + "%)";
 		}
@@ -111,13 +111,29 @@ public final class HubScreen extends CompatScreen {
 		return box;
 	}
 
-	/** Where the logo, MOD MENU button and quick buttons go: {x1, y1, x2, y2}. */
+	private static final int BUTTON_H = 26;
+	private static final int MODS_W = 120;
+	private static final int GAP = 6;
+
+	/** Pixels per cell of the emblem's 3. */
+	private int cell() {
+		return this.height >= 360 ? 4 : 3;
+	}
+
+	private int emblemSize() {
+		return 16 * cell();
+	}
+
+	private int buttonsY() {
+		return this.height / 2 + 14;
+	}
+
+	/** Where the emblem, the name and the buttons go: {x1, y1, x2, y2}. */
 	private int[] centreBounds() {
-		int cell = this.height >= 420 ? 3 : 2;
-		int btnY = this.height / 2 - 10;
-		int top = btnY - 14 - 4 - 15 * cell - 8;
-		int bottom = btnY + 20 + 6 + 24 + 8;
-		int half = 88;
+		int rowW = MODS_W + 2 * (BUTTON_H + GAP);
+		int half = Math.max(rowW, emblemSize()) / 2 + 8;
+		int top = buttonsY() - 10 - 12 - 8 - emblemSize() - 6;
+		int bottom = buttonsY() + BUTTON_H + 6;
 		return new int[] {this.width / 2 - half, top, this.width / 2 + half, bottom};
 	}
 
@@ -139,47 +155,55 @@ public final class HubScreen extends CompatScreen {
 		ui.hit(x, y, x + 10, y + 10, action);
 	}
 
-	private void drawCentre(Ui ui, Minecraft mc, int[] plate) {
-		MenuTheme t = ui.t;
-		ui.panel(plate[0], plate[1], plate[2], plate[3], MenuTheme.alpha(t.panel(), 0xD8));
+	private void drawCentre(Ui ui, Minecraft mc, int[] bounds) {
 		int cx = this.width / 2;
-		int btnW = 150;
-		int btnH = 20;
-		int btnY = this.height / 2 - btnH / 2;
-		int cell = this.height >= 420 ? 3 : 2;
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 300f);
 		int drop = Math.round((1 - (1 - (1 - intro) * (1 - intro) * (1 - intro))) * -8);
+		int alpha = Math.round(255 * intro);
 
-		int clientY = btnY - 14;
-		int wordY = clientY - 4 - 15 * cell + drop;
-		Wordmark.draw(ui.d, cx - 43 * cell / 2, wordY, cell, 0xFFE3F3FC, 0xFF061D8C);
-		String client = "C L I E N T";
-		ui.text(client, cx - ui.width(client) / 2, clientY, t.accent());
+		int btnY = buttonsY();
+		int nameY = btnY - 10 - 12;
+		int size = emblemSize();
+		int ex = cx - size / 2;
+		int ey = nameY - 8 - size + drop;
+		drawEmblem(ui.d, ex, ey, size, cell(), alpha);
 
-		ui.button(cx - btnW / 2, btnY, btnW, btnH, "Mod Menu", false, () -> mc.setScreen(new ModMenuScreen(this)));
+		ui.d.push();
+		ui.d.translate(cx, nameY + drop);
+		ui.d.scale(1.5f);
+		String brand = "3VHY";
+		String client = " CLIENT";
+		int textW = ui.boldWidth(brand) + ui.width(client);
+		int white = MenuTheme.alpha(0xFFFFFF, alpha);
+		ui.d.text(Ui.bold(brand), -textW / 2, 0, white, false);
+		ui.d.text(client, -textW / 2 + ui.boldWidth(brand), 0, MenuTheme.alpha(0xE6E6E6, alpha), false);
+		ui.d.pop();
 
-		record Quick(String label, String[] icon, Runnable action) {
-		}
-		List<Quick> quick = List.of(
-				new Quick("Profiles", PixelIcons.forModule(Modules.PROFILES),
-						() -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.PROFILES))),
-				new Quick("Waypoints", PixelIcons.forModule(Modules.WAYPOINTS),
-						() -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.WAYPOINTS))),
-				new Quick("Crosshair", PixelIcons.forModule(Modules.CROSSHAIR),
-						() -> mc.setScreen(new ModMenuScreen(this).openModule(Modules.CROSSHAIR))),
-				new Quick("Theme", PixelIcons.forModule(Modules.THEME),
-						() -> mc.setScreen(new ModMenuScreen(this).openModule(Modules.THEME))),
-				new Quick("Discord", PixelIcons.forModule(Modules.DISCORD),
-						() -> mc.setScreen(new ModMenuScreen(this).openModule(Modules.DISCORD))));
-		int size = 24;
-		int gap = 5;
-		int rowW = quick.size() * size + (quick.size() - 1) * gap;
+		int rowW = MODS_W + 2 * (BUTTON_H + GAP);
 		int x = cx - rowW / 2;
-		int y = btnY + btnH + 6;
-		for (Quick each : quick) {
-			ui.iconButton(x, y, size, each.icon(), each.label(), false, each.action());
-			x += size + gap;
-		}
+		ui.glassButton(x, btnY, BUTTON_H, BUTTON_H, null, PixelIcons.forModule(Modules.PROFILES),
+				() -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.PROFILES)));
+		if (ui.hover(x, btnY, x + BUTTON_H, btnY + BUTTON_H)) ui.tooltip("Profiles", x + BUTTON_H / 2, btnY + BUTTON_H + 4);
+		x += BUTTON_H + GAP;
+		ui.glassButton(x, btnY, MODS_W, BUTTON_H, "Mods", null, () -> mc.setScreen(ModMenuScreen.create(this)));
+		x += MODS_W + GAP;
+		ui.glassButton(x, btnY, BUTTON_H, BUTTON_H, null, PixelIcons.forModule(Modules.WAYPOINTS),
+				() -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.WAYPOINTS)));
+		if (ui.hover(x, btnY, x + BUTTON_H, btnY + BUTTON_H)) ui.tooltip("Waypoints", x + BUTTON_H / 2, btnY + BUTTON_H + 4);
+	}
+
+	/** The 3vhy emblem: the app icon's pixel 3 inside a rounded outline, in white like Lunar's. */
+	static void drawEmblem(Draw d, int x, int y, int size, int cell, int alpha) {
+		int white = MenuTheme.alpha(0xFFFFFF, alpha);
+		int shade = MenuTheme.alpha(0x000000, alpha * 0x50 / 255);
+		int radius = size / 4;
+		int ring = Math.max(2, cell / 2 + 1);
+		d.roundRect(x, y, x + size, y + size, radius, MenuTheme.alpha(0x000000, alpha * 0x40 / 255));
+		for (int i = 0; i < ring; i++) d.roundOutline(x + i, y + i, x + size - i, y + size - i, radius - i, white);
+		int gx = x + (size - 10 * cell) / 2;
+		int gy = y + (size - 12 * cell) / 2;
+		Wordmark.drawGlyph(d, gx + Math.max(1, cell / 3), gy + Math.max(1, cell / 3), cell, shade);
+		Wordmark.drawGlyph(d, gx, gy, cell, white);
 	}
 
 	private float widgetScale(HudWidget widget) {

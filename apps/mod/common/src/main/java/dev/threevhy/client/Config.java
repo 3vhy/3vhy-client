@@ -30,6 +30,8 @@ public final class Config {
 	public Map<String, String> settings = new LinkedHashMap<>();
 	/** HUD widget id -> [x, y], each 0..1 across the free space on screen. */
 	public Map<String, double[]> hud = new LinkedHashMap<>();
+	/** Panels mod menu: each panel's spot and whether it's folded, as {x, y, folded}. */
+	public Map<String, int[]> panels = new LinkedHashMap<>();
 
 	/** Name of the profile the fields above belong to. */
 	public String profile = DEFAULT_PROFILE;
@@ -95,6 +97,8 @@ public final class Config {
 				if (loaded.modules == null) loaded.modules = new LinkedHashMap<>();
 				if (loaded.settings == null) loaded.settings = new LinkedHashMap<>();
 				if (loaded.hud == null) loaded.hud = new LinkedHashMap<>();
+				if (loaded.panels == null) loaded.panels = new LinkedHashMap<>();
+				loaded.panels.values().removeIf(spot -> spot == null || spot.length < 3);
 				if (loaded.profile == null || loaded.profile.isBlank()) loaded.profile = DEFAULT_PROFILE;
 				if (loaded.profiles == null) loaded.profiles = new LinkedHashMap<>();
 				if (loaded.waypoints == null) loaded.waypoints = new LinkedHashMap<>();

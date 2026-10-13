@@ -5,6 +5,7 @@ import dev.threevhy.client.Config;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.Compat;
+import dev.threevhy.client.gui.ClickGuiScreen;
 import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MainMenuScreen;
 import dev.threevhy.client.gui.ModMenuScreen;
@@ -43,7 +44,7 @@ import org.lwjgl.glfw.GLFW;
 public final class ThreevhyGameTest implements FabricClientGameTest {
 	/** A song as the Windows helper reports it, with a tiny 8x8 cover, since CI can't play real music. */
 	private static final String SAMPLE_SONG = "{\"key\":\"test\",\"app\":\"Spotify.exe\",\"title\":\"Snowfall\","
-			+ "\"artist\":\"3vhy Test Band\",\"album\":\"CI\",\"playing\":true,\"position\":61,\"duration\":235,"
+			+ "\"artist\":\"3vhy Test Band\",\"album\":\"CI\",\"playing\":true,\"position\":61,\"duration\":235,\"volume\":64,\"muted\":false,"
 			+ "\"art\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\","
 			+ "\"icon\":\"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAG0lEQVR4nGPUsDnxX5LhGwMuzMIgwoAXDA8FAKZeCj5VXRt0AAAAAElFTkSuQmCC\"}";
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
@@ -109,6 +110,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.setScreen(() -> new HubScreen(new MainMenuScreen()));
 		context.waitTicks(10);
 		shot(context, "3vhy-hub-from-menu");
+		context.setScreen(() -> new ClickGuiScreen(new MainMenuScreen()).expand(Modules.FREELOOK));
+		context.waitTicks(10);
+		shot(context, "3vhy-panels-from-menu");
 		context.setScreen(MainMenuScreen::new);
 		context.waitTicks(5);
 
@@ -404,6 +408,21 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(10);
 			shot(context, "3vhy-modmenu-light");
 			context.runOnClient(client -> Modules.THEME_MODE.next());
+
+			// The Panels style of the mod menu
+			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Panels"));
+			check(failed, "Theme > Mod menu > Panels opens the panels menu",
+					context.computeOnClient(client -> ModMenuScreen.create(null) instanceof ClickGuiScreen));
+			context.setScreen(() -> new ClickGuiScreen(null));
+			context.waitTicks(10);
+			shot(context, "3vhy-panels");
+			context.setScreen(() -> new ClickGuiScreen(null).expand(Modules.FREELOOK).expand(Modules.CROSSHAIR));
+			context.waitTicks(10);
+			shot(context, "3vhy-panels-settings");
+			context.setScreen(() -> new ClickGuiScreen(null).search("totem"));
+			context.waitTicks(5);
+			shot(context, "3vhy-panels-search");
+			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Classic"));
 
 			// Pause menu: the mod menu button, then Confirm Disconnect
 			context.setScreen(() -> null);
