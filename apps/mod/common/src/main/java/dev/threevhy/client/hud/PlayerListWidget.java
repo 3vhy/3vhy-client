@@ -47,8 +47,7 @@ final class PlayerListWidget extends HudWidget {
 	private static final int SHOWN = 6;
 	private static final int FILL = 0x121019;
 	private static final int TITLE_COLOR = 0xFFD9DADF;
-	private static final int NAME_COLOR = 0xFFF1F1F3;
-	private static final int OFFLINE_COLOR = 0xFF6E7380;
+	private static final int NAME_COLOR = 0xFFFFFFFF;
 	private static final int MORE_COLOR = 0xFF6C6672;
 	private static final String[] SAMPLE = {"Steve", "Alex", "Player372"};
 
@@ -156,11 +155,10 @@ final class PlayerListWidget extends HudWidget {
 				d.face(row.info().getSkin(), 0, 0, 8);
 			} else {
 				d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), 0, 0, 8);
-				if (!row.online()) d.fill(0, 0, 8, 8, 0x90111216);
 			}
 			d.pop();
 			text(d, bold(row.name().toUpperCase(Locale.ROOT)), headX + HEAD + HEAD_GAP, mid - C / 2f, NAME,
-					row.online() ? NAME_COLOR : OFFLINE_COLOR, shadow);
+					NAME_COLOR, shadow);
 			mid += ROW;
 		}
 		if (rows.size() > SHOWN) {

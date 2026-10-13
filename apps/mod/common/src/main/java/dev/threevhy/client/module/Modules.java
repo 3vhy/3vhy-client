@@ -113,7 +113,7 @@ public final class Modules {
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
 			"Players", 16));
 	public static final Toggle PLAYER_LIST_OFFLINE = PLAYER_LIST.add(new Toggle("offline", "Show offline players",
-			"Grey names for players who aren't on", false));
+			"Also list players who aren't on, after the ones who are", false));
 	public static final Toggle PLAYER_LIST_ALERTS = PLAYER_LIST.add(new Toggle("alerts", "Join alerts",
 			"A chat message when someone on your list joins or leaves", true));
 	public static final Toggle PLAYER_LIST_ASK = PLAYER_LIST.add(new Toggle("ask", "Ask the server",
