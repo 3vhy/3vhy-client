@@ -1,6 +1,8 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
+import dev.threevhy.client.gui.Smooth;
+import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.gui.SafeItems;
 import dev.threevhy.client.hud.HudWidget.Anchor;
 import dev.threevhy.client.module.Combo;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
@@ -238,6 +241,11 @@ public final class HudWidgets {
 	public static final HudWidget KEYSTROKES = new HudWidget("keystrokes", Modules.KEYSTROKES, Anchor.TOP_LEFT) {
 		private static final int K = 20;
 		private static final int GAP = 2;
+		private static final int SPACE_H = 10;
+		private static final float TEXT = 0.8f;
+		private static final int KEY_FILL = 0x141417;
+		private static final int DOWN_FILL = 0xF2FFFFFF;
+		private static final int DOWN_TEXT = 0xFF141417;
 
 		@Override
 		public int width(Minecraft mc) {
@@ -247,8 +255,8 @@ public final class HudWidgets {
 		@Override
 		public int height(Minecraft mc) {
 			int h = K * 2 + GAP;
-			if (Modules.KEYSTROKES_MOUSE.get()) h += GAP + 22;
-			if (Modules.KEYSTROKES_SPACE.get()) h += GAP + 10;
+			if (Modules.KEYSTROKES_MOUSE.get()) h += GAP + K;
+			if (Modules.KEYSTROKES_SPACE.get()) h += GAP + SPACE_H;
 			return h;
 		}
 
@@ -263,39 +271,34 @@ public final class HudWidgets {
 			row += K + GAP;
 			if (Modules.KEYSTROKES_MOUSE.get()) {
 				int half = (width(mc) - GAP) / 2;
-				mouse(d, mc, x, row, half, 22, "LMB", CpsTracker.left(), o.keyAttack);
-				mouse(d, mc, x + half + GAP, row, half, 22, "RMB", CpsTracker.right(), o.keyUse);
-				row += 22 + GAP;
+				key(d, mc, x, row, half, K, "LMB " + CpsTracker.left(), o.keyAttack);
+				key(d, mc, x + half + GAP, row, half, K, "RMB " + CpsTracker.right(), o.keyUse);
+				row += K + GAP;
 			}
 			if (Modules.KEYSTROKES_SPACE.get()) {
 				boolean jump = o.keyJump.isDown();
-				box(d, x, row, x + width(mc), row + 10, jump ? Theme.KEY_DOWN : backgroundColor());
-				int barW = width(mc) / 3;
-				d.fill(x + (width(mc) - barW) / 2, row + 4, x + (width(mc) + barW) / 2, row + 6,
-						jump ? Theme.NIGHT : Theme.SKY);
+				int w = width(mc);
+				Smooth.roundRect(d, x, row, x + w, row + SPACE_H, 3, jump ? DOWN_FILL : fill());
+				int barW = w / 3;
+				Smooth.roundRect(d, x + (w - barW) / 2f, row + SPACE_H / 2f - 0.75f, x + (w + barW) / 2f, row + SPACE_H / 2f + 0.75f, 0.75f,
+						jump ? DOWN_TEXT : 0xFFFFFFFF);
 			}
 		}
 
-		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
-			boolean down = key.isDown();
-			box(d, x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
-			int tw = textWidth(mc, label);
-			d.text(label, x + (w - tw) / 2, y + (h - 8) / 2, down ? Theme.NIGHT : Theme.ICE, !down && textShadow());
+		private int fill() {
+			return (backgroundAlpha() << 24) | KEY_FILL;
 		}
 
-		private void mouse(Draw d, Minecraft mc, int x, int y, int w, int h, String label, int cps, KeyMapping key) {
+		/** A rounded key: dark with a white label, or white with a dark label while it's held. */
+		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
 			boolean down = key.isDown();
-			box(d, x, y, x + w, y + h, down ? Theme.KEY_DOWN : backgroundColor());
-			int color = down ? Theme.NIGHT : Theme.ICE;
-			int tw = textWidth(mc, label);
-			d.text(label, x + (w - tw) / 2, y + 3, color, !down && textShadow());
-			String c = cps + " CPS";
+			Smooth.roundRect(d, x, y, x + w, y + h, 4, down ? DOWN_FILL : fill());
+			Component text = UiFont.clean() ? UiFont.bold(label) : Component.literal(label);
+			float tw = mc.font.width(text) * TEXT;
 			d.push();
-			float s = 0.75f;
-			int cw = textWidth(mc, c);
-			d.translate(x + (w - cw * s) / 2f, y + 13);
-			d.scale(s);
-			d.text(c, 0, 0, down ? Theme.NIGHT : Theme.SKY, !down && textShadow());
+			d.translate(x + (w - tw) / 2f, y + (h - 7 * TEXT) / 2f);
+			d.scale(TEXT);
+			d.text(text, 0, 0, down ? DOWN_TEXT : 0xFFFFFFFF, !down && textShadow());
 			d.pop();
 		}
 	};
@@ -670,8 +673,9 @@ public final class HudWidgets {
 	public static final HudWidget SCOREBOARD = new ScoreboardWidget();
 	public static final HudWidget MUSIC = new MusicWidget();
 	public static final HudWidget PLAYER_LIST = new PlayerListWidget();
+	public static final HudWidget MODULE_LIST = new ModuleListWidget();
 
 	/** Drawing order; widgets that share an anchor stack in this order (upwards at the bottom). */
 	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, TPS, CLOCK, COMBO, COORDS, KEYSTROKES, ITEMS,
-			ARMOR, POPS, PLAYER_LIST, TARGET, JUMP_RESET, TOTEM_WARNING, MUSIC, SCOREBOARD);
+			ARMOR, MODULE_LIST, POPS, PLAYER_LIST, TARGET, JUMP_RESET, TOTEM_WARNING, MUSIC, SCOREBOARD);
 }

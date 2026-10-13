@@ -16,9 +16,9 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 
 /**
- * The Music HUD, like a media player: the cover (with the music app's logo on its corner), the title
- * in bold and the artist in the accent colour under it, previous / play-pause / next on the right, a
- * progress bar between the time played and the song's length, and Windows' volume along the bottom.
+ * The Music HUD, like 67's: the cover (with the music app's logo on its corner), the title in bold
+ * and the artist in grey under it, previous / play-pause / next on the right, the time played over
+ * a progress bar with the song's length at its end, and Windows' volume along the bottom.
  * Text is in the clean font ({@link UiFont}) unless Theme's Menu font is set to Minecraft.
  */
 final class MusicWidget extends HudWidget {
@@ -30,8 +30,9 @@ final class MusicWidget extends HudWidget {
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int GREY = 0xFFA3A9B6;
 	private static final int TRACK = 0x38FFFFFF;
-	private static final int FILL = 0x16171B;
-	private static final int BADGE = 0xFF16171B;
+	private static final int FILL = 0x111214;
+	private static final int BADGE = 0xFF111214;
+	private static final int ARTIST = 0xFFB4B8C0;
 
 	MusicWidget() {
 		super("music", Modules.MUSIC, Anchor.TOP_CENTER);
@@ -104,16 +105,17 @@ final class MusicWidget extends HudWidget {
 		String title = song.title().isBlank() ? "Unknown song" : song.title();
 		d.text(heading(fit(mc, title.toUpperCase(Locale.ROOT), textW, MusicWidget::heading)), textX, y + PAD + 2, WHITE, shadow);
 		small(d, fit(mc, song.artist().toUpperCase(Locale.ROOT), Math.round(textW / 0.8f), MusicWidget::plain), textX, y + PAD + 13,
-				0.8f, accent, shadow);
+				0.8f, ARTIST, shadow);
 
 		if (progress(song)) {
 			double position = song.positionNow();
-			int barX1 = textX;
-			int barX2 = x + W - PAD;
 			String played = NowPlaying.time(position);
 			String length = NowPlaying.time(song.duration());
-			small(d, played, barX1, y + PAD + 23, 0.6f, GREY, shadow);
-			small(d, length, barX2 - Math.round(mc.font.width(plain(length)) * 0.6f), y + PAD + 23, 0.6f, GREY, shadow);
+			int lengthW = Math.round(mc.font.width(plain(length)) * 0.6f);
+			int barX1 = textX;
+			int barX2 = x + W - PAD - lengthW - 8;
+			small(d, played, barX1, y + PAD + 24, 0.6f, GREY, shadow);
+			small(d, length, x + W - PAD - lengthW, y + PAD + 31, 0.6f, GREY, shadow);
 			double fraction = song.duration() > 0 ? Math.max(0, Math.min(1, position / song.duration())) : 0;
 			slider(d, barX1, barX2, y + PAD + 32, fraction, accent);
 		}

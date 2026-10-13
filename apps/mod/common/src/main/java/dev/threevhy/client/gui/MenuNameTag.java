@@ -16,20 +16,20 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.PlayerSkin;
 
 /**
- * The 3vhy Client logo in a small dark pill at the bottom right of the main menu, the pause menu,
- * your inventory and chests, like 67 Client's: 3VHY in the client's colour (Theme > Panels colour),
- * a dot and CLIENT, in the clean font with smooth corners. It can also show your head and name
- * (Name Protect and Skin Protect apply to them like everywhere else), or only those. It's the same
- * real size at any GUI scale.
+ * The 3vhy Client logo at the bottom right of the main menu, the pause menu, your inventory and
+ * chests: the pixel 3vhy wordmark and a spaced-out CLIENT, like the launcher's logo, on a small dark
+ * pill. It can also show your head and name (Name Protect and Skin Protect apply to them like
+ * everywhere else), or only those.
+ *
+ * <p>It's drawn in real screen pixels, each wordmark cell a whole number of them (two on a 1080p
+ * screen), so it stays crisp and the same size at any GUI scale.
  */
 public final class MenuNameTag {
-	/** Layout units to the window's height, like the Panels menu: a unit is two pixels at 1080p. */
-	private static final float UNITS_PER_SCREEN = 540f;
-	private static final int MARGIN = 8;
-	private static final int HEIGHT = 17;
-	private static final int PAD = 9;
-	private static final int FILL = 0xE6161719;
+	private static final int FILL = 0xE6111216;
 	private static final int EDGE = 0x2EFFFFFF;
+	private static final int WORD = 0xFFE3F3FC;
+	private static final int WORD_SHADOW = 0xFF04104A;
+	private static final int CLIENT_COLOR = 0xFF8CC4EA;
 	/** The title screen's copyright line along the bottom (in GUI pixels), which the pill sits above. */
 	private static final int COPYRIGHT_LINE = 10;
 	/** Your own entry, for your skin when you're not in a world. */
@@ -47,54 +47,77 @@ public final class MenuNameTag {
 	public static void draw(Draw d, Screen screen) {
 		if (!Modules.MENU_NAME.enabled() || !shows(screen)) return;
 		Minecraft mc = Minecraft.getInstance();
-		float unit = Math.max(1f, mc.getWindow().getHeight() / UNITS_PER_SCREEN) / (float) mc.getWindow().getGuiScale();
+		float guiScale = (float) mc.getWindow().getGuiScale();
+		// One wordmark cell in real pixels: 2 at 1080p, 3 at 4K
+		int cell = Math.max(1, Math.round(mc.getWindow().getHeight() / 720f));
 		boolean logo = !Modules.MENU_NAME_SHOW.is("Name");
 		boolean name = !Modules.MENU_NAME_SHOW.is("Logo");
 		boolean head = Modules.MENU_NAME_HEAD.get();
 		String player = mc.getUser().getName();
-		Component brand = UiFont.bold("3VHY");
-		Component dot = UiFont.bold("\u00B7");
-		Component client = UiFont.bold("CLIENT");
 		Component playerText = UiFont.semibold(player);
 
-		int logoW = UiFont.width(brand) + 4 + UiFont.width(dot) + 4 + UiFont.width(client);
-		int nameW = UiFont.width(playerText) + (head ? 13 : 0);
-		int w = 2 * PAD + (logo ? logoW : 0) + (logo && name ? 15 : 0) + (name ? nameW : 0);
-		int vw = Math.round(d.width() / unit);
-		int vh = Math.round(d.height() / unit);
-		int x = vw - MARGIN - w;
-		int y = vh - MARGIN - HEIGHT - (screen instanceof TitleScreen ? Math.round(COPYRIGHT_LINE / unit) : 0);
-		if (coversButton(screen, x * unit, y * unit, w * unit, HEIGHT * unit)) {
-			y = MARGIN;
-			if (coversButton(screen, x * unit, y * unit, w * unit, HEIGHT * unit)) return;
+		// Sizes in real pixels
+		int pad = 5 * cell;
+		int wordW = Wordmark.COLUMNS * cell;
+		int wordH = Wordmark.ROWS * cell;
+		int h = wordH + cell + 2 * (2 * cell);
+		float textScale = 4.4f * cell / 7f;
+		int letterGap = 2 * cell;
+		String client = "CLIENT";
+		int clientW = -letterGap;
+		for (char c : client.toCharArray()) clientW += Math.round(mc.font.width(UiFont.bold(String.valueOf(c))) * textScale) + letterGap;
+		int logoW = wordW + 4 * cell + clientW;
+		int faceSize = 9 * cell / 2 * 2;
+		int nameW = Math.round(mc.font.width(playerText) * textScale * 1.15f) + (head ? faceSize + 3 * cell : 0);
+		int w = 2 * pad + (logo ? logoW : 0) + (logo && name ? 9 * cell : 0) + (name ? nameW : 0);
+
+		int screenW = Math.round(d.width() * guiScale);
+		int screenH = Math.round(d.height() * guiScale);
+		int margin = 4 * cell;
+		int x = screenW - margin - w;
+		int y = screenH - margin - h - (screen instanceof TitleScreen ? Math.round(COPYRIGHT_LINE * guiScale) : 0);
+		if (coversButton(screen, x / guiScale, y / guiScale, w / guiScale, h / guiScale)) {
+			y = margin;
+			if (coversButton(screen, x / guiScale, y / guiScale, w / guiScale, h / guiScale)) return;
 		}
 
 		d.push();
-		d.scale(unit);
-		Smooth.roundRect(d, x, y, x + w, y + HEIGHT, HEIGHT / 2f, FILL);
-		Smooth.roundOutline(d, x, y, x + w, y + HEIGHT, HEIGHT / 2f, 1, EDGE);
-		int cx = x + PAD;
-		int ty = y + 5;
+		d.scale(1f / guiScale);
+		Smooth.roundRect(d, x, y, x + w, y + h, h / 2f, FILL);
+		Smooth.roundOutline(d, x, y, x + w, y + h, h / 2f, 1, EDGE);
+		int cx = x + pad;
 		if (logo) {
-			int accent = Modules.THEME_PANEL_COLOR.get() | 0xFF000000;
-			d.text(brand, cx, ty, accent, false);
-			cx += UiFont.width(brand) + 4;
-			d.text(dot, cx, ty, 0xFF9AA0AA, false);
-			cx += UiFont.width(dot) + 4;
-			d.text(client, cx, ty, 0xFFFFFFFF, false);
-			cx += UiFont.width(client);
+			int wordY = y + 2 * cell;
+			Wordmark.draw(d, cx, wordY, cell, WORD, WORD_SHADOW);
+			cx += wordW + 4 * cell;
+			int ty = Math.round(wordY + 7 * cell - 3.5f * textScale);
+			for (char c : client.toCharArray()) {
+				Component letter = UiFont.bold(String.valueOf(c));
+				d.push();
+				d.translate(cx, ty);
+				d.scale(textScale);
+				d.text(letter, 0, 0, CLIENT_COLOR, false);
+				d.pop();
+				cx += Math.round(mc.font.width(letter) * textScale) + letterGap;
+			}
+			cx += -letterGap;
 		}
 		if (logo && name) {
-			cx += 7;
-			d.fill(cx, y + 4, cx + 1, y + HEIGHT - 4, EDGE);
-			cx += 8;
+			cx += 4 * cell;
+			d.fill(cx, y + 4 * cell, cx + Math.max(1, cell / 2), y + h - 4 * cell, EDGE);
+			cx += 5 * cell;
 		}
 		if (name) {
 			if (head) {
-				d.face(ownSkin(mc), cx, y + 4, 9);
-				cx += 13;
+				d.face(ownSkin(mc), cx, y + (h - faceSize) / 2, faceSize);
+				cx += faceSize + 3 * cell;
 			}
-			d.text(playerText, cx, ty, 0xFFFFFFFF, false);
+			float nameScale = textScale * 1.15f;
+			d.push();
+			d.translate(cx, y + (h - 7 * nameScale) / 2f);
+			d.scale(nameScale);
+			d.text(playerText, 0, 0, 0xFFFFFFFF, false);
+			d.pop();
 		}
 		d.pop();
 		Hooks.menuNameDrawn = true;

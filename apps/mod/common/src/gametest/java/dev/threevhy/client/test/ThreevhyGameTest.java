@@ -64,10 +64,17 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	/** An old-style 64x32 skin, to check Skin Protect converts it like Minecraft does. */
 	private static final String LEGACY_SKIN = "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAASUlEQVR42u3QAQkAIBAEwRPNYSbDGu9Bg/wsbIEZ+9w3k3R9JZXOAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACADn2s5CHgcZHXdQAAAABJRU5ErkJggg==";
 
-	/** Just the Music HUD, half again its size, low on the 3vhy sky (clear of toasts), for close-up screenshots. */
+	/** One HUD widget on its own, half again its size, low on the 3vhy sky (clear of toasts), for close-up screenshots. */
 	private static final class MusicShowcase extends CompatScreen {
+		private final HudWidget widget;
+
 		MusicShowcase() {
-			super(Component.literal("Music HUD"));
+			this(HudWidgets.MUSIC);
+		}
+
+		MusicShowcase(HudWidget widget) {
+			super(Component.literal("HUD close-up"));
+			this.widget = widget;
 		}
 
 		@Override
@@ -78,14 +85,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		@Override
 		protected void draw(Draw d, int mouseX, int mouseY, float delta) {
 			Minecraft mc = Minecraft.getInstance();
-			HudWidget widget = HudWidgets.MUSIC;
 			float scale = 1.5f;
 			int w = Math.round(widget.width(mc) * scale);
 			int h = Math.round(widget.height(mc) * scale);
 			d.push();
 			d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
 			d.scale(scale);
-			widget.draw(d, 0, 0, mc, false);
+			widget.draw(d, 0, 0, mc, widget != HudWidgets.MUSIC);
 			d.pop();
 		}
 	}
@@ -301,7 +307,18 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			});
 			context.waitTicks(10);
 			shot(context, "3vhy-music-closeup-pink");
-			context.runOnClient(client -> Modules.MUSIC_COLOR.set(0xFF8CC4EA));
+			context.runOnClient(client -> Modules.MUSIC_COLOR.reset());
+			context.setScreen(() -> new MusicShowcase(HudWidgets.KEYSTROKES));
+			context.waitTicks(5);
+			shot(context, "3vhy-keystrokes-closeup");
+			context.setScreen(() -> new MusicShowcase(HudWidgets.PLAYER_LIST));
+			context.waitTicks(5);
+			shot(context, "3vhy-player-list-closeup");
+			context.setScreen(() -> new MusicShowcase(HudWidgets.MODULE_LIST));
+			context.waitTicks(5);
+			shot(context, "3vhy-module-list-closeup");
+			check(failed, "module list shows the mods that are on", context.computeOnClient(client ->
+					HudWidgets.MODULE_LIST.visible(client) && HudWidgets.MODULE_LIST.height(client) >= 9 * 5));
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 			check(failed, "player list sees who is online", context.computeOnClient(client ->

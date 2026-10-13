@@ -37,6 +37,8 @@ public final class Ui {
 	private int[] clip = null;
 	/** Whether text goes in the clean font ({@link UiFont}) instead of Minecraft's. */
 	private boolean clean = false;
+	/** How big text() and title() draw, and width() measures. */
+	private float textScale = 1f;
 
 	public Ui(Draw d, int mouseX, int mouseY, List<Hit> hits) {
 		this.d = d;
@@ -50,6 +52,16 @@ public final class Ui {
 	public Ui cleanFont(boolean on) {
 		clean = on;
 		return this;
+	}
+
+	/** Draws (and measures) text() and title() at {@code scale}. */
+	public Ui textScale(float scale) {
+		textScale = scale;
+		return this;
+	}
+
+	public float textScale() {
+		return textScale;
 	}
 
 	public static List<Hit> newHits() {
@@ -90,7 +102,7 @@ public final class Ui {
 	// Text
 
 	public int width(String text) {
-		return clean ? mc.font.width(UiFont.semibold(text)) : mc.font.width(text);
+		return Math.round((clean ? mc.font.width(UiFont.semibold(text)) : mc.font.width(text)) * textScale);
 	}
 
 	public static Component bold(String text) {
@@ -98,18 +110,29 @@ public final class Ui {
 	}
 
 	public int boldWidth(String text) {
-		return mc.font.width(clean ? UiFont.bold(text) : bold(text));
+		return Math.round(mc.font.width(clean ? UiFont.bold(text) : bold(text)) * textScale);
 	}
 
 	public void text(String text, int x, int y, int color) {
-		if (clean) d.text(UiFont.semibold(text), x, y, color, false);
-		else d.text(text, x, y, color, false);
+		scaled(clean ? UiFont.semibold(text) : Component.literal(text), x, y, color);
 	}
 
 	/** Uppercase bold, like NoRisk's titles. */
 	public void title(String text, int x, int y, int color) {
 		String upper = text.toUpperCase(Locale.ROOT);
-		d.text(clean ? UiFont.bold(upper) : bold(upper), x, y, color, false);
+		scaled(clean ? UiFont.bold(upper) : bold(upper), x, y, color);
+	}
+
+	private void scaled(Component text, float x, float y, int color) {
+		if (textScale == 1f) {
+			d.text(text, Math.round(x), Math.round(y), color, false);
+			return;
+		}
+		d.push();
+		d.translate(x, y);
+		d.scale(textScale);
+		d.text(text, 0, 0, color, false);
+		d.pop();
 	}
 
 	public int titleWidth(String text) {

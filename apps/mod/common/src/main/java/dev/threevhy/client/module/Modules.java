@@ -101,9 +101,11 @@ public final class Modules {
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
 	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
 	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", true));
-	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The artist, progress bar and volume bar", 0xFF8CC4EA));
+	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The play button, progress bar and volume bar", 0xFFF2F2F2));
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
+	public static final Module MODULE_LIST = sized(background(new Module("module_list", "Module List",
+			"The mods you have on, listed down the side of the screen", Category.HUD, true).markNew()));
 	public static final Module PLAYER_LIST = sized(background(new Module("player_list", "Player List",
 			"Add players and see when they're online on your server", Category.HUD, true).markNew()));
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
@@ -203,7 +205,9 @@ public final class Modules {
 			"The font in the Panels menu and the Music HUD: a clean sans-serif, or Minecraft's pixel font", 0, "Clean",
 			"Minecraft"));
 	public static final Color THEME_PANEL_COLOR = THEME.add(new Color("panel_color", "Panels colour",
-			"The colour of mods that are on in the Panels mod menu", 0xFF74D46E));
+			"The colour of the Panels menu, the module list and the menu logo", 0xFF5A9CFF));
+	public static final Toggle THEME_RAINBOW = THEME.add(new Toggle("rainbow", "Rainbow",
+			"The Panels colour slowly cycles through the rainbow", false));
 	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Snow", "Pixel snow behind 3vhy's menus", true));
 	public static final Slider THEME_SNOW_AMOUNT = THEME.add(new Slider("snow_amount", "Snow amount", "How much snow falls",
 			10, 100, 10, 50, "%"));
@@ -259,7 +263,7 @@ public final class Modules {
 
 	public static final List<Module> ALL = List.of(
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, ITEMS, POPS, TARGET_HUD, COMBO, SCOREBOARD, JUMP_RESET,
-			MUSIC, PLAYER_LIST,
+			MUSIC, PLAYER_LIST, MODULE_LIST,
 			CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM,
 			CROSSHAIR, FULLBRIGHT, NO_FOG, FOV_CHANGER, NAMETAGS, SHINY_POTS, SWING_SPEED, SKIN_PROTECT, MENU_NAME, MAIN_MENU,
 			THEME,
