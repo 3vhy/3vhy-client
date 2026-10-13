@@ -168,7 +168,7 @@ public final class HubScreen extends CompatScreen {
 		int size = emblemSize();
 		int ex = cx - size / 2;
 		int ey = nameY - 8 - size + drop;
-		drawEmblem(ui.d, ex, ey, size, cell(), alpha);
+		drawEmblem(ui.d, ex, ey, size, cell(), alpha, ui.t.text());
 
 		ui.d.push();
 		ui.d.translate(cx, nameY + drop);
@@ -176,9 +176,8 @@ public final class HubScreen extends CompatScreen {
 		String brand = "3VHY";
 		String client = " CLIENT";
 		int textW = ui.boldWidth(brand) + ui.width(client);
-		int white = MenuTheme.alpha(0xFFFFFF, alpha);
-		ui.d.text(Ui.bold(brand), -textW / 2, 0, white, false);
-		ui.d.text(client, -textW / 2 + ui.boldWidth(brand), 0, MenuTheme.alpha(0xE6E6E6, alpha), false);
+		ui.d.text(Ui.bold(brand), -textW / 2, 0, MenuTheme.alpha(ui.t.text(), alpha), false);
+		ui.d.text(client, -textW / 2 + ui.boldWidth(brand), 0, MenuTheme.alpha(Draw.mix(ui.t.text(), ui.t.muted(), 0.25), alpha), false);
 		ui.d.pop();
 
 		int rowW = MODS_W + 2 * (BUTTON_H + GAP);
@@ -194,9 +193,9 @@ public final class HubScreen extends CompatScreen {
 		if (ui.hover(x, btnY, x + BUTTON_H, btnY + BUTTON_H)) ui.tooltip("Waypoints", x + BUTTON_H / 2, btnY + BUTTON_H + 4);
 	}
 
-	/** The 3vhy emblem: the app icon's pixel 3 inside a rounded outline, in white like Lunar's. */
-	static void drawEmblem(Draw d, int x, int y, int size, int cell, int alpha) {
-		int white = MenuTheme.alpha(0xFFFFFF, alpha);
+	/** The 3vhy emblem: the app icon's pixel 3 inside a rounded outline, in one colour like Lunar's. */
+	static void drawEmblem(Draw d, int x, int y, int size, int cell, int alpha, int color) {
+		int white = MenuTheme.alpha(color, alpha);
 		int shade = MenuTheme.alpha(0x000000, alpha * 0x50 / 255);
 		int radius = size / 4;
 		int ring = Math.max(2, cell / 2 + 1);

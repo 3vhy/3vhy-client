@@ -180,7 +180,7 @@ public final class ModMenuScreen extends CompatScreen {
 
 	private void drawHeader(Ui ui, int px, int y0, int pw) {
 		int y = y0 + 8;
-		HubScreen.drawEmblem(ui.d, px + 8, y, 16, 1, 255);
+		HubScreen.drawEmblem(ui.d, px + 8, y, 16, 1, 255, ui.t.text());
 		int x = px + 32;
 		for (Tab each : Tab.values()) {
 			String label = each.name();
