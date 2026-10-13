@@ -759,11 +759,11 @@ public final class ModMenuScreen extends CompatScreen {
 		ui.button(x, y, keyW, 16, ui.trim(keyLabel, keyW - 10), picking, () -> focus = Focus.HOTKEY_KEY);
 		int fx = x + keyW + 6;
 		int fieldW = w - keyW - addW - 12;
-		ui.field(fx, y, fieldW, 16, hotkeyText, "Message or /command, like /home", focus == Focus.HOTKEY_TEXT, PixelIcons.PENCIL);
+		ui.field(fx, y, fieldW, 16, hotkeyText, "Message or /command", focus == Focus.HOTKEY_TEXT, PixelIcons.PENCIL);
 		ui.hit(fx, y, fx + fieldW, y + 16, () -> focus = Focus.HOTKEY_TEXT);
 		ui.button(x + w - addW, y, addW, 16, "+ Add", true, this::addHotkey);
 		y += 22;
-		String hint = "Start with / to run a command. Works in game with no menu or chat open. Mouse side buttons work too.";
+		String hint = "Start with / to run a command. Never fires while you type.";
 		ui.small(ui.trim(hint, (int) ((w - 4) / 0.75f)), x + 2, y, 0.75f, t.muted());
 		y += 12;
 		List<Config.TextHotkey> hotkeys = new ArrayList<>(Config.get().textHotkeys);
