@@ -26,6 +26,9 @@
   "app.3vhy.home.installing": {
     "message": "Installing"
   },
+  "app.3vhy.home.october": {
+    "message": "Happy October"
+  },
   "app.3vhy.home.play": {
     "message": "Play"
   },
@@ -46,6 +49,9 @@
   },
   "app.3vhy.home.welcome": {
     "message": "Welcome to 3vhy Client"
+  },
+  "app.3vhy.home.welcome-back": {
+    "message": "Welcome back,"
   },
   "app.3vhy.ingame.built-in": {
     "message": "30+ mods built in: HUD, PvP tools, crosshair, waypoints, profiles and more."
@@ -160,6 +166,12 @@
   },
   "app.3vhy.servers.title": {
     "message": "Servers"
+  },
+  "app.3vhy.settings.october.description": {
+    "message": "White, with ghosts. It turns itself on in October and off in November. While it is on, it is used instead of the colour theme below."
+  },
+  "app.3vhy.settings.october.title": {
+    "message": "October look"
   },
   "app.3vhy.settings.sidebar.label.client": {
     "message": "3vhy Client"

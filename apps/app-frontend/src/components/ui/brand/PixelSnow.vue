@@ -109,8 +109,12 @@ onBeforeUnmount(() => {
 	pointer-events: none;
 	image-rendering: pixelated;
 }
+</style>
 
-:global(html.light-mode) .pixel-snow {
+<style>
+/* Not scoped: a scoped ":global(html.light-mode) .pixel-snow" compiles to just "html.light-mode",
+   which hid the whole app in light mode */
+html.light-mode .pixel-snow {
 	display: none;
 }
 </style>

@@ -77,6 +77,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router'
 
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import AppActionBar from '@/components/ui/AppActionBar.vue'
+import PixelGhosts from '@/components/ui/brand/PixelGhosts.vue'
 import PixelSnow from '@/components/ui/brand/PixelSnow.vue'
 import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
@@ -107,6 +108,7 @@ import { useError } from '@/composables/use-error.js'
 import { useInstanceMetadataRefresh } from '@/composables/use-instance-metadata-refresh'
 import { useQuickInstanceLimit } from '@/composables/use-quick-instance-limit.ts'
 import { useSelectedInstance } from '@/composables/use-selected-instance'
+import { octoberActive } from '@/composables/use-october'
 import { isDarkTheme, useTheme } from '@/composables/use-theme.ts'
 import { config } from '@/config'
 import NewUpdateModal from '@/features/updates/new-update-modal/index.vue'
@@ -1856,8 +1858,9 @@ function handleContextMenu(event) {
 		class="app-grid-layout relative"
 		:class="{ 'disable-advanced-rendering': !appTheme.advancedRendering }"
 	>
-		<!-- 3vhy Client: pixel snow falls on the night sky behind everything -->
-		<PixelSnow v-if="appTheme.advancedRendering" class="app-snow" />
+		<!-- 3vhy Client: pixel snow falls on the night sky behind everything (ghosts float up in October) -->
+		<PixelGhosts v-if="appTheme.advancedRendering && octoberActive" class="app-snow" />
+		<PixelSnow v-else-if="appTheme.advancedRendering" class="app-snow" />
 		<Transition name="fade">
 			<div
 				v-if="restarting"

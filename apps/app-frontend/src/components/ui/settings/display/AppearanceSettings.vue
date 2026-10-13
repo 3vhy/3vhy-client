@@ -1,20 +1,35 @@
 <script setup lang="ts">
 import {
 	AppearanceSettingsLayout,
+	defineMessages,
 	injectAuth,
 	injectUserPreferences,
 	provideAppearanceSettings,
+	Toggle,
 	useSavable,
+	useVIntl,
 } from '@modrinth/ui'
 import { platform } from '@tauri-apps/plugin-os'
 import { computed, inject, onBeforeUnmount, onMounted, watch } from 'vue'
 
 import { useAppSettings } from '@/composables/use-app-settings.ts'
+import { useOctober } from '@/composables/use-october'
 import { type ColorTheme, isDarkTheme, useTheme } from '@/composables/use-theme.ts'
 import { type AppSettings, get, set } from '@/helpers/settings.ts'
 import { appSettingsModalContextKey } from '@/providers/app-settings-modal'
 
 const theme = useTheme()
+const { formatMessage } = useVIntl()
+const { active: octoberOn, setEnabled: setOctober } = useOctober()
+
+const messages = defineMessages({
+	octoberTitle: { id: 'app.3vhy.settings.october.title', defaultMessage: 'October look' },
+	octoberDescription: {
+		id: 'app.3vhy.settings.october.description',
+		defaultMessage:
+			'White, with ghosts. It turns itself on in October and off in November. While it is on, it is used instead of the colour theme below.',
+	},
+})
 const appSettings = useAppSettings()
 const auth = injectAuth()
 const { updatePreferences } = injectUserPreferences()
@@ -158,5 +173,22 @@ provideAppearanceSettings({
 </script>
 
 <template>
+	<section class="mb-6 flex items-center justify-between gap-4">
+		<div>
+			<h2 id="threevhy-october-label" class="m-0 text-lg font-semibold text-contrast">
+				{{ formatMessage(messages.octoberTitle) }}
+			</h2>
+			<p id="threevhy-october-description" class="m-0 mt-1">
+				{{ formatMessage(messages.octoberDescription) }}
+			</p>
+		</div>
+		<Toggle
+			id="threevhy-october"
+			:model-value="octoberOn"
+			aria-labelledby="threevhy-october-label"
+			aria-describedby="threevhy-october-description"
+			@update:model-value="setOctober($event)"
+		/>
+	</section>
 	<AppearanceSettingsLayout />
 </template>

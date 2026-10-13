@@ -1,6 +1,8 @@
 import { prepareThemeColorTransition } from '@modrinth/ui'
 import { computed, reactive, ref, watch } from 'vue'
 
+import { octoberActive } from '@/composables/use-october'
+
 export const THEME_OPTIONS = ['dark', 'light', 'oled', 'retro', 'system'] as const
 export const DARK_THEMES = ['dark', 'oled', 'retro'] as const
 
@@ -56,6 +58,11 @@ const syncAcrossDevices = ref(false)
 const nativeThemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
 const native = ref<NativeTheme>(nativeThemeQuery.matches ? 'dark' : 'light')
 const active = computed<Theme>(() => {
+	// 3vhy Client: the October look is white, so it sits on the light colours
+	if (octoberActive.value) {
+		return 'light'
+	}
+
 	const selectedTheme = preview.value ?? preferred.value
 	if (selectedTheme !== 'system') {
 		return selectedTheme

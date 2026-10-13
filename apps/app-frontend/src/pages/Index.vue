@@ -15,6 +15,7 @@ import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, inject, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
+import GhostSprite from '@/components/ui/brand/GhostSprite.vue'
 import PixelSnow from '@/components/ui/brand/PixelSnow.vue'
 import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
 import InGamePanel from '@/components/ui/home/InGamePanel.vue'
@@ -25,9 +26,11 @@ import { THREEVHY_VERSIONS } from '@/components/ui/home/threevhy'
 import RecentWorldsList from '@/components/ui/world/RecentWorldsList.vue'
 import { useAppEvent } from '@/composables/use-app-event'
 import { useAppSettings } from '@/composables/use-app-settings.ts'
+import { octoberActive } from '@/composables/use-october'
 import { handleSevereError } from '@/composables/use-error.js'
 import { useInstanceMods } from '@/composables/use-instance-mods'
 import { useSelectedInstance } from '@/composables/use-selected-instance'
+import { get_default_user, users } from '@/helpers/auth'
 import { install_create_instance, installJobInstanceId } from '@/helpers/install'
 import { kill, run } from '@/helpers/instance'
 import { maxMemoryQueryOptions } from '@/helpers/jre.js'
@@ -37,8 +40,9 @@ import { traceStartupStep } from '@/helpers/startup-debug'
 import { useRootBreadcrumb } from '@/providers/breadcrumbs'
 import { injectOnboardingChecklist } from '@/providers/onboarding-checklist'
 
-// 3vhy Client home: the banner sky with Play front and centre, and a hotbar of
-// shortcuts underneath — press 1 to 5 to jump to one, like in Minecraft.
+// 3vhy Client home: a greeting with your stats, the banner sky with Play front and
+// centre, and a hotbar of shortcuts underneath — press 1 to 5 to jump to one, like in
+// Minecraft. In October the sky turns to a pale moonlit graveyard with ghosts.
 defineOptions({
 	name: 'HomePage',
 })
@@ -54,6 +58,8 @@ const router = useRouter()
 const messages = defineMessages({
 	home: { id: 'app.navigation.home', defaultMessage: 'Home' },
 	welcome: { id: 'app.3vhy.home.welcome', defaultMessage: 'Welcome to 3vhy Client' },
+	welcomeBack: { id: 'app.3vhy.home.welcome-back', defaultMessage: 'Welcome back,' },
+	october: { id: 'app.3vhy.home.october', defaultMessage: 'Happy October' },
 	modsOn: { id: 'app.3vhy.home.stat.mods', defaultMessage: 'mods on' },
 	instances: {
 		id: 'app.3vhy.home.stat.instances',
@@ -90,6 +96,19 @@ const { instances, selected, select, instancesQuery } = useSelectedInstance()
 if (hasCreatedInstance.value) {
 	await traceStartupStep('Load home instances', () => instancesQuery.suspense()).catch(handleError)
 }
+
+type MinecraftAccount = { profile?: { id: string; name: string } }
+/** The signed-in Minecraft account's name, for the greeting. */
+const playerQuery = useQuery({
+	queryKey: ['threevhy', 'player-name'],
+	queryFn: async (): Promise<string | null> => {
+		const id = await get_default_user()
+		if (!id) return null
+		const accounts = ((await users()) ?? []) as MinecraftAccount[]
+		return accounts.find((account) => account.profile?.id === id)?.profile?.name ?? null
+	},
+})
+const playerName = computed(() => playerQuery.data.value ?? null)
 
 const selectedId = computed(() => selected.value?.id ?? null)
 const { enabledCount } = useInstanceMods(selectedId)
@@ -191,6 +210,55 @@ function onHotbarKey(event: KeyboardEvent) {
 onMounted(() => window.addEventListener('keydown', onHotbarKey))
 onBeforeUnmount(() => window.removeEventListener('keydown', onHotbarKey))
 
+type Run = { x: number; y: number; w: number }
+
+/** The filled runs of a pixel sprite (# filled, . empty), one rect each. */
+function spriteRuns(rows: string[]): Run[] {
+	const runs: Run[] = []
+	rows.forEach((row, y) => {
+		for (let x = 0; x < row.length; x++) {
+			if (row[x] !== '#') continue
+			let end = x
+			while (end < row.length && row[end] === '#') end++
+			runs.push({ x, y, w: end - x })
+			x = end
+		}
+	})
+	return runs
+}
+
+// October: a pixel moon, 20 cells across
+const moonRows: Run[] = Array.from({ length: 20 }, (_, y) => {
+	const half = Math.round(Math.sqrt(Math.max(0, 100 - (y + 0.5 - 10) ** 2)))
+	return { x: 10 - half, y, w: half * 2 }
+})
+
+// October: bats flapping by the moon, wings up and wings down
+const batUp = spriteRuns([
+	'#.........#',
+	'##.......##',
+	'###.#.#.###',
+	'.#########.',
+	'...#####...',
+])
+const batDown = spriteRuns([
+	'....#.#....',
+	'..#######..',
+	'.#########.',
+	'##.#####.##',
+	'#.........#',
+])
+
+// October: tombstones and pumpkins standing on the front hill, as [left %, bottom %, kind]
+const graveyard: [number, number, 'stone' | 'cross' | 'pumpkin'][] = [
+	[5, 8.5, 'stone'],
+	[18, 11.3, 'pumpkin'],
+	[26, 8.5, 'cross'],
+	[75, 14.2, 'cross'],
+	[85, 11.3, 'pumpkin'],
+	[93, 11.3, 'stone'],
+]
+
 // Pixel clouds in the hero sky, in grid cells: [x, y, width]
 const clouds: [number, number, number][] = [
 	[3, 3, 7],
@@ -201,6 +269,40 @@ const clouds: [number, number, number][] = [
 
 <template>
 	<div class="tvh-home">
+		<header class="tvh-greet">
+			<p class="tvh-greet__hello">
+				<template v-if="playerName">
+					{{ formatMessage(messages.welcomeBack) }} <b>{{ playerName }}</b>
+				</template>
+				<template v-else>{{ formatMessage(messages.welcome) }}</template>
+				<span v-if="octoberActive" class="tvh-greet__season">
+					<GhostSprite :size="14" />
+					{{ formatMessage(messages.october) }}
+				</span>
+			</p>
+
+			<div class="tvh-stats">
+				<span v-if="selected" class="tvh-stat">
+					<b>{{ enabledCount }}</b> {{ formatMessage(messages.modsOn) }}
+				</span>
+				<span class="tvh-stat">
+					<b>{{ instances.length }}</b>
+					{{ formatMessage(messages.instances, { count: instances.length }) }}
+				</span>
+				<span
+					v-if="ramGb"
+					v-tooltip="
+						allocatedGb
+							? formatMessage(messages.ramTooltip, { total: ramGb, allocated: allocatedGb })
+							: undefined
+					"
+					class="tvh-stat"
+				>
+					<b>{{ ramGb }}</b> {{ formatMessage(messages.ram) }}
+				</span>
+			</div>
+		</header>
+
 		<section class="tvh-hero">
 			<div class="tvh-hero__sky" aria-hidden="true">
 				<svg
@@ -214,7 +316,58 @@ const clouds: [number, number, number][] = [
 						<rect :x="x" :y="y + 1" :width="w" height="1" />
 					</g>
 				</svg>
-				<PixelSnow :density="1.6" :speed="12" />
+				<template v-if="octoberActive">
+					<svg class="tvh-moon" viewBox="0 0 20 20" shape-rendering="crispEdges">
+						<rect
+							v-for="row in moonRows"
+							:key="row.y"
+							class="tvh-moon__face"
+							:x="row.x"
+							:y="row.y"
+							:width="row.w"
+							height="1"
+						/>
+						<path
+							class="tvh-moon__crater"
+							d="M5 5h3v1h1v2H8v1H5V8H4V6h1zM12 11h3v3h-1v1h-2v-1h-1v-2h1zM13 4h2v2h-2zM6 13h2v2H6z"
+						/>
+					</svg>
+					<div class="tvh-bats">
+						<svg
+							v-for="index in 3"
+							:key="index"
+							class="tvh-bat"
+							viewBox="0 0 11 5"
+							shape-rendering="crispEdges"
+						>
+							<g class="tvh-bat__up">
+								<rect
+									v-for="(cell, i) in batUp"
+									:key="i"
+									:x="cell.x"
+									:y="cell.y"
+									:width="cell.w"
+									height="1"
+								/>
+							</g>
+							<g class="tvh-bat__down">
+								<rect
+									v-for="(cell, i) in batDown"
+									:key="i"
+									:x="cell.x"
+									:y="cell.y"
+									:width="cell.w"
+									height="1"
+								/>
+							</g>
+						</svg>
+					</div>
+					<GhostSprite class="tvh-ghost tvh-ghost--far" :size="40" facing="left" />
+					<GhostSprite class="tvh-ghost tvh-ghost--left" :size="112" />
+					<GhostSprite class="tvh-ghost tvh-ghost--right" :size="84" facing="left" />
+					<div class="tvh-mist tvh-mist--back" />
+				</template>
+				<PixelSnow v-else :density="1.6" :speed="12" />
 				<svg
 					class="tvh-hero__hills"
 					viewBox="0 0 64 12"
@@ -224,32 +377,30 @@ const clouds: [number, number, number][] = [
 					<path class="tvh-hill--back" d="M0 6h6v-1h7v1h5v-2h8v1h6v1h9v-2h7v1h9v1h7v6H0z" />
 					<path class="tvh-hill--front" d="M0 9h9v-1h8v1h11v-1h6v1h10v-2h8v1h12v4H0z" />
 				</svg>
+				<template v-if="octoberActive">
+					<svg
+						v-for="([left, bottom, kind], index) in graveyard"
+						:key="index"
+						class="tvh-grave"
+						:class="`tvh-grave--${kind}`"
+						:style="{ left: `${left}%`, bottom: `${bottom}%` }"
+						viewBox="0 0 6 6"
+						shape-rendering="crispEdges"
+					>
+						<template v-if="kind === 'pumpkin'">
+							<path class="tvh-pumpkin__stem" d="M2 0h1v1H2z" />
+							<path class="tvh-pumpkin__body" d="M1 1h4v1h1v3H5v1H1V5H0V2h1z" />
+							<path class="tvh-pumpkin__face" d="M1 2h1v1H1zM4 2h1v1H4zM2 4h2v1H2z" />
+						</template>
+						<path v-else-if="kind === 'cross'" d="M2 0h1v1h1v1H3v4H2V2H1V1h1z" />
+						<path v-else d="M1 0h3v1h1v5H0V1h1z" />
+					</svg>
+					<div class="tvh-mist tvh-mist--front" />
+				</template>
 			</div>
 
 			<div class="tvh-hero__content">
 				<ThreevhyLogo size="lg" />
-				<p class="tvh-hero__welcome">{{ formatMessage(messages.welcome) }}</p>
-
-				<div class="tvh-stats">
-					<span v-if="selected" class="tvh-stat">
-						<b>{{ enabledCount }}</b> {{ formatMessage(messages.modsOn) }}
-					</span>
-					<span class="tvh-stat">
-						<b>{{ instances.length }}</b>
-						{{ formatMessage(messages.instances, { count: instances.length }) }}
-					</span>
-					<span
-						v-if="ramGb"
-						v-tooltip="
-							allocatedGb
-								? formatMessage(messages.ramTooltip, { total: ramGb, allocated: allocatedGb })
-								: undefined
-						"
-						class="tvh-stat"
-					>
-						<b>{{ ramGb }}</b> {{ formatMessage(messages.ram) }}
-					</span>
-				</div>
 
 				<div class="tvh-playbar">
 					<button
@@ -307,6 +458,49 @@ const clouds: [number, number, number][] = [
 	flex-direction: column;
 	gap: 1.25rem;
 	padding: 1.25rem 1.5rem 2rem;
+}
+
+// Greeting, like a launcher's welcome line: who's playing on the left, stats on the right
+.tvh-greet {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem 1rem;
+	margin-bottom: -0.35rem;
+}
+
+.tvh-greet__hello {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0;
+	font-size: 1.05rem;
+	color: var(--color-base);
+
+	b {
+		font-family: var(--threevhy-font-pixel);
+		font-weight: 600;
+		color: var(--color-contrast);
+	}
+}
+
+.tvh-greet__season {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin-left: 0.35rem;
+	padding: 0.18rem 0.55rem 0.22rem 0.4rem;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: #b4561a;
+	background: rgba(255, 138, 43, 0.12);
+	clip-path: var(--threevhy-pixel-corners);
+
+	.ghost-sprite {
+		filter: none;
+	}
 }
 
 .tvh-hero {
@@ -390,16 +584,11 @@ const clouds: [number, number, number][] = [
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	gap: 0.85rem;
-	padding: 2.6rem 1.5rem 4.6rem;
+	min-height: 24.5rem;
+	padding: 2.2rem 1.5rem 5rem;
 	text-align: center;
-}
-
-.tvh-hero__welcome {
-	margin: 0;
-	font-size: 1rem;
-	font-weight: 500;
-	color: var(--threevhy-pale);
 }
 
 .tvh-stats {
@@ -412,12 +601,12 @@ const clouds: [number, number, number][] = [
 .tvh-stat {
 	padding: 0.32rem 0.8rem 0.38rem;
 	font-size: 0.85rem;
-	color: var(--threevhy-pale);
-	background: rgba(4, 18, 63, 0.45);
+	color: var(--color-secondary);
+	background: var(--threevhy-chip-bg);
 	clip-path: var(--threevhy-pixel-corners);
 
 	b {
-		color: #f2faff;
+		color: var(--color-contrast);
 		font-weight: 700;
 	}
 }
@@ -558,13 +747,306 @@ const clouds: [number, number, number][] = [
 	font-weight: 600;
 }
 
+.tvh-moon {
+	position: absolute;
+	top: 9%;
+	right: 7%;
+	width: 4.6rem;
+	height: 4.6rem;
+	filter: drop-shadow(0 0 18px rgba(143, 132, 173, 0.35));
+}
+
+.tvh-moon__face {
+	fill: #fcfaff;
+}
+
+.tvh-moon__crater {
+	fill: #ebe5f4;
+}
+
+.tvh-bats {
+	position: absolute;
+	top: 7%;
+	right: 5%;
+	width: 11rem;
+	height: 6rem;
+}
+
+.tvh-bat {
+	position: absolute;
+	width: 1.4rem;
+	fill: #2a2238;
+	animation: tvh-bat-path 9s ease-in-out infinite alternate;
+
+	&:nth-child(1) {
+		top: 10%;
+		left: 4%;
+	}
+
+	&:nth-child(2) {
+		top: 64%;
+		left: 22%;
+		width: 1.1rem;
+		animation-duration: 11s;
+		animation-delay: -3s;
+	}
+
+	&:nth-child(3) {
+		top: 30%;
+		left: 82%;
+		width: 0.9rem;
+		animation-duration: 7s;
+		animation-delay: -5s;
+	}
+}
+
+.tvh-bat__up {
+	animation: tvh-flap 0.36s steps(1) infinite;
+}
+
+.tvh-bat__down {
+	animation: tvh-flap 0.36s steps(1) infinite reverse;
+}
+
+@keyframes tvh-flap {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0;
+	}
+}
+
+@keyframes tvh-bat-path {
+	from {
+		transform: translate(0, 0);
+	}
+	to {
+		transform: translate(-1.6rem, 0.6rem);
+	}
+}
+
+.tvh-ghost {
+	position: absolute;
+	animation: tvh-bob 4.2s ease-in-out infinite;
+}
+
+.tvh-ghost--left {
+	left: 6%;
+	top: 26%;
+}
+
+.tvh-ghost--right {
+	right: 4%;
+	top: 44%;
+	animation-duration: 5s;
+	animation-delay: -1.6s;
+}
+
+.tvh-ghost--far {
+	left: 23%;
+	top: 12%;
+	opacity: 0.55;
+	animation-duration: 6s;
+	animation-delay: -3s;
+}
+
+// Narrow windows: keep the ghosts clear of the Play button and the instance picker
+@media (max-width: 1180px) {
+	.tvh-ghost--far,
+	.tvh-ghost--right {
+		display: none;
+	}
+
+	.tvh-ghost--left {
+		left: 2%;
+		top: 8%;
+		scale: 0.7;
+		transform-origin: top left;
+	}
+}
+
+@keyframes tvh-bob {
+	0%,
+	100% {
+		translate: 0 0;
+	}
+	50% {
+		translate: 0 -10px;
+	}
+}
+
+.tvh-mist {
+	position: absolute;
+	left: -20%;
+	width: 140%;
+	height: 1.6rem;
+	background: repeating-linear-gradient(
+		90deg,
+		rgba(255, 255, 255, 0) 0,
+		rgba(255, 255, 255, 0.7) 9rem,
+		rgba(255, 255, 255, 0) 20rem
+	);
+	animation: tvh-mist 26s linear infinite alternate;
+}
+
+.tvh-mist--back {
+	bottom: 21%;
+	opacity: 0.8;
+}
+
+.tvh-mist--front {
+	bottom: 4%;
+	height: 1.2rem;
+	opacity: 0.6;
+	animation-duration: 34s;
+	animation-direction: alternate-reverse;
+}
+
+@keyframes tvh-mist {
+	from {
+		transform: translateX(-4%);
+	}
+	to {
+		transform: translateX(4%);
+	}
+}
+
+.tvh-grave {
+	position: absolute;
+	width: 1.5rem;
+	height: 1.5rem;
+	translate: -50% 0;
+	fill: #a79dbf;
+}
+
+.tvh-grave--pumpkin {
+	width: 1.8rem;
+	height: 1.8rem;
+	filter: drop-shadow(0 0 10px rgba(255, 138, 43, 0.45));
+}
+
+.tvh-pumpkin__stem {
+	fill: #4e7a3a;
+}
+
+.tvh-pumpkin__body {
+	fill: #ff8a2b;
+}
+
+.tvh-pumpkin__face {
+	fill: #ffd45c;
+	animation: tvh-flicker 2.4s steps(1) infinite;
+}
+
+@keyframes tvh-flicker {
+	0%,
+	70%,
+	100% {
+		fill: #ffd45c;
+	}
+	72%,
+	80% {
+		fill: #ffe9a3;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.tvh-cloud {
+	.tvh-cloud,
+	.tvh-ghost,
+	.tvh-bat,
+	.tvh-bat__up,
+	.tvh-bat__down,
+	.tvh-mist,
+	.tvh-pumpkin__face {
 		animation: none;
+	}
+
+	.tvh-bat__down {
+		display: none;
 	}
 
 	.tvh-play:active:not(:disabled) {
 		transform: none;
 	}
+}
+</style>
+
+<style lang="scss">
+// October: a pale moonlit graveyard with ghosts, everything else in white and ink. Not scoped,
+// because it hangs off the `threevhy-october` class on <html>; every class here is tvh- prefixed.
+html.threevhy-october .tvh-hero {
+	--threevhy-ice: #221c30;
+	--threevhy-card-bg: rgba(255, 255, 255, 0.86);
+	--threevhy-card-border: rgba(34, 28, 48, 0.1);
+	--color-contrast: #221c30;
+	--color-base: #3d3650;
+	--color-secondary: #6f6886;
+	--color-raised-bg: #ffffff;
+	--color-button-bg: #f1eff6;
+	--color-divider: rgba(34, 28, 48, 0.08);
+	--color-brand: #2d2440;
+	--color-brand-highlight: rgba(45, 36, 64, 0.08);
+}
+
+html.threevhy-october .tvh-hero__sky {
+	background:
+		radial-gradient(38% 46% at 88% 14%, rgba(143, 132, 173, 0.22), transparent 70%),
+		var(--threevhy-sky-panel);
+	box-shadow:
+		inset 0 0 0 2px rgba(34, 28, 48, 0.06),
+		inset 0 2px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.threevhy-october .tvh-cloud {
+	fill: rgba(143, 132, 173, 0.14);
+}
+
+html.threevhy-october .tvh-hill--back {
+	fill: #ddd7ea;
+}
+
+html.threevhy-october .tvh-hill--front {
+	fill: #c9c0db;
+}
+
+html.threevhy-october .tvh-play:not(.tvh-play--stop) {
+	color: #ffffff;
+	box-shadow:
+		inset 0 -6px 0 rgba(10, 6, 20, 0.45),
+		inset 0 3px 0 rgba(255, 255, 255, 0.16);
+}
+
+html.threevhy-october .tvh-hotbar {
+	background: #ffffff;
+	box-shadow:
+		inset 0 0 0 2px rgba(34, 28, 48, 0.1),
+		inset 0 -4px 0 rgba(34, 28, 48, 0.08),
+		0 10px 24px rgba(60, 48, 92, 0.12);
+}
+
+html.threevhy-october .tvh-slot {
+	color: #3d3650;
+	background: #f6f5fa;
+	box-shadow:
+		inset 3px 3px 0 rgba(34, 28, 48, 0.07),
+		inset -3px -3px 0 rgba(255, 255, 255, 0.9);
+
+	&:hover,
+	&:focus-visible {
+		color: #221c30;
+		background: #ffffff;
+		box-shadow:
+			inset 0 0 0 3px #2d2440,
+			inset 3px 3px 0 3px rgba(34, 28, 48, 0.06);
+	}
+}
+
+html.threevhy-october .tvh-slot__key {
+	color: rgba(111, 104, 134, 0.6);
+}
+
+html.threevhy-october .tvh-slot__icon {
+	color: #6d5fa0;
 }
 </style>

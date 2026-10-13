@@ -1,0 +1,171 @@
+// 3vhy Client in October: white, with ghosts.
+//
+// The same blocky shapes as the rest of 3vhy, repainted for the season. It sits on top of the
+// light colours (see use-october.ts), so anything made for light mode still reads well.
+//
+//   paper    #f6f5fa  the ground everything sits on
+//   white    #ffffff  raised surfaces, the ghosts
+//   mist     #e6e2ef  edges and quiet fills
+//   lilac    #8f84ad  secondary text, ghost shading
+//   ink      #221c30  text and primary actions
+//   pumpkin  #ff8a2b  a hint of the season, used sparingly
+
+html.threevhy-october,
+html.threevhy-october.light-mode {
+	--threevhy-cyan: #6d5fa0;
+	--threevhy-royal: #4a3f6b;
+	--threevhy-sky: #8f84ad;
+	--threevhy-pale: #5d5574;
+	--threevhy-ice: #221c30;
+	--threevhy-night: #f6f5fa;
+	--threevhy-pumpkin: #ff8a2b;
+	--threevhy-chip-bg: rgba(34, 28, 48, 0.06);
+	--threevhy-card-bg: rgba(255, 255, 255, 0.82);
+	--threevhy-card-border: rgba(34, 28, 48, 0.1);
+	--threevhy-play-bg: linear-gradient(180deg, #3d3452 0%, #2a2338 55%, #1c1726 100%);
+	--threevhy-stars: none;
+	--threevhy-sky-panel: linear-gradient(180deg, #ffffff 0%, #f4f1fa 46%, #e3ddef 100%);
+	--threevhy-slab: rgba(255, 255, 255, 0.8);
+	--threevhy-sidebar: rgba(255, 255, 255, 0.55);
+	--threevhy-block-edge:
+		inset 0 -4px 0 rgba(20, 14, 34, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.22);
+	--threevhy-block-edge-pressed:
+		inset 0 -1px 0 rgba(20, 14, 34, 0.35), inset 0 2px 0 rgba(20, 14, 34, 0.18);
+
+	--surface-1: #f6f5fa;
+	--surface-1-5: #f9f8fc;
+	--surface-2: #fbfafd;
+	--surface-2-5: #fdfcfe;
+	--surface-3: #ffffff;
+	--surface-4: #ffffff;
+	--surface-5: #e6e2ef;
+
+	--color-text-primary: #221c30;
+	--color-text-default: #3d3650;
+	--color-text-tertiary: #6f6886;
+
+	--color-bg: var(--surface-1);
+	--color-raised-bg: var(--surface-3);
+	--color-super-raised-bg: var(--surface-4);
+	--color-button-bg: #f1eff6;
+	--color-button-border: rgba(34, 28, 48, 0.1);
+	--color-scrollbar: #d5d0e1;
+	--color-divider: rgba(34, 28, 48, 0.08);
+	--color-divider-dark: #d5d0e1;
+
+	--color-base: var(--color-text-default);
+	--color-secondary: var(--color-text-tertiary);
+	--color-contrast: var(--color-text-primary);
+	--color-accent-contrast: #ffffff;
+
+	--color-brand: #2d2440;
+	--color-brand-highlight: rgba(45, 36, 64, 0.08);
+	--color-brand-shadow: rgba(45, 36, 64, 0.3);
+	--color-button-bg-selected: var(--color-brand);
+	--color-button-text-selected: #ffffff;
+
+	--brand-gradient-bg: transparent;
+	--brand-gradient-strong-bg: linear-gradient(270deg, #ece8f4 10%, #ffffff 100%);
+	--brand-gradient-button: rgba(255, 255, 255, 0.75);
+	--brand-gradient-border: rgba(34, 28, 48, 0.1);
+	--brand-gradient-fade-out-color: linear-gradient(to bottom, rgba(246, 245, 250, 0), #f6f5fa 70%);
+	--color-gradient-button-bg: linear-gradient(180deg, #ffffff 0%, #f1eff6 100%);
+	--loading-bar-gradient: linear-gradient(to right, #2d2440 0%, #8f84ad 100%);
+
+	--shadow-card: rgba(60, 48, 92, 0.08) 0px 2px 0px 0px;
+	--shadow-floating: 0 18px 40px rgba(60, 48, 92, 0.18);
+}
+
+// The shell: paper with a soft lilac glow up in the corner, where the moon would be
+html.threevhy-october .app-grid-layout {
+	background:
+		radial-gradient(70% 50% at 100% 0%, rgba(143, 132, 173, 0.16), transparent 70%),
+		radial-gradient(60% 40% at 0% 100%, rgba(255, 138, 43, 0.05), transparent 70%), #f6f5fa;
+}
+
+html.threevhy-october body {
+	scrollbar-color: #d5d0e1 transparent;
+}
+
+html.threevhy-october body ::-webkit-scrollbar-thumb {
+	background-color: #d5d0e1;
+}
+
+html.threevhy-october body ::-webkit-scrollbar-thumb:hover {
+	background-color: #b9b2ca;
+}
+
+html.threevhy-october ::selection {
+	background: rgba(143, 132, 173, 0.3);
+}
+
+html.threevhy-october body .button-frame--base.button-frame--base {
+	box-shadow:
+		inset 0 0 0 1px rgba(34, 28, 48, 0.1),
+		inset 0 -3px 0 rgba(34, 28, 48, 0.08);
+}
+
+html.threevhy-october body .clickable-card:hover {
+	border-color: rgba(45, 36, 64, 0.35) !important;
+}
+
+html.threevhy-october.light-mode .threevhy-logo__client {
+	color: #6f6886;
+}
+
+html.threevhy-october .threevhy-logo__mark {
+	filter: drop-shadow(0 1px 0 rgba(143, 132, 173, 0.45));
+}
+
+html.threevhy-october .threevhy-logo--lg .threevhy-logo__mark {
+	filter: drop-shadow(0 4px 0 rgba(143, 132, 173, 0.4));
+}
+
+// Home pieces that hard-code the night colours
+html.threevhy-october .tvh-picker__button {
+	background: rgba(255, 255, 255, 0.92);
+	box-shadow:
+		inset 0 0 0 2px rgba(34, 28, 48, 0.1),
+		inset 0 -4px 0 rgba(34, 28, 48, 0.08);
+}
+
+html.threevhy-october .tvh-picker__badge {
+	color: #ffffff;
+}
+
+html.threevhy-october .tvh-join:not(.tvh-join--stop) {
+	color: #ffffff;
+	background: var(--threevhy-play-bg);
+}
+
+// Navigation: the active tile is an ink block, with a pumpkin-orange marker on the edge
+html.threevhy-october .nav-tile:hover::before {
+	background: rgba(34, 28, 48, 0.06);
+}
+
+html.threevhy-october .nav-tile.router-link-active {
+	color: #ffffff;
+}
+
+html.threevhy-october .nav-tile.router-link-active::before {
+	background: var(--threevhy-play-bg);
+}
+
+html.threevhy-october .nav-tile.router-link-active::after {
+	background: #ff8a2b;
+	box-shadow: 0 0 10px rgba(255, 138, 43, 0.6);
+}
+
+html.threevhy-october .nav-tile.subpage-active::before {
+	background: rgba(45, 36, 64, 0.08);
+	box-shadow: inset 0 0 0 1px rgba(45, 36, 64, 0.2);
+}
+
+html.threevhy-october :is(.router-link-active, .subpage-active) svg {
+	filter: none;
+}
+
+// Switches: the knob is black on the brand colour, which is ink here, so make it white
+html.threevhy-october button[role='switch'][aria-checked='true'] > span {
+	background-color: #ffffff;
+}

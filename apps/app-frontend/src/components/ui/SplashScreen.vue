@@ -17,6 +17,7 @@
 				</svg>
 			</div>
 			<div class="splash-content" data-tauri-drag-region>
+				<GhostSprite v-if="octoberActive" class="splash-ghost" :size="72" />
 				<ThreevhyWordmarkLetters drop class="splash-wordmark" />
 				<span class="splash-client">CLIENT</span>
 				<div
@@ -43,8 +44,10 @@
 import { injectLoadingState } from '@modrinth/ui'
 import { computed, onMounted, ref, watch } from 'vue'
 
+import GhostSprite from '@/components/ui/brand/GhostSprite.vue'
 import ThreevhyWordmarkLetters from '@/components/ui/brand/ThreevhyWordmarkLetters.vue'
 import { useAppEvent } from '@/composables/use-app-event'
+import { octoberActive } from '@/composables/use-october'
 import { debugStartup } from '@/helpers/startup-debug'
 
 const BLOCKS = 16
@@ -276,11 +279,85 @@ useAppEvent('loading', (e) => {
 	}
 }
 
+.splash-ghost {
+	position: absolute;
+	top: calc(50% - 9.5rem);
+	left: calc(50% + min(150px, 18vw));
+	animation: splash-bob 3.6s ease-in-out infinite;
+}
+
+@keyframes splash-bob {
+	0%,
+	100% {
+		translate: 0 0;
+	}
+	50% {
+		translate: 0 -10px;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.splash-cloud,
 	.splash-client,
-	.splash-blocks {
+	.splash-blocks,
+	.splash-ghost {
 		animation: none;
+	}
+}
+</style>
+
+<style lang="scss">
+// October: the loading screen in white and ink, with a ghost peeking over the name
+html.threevhy-october {
+	.splash-screen {
+		background: #f6f5fa;
+	}
+
+	.splash-sky {
+		background:
+			radial-gradient(40% 40% at 80% 12%, rgba(143, 132, 173, 0.22), transparent 70%),
+			linear-gradient(180deg, #ffffff 0%, #f4f1fa 50%, #e3ddef 100%);
+	}
+
+	.splash-cloud {
+		background: rgba(143, 132, 173, 0.12);
+	}
+
+	.splash-hills .hill-back {
+		fill: #ddd7ea;
+	}
+
+	.splash-hills .hill-front {
+		fill: #c9c0db;
+	}
+
+	.splash-content {
+		color: #221c30;
+	}
+
+	.splash-wordmark {
+		filter: drop-shadow(0 5px 0 rgba(143, 132, 173, 0.45));
+	}
+
+	.splash-client {
+		color: #8f84ad;
+	}
+
+	.splash-blocks {
+		background: rgba(255, 255, 255, 0.85);
+		box-shadow: inset 0 0 0 2px rgba(34, 28, 48, 0.08);
+	}
+
+	.splash-block {
+		background: rgba(34, 28, 48, 0.07);
+
+		&.on {
+			background: linear-gradient(180deg, #4a4063, #2d2440 55%, #1c1726);
+		}
+	}
+
+	.splash-message {
+		color: #6f6886;
 	}
 }
 </style>

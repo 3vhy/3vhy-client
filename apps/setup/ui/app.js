@@ -4,6 +4,126 @@
 	const invoke = (cmd, args) => tauri.core.invoke(cmd, args)
 	const $ = (id) => document.getElementById(id)
 
+	// ---------- October ----------
+
+	// In October the setup turns white, with ghosts, a moon, bats and a little graveyard
+	const october = new Date().getMonth() === 9
+
+	/** An SVG of a pixel sprite: each character is one cell, coloured by its class in `parts`. */
+	function pixelSvg(rows, parts, className) {
+		let rects = ''
+		rows.forEach((row, y) => {
+			for (let x = 0; x < row.length; x++) {
+				const part = parts[row[x]]
+				if (!part) continue
+				let end = x
+				while (end < row.length && row[end] === row[x]) end++
+				rects += `<rect x="${x}" y="${y}" width="${end - x}" height="1" ${part}/>`
+				x = end - 1
+			}
+		})
+		const width = rows[0].length
+		return `<svg class="${className}" viewBox="0 0 ${width} ${rows.length}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`
+	}
+
+	const GHOST = [
+		'......####......',
+		'....########....',
+		'...##########s..',
+		'..###########ss.',
+		'.############ss.',
+		'.############sss',
+		'.##go####go##sss',
+		'###oo####oo##sss',
+		'###oo####oo##sss',
+		'#bb########bbsss',
+		'#######oo####sss',
+		'#######oo####sss',
+		'#############sss',
+		'############ssss',
+		'###########sssss',
+		'##ssssssssssssss',
+		'##.####..####.ss',
+		'#...##....##...s',
+	]
+	const GHOST_PARTS = {
+		'#': 'fill="#ffffff"',
+		s: 'fill="#e6e0f1"',
+		o: 'fill="#221c30"',
+		g: 'fill="#ffffff"',
+		b: 'fill="#f7b9cb"',
+	}
+
+	function moonSvg() {
+		const rows = []
+		for (let y = 0; y < 20; y++) {
+			const half = Math.round(Math.sqrt(Math.max(0, 100 - (y + 0.5 - 10) ** 2)))
+			rows.push(' '.repeat(10 - half) + '#'.repeat(half * 2) + ' '.repeat(10 - half))
+		}
+		const craters = [
+			[5, 5, 3, 4],
+			[12, 11, 3, 4],
+			[13, 4, 2, 2],
+			[6, 13, 2, 2],
+		]
+		for (const [cx, cy, w, h] of craters) {
+			for (let y = cy; y < cy + h; y++) {
+				rows[y] = rows[y].slice(0, cx) + 'c'.repeat(w) + rows[y].slice(cx + w)
+			}
+		}
+		return pixelSvg(rows, { '#': 'fill="#fcfaff"', c: 'fill="#ebe5f4"' }, 'spooky-moon')
+	}
+
+	function batSvg(style) {
+		const up = ['#.........#', '##.......##', '###.#.#.###', '.#########.', '...#####...']
+		const down = ['....#.#....', '..#######..', '.#########.', '##.#####.##', '#.........#']
+		const group = (rows, className) =>
+			`<g class="${className}">${pixelSvg(rows, { '#': 'class="px"' }, '').replace(/^<svg[^>]*>|<\/svg>$/g, '')}</g>`
+		return `<svg class="spooky-bat" style="${style}" viewBox="0 0 11 5" shape-rendering="crispEdges" aria-hidden="true">${group(up, 'wings-up')}${group(down, 'wings-down')}</svg>`
+	}
+
+	const GRAVES = {
+		stone: ['.###.', '#####', '#####', '#####', '#####', '#####'],
+		cross: ['..#..', '.###.', '..#..', '..#..', '..#..', '..#..'],
+		pumpkin: ['..t...', '.oooo.', 'oyooyo', 'oooooo', 'ooyyoo', '.oooo.'],
+	}
+
+	function graveSvg(kind, left, bottom) {
+		const parts =
+			kind === 'pumpkin'
+				? { t: 'class="stem"', o: 'class="body"', y: 'class="face"' }
+				: { '#': 'class="px"' }
+		return pixelSvg(GRAVES[kind], parts, `spooky-grave spooky-grave--${kind}`).replace(
+			'<svg ',
+			`<svg style="left:${left}%;bottom:${bottom}%" `,
+		)
+	}
+
+	if (october) {
+		document.documentElement.classList.add('october')
+		const scene = document.createElement('div')
+		scene.className = 'spooky'
+		scene.innerHTML = [
+			moonSvg(),
+			batSvg('top:58px;right:150px'),
+			batSvg('top:104px;right:190px;width:17px;animation-duration:11s;animation-delay:-3s'),
+			batSvg('top:80px;right:36px;width:14px;animation-duration:7s;animation-delay:-5s'),
+			pixelSvg(GHOST, GHOST_PARTS, 'spooky-ghost spooky-ghost--far'),
+			pixelSvg(GHOST, GHOST_PARTS, 'spooky-ghost spooky-ghost--left'),
+			pixelSvg(GHOST, GHOST_PARTS, 'spooky-ghost spooky-ghost--right').replace(
+				'<svg ',
+				'<svg style="transform:scaleX(-1)" ',
+			),
+			graveSvg('stone', 5, 6.5),
+			graveSvg('pumpkin', 18, 8.7),
+			graveSvg('cross', 26, 8.7),
+			graveSvg('cross', 75, 10.8),
+			graveSvg('pumpkin', 85, 8.7),
+			graveSvg('stone', 93, 8.7),
+		].join('')
+		document.querySelector('.sky').appendChild(scene)
+	}
+
 	const state = {
 		info: null,
 		dir: '',
@@ -167,7 +287,9 @@
 	function burst() {
 		const host = $('burst')
 		host.innerHTML = ''
-		const colors = ['#e3f3fc', '#5bc8e6', '#8cc4ea', '#1a4fba', '#a6ebfa']
+		const colors = october
+			? ['#221c30', '#8f84ad', '#ff8a2b', '#d5d0e1', '#4a4063']
+			: ['#e3f3fc', '#5bc8e6', '#8cc4ea', '#1a4fba', '#a6ebfa']
 		for (let i = 0; i < 26; i++) {
 			const spark = document.createElement('span')
 			const angle = (Math.PI * 2 * i) / 26 + Math.random() * 0.3
