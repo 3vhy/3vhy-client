@@ -38,6 +38,9 @@ public abstract class HudWidget {
 	/** The pills' capital height; every other pill size is a share of it, measured off 67's. */
 	protected static final float PILL_CAP = 6.8f * PILL_TEXT;
 	protected static final int PILL_H = Math.round(2.6f * PILL_CAP);
+	private static final float PILL_LEFT = 1.15f * PILL_CAP;
+	/** Less than the left: the font already leaves a little space after the last letter. */
+	private static final float PILL_RIGHT = 0.8f * PILL_CAP;
 	private static final float PILL_LABEL_GAP = 0.8f * PILL_CAP;
 	private static final int PILL_FILL = 0x1F2231;
 
@@ -237,7 +240,7 @@ public abstract class HudWidget {
 
 	/** A pill's width with a label column {@code labelW} wide (0 for none) and the given value. */
 	protected static int pillWidth(Minecraft mc, float labelW, String value) {
-		return Math.round(2 * PILL_CAP + (labelW > 0 ? labelW + PILL_LABEL_GAP : 0) + pillTextWidth(mc, value));
+		return Math.round(PILL_LEFT + (labelW > 0 ? labelW + PILL_LABEL_GAP : 0) + pillTextWidth(mc, value) + PILL_RIGHT);
 	}
 
 	/** The dark box behind pills: fully round ends (or square with Rounded HUD off). */
@@ -255,7 +258,7 @@ public abstract class HudWidget {
 	 */
 	protected void pillLine(Draw d, Minecraft mc, int x, float y, float labelW, String label, String value, int valueColor) {
 		boolean shadow = textShadow();
-		float tx = x + PILL_CAP;
+		float tx = x + PILL_LEFT;
 		float ty = y + (PILL_H - PILL_CAP) / 2f;
 		if (labelW > 0) {
 			pillText(d, label, tx, ty, Accent.get(), shadow);
