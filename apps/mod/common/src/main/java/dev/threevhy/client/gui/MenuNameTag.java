@@ -19,10 +19,11 @@ import net.minecraft.world.entity.player.PlayerSkin;
  * The 3vhy Client logo at the bottom right of the main menu, the pause menu, your inventory and
  * chests: the pixel 3vhy wordmark and a spaced-out CLIENT, like the launcher's logo, on a small dark
  * pill. It can also show your head and name (Name Protect and Skin Protect apply to them like
- * everywhere else), or only those.
+ * everywhere else), or only those. With Show in game on, the HUD shows it too.
  *
- * <p>It's drawn in real screen pixels, each wordmark cell a whole number of them (two on a 1080p
- * screen), so it stays crisp and the same size at any GUI scale.
+ * <p>It's drawn in real screen pixels, each wordmark cell a whole number of them (one on a 1080p
+ * screen), so it stays crisp and the same size at any GUI scale. Like 67's logo, the wordmark, CLIENT
+ * and your name share one capital height, and the pill is 2.4 of them tall.
  */
 public final class MenuNameTag {
 	private static final int FILL = 0xE6111216;
@@ -30,10 +31,18 @@ public final class MenuNameTag {
 	private static final int WORD = 0xFFE3F3FC;
 	private static final int WORD_SHADOW = 0xFF04104A;
 	private static final int CLIENT_COLOR = 0xFF8CC4EA;
+	private static final String CLIENT = "CLIENT";
+	/** The wordmark's capital height in cells (its "y" hangs below that). */
+	private static final int WORD_CAP = 12;
 	/** The title screen's copyright line along the bottom (in GUI pixels), which the pill sits above. */
 	private static final int COPYRIGHT_LINE = 10;
 	/** Your own entry, for your skin when you're not in a world. */
 	private static PlayerInfo offline = null;
+
+	/** The pill's sizes in real pixels. */
+	private record Layout(int cell, int cap, float textScale, int pad, int h, int letterGap, int clientW, int faceSize,
+			int nameW, boolean logo, boolean name, boolean head, Component playerText, int w) {
+	}
 
 	private MenuNameTag() {
 	}
@@ -44,83 +53,98 @@ public final class MenuNameTag {
 				|| screen instanceof AbstractContainerScreen<?>;
 	}
 
+	private static Layout layout(Minecraft mc) {
+		int cell = Math.max(1, Math.round(mc.getWindow().getHeight() / 1080f));
+		int cap = WORD_CAP * cell;
+		float textScale = cap / 6.8f;
+		int pad = Math.round(0.9f * cap);
+		int h = Math.round(2.4f * cap);
+		int letterGap = Math.max(1, Math.round(0.22f * cap));
+		boolean logo = !Modules.MENU_NAME_SHOW.is("Name");
+		boolean name = !Modules.MENU_NAME_SHOW.is("Logo");
+		boolean head = Modules.MENU_NAME_HEAD.get();
+		Component playerText = UiFont.semibold(mc.getUser().getName());
+		int clientW = -letterGap;
+		for (char c : CLIENT.toCharArray()) clientW += Math.round(mc.font.width(UiFont.bold(String.valueOf(c))) * textScale) + letterGap;
+		int logoW = Wordmark.COLUMNS * cell + Math.round(0.5f * cap) + clientW;
+		int faceSize = Math.round(1.15f * cap / 2) * 2;
+		int nameW = Math.round(mc.font.width(playerText) * textScale) + (head ? faceSize + Math.round(0.4f * cap) : 0);
+		int w = 2 * pad + (logo ? logoW : 0) + (logo && name ? Math.round(1.2f * cap) : 0) + (name ? nameW : 0);
+		return new Layout(cell, cap, textScale, pad, h, letterGap, clientW, faceSize, nameW, logo, name, head, playerText, w);
+	}
+
+	/** The pill's {width, height} in real pixels. */
+	public static int[] size(Minecraft mc) {
+		Layout l = layout(mc);
+		return new int[] {l.w(), l.h()};
+	}
+
 	public static void draw(Draw d, Screen screen) {
 		if (!Modules.MENU_NAME.enabled() || !shows(screen)) return;
 		Minecraft mc = Minecraft.getInstance();
 		float guiScale = (float) mc.getWindow().getGuiScale();
-		// One wordmark cell in real pixels: 2 at 1080p, 3 at 4K
-		int cell = Math.max(1, Math.round(mc.getWindow().getHeight() / 720f));
-		boolean logo = !Modules.MENU_NAME_SHOW.is("Name");
-		boolean name = !Modules.MENU_NAME_SHOW.is("Logo");
-		boolean head = Modules.MENU_NAME_HEAD.get();
-		String player = mc.getUser().getName();
-		Component playerText = UiFont.semibold(player);
-
-		// Sizes in real pixels
-		int pad = 5 * cell;
-		int wordW = Wordmark.COLUMNS * cell;
-		int wordH = Wordmark.ROWS * cell;
-		int h = wordH + cell + 2 * (2 * cell);
-		float textScale = 4.4f * cell / 7f;
-		int letterGap = 2 * cell;
-		String client = "CLIENT";
-		int clientW = -letterGap;
-		for (char c : client.toCharArray()) clientW += Math.round(mc.font.width(UiFont.bold(String.valueOf(c))) * textScale) + letterGap;
-		int logoW = wordW + 4 * cell + clientW;
-		int faceSize = 9 * cell / 2 * 2;
-		int nameW = Math.round(mc.font.width(playerText) * textScale * 1.15f) + (head ? faceSize + 3 * cell : 0);
-		int w = 2 * pad + (logo ? logoW : 0) + (logo && name ? 9 * cell : 0) + (name ? nameW : 0);
-
+		Layout l = layout(mc);
 		int screenW = Math.round(d.width() * guiScale);
 		int screenH = Math.round(d.height() * guiScale);
-		int margin = 4 * cell;
-		int x = screenW - margin - w;
-		int y = screenH - margin - h - (screen instanceof TitleScreen ? Math.round(COPYRIGHT_LINE * guiScale) : 0);
-		if (coversButton(screen, x / guiScale, y / guiScale, w / guiScale, h / guiScale)) {
+		int margin = Math.round(0.4f * l.cap());
+		int x = screenW - margin - l.w();
+		int y = screenH - margin - l.h() - (screen instanceof TitleScreen ? Math.round(COPYRIGHT_LINE * guiScale) : 0);
+		if (coversButton(screen, x / guiScale, y / guiScale, l.w() / guiScale, l.h() / guiScale)) {
 			y = margin;
-			if (coversButton(screen, x / guiScale, y / guiScale, w / guiScale, h / guiScale)) return;
+			if (coversButton(screen, x / guiScale, y / guiScale, l.w() / guiScale, l.h() / guiScale)) return;
 		}
-
 		d.push();
 		d.scale(1f / guiScale);
-		Smooth.roundRect(d, x, y, x + w, y + h, h / 2f, FILL);
-		Smooth.roundOutline(d, x, y, x + w, y + h, h / 2f, 1, EDGE);
-		int cx = x + pad;
-		if (logo) {
-			int wordY = y + 2 * cell;
-			Wordmark.draw(d, cx, wordY, cell, WORD, WORD_SHADOW);
-			cx += wordW + 4 * cell;
-			int ty = Math.round(wordY + 7 * cell - 3.5f * textScale);
-			for (char c : client.toCharArray()) {
-				Component letter = UiFont.bold(String.valueOf(c));
-				d.push();
-				d.translate(cx, ty);
-				d.scale(textScale);
-				d.text(letter, 0, 0, CLIENT_COLOR, false);
-				d.pop();
-				cx += Math.round(mc.font.width(letter) * textScale) + letterGap;
-			}
-			cx += -letterGap;
-		}
-		if (logo && name) {
-			cx += 4 * cell;
-			d.fill(cx, y + 4 * cell, cx + Math.max(1, cell / 2), y + h - 4 * cell, EDGE);
-			cx += 5 * cell;
-		}
-		if (name) {
-			if (head) {
-				d.face(ownSkin(mc), cx, y + (h - faceSize) / 2, faceSize);
-				cx += faceSize + 3 * cell;
-			}
-			float nameScale = textScale * 1.15f;
-			d.push();
-			d.translate(cx, y + (h - 7 * nameScale) / 2f);
-			d.scale(nameScale);
-			d.text(playerText, 0, 0, 0xFFFFFFFF, false);
-			d.pop();
-		}
+		drawPill(d, mc, l, x, y);
 		d.pop();
 		Hooks.menuNameDrawn = true;
+	}
+
+	/** Draws the pill with its top left at (x, y); {@code d} must be drawing in real pixels. */
+	public static void drawPill(Draw d, Minecraft mc, int x, int y) {
+		drawPill(d, mc, layout(mc), x, y);
+	}
+
+	private static void drawPill(Draw d, Minecraft mc, Layout l, int x, int y) {
+		int cell = l.cell();
+		int cap = l.cap();
+		int h = l.h();
+		Smooth.roundRect(d, x, y, x + l.w(), y + h, h / 2f, FILL);
+		Smooth.roundOutline(d, x, y, x + l.w(), y + h, h / 2f, 1, EDGE);
+		int capTop = y + (h - cap) / 2;
+		int cx = x + l.pad();
+		if (l.logo()) {
+			Wordmark.draw(d, cx, capTop, cell, WORD, WORD_SHADOW);
+			cx += Wordmark.COLUMNS * cell + Math.round(0.5f * cap);
+			for (char c : CLIENT.toCharArray()) {
+				Component letter = UiFont.bold(String.valueOf(c));
+				text(d, letter, cx, capTop, l.textScale(), CLIENT_COLOR);
+				cx += Math.round(mc.font.width(letter) * l.textScale()) + l.letterGap();
+			}
+			cx -= l.letterGap();
+		}
+		if (l.logo() && l.name()) {
+			int gap = Math.round(0.6f * cap);
+			cx += gap;
+			int lineH = Math.round(1.2f * cap);
+			d.fill(cx, y + (h - lineH) / 2, cx + Math.max(1, cell), y + (h + lineH) / 2, EDGE);
+			cx += Math.round(1.2f * cap) - gap;
+		}
+		if (l.name()) {
+			if (l.head()) {
+				d.face(ownSkin(mc), cx, y + (h - l.faceSize()) / 2, l.faceSize());
+				cx += l.faceSize() + Math.round(0.4f * cap);
+			}
+			text(d, l.playerText(), cx, capTop, l.textScale(), 0xFFFFFFFF);
+		}
+	}
+
+	private static void text(Draw d, Component text, float x, float y, float scale, int color) {
+		d.push();
+		d.translate(x, y);
+		d.scale(scale);
+		d.text(text, 0, 0, color, false);
+		d.pop();
 	}
 
 	/** Whether the pill at this spot (in GUI pixels) would sit on one of the screen's buttons (small windows put buttons in the corners). */

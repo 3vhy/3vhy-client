@@ -19,35 +19,35 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The Player List on the HUD, like 67's staff list: a dark rounded box with a small title and a badge
- * in the client's colour counting who's on, then each listed player's head (where 67 has a star) and
- * their name in capitals, six at most with "+N MORE" under them. Every size is a share of the names'
- * capital height, measured off 67's.
+ * in the client's colour counting who's on, then each listed player's name in bold capitals after a
+ * green plus (or their head), six at most with "+N MORE" under them. Every size is a share of the
+ * names' capital height, measured off 67's.
  */
 final class PlayerListWidget extends HudWidget {
 	private static final float NAME = 0.76f;
-	private static final float TITLE = 0.48f;
+	private static final float TITLE = 0.65f * NAME;
 	private static final float COUNT = 0.5f;
 	private static final float MORE = 0.43f;
 	private static final float C = 6.8f * NAME;
-	private static final float PAD = 0.9f * C;
-	private static final float HEAD = 1.1f * C;
-	private static final float HEAD_GAP = 0.55f * C;
-	private static final float TITLE_TOP = 1.2f * C;
+	private static final float PAD = 1f * C;
+	private static final float ICON = 0.95f * C;
+	private static final float NAME_X = 2.94f * C;
+	private static final float TITLE_TOP = 1.47f * C;
 	private static final float TITLE_MID = TITLE_TOP + 3.4f * TITLE;
-	private static final float FIRST_ROW = TITLE_MID + 2.6f * C;
-	private static final float ROW = 2.17f * C;
-	private static final float BOTTOM = 2.05f * C;
+	private static final float FIRST_ROW = 4.6f * C;
+	private static final float ROW = 2.31f * C;
+	private static final float BOTTOM = 2.06f * C;
 	private static final float MORE_GAP = 1.9f * C;
 	private static final float MORE_BOTTOM = 1.5f * C;
-	private static final float END_PAD = 1.9f * C;
-	private static final float BADGE_R = 0.8f * C;
-	private static final float BADGE_RING = 0.15f * C;
-	private static final float BADGE_PAD = 0.8f * C;
-	private static final float RADIUS = 0.67f * C;
+	private static final float END_PAD = 2.2f * C;
+	private static final float BADGE_R = 0.82f * C;
+	private static final float BADGE_PAD = 0.94f * C;
+	private static final float RADIUS = 0.9f * C;
 	private static final int SHOWN = 6;
-	private static final int FILL = 0x121019;
-	private static final int TITLE_COLOR = 0xFFD9DADF;
+	private static final int FILL = 0x1A1B26;
+	private static final int TITLE_COLOR = 0xFFC9CAD3;
 	private static final int NAME_COLOR = 0xFFFFFFFF;
+	private static final int PLUS_COLOR = 0xFF3DDC97;
 	private static final int MORE_COLOR = 0xFF6C6672;
 	private static final String[] SAMPLE = {"Steve", "Alex", "Player372"};
 
@@ -108,7 +108,7 @@ final class PlayerListWidget extends HudWidget {
 		float widest = PAD + width(mc, bold(title()), TITLE) + 2 * C + 2 * BADGE_R + BADGE_PAD;
 		for (Row row : shown(rows(mc, true))) {
 			float name = width(mc, bold(row.name().toUpperCase(Locale.ROOT)), NAME);
-			widest = Math.max(widest, PAD + HEAD + HEAD_GAP + name + END_PAD);
+			widest = Math.max(widest, NAME_X + name + END_PAD);
 		}
 		return (int) Math.ceil(widest);
 	}
@@ -131,46 +131,41 @@ final class PlayerListWidget extends HudWidget {
 		int alpha = backgroundAlpha();
 		if (alpha > 0) Smooth.roundRect(d, x, y, x + w, y + height(mc), RADIUS, (alpha << 24) | FILL);
 		boolean shadow = textShadow();
-		boolean glow = Modules.PLAYER_LIST_GLOW.get() && !shadow;
-		glowText(d, bold(title()), x + PAD, y + TITLE_TOP, TITLE, TITLE_COLOR, glow, shadow);
+		text(d, bold(title()), x + PAD, y + TITLE_TOP, TITLE, TITLE_COLOR, shadow);
 
 		int accent = Accent.get();
 		float badgeX = x + w - BADGE_PAD - BADGE_R;
 		float badgeY = y + TITLE_MID;
 		int boxAlpha = Math.max(alpha, 0x60) << 24;
-		Smooth.circle(d, badgeX, badgeY, BADGE_R, boxAlpha | (Draw.mix(FILL, accent, 0.3) & 0xFFFFFF));
-		Smooth.ring(d, badgeX, badgeY, BADGE_R, BADGE_RING,
-				boxAlpha | (Draw.mix(FILL, Draw.mix(accent, 0xFFFFFFFF, 0.35), 0.45) & 0xFFFFFF));
+		Smooth.circle(d, badgeX, badgeY, BADGE_R, boxAlpha | (Draw.mix(FILL, accent, 0.36) & 0xFFFFFF));
 		Component count = bold(Integer.toString(online(rows)));
 		text(d, count, badgeX - width(mc, count, COUNT) / 2f, badgeY - 3.4f * COUNT, COUNT,
-				Draw.mix(accent, 0xFFFFFFFF, 0.55), false);
+				Draw.mix(accent, 0xFFFFFFFF, 0.3), false);
 
 		float mid = y + FIRST_ROW;
+		boolean heads = Modules.PLAYER_LIST_ICON.is("Head");
 		for (Row row : shown(rows)) {
-			float headX = x + PAD;
-			float headY = mid - HEAD / 2f;
-			d.push();
-			d.translate(headX, headY);
-			d.scale(HEAD / 8f);
-			if (row.info() != null) {
-				d.face(row.info().getSkin(), 0, 0, 8);
+			if (heads) {
+				float head = 1.1f * C;
+				d.push();
+				d.translate(x + PAD + (ICON - head) / 2f, mid - head / 2f);
+				d.scale(head / 8f);
+				if (row.info() != null) {
+					d.face(row.info().getSkin(), 0, 0, 8);
+				} else {
+					d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), 0, 0, 8);
+				}
+				d.pop();
 			} else {
-				d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), 0, 0, 8);
+				Smooth.icon(d, "plus", x + PAD, mid - ICON / 2f, ICON, PLUS_COLOR);
 			}
-			d.pop();
-			glowText(d, bold(row.name().toUpperCase(Locale.ROOT)), headX + HEAD + HEAD_GAP, mid - C / 2f, NAME,
-					NAME_COLOR, glow, shadow);
+			text(d, bold(row.name().toUpperCase(Locale.ROOT)), x + NAME_X, mid - C / 2f, NAME, NAME_COLOR, shadow);
 			mid += ROW;
 		}
 		if (rows.size() > SHOWN) {
 			float moreY = mid - ROW + MORE_GAP;
-			text(d, bold(more(rows)), x + PAD + HEAD + HEAD_GAP, moreY - 3.4f * MORE, MORE, MORE_COLOR, shadow);
+			text(d, bold(more(rows)), x + NAME_X, moreY - 3.4f * MORE, MORE, MORE_COLOR, shadow);
 		}
-	}
-
-	private static void glowText(Draw d, Component text, float x, float y, float scale, int color, boolean glow, boolean shadow) {
-		if (glow) Smooth.glowText(d, text, x, y, scale, color);
-		else text(d, text, x, y, scale, color, shadow);
 	}
 
 	private static void text(Draw d, Component text, float x, float y, float scale, int color, boolean shadow) {

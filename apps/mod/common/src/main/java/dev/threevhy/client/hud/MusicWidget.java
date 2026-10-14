@@ -13,7 +13,6 @@ import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.Identifier;
 
 /**
  * The Music HUD, like 67's: the cover (with the music app's logo on its corner), the title in bold
@@ -94,7 +93,7 @@ final class MusicWidget extends HudWidget {
 
 		int textX = x + PAD;
 		if (Modules.MUSIC_ART.get()) {
-			drawCover(d, song, x + PAD, y + PAD, alpha > 0 ? fill : 0);
+			drawCover(d, song, x + PAD, y + PAD);
 			textX = x + PAD + ART + 8;
 		}
 
@@ -134,24 +133,16 @@ final class MusicWidget extends HudWidget {
 	}
 
 	/** The cover with soft corners, and the music app's logo in a round badge on its bottom right corner. */
-	private static void drawCover(Draw d, NowPlaying song, int x, int y, int behind) {
-		Identifier cover = MusicArt.COVER.texture(song.art(), song.artVersion());
-		if (cover != null) {
-			int[] size = MusicArt.COVER.size();
-			d.texture(cover, x, y, ART, ART, size[0], size[1]);
-			if (behind != 0) Smooth.cornerCovers(d, x, y, x + ART, y + ART, 5, behind);
-		} else {
+	private static void drawCover(Draw d, NowPlaying song, int x, int y) {
+		if (!MusicArt.COVER.draw(d, song.art(), song.artVersion(), x, y, ART, 5)) {
 			Smooth.roundRect(d, x, y, x + ART, y + ART, 5, 0xFF2A2D35);
 			PixelIcons.draw(d, PixelIcons.forModule(Modules.MUSIC), x + (ART - 24) / 2, y + (ART - 24) / 2, 2, Theme.SKY);
 		}
-		Identifier icon = MusicArt.ICON.texture(song.icon(), song.iconVersion());
-		if (icon != null) {
+		if (song.icon() != null) {
 			int bx = x + ART - 10;
 			int by = y + ART - 10;
 			Smooth.circle(d, bx + 6, by + 6, 8, BADGE);
-			int[] size = MusicArt.ICON.size();
-			d.texture(icon, bx, by, 12, 12, size[0], size[1]);
-			Smooth.cornerCovers(d, bx, by, bx + 12, by + 12, 6, BADGE);
+			MusicArt.ICON.draw(d, song.icon(), song.iconVersion(), bx, by, 12, 6);
 		}
 	}
 

@@ -25,7 +25,7 @@ public final class HudRenderer {
 
 	private static void drawAll(Draw d, Minecraft mc) {
 		for (HudWidget widget : HudWidgets.ALL) {
-			if (!widget.module.enabled() || !widget.visible(mc)) continue;
+			if (!widget.shown() || !widget.visible(mc)) continue;
 			float scale = scaleFor(widget);
 			int w = Math.round(d.width() / scale);
 			int h = Math.round(d.height() / scale);

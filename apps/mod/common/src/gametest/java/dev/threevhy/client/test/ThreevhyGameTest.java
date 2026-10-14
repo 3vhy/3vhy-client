@@ -72,14 +72,19 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	 */
 	private static final class MusicShowcase extends CompatScreen {
 		private final HudWidget widget;
+		private final List<HudWidget> row;
 
 		MusicShowcase() {
 			this(HudWidgets.MUSIC);
 		}
 
-		MusicShowcase(HudWidget widget) {
+		MusicShowcase(HudWidget widget, HudWidget... more) {
 			super(Component.literal("HUD close-up"));
 			this.widget = widget;
+			List<HudWidget> all = new ArrayList<>();
+			all.add(widget);
+			all.addAll(List.of(more));
+			this.row = all;
 		}
 
 		@Override
@@ -95,6 +100,21 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		protected void draw(Draw d, int mouseX, int mouseY, float delta) {
 			Minecraft mc = Minecraft.getInstance();
 			float scale = 1.5f;
+			if (row.size() > 1) {
+				int gap = 4;
+				float total = -gap;
+				for (HudWidget each : row) total += each.width(mc) + gap;
+				d.push();
+				d.translate((this.width - total * scale) / 2f, (this.height - widget.height(mc) * scale) / 2f);
+				d.scale(scale);
+				int x = 0;
+				for (HudWidget each : row) {
+					each.draw(d, x, 0, mc, true);
+					x += each.width(mc) + gap;
+				}
+				d.pop();
+				return;
+			}
 			int w = Math.round(widget.width(mc) * scale);
 			int h = Math.round(widget.height(mc) * scale);
 			d.push();
@@ -245,6 +265,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				Modules.KEYSTROKES.sliderSetting("background").set(25);
 				Modules.MUSIC.set(true);
 				MusicBridge.simulate(SAMPLE_SONG);
+				Modules.MENU_NAME_HUD.set(true);
 				Modules.PLAYER_LIST_OFFLINE.set(true);
 				Modules.PLAYER_LIST_TITLE.set("Friends");
 				PlayerList.add(client.getUser().getName());
@@ -301,6 +322,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 							&& HudWidgets.MUSIC.visible(client)));
 			check(failed, "music cover uploaded as a texture (NativeImage, DynamicTexture)", Hooks.musicArtUploaded);
 			check(failed, "music app icon uploaded as a texture", Hooks.musicIconUploaded);
+			check(failed, "menu logo on the HUD with Show in game, above the music HUD", context.computeOnClient(client -> {
+				int w = client.getWindow().getGuiScaledWidth();
+				int h = client.getWindow().getGuiScaledHeight();
+				int logoBottom = HudWidgets.MENU_LOGO.position(client, w, h)[1] + HudWidgets.MENU_LOGO.height(client);
+				return HudWidgets.MENU_LOGO.shown() && HudWidgets.MENU_LOGO.visible(client)
+						&& logoBottom <= HudWidgets.MUSIC.position(client, w, h)[1];
+			}));
 			server.runCommand("bossbar add threevhy:test \"Boss\"");
 			server.runCommand("bossbar set threevhy:test players @a");
 			context.waitTicks(10);
@@ -310,6 +338,26 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "music HUD moves below boss bars (BossHealthOverlay)", musicY > 17);
 			shot(context, "3vhy-music-under-bossbar");
 			server.runCommand("bossbar remove threevhy:test");
+			context.setScreen(() -> new MusicShowcase(HudWidgets.MENU_LOGO));
+			context.waitTicks(5);
+			shot(context, "3vhy-menu-logo-closeup");
+			context.runOnClient(client -> Modules.MENU_NAME_SHOW.set("Logo and name"));
+			context.waitTicks(5);
+			shot(context, "3vhy-menu-logo-closeup-name");
+			context.runOnClient(client -> {
+				Modules.MENU_NAME_SHOW.reset();
+				Modules.MENU_NAME_HUD.reset();
+			});
+			check(failed, "menu logo leaves the HUD when Show in game is off", context.computeOnClient(client ->
+					!HudWidgets.MENU_LOGO.shown()));
+			context.runOnClient(client -> {
+				Modules.CPS.sliderSetting("background").reset();
+				Modules.THEME_PANEL_COLOR.set(0xFFFF5A5F);
+			});
+			context.setScreen(() -> new MusicShowcase(HudWidgets.FPS, HudWidgets.CPS, HudWidgets.PING));
+			context.waitTicks(5);
+			shot(context, "3vhy-stats-closeup");
+			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
 			context.setScreen(MusicShowcase::new);
 			context.waitTicks(10);
 			shot(context, "3vhy-music-closeup");
@@ -331,7 +379,20 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			});
 			context.waitTicks(5);
 			shot(context, "3vhy-keystrokes-closeup");
-			context.runOnClient(client -> client.options.keyAttack.setDown(false));
+			context.runOnClient(client -> {
+				client.options.keyAttack.setDown(false);
+				client.options.keyUse.setDown(true);
+				client.options.keyJump.setDown(true);
+				Modules.KEYSTROKES_PRESSED.set(0xFFFF5FA2);
+			});
+			context.waitTicks(5);
+			shot(context, "3vhy-keystrokes-closeup-pink");
+			check(failed, "keystrokes pressed colour can be changed", Modules.KEYSTROKES_PRESSED.get() == 0xFFFF5FA2);
+			context.runOnClient(client -> {
+				client.options.keyUse.setDown(false);
+				client.options.keyJump.setDown(false);
+				Modules.KEYSTROKES_PRESSED.reset();
+			});
 			List<String> listedPlayers = context.computeOnClient(client -> List.copyOf(PlayerList.names()));
 			context.runOnClient(client -> {
 				PlayerList.names().clear();

@@ -205,8 +205,8 @@ public abstract class Setting {
 	public static final class Color extends Setting {
 		/** ARGB swatches: the banner blues first, then the usual PvP colours. */
 		public static final int[] SWATCHES = {
-				0xFFE3F3FC, 0xFF5BC8E6, 0xFF1A4FBA, 0xFF74D46E, 0xFFFFD166, 0xFFFF9F43, 0xFFFF6B81, 0xFFC77DFF,
-				0xFF000000
+				0xFFE3F3FC, 0xFF5BC8E6, 0xFF1A4FBA, 0xFF74D46E, 0xFFFFD166, 0xFFFF9F43, 0xFFFF6B81, 0xFFFF5FA2,
+				0xFFC77DFF, 0xFF000000
 		};
 		private final int def;
 
