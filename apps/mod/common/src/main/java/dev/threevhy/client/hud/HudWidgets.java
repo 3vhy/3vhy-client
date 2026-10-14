@@ -46,7 +46,7 @@ public final class HudWidgets {
 		return 0xFFFF6B81;
 	}
 
-	/** A small box with an optional label and a coloured value, like "137 ms". */
+	/** A dark pill with an optional label in the theme colour and a coloured value, like "PING 137 MS", like 67's. */
 	private abstract static class StatWidget extends HudWidget {
 		StatWidget(String id, Module module, Anchor anchor) {
 			super(id, module, anchor);
@@ -61,33 +61,33 @@ public final class HudWidgets {
 		}
 
 		private String labelText() {
-			return showLabel() ? label() : "";
+			return showLabel() ? label().toUpperCase(Locale.ROOT) : "";
+		}
+
+		private String valueText(Minecraft mc, boolean preview) {
+			return value(mc, preview).toUpperCase(Locale.ROOT);
+		}
+
+		private int widthFor(Minecraft mc, String label, String value) {
+			return pillWidth(mc, label.isEmpty() ? 0 : pillTextWidth(mc, label), value);
 		}
 
 		@Override
 		public int width(Minecraft mc) {
-			String label = labelText();
-			return 10 + (label.isEmpty() ? 0 : textWidth(mc, label) + 4) + textWidth(mc, value(mc, true));
+			return widthFor(mc, labelText(), valueText(mc, true));
 		}
 
 		@Override
 		public int height(Minecraft mc) {
-			return 14;
+			return PILL_H;
 		}
 
 		@Override
 		public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 			String label = labelText();
-			String value = value(mc, preview);
-			int w = 10 + (label.isEmpty() ? 0 : textWidth(mc, label) + 4) + textWidth(mc, value);
-			panel(d, x, y, w, 14);
-			boolean shadow = textShadow();
-			int tx = x + 6;
-			if (!label.isEmpty()) {
-				d.text(label, tx, y + 3, Theme.MUTED, shadow);
-				tx += textWidth(mc, label) + 4;
-			}
-			d.text(value, tx, y + 3, color(mc), shadow);
+			String value = valueText(mc, preview);
+			pillBox(d, x, y, widthFor(mc, label, value), PILL_H);
+			pillLine(d, mc, x, y, label.isEmpty() ? 0 : pillTextWidth(mc, label), label, value, color(mc));
 		}
 	}
 
@@ -204,14 +204,22 @@ public final class HudWidgets {
 	};
 
 	public static final HudWidget COORDS = new HudWidget("coords", Modules.COORDS, Anchor.TOP_LEFT) {
+		private static final float ROW = 2f * PILL_CAP;
+
+		private float labelWidth(Minecraft mc) {
+			if (!showLabel()) return 0;
+			return Modules.COORDS_FACING.get() ? Math.max(pillTextWidth(mc, "XYZ"), pillTextWidth(mc, "FACING"))
+					: pillTextWidth(mc, "XYZ");
+		}
+
 		@Override
 		public int width(Minecraft mc) {
-			return 10 + textWidth(mc, "XYZ -30000000 320 -30000000");
+			return pillWidth(mc, labelWidth(mc), "-30000000 320 -30000000");
 		}
 
 		@Override
 		public int height(Minecraft mc) {
-			return Modules.COORDS_FACING.get() ? 24 : 14;
+			return Modules.COORDS_FACING.get() ? Math.round(PILL_H + ROW) : PILL_H;
 		}
 
 		@Override
@@ -221,22 +229,16 @@ public final class HudWidgets {
 			String facing;
 			if (player == null) {
 				xyz = "120 64 -32";
-				facing = "North";
+				facing = "NORTH";
 			} else {
 				BlockPos pos = player.blockPosition();
 				xyz = pos.getX() + " " + pos.getY() + " " + pos.getZ();
-				String dir = player.getDirection().toString();
-				facing = dir.isEmpty() ? dir : Character.toUpperCase(dir.charAt(0)) + dir.substring(1);
+				facing = player.getDirection().toString().toUpperCase(Locale.ROOT);
 			}
-			panel(d, x, y, width(mc), height(mc));
-			boolean shadow = textShadow();
-			int labelW = showLabel() ? textWidth(mc, "Facing") + 4 : 0;
-			if (showLabel()) d.text("XYZ", x + 6, y + 3, Theme.MUTED, shadow);
-			d.text(xyz, x + 6 + labelW, y + 3, valueColor(), shadow);
-			if (Modules.COORDS_FACING.get()) {
-				if (showLabel()) d.text("Facing", x + 6, y + 13, Theme.MUTED, shadow);
-				d.text(facing, x + 6 + labelW, y + 13, valueColor(), shadow);
-			}
+			float labelW = labelWidth(mc);
+			pillBox(d, x, y, width(mc), height(mc));
+			pillLine(d, mc, x, y, labelW, "XYZ", xyz, valueColor());
+			if (Modules.COORDS_FACING.get()) pillLine(d, mc, x, y + ROW, labelW, "FACING", facing, valueColor());
 		}
 	};
 
@@ -250,7 +252,7 @@ public final class HudWidgets {
 		private static final int KEY_FILL = 0x17161B;
 		private static final int KEY_TEXT = 0xFFD4D2DA;
 		private static final int DASH_COLOR = 0xFF97969E;
-		private static final int DOWN_FILL = 0xFFF6F6F7;
+		private static final int DARK_TEXT = 0xFF17161B;
 		private static final float FADE_SECONDS = 0.08f;
 		private final Map<KeyMapping, float[]> pressed = new IdentityHashMap<>();
 
@@ -285,11 +287,11 @@ public final class HudWidgets {
 			if (Modules.KEYSTROKES_SPACE.get()) {
 				float t = held(o.keyJump);
 				int w = width(mc);
-				Smooth.roundRect(d, x, row, x + w, row + SPACE_H, RADIUS, Draw.mix(fill(), DOWN_FILL, t));
+				Smooth.roundRect(d, x, row, x + w, row + SPACE_H, RADIUS, Draw.mix(fill(), pressedFill(), t));
 				float dashW = w * 0.47f;
 				float mid = row + SPACE_H / 2f;
 				Smooth.roundRect(d, x + (w - dashW) / 2f, mid - DASH / 2f, x + (w + dashW) / 2f, mid + DASH / 2f, DASH / 2f,
-						DASH_COLOR);
+						Draw.mix(DASH_COLOR, pressedText(), t));
 			}
 		}
 
@@ -297,7 +299,18 @@ public final class HudWidgets {
 			return (backgroundAlpha() << 24) | KEY_FILL;
 		}
 
-		/** How far a key has faded to white: 0 when up, 1 once it's been held for a moment. */
+		private static int pressedFill() {
+			return Modules.KEYSTROKES_PRESSED.get() | 0xFF000000;
+		}
+
+		/** White on a dark or bright pressed colour, dark on a light one, so the label stays readable. */
+		private static int pressedText() {
+			int c = pressedFill();
+			double luma = (0.299 * ((c >> 16) & 255) + 0.587 * ((c >> 8) & 255) + 0.114 * (c & 255)) / 255;
+			return luma > 0.72 ? DARK_TEXT : 0xFFFFFFFF;
+		}
+
+		/** How far a key has faded to its pressed colour: 0 when up, 1 once it's been held for a moment. */
 		private float held(KeyMapping key) {
 			float[] state = pressed.computeIfAbsent(key, k -> new float[] {0f, 0f});
 			float now = System.nanoTime() / 1.0e9f;
@@ -307,16 +320,16 @@ public final class HudWidgets {
 			return state[0];
 		}
 
-		/** A rounded key with a light label: dark, fading to white while it's held (the label stays light, like 67's). */
+		/** A rounded key with a light label: dark, lighting up in the Pressed colour while it's held, like 67's. */
 		private void key(Draw d, Minecraft mc, int x, int y, int w, int h, String label, KeyMapping key) {
 			float t = held(key);
-			Smooth.roundRect(d, x, y, x + w, y + h, RADIUS, Draw.mix(fill(), DOWN_FILL, t));
+			Smooth.roundRect(d, x, y, x + w, y + h, RADIUS, Draw.mix(fill(), pressedFill(), t));
 			Component text = UiFont.clean() ? UiFont.bold(label) : Component.literal(label);
 			float tw = mc.font.width(text) * TEXT;
 			d.push();
 			d.translate(x + (w - tw) / 2f, y + (h - 6.8f * TEXT) / 2f);
 			d.scale(TEXT);
-			d.text(text, 0, 0, KEY_TEXT, t < 0.5f && textShadow());
+			d.text(text, 0, 0, Draw.mix(KEY_TEXT, pressedText(), t), t < 0.5f && textShadow());
 			d.pop();
 		}
 	};
@@ -689,11 +702,12 @@ public final class HudWidgets {
 	};
 
 	public static final HudWidget SCOREBOARD = new ScoreboardWidget();
+	public static final HudWidget MENU_LOGO = new MenuLogoWidget();
 	public static final HudWidget MUSIC = new MusicWidget();
 	public static final HudWidget PLAYER_LIST = new PlayerListWidget();
 	public static final HudWidget MODULE_LIST = new ModuleListWidget();
 
 	/** Drawing order; widgets that share an anchor stack in this order (upwards at the bottom). */
 	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, TPS, CLOCK, COMBO, COORDS, KEYSTROKES, ITEMS,
-			ARMOR, MODULE_LIST, POPS, PLAYER_LIST, TARGET, JUMP_RESET, TOTEM_WARNING, MUSIC, SCOREBOARD);
+			ARMOR, MODULE_LIST, POPS, PLAYER_LIST, TARGET, JUMP_RESET, TOTEM_WARNING, MENU_LOGO, MUSIC, SCOREBOARD);
 }

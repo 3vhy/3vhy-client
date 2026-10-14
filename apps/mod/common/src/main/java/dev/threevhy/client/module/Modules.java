@@ -23,8 +23,8 @@ public final class Modules {
 	/** A text HUD module: every one can hide its label, fade its background and pick a colour. */
 	private static Module hud(String id, String name, String description, boolean on) {
 		Module module = new Module(id, name, description, Category.HUD, on);
-		module.add(new Toggle("label", "Show label", "The grey name in front of the value", true));
-		background(module);
+		module.add(new Toggle("label", "Show label", "The name in front of the value, in the theme colour", true));
+		background(module, 85);
 		module.add(new Color("color", "Text colour", "Colour of the value", 0xFFE3F3FC));
 		return module;
 	}
@@ -63,6 +63,8 @@ public final class Modules {
 			"Shows WASD, jump and your mouse buttons as you press them", Category.HUD, true), 85);
 	public static final Toggle KEYSTROKES_MOUSE = KEYSTROKES.add(new Toggle("mouse", "Mouse buttons", "LMB and RMB with CPS", true));
 	public static final Toggle KEYSTROKES_SPACE = KEYSTROKES.add(new Toggle("space", "Space bar", "The jump key", true));
+	public static final Color KEYSTROKES_PRESSED = KEYSTROKES.add(new Color("pressed", "Pressed colour",
+			"The colour a key lights up while you hold it", 0xFFF6F6F7));
 	public static final Module ARMOR = background(new Module("armor", "Armor Status",
 			"Displays the durability and status of your equipped armor", Category.HUD, true));
 	public static final Choice ARMOR_LAYOUT = ARMOR.add(new Choice("layout", "Layout",
@@ -114,8 +116,8 @@ public final class Modules {
 			"Add players and see when they're online on your server", Category.HUD, true).markNew(), 90));
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
 			"Players", 16));
-	public static final Toggle PLAYER_LIST_GLOW = PLAYER_LIST.add(new Toggle("glow", "Glow",
-			"A soft glow around the names, like 67's", true));
+	public static final Choice PLAYER_LIST_ICON = PLAYER_LIST.add(new Choice("icon", "Icon",
+			"A green plus like 67's, or the player's head, before each name", 0, "Plus", "Head"));
 	public static final Toggle PLAYER_LIST_OFFLINE = PLAYER_LIST.add(new Toggle("offline", "Show offline players",
 			"Also list players who aren't on, after the ones who are", false));
 	public static final Toggle PLAYER_LIST_ALERTS = PLAYER_LIST.add(new Toggle("alerts", "Join alerts",
@@ -188,10 +190,13 @@ public final class Modules {
 	public static final Choice SKIN_PROTECT_ARMS = SKIN_PROTECT.add(new Choice("arms", "Arms",
 			"Classic or slim arms, for skin files", 0, "Classic", "Slim"));
 	public static final Module MENU_NAME = new Module("menu_name", "Menu Logo",
-			"The 3vhy Client logo in the bottom right of menus, chests and your inventory", Category.VISUAL, true).markNew();
+			"The 3vhy Client logo in the bottom right of menus, chests and your inventory, or on your HUD all the time",
+			Category.VISUAL, true).markNew();
 	public static final Choice MENU_NAME_SHOW = MENU_NAME.add(new Choice("show", "Show", "The logo, your name, or both", 0,
 			"Logo", "Logo and name", "Name"));
 	public static final Toggle MENU_NAME_HEAD = MENU_NAME.add(new Toggle("head", "Show your head", "Your skin's face next to your name", true));
+	public static final Toggle MENU_NAME_HUD = MENU_NAME.add(new Toggle("hud", "Show in game",
+			"Keep it on your HUD while you play too, above the Music HUD; move it in Edit HUD", false));
 	public static final Module SWING_SPEED = new Module("swing_speed", "Swing Speed",
 			"Slows down (or speeds up) your arm swing when you hit, place and use things", Category.VISUAL, false).markNew();
 	public static final Slider SWING_SPEED_SPEED = SWING_SPEED.add(new Slider("speed", "Speed",

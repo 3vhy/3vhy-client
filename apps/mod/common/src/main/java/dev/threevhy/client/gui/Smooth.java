@@ -150,7 +150,7 @@ public final class Smooth {
 	}
 
 	/**
-	 * A line icon, {@code size} units square: chevron_down, chevron_right, check, cross, play,
+	 * A line icon, {@code size} units square: chevron_down, chevron_right, check, cross, plus, play,
 	 * pause, prev, next, speaker, speaker_muted, search, grid, target, eye, sliders or spark.
 	 */
 	public static void icon(Draw d, String name, float x, float y, float size, int color) {
@@ -184,6 +184,7 @@ public final class Smooth {
 			case "chevron_right" -> (x, y) -> line(x / s, y / s, w, 0.38, 0.2, 0.66, 0.5, 0.38, 0.8);
 			case "check" -> (x, y) -> line(x / s, y / s, 0.13, 0.2, 0.52, 0.42, 0.74, 0.8, 0.3);
 			case "cross" -> (x, y) -> line(x / s, y / s, w, 0.28, 0.28, 0.72, 0.72) || line(x / s, y / s, w, 0.72, 0.28, 0.28, 0.72);
+			case "plus" -> (x, y) -> line(x / s, y / s, 0.3, 0.5, 0.15, 0.5, 0.85) || line(x / s, y / s, 0.3, 0.15, 0.5, 0.85, 0.5);
 			case "play" -> (x, y) -> triangle(x / s, y / s, 0.3, 0.18, 0.3, 0.82, 0.84, 0.5);
 			case "pause" -> (x, y) -> box(x / s, y / s, 0.26, 0.2, 0.42, 0.8) || box(x / s, y / s, 0.58, 0.2, 0.74, 0.8);
 			case "prev" -> (x, y) -> box(x / s, y / s, 0.16, 0.2, 0.28, 0.8) || triangle(x / s, y / s, 0.84, 0.2, 0.84, 0.8, 0.3, 0.5);
@@ -269,7 +270,7 @@ public final class Smooth {
 	/** The mask texture for {@code key}, made (and kept) on first use; null if it couldn't be made. */
 	private static Identifier mask(String key, int w, int h, Shape shape) {
 		if (MASKS.containsKey(key)) return MASKS.get(key);
-		byte[] alpha = new byte[w * h];
+		int[] pixels = new int[w * h];
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
 				int hits = 0;
@@ -278,26 +279,27 @@ public final class Smooth {
 						if (shape.inside(x + (sx + 0.5) / SAMPLES, y + (sy + 0.5) / SAMPLES)) hits++;
 					}
 				}
-				alpha[y * w + x] = (byte) Math.round(hits * 255.0 / (SAMPLES * SAMPLES));
+				pixels[y * w + x] = (int) Math.round(hits * 255.0 / (SAMPLES * SAMPLES)) << 24 | 0xFFFFFF;
 			}
 		}
 		Identifier id = Identifier.fromNamespaceAndPath(ThreevhyClient.MOD_ID, "smooth/" + key);
-		Identifier made = Compat.uploadTexture(id, png(w, h, alpha)) != null ? id : null;
+		Identifier made = Compat.uploadTexture(id, png(w, h, pixels)) != null ? id : null;
 		MASKS.put(key, made);
 		return made;
 	}
 
-	/** A white RGBA PNG whose alpha is {@code alpha}. */
-	private static byte[] png(int w, int h, byte[] alpha) {
+	/** An RGBA PNG of {@code argb}, row by row. */
+	public static byte[] png(int w, int h, int[] argb) {
 		try {
 			ByteArrayOutputStream rows = new ByteArrayOutputStream();
 			for (int y = 0; y < h; y++) {
 				rows.write(0);
 				for (int x = 0; x < w; x++) {
-					rows.write(255);
-					rows.write(255);
-					rows.write(255);
-					rows.write(alpha[y * w + x]);
+					int pixel = argb[y * w + x];
+					rows.write(pixel >>> 16);
+					rows.write(pixel >>> 8);
+					rows.write(pixel);
+					rows.write(pixel >>> 24);
 				}
 			}
 			Deflater deflater = new Deflater();

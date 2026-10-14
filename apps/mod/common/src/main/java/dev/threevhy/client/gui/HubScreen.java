@@ -81,7 +81,7 @@ public final class HubScreen extends CompatScreen {
 				&& mouseY >= centre[1] && mouseY < centre[3];
 		HudWidget hovered = null;
 		for (HudWidget widget : HudWidgets.ALL) {
-			if (!widget.module.enabled()) continue;
+			if (!widget.shown()) continue;
 			int[] box = drawWidget(ui, mc, widget, false);
 			if (dragging == null && !overCentre && mouseX >= box[0] && mouseX < box[2] && mouseY >= box[1]
 					&& mouseY < box[3]) {
@@ -314,7 +314,7 @@ public final class HubScreen extends CompatScreen {
 			Minecraft mc = Minecraft.getInstance();
 			for (int i = HudWidgets.ALL.size() - 1; i >= 0; i--) {
 				HudWidget widget = HudWidgets.ALL.get(i);
-				if (!widget.module.enabled() || !widget.resizable()) continue;
+				if (!widget.shown() || !widget.resizable()) continue;
 				int[] box = box(mc, widget);
 				if (x < box[0] || x >= box[2] || y < box[1] || y >= box[3]) continue;
 				Setting.Slider size = widget.module.sliderSetting("size");

@@ -168,7 +168,13 @@ function Convert-ToPng([byte[]]$bytes, [int]$size) {
 		$bitmap = New-Object System.Drawing.Bitmap $size, $size
 		$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 		$graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-		$graphics.DrawImage($image, (New-Object System.Drawing.Rectangle 0, 0, $size, $size), $source, [System.Drawing.GraphicsUnit]::Pixel)
+		$graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+		$graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+		# Without this, the resize blends in see-through pixels from outside the picture: a faint line along its edges
+		$attributes = New-Object System.Drawing.Imaging.ImageAttributes
+		$attributes.SetWrapMode([System.Drawing.Drawing2D.WrapMode]::TileFlipXY)
+		$graphics.DrawImage($image, (New-Object System.Drawing.Rectangle 0, 0, $size, $size), $source.X, $source.Y, $source.Width, $source.Height, [System.Drawing.GraphicsUnit]::Pixel, $attributes)
+		$attributes.Dispose()
 		$output = New-Object System.IO.MemoryStream
 		$bitmap.Save($output, [System.Drawing.Imaging.ImageFormat]::Png)
 		return [Convert]::ToBase64String($output.ToArray())
@@ -186,7 +192,7 @@ function Get-Cover($properties) {
 	} finally {
 		Close-Quietly $stream
 	}
-	return Convert-ToPng $bytes 64
+	return Convert-ToPng $bytes 160
 }
 
 # Windows names apps by an app id: "Spotify.exe", "Chrome", "MSEdge", a packaged app's
@@ -255,7 +261,7 @@ function Get-PackagedLogo([string]$app) {
 function Get-AppIcon([string]$app) {
 	if ($app -like '*!*') {
 		$logo = Get-PackagedLogo $app
-		if ($logo) { return Convert-ToPng ([System.IO.File]::ReadAllBytes($logo)) 32 }
+		if ($logo) { return Convert-ToPng ([System.IO.File]::ReadAllBytes($logo)) 48 }
 	}
 	$exe = Get-ExePath $app
 	if (-not $exe) { throw "couldn't find the program for $app" }
