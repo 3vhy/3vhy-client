@@ -1,0 +1,9 @@
+ref: refs/tags/v0.5.0
+commit: ecb4fabdcdbf84d277a154cf1fea08eb933a2398
+status: success
+installers:
+total 54444
+drwxr-xr-x 1 runneradmin 197121        0 Oct 15 18:39 .
+drwxr-xr-x 1 runneradmin 197121        0 Oct 15 18:36 ..
+-rwxr-xr-x 1 runneradmin 197121 26147547 Oct 15 18:36 3vhy Client Classic Installer.exe
+-rwxr-xr-x 1 runneradmin 197121 29590528 Oct 15 18:39 3vhy Client Setup.exe
