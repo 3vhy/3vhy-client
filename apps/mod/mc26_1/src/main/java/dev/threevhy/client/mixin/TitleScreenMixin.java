@@ -10,12 +10,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 3vhy main menu: the 3vhy sky, emblem and name behind the title screen, instead of the panorama. */
+/** 3vhy main menu: October's ghosts behind the title screen in place of the panorama. */
 @Mixin(TitleScreen.class)
 public abstract class TitleScreenMixin {
 	@Inject(method = "extractBackground", at = @At("HEAD"), cancellable = true)
 	private void threevhy$background(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-		if (!TitleScreenStyle.enabled()) return;
+		if (!TitleScreenStyle.drawsBackground()) return;
 		Screen screen = (Screen) (Object) this;
 		TitleScreenStyle.drawBackground(new DrawImpl(graphics), screen.width, screen.height);
 		ci.cancel();

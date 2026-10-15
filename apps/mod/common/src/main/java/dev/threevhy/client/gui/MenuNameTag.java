@@ -158,7 +158,8 @@ public final class MenuNameTag {
 		return false;
 	}
 
-	private static PlayerSkin ownSkin(Minecraft mc) {
+	/** Your skin: from the server in a world, otherwise your account's. */
+	public static PlayerSkin ownSkin(Minecraft mc) {
 		ClientPacketListener connection = mc.getConnection();
 		if (connection != null && mc.player != null) {
 			PlayerInfo info = connection.getPlayerInfo(mc.player.getUUID());

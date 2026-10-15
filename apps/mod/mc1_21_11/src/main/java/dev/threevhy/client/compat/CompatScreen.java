@@ -31,11 +31,23 @@ public abstract class CompatScreen extends Screen {
 		d.fill(0, 0, this.width, this.height, 0xB0040A20);
 	}
 
+	/** Whether the game behind is blurred, Minecraft's way; the Lunar-style menus leave it sharp. */
+	protected boolean blurBackground() {
+		return true;
+	}
+
+	/** Whether Minecraft's panorama shows behind this menu when there's no world, as on the main menu. */
+	protected boolean panoramaBackground() {
+		return false;
+	}
+
 	@Override
 	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
 		if (!dimBackground()) return;
 		if (Minecraft.getInstance().level != null) {
-			super.renderBackground(graphics, mouseX, mouseY, delta);
+			if (blurBackground()) super.renderBackground(graphics, mouseX, mouseY, delta);
+		} else if (panoramaBackground()) {
+			renderPanorama(graphics, delta);
 		}
 		drawBackdrop(new DrawImpl(graphics));
 	}

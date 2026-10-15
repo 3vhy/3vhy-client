@@ -19,9 +19,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 
 /**
- * The 3vhy hub (Right Shift), like Lunar's: the game dims behind falling snow, the 3vhy emblem and
- * name sit in the middle over a row of glass buttons (Profiles, MODS, Waypoints), and the HUD stays
- * on screen to be dragged around. Hovering a widget shows a pencil (its settings) and an X (turn it off).
+ * The 3vhy hub (Right Shift), like Lunar's: the game stays sharp behind falling snow, the 3vhy emblem
+ * and name sit just above the middle of the screen over a row of three glass buttons (Profiles, MODS,
+ * Waypoints), and the HUD stays on screen to be dragged around. Hovering a widget shows a pencil (its
+ * settings) and an X (turn it off). The emblem and buttons are measured off Lunar's at Minecraft's GUI
+ * scale, so they grow and shrink with the HUD (the HUD size setting too).
  */
 public final class HubScreen extends CompatScreen {
 	private static final int SNAP = 4;
@@ -56,11 +58,29 @@ public final class HubScreen extends CompatScreen {
 	}
 
 	@Override
+	protected boolean blurBackground() {
+		return false;
+	}
+
+	@Override
+	protected boolean panoramaBackground() {
+		return !TitleScreenStyle.drawsBackground();
+	}
+
+	@Override
 	protected void drawBackdrop(Draw d) {
+		drawLunarBackdrop(d, this.width, this.height, snow);
+	}
+
+	/**
+	 * Behind the Lunar-style menus: October's ghosts if the main menu shows them (with no world), a
+	 * light tint like Lunar's, and the snow.
+	 */
+	static void drawLunarBackdrop(Draw d, int w, int h, Snow snow) {
 		MenuTheme t = MenuTheme.current();
-		if (Minecraft.getInstance().level == null) MainMenuScreen.drawBackdrop(d, this.width, this.height);
-		d.fill(0, 0, this.width, this.height, t.tint());
-		snow.draw(d, this.width, this.height);
+		if (Minecraft.getInstance().level == null && TitleScreenStyle.drawsBackground()) October.drawBackdrop(d, w, h);
+		d.fill(0, 0, w, h, t.isLight() ? t.tint() : 0x29000000);
+		snow.draw(d, w, h);
 	}
 
 	@Override
@@ -90,8 +110,8 @@ public final class HubScreen extends CompatScreen {
 			hits.add(new Ui.Hit(box[0], box[1], box[2], box[3], () -> startDrag(widget, mouseX, mouseY), null));
 		}
 
-		// The logo block sits on its own glass plate, and steps aside while something is dragged
-		if (dragging == null && !editOnly) drawCentre(ui, mc, centre);
+		// The logo and buttons step aside while something is dragged
+		if (dragging == null && !editOnly) drawCentre(ui, mc);
 
 		// The widget being touched is drawn again on top, so it's never hidden behind the logo block
 		HudWidget active = dragging != null ? dragging : hovered;
@@ -123,30 +143,31 @@ public final class HubScreen extends CompatScreen {
 		return box;
 	}
 
-	private static final int BUTTON_H = 26;
-	private static final int MODS_W = 120;
-	private static final int GAP = 6;
+	/** Lunar's hub, in GUI pixels at 100% HUD size: its button row and its logo above it. */
+	private static final float BUTTON_H = 19.3f;
+	private static final float MODS_W = 66.7f;
+	private static final float GAP = 2f;
+	private static final float EMBLEM = 37f;
+	/** From the middle of the screen up to the emblem's top, the name's capital top, and the buttons' top. */
+	private static final float EMBLEM_TOP = 66.7f;
+	private static final float NAME_TOP = 25f;
+	private static final float NAME_CAP = 6.3f;
+	private static final float BUTTONS_TOP = 9.7f;
 
-	/** Pixels per cell of the emblem's 3. */
-	private int cell() {
-		return this.height >= 360 ? 4 : 3;
-	}
-
-	private int emblemSize() {
-		return 16 * cell();
-	}
-
-	private int buttonsY() {
-		return this.height / 2 + 14;
+	/** How big the centre is drawn: the HUD size setting, made smaller if the window can't fit it. */
+	private float centreScale() {
+		float fit = Math.min((this.height - 16) / 80f, (this.width - 16) / 112f);
+		return Math.max(0.4f, Math.min(HudRenderer.scale(), fit));
 	}
 
 	/** Where the emblem, the name and the buttons go: {x1, y1, x2, y2}. */
 	private int[] centreBounds() {
-		int rowW = MODS_W + 2 * (BUTTON_H + GAP);
-		int half = Math.max(rowW, emblemSize()) / 2 + 8;
-		int top = buttonsY() - 10 - 12 - 8 - emblemSize() - 6;
-		int bottom = buttonsY() + BUTTON_H + 6;
-		return new int[] {this.width / 2 - half, top, this.width / 2 + half, bottom};
+		float s = centreScale();
+		float rowW = MODS_W + 2 * (BUTTON_H + GAP);
+		float cx = this.width / 2f;
+		float cy = this.height / 2f;
+		return new int[] {Math.round(cx - rowW * s / 2) - 2, Math.round(cy - EMBLEM_TOP * s) - 2,
+				Math.round(cx + rowW * s / 2) + 2, Math.round(cy + BUTTONS_TOP * s + BUTTON_H * s) + 2};
 	}
 
 	/** The pencil and X over a hovered widget. */
@@ -168,42 +189,88 @@ public final class HubScreen extends CompatScreen {
 		ui.hit(x, y, x + 10, y + 10, action);
 	}
 
-	private void drawCentre(Ui ui, Minecraft mc, int[] bounds) {
-		// A soft plate keeps the emblem and buttons readable over HUD widgets placed in the middle
-		ui.d.roundRect(bounds[0], bounds[1], bounds[2], bounds[3], 10, MenuTheme.alpha(ui.t.panel(), 0xB0));
-		int cx = this.width / 2;
+	private void drawCentre(Ui ui, Minecraft mc) {
+		float s = centreScale();
+		float cx = this.width / 2f;
+		float cy = this.height / 2f;
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 300f);
-		int drop = Math.round((1 - (1 - (1 - intro) * (1 - intro) * (1 - intro))) * -8);
+		float drop = (1 - (1 - (1 - intro) * (1 - intro) * (1 - intro))) * -6 * s;
 		int alpha = Math.round(255 * intro);
+		Draw d = ui.d;
 
-		int btnY = buttonsY();
-		int nameY = btnY - 10 - 12;
-		int size = emblemSize();
-		int ex = cx - size / 2;
-		int ey = nameY - 8 - size + drop;
-		drawEmblem(ui.d, ex, ey, size, cell(), alpha, ui.t.text());
+		float guiScale = (float) mc.getWindow().getGuiScale();
+		int cell = Math.max(1, Math.round(EMBLEM * s * guiScale / 16));
+		int size = 16 * cell;
+		d.push();
+		d.scale(1f / guiScale);
+		drawEmblem(d, Math.round(cx * guiScale - size / 2f), Math.round((cy - EMBLEM_TOP * s + drop) * guiScale), size, cell, alpha,
+				0xFFFFFFFF);
+		d.pop();
 
-		ui.d.push();
-		ui.d.translate(cx, nameY + drop);
-		ui.d.scale(1.5f);
-		String brand = "3VHY";
-		String client = " CLIENT";
-		int textW = ui.boldWidth(brand) + ui.width(client);
-		ui.d.text(Ui.bold(brand), -textW / 2, 0, MenuTheme.alpha(ui.t.text(), alpha), false);
-		ui.d.text(client, -textW / 2 + ui.boldWidth(brand), 0, MenuTheme.alpha(Draw.mix(ui.t.text(), ui.t.muted(), 0.25), alpha), false);
-		ui.d.pop();
+		boolean clean = UiFont.clean();
+		Component brand = clean ? UiFont.bold("3VHY") : Ui.bold("3VHY");
+		Component client = clean ? UiFont.semibold(" CLIENT") : Component.literal(" CLIENT");
+		float nameScale = NAME_CAP * s / (clean ? 6.8f : 7f);
+		float brandW = mc.font.width(brand) * nameScale;
+		float nameW = brandW + mc.font.width(client) * nameScale;
+		float nameY = cy - NAME_TOP * s + drop;
+		text(d, brand, cx - nameW / 2, nameY, nameScale, MenuTheme.alpha(0x000000, alpha * 0x60 / 255), s);
+		text(d, client, cx - nameW / 2 + brandW, nameY, nameScale, MenuTheme.alpha(0x000000, alpha * 0x60 / 255), s);
+		text(d, brand, cx - nameW / 2, nameY, nameScale, MenuTheme.alpha(0xFFFFFF, alpha), 0);
+		text(d, client, cx - nameW / 2 + brandW, nameY, nameScale, MenuTheme.alpha(0xF0F3F8, alpha), 0);
 
-		int rowW = MODS_W + 2 * (BUTTON_H + GAP);
-		int x = cx - rowW / 2;
-		ui.glassButton(x, btnY, BUTTON_H, BUTTON_H, null, PixelIcons.forModule(Modules.PROFILES),
+		float y = cy - BUTTONS_TOP * s;
+		float h = BUTTON_H * s;
+		float rowW = (MODS_W + 2 * (BUTTON_H + GAP)) * s;
+		float x = cx - rowW / 2;
+		lunarButton(ui, x, y, h, h, null, PixelIcons.forModule(Modules.PROFILES),
 				() -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.PROFILES)));
-		if (ui.hover(x, btnY, x + BUTTON_H, btnY + BUTTON_H)) ui.tooltip("Profiles", x + BUTTON_H / 2, btnY + BUTTON_H + 4);
-		x += BUTTON_H + GAP;
-		ui.glassButton(x, btnY, MODS_W, BUTTON_H, "Mods", null, () -> mc.setScreen(ModMenuScreen.create(this)));
-		x += MODS_W + GAP;
-		ui.glassButton(x, btnY, BUTTON_H, BUTTON_H, null, PixelIcons.forModule(Modules.WAYPOINTS),
+		if (ui.hover(Math.round(x), Math.round(y), Math.round(x + h), Math.round(y + h))) ui.tooltip("Profiles", Math.round(x + h / 2), Math.round(y + h + 4));
+		x += h + GAP * s;
+		lunarButton(ui, x, y, MODS_W * s, h, "MODS", null, () -> mc.setScreen(ModMenuScreen.create(this)));
+		x += (MODS_W + GAP) * s;
+		lunarButton(ui, x, y, h, h, null, PixelIcons.forModule(Modules.WAYPOINTS),
 				() -> mc.setScreen(new ModMenuScreen(this).openTab(ModMenuScreen.Tab.WAYPOINTS)));
-		if (ui.hover(x, btnY, x + BUTTON_H, btnY + BUTTON_H)) ui.tooltip("Waypoints", x + BUTTON_H / 2, btnY + BUTTON_H + 4);
+		if (ui.hover(Math.round(x), Math.round(y), Math.round(x + h), Math.round(y + h))) ui.tooltip("Waypoints", Math.round(x + h / 2), Math.round(y + h + 4));
+	}
+
+	/** Text at a fractional size; {@code shadow} nudges it down and right by that many GUI pixels' worth. */
+	private static void text(Draw d, Component text, float x, float y, float scale, int color, float shadow) {
+		d.push();
+		d.translate(x + shadow * 0.5f, y + shadow * 0.5f);
+		d.scale(scale);
+		d.text(text, 0, 0, color, false);
+		d.pop();
+	}
+
+	/**
+	 * Lunar's hub button: smoked glass (a fifth black) with a thin light edge and small round corners,
+	 * drawn in real pixels, and white text or a pixel icon in the middle.
+	 */
+	static void lunarButton(Ui ui, float x, float y, float w, float h, String label, String[] icon, Runnable action) {
+		Draw d = ui.d;
+		boolean hover = ui.hover(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h));
+		float radius = h * 0.11f;
+		Smooth.roundRect(d, x, y, x + w, y + h, radius, hover ? 0x40FFFFFF : 0x38000000);
+		Smooth.roundOutline(d, x, y, x + w, y + h, radius, h * 0.035f, hover ? 0xB0FFFFFF : 0x4DFFFFFF);
+		Minecraft mc = ui.mc;
+		if (icon != null) {
+			float guiScale = (float) mc.getWindow().getGuiScale();
+			int pixel = Math.max(1, Math.round(h / 27f * guiScale));
+			int size = PixelIcons.SIZE * pixel;
+			d.push();
+			d.scale(1f / guiScale);
+			PixelIcons.draw(d, icon, Math.round((x + w / 2) * guiScale - size / 2f), Math.round((y + h / 2) * guiScale - size / 2f), pixel,
+					hover ? 0xFFFFFFFF : 0xFFE6E8EC);
+			d.pop();
+		} else if (label != null) {
+			boolean clean = UiFont.clean();
+			Component text = clean ? UiFont.semibold(label) : Component.literal(label);
+			float scale = h * 0.245f / (clean ? 6.8f : 7f);
+			float textW = mc.font.width(text) * scale;
+			text(d, text, x + (w - textW) / 2, y + (h - (clean ? 6.8f : 7f) * scale) / 2, scale, hover ? 0xFFFFFFFF : 0xFFEFF2F6, 0);
+		}
+		ui.hit(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), action);
 	}
 
 	/** The 3vhy emblem: the app icon's pixel 3 inside a rounded outline, in one colour like Lunar's. */

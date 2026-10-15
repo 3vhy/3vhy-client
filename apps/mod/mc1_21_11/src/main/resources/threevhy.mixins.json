@@ -17,7 +17,6 @@
 		"ItemStackMixin",
 		"LivingEntityMixin",
 		"LivingEntityRendererMixin",
-		"LogoRendererMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",

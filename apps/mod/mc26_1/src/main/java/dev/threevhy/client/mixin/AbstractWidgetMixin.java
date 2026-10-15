@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 3vhy main menu: the title screen's buttons are drawn as 3vhy glass instead of Minecraft's stone. */
+/** 3vhy main menu: the dark buttons down the right of the title screen, like Lunar's. */
 @Mixin(AbstractWidget.class)
 public abstract class AbstractWidgetMixin {
 	@Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)

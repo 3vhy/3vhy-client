@@ -10,7 +10,8 @@ import net.minecraft.network.chat.Component;
 
 /**
  * Drawing helpers shared by the hub and the mod menus: Lunar-style smoked glass with thin edges and
- * 3vhy's accent. Every control records a click area; the screen runs the topmost one hit.
+ * 3vhy's accent, with round corners drawn smooth by {@link Smooth} so they stay clean at any scale.
+ * Every control records a click area; the screen runs the topmost one hit.
  */
 public final class Ui {
 	/** A clickable area. Areas added later are on top. */
@@ -113,6 +114,50 @@ public final class Ui {
 		return Math.round(mc.font.width(clean ? UiFont.bold(text) : bold(text)) * textScale);
 	}
 
+	/** Bold text in the font this Ui draws with. */
+	private Component boldText(String text) {
+		return clean ? UiFont.bold(text) : bold(text);
+	}
+
+	/**
+	 * Text with extra room between the letters, like Lunar's uppercase labels, at {@code scale}.
+	 * Returns how wide it was.
+	 */
+	public float spaced(String text, float x, float y, float scale, float spacing, boolean bold, int color) {
+		float cx = x;
+		for (int i = 0; i < text.length(); i++) {
+			String letter = String.valueOf(text.charAt(i));
+			Component part = bold ? boldText(letter) : clean ? UiFont.semibold(letter) : Component.literal(letter);
+			d.push();
+			d.translate(cx, y);
+			d.scale(scale);
+			d.text(part, 0, 0, color, false);
+			d.pop();
+			cx += mc.font.width(part) * scale + spacing;
+		}
+		return text.isEmpty() ? 0 : cx - spacing - x;
+	}
+
+	public float spacedWidth(String text, float scale, float spacing, boolean bold) {
+		float w = 0;
+		for (int i = 0; i < text.length(); i++) {
+			String letter = String.valueOf(text.charAt(i));
+			Component part = bold ? boldText(letter) : clean ? UiFont.semibold(letter) : Component.literal(letter);
+			w += mc.font.width(part) * scale + spacing;
+		}
+		return text.isEmpty() ? 0 : w - spacing;
+	}
+
+	/** A smooth filled box with round corners. */
+	public void round(float x1, float y1, float x2, float y2, float radius, int color) {
+		Smooth.roundRect(d, x1, y1, x2, y2, radius, color);
+	}
+
+	/** A smooth one-unit edge with round corners. */
+	public void ring(float x1, float y1, float x2, float y2, float radius, int color) {
+		Smooth.roundOutline(d, x1, y1, x2, y2, radius, 1, color);
+	}
+
 	public void text(String text, int x, int y, int color) {
 		scaled(clean ? UiFont.semibold(text) : Component.literal(text), x, y, color);
 	}
@@ -193,14 +238,14 @@ public final class Ui {
 
 	/** A glass panel with a thin edge and soft round corners, like the launcher's cards. */
 	public void panel(int x1, int y1, int x2, int y2, int fill) {
-		d.roundRect(x1, y1, x2, y2, R_PANEL, fill);
-		d.roundOutline(x1, y1, x2, y2, R_PANEL, t.edge());
+		round(x1, y1, x2, y2, R_PANEL, fill);
+		ring(x1, y1, x2, y2, R_PANEL, t.edge());
 	}
 
 	/** A card or list row: rounded, with a thin edge. */
 	public void card(int x1, int y1, int x2, int y2, int fill, int edge) {
-		d.roundRect(x1, y1, x2, y2, R_CARD, fill);
-		d.roundOutline(x1, y1, x2, y2, R_CARD, edge);
+		round(x1, y1, x2, y2, R_CARD, fill);
+		ring(x1, y1, x2, y2, R_CARD, edge);
 	}
 
 	/**
@@ -212,42 +257,29 @@ public final class Ui {
 		String text = trimTitle(label, w - 8);
 		if (primary) {
 			int face = hover ? Draw.mix(t.accent(), 0xFFFFFFFF, 0.12) : t.accent();
-			d.roundRect(x, y, x + w, y + h, R_CONTROL, Draw.mix(t.accent(), 0xFF000000, 0.45));
-			d.roundGradient(x, y, x + w, y + h - 2, R_CONTROL, Draw.mix(face, 0xFFFFFFFF, 0.3), face);
-			d.text(bold(text), x + (w - boldWidth(text)) / 2, y + (h - 2 - 8) / 2 + 1, t.onAccent(), false);
+			round(x, y, x + w, y + h, R_CONTROL, Draw.mix(t.accent(), 0xFF000000, 0.45));
+			round(x, y, x + w, y + h - 1, R_CONTROL, face);
+			d.text(boldText(text), x + (w - boldWidth(text)) / 2, y + (h - 1 - 8) / 2 + 1, t.onAccent(), false);
 		} else {
 			card(x, y, x + w, y + h, hover ? t.cardHover() : t.card(), hover ? t.edgeStrong() : t.edge());
-			d.text(bold(text), x + (w - boldWidth(text)) / 2, y + (h - 8) / 2, t.text(), false);
+			d.text(boldText(text), x + (w - boldWidth(text)) / 2, y + (h - 8) / 2, t.text(), false);
 		}
 		hit(x, y, x + w, y + h, action);
-	}
-
-	/** A square icon button, with a label shown under it on hover. */
-	public void iconButton(int x, int y, int size, String[] icon, String label, boolean active, Runnable action) {
-		boolean hover = hover(x, y, x + size, y + size);
-		card(x, y, x + size, y + size, active ? MenuTheme.alpha(t.accent(), 0xD8) : hover ? t.cardHover() : t.card(),
-				active ? t.accent() : hover ? t.edgeStrong() : t.edge());
-		int scale = size >= 28 ? 2 : 1;
-		int iconSize = PixelIcons.SIZE * scale;
-		PixelIcons.draw(d, icon, x + (size - iconSize) / 2, y + (size - iconSize) / 2, scale,
-				active ? t.onAccent() : t.text());
-		hit(x, y, x + size, y + size, action);
-		if (hover && label != null) tooltip(label, x + size / 2, y + size + 3);
 	}
 
 	/** A small dark label centred under (cx, y). */
 	public void tooltip(String text, int cx, int y) {
 		String upper = text.toUpperCase(Locale.ROOT);
 		int w = width(upper) + 10;
-		d.roundRect(cx - w / 2, y, cx + w / 2, y + 12, 4, 0xE0050C26);
-		d.text(upper, cx - w / 2 + 5, y + 2, 0xFFE3F3FC, false);
+		round(cx - w / 2, y, cx + w / 2, y + 12, 4, 0xE0050C26);
+		text(upper, cx - w / 2 + 5, y + 2, 0xFFE3F3FC);
 	}
 
 	/** A small rounded label, like ACTIVE or NEW. */
 	public void pill(int x, int y, String label, int fill, int color) {
 		int w = width(label) + 10;
-		d.roundRect(x, y, x + w, y + 12, 6, fill);
-		d.text(label, x + 5, y + 2, color, false);
+		round(x, y, x + w, y + 12, 6, fill);
+		text(label, x + 5, y + 2, color);
 	}
 
 	public int pillWidth(String label) {
@@ -256,44 +288,25 @@ public final class Ui {
 
 	/** An on/off switch, 22x10: green when on, like Lunar's. */
 	public void toggle(int x, int y, boolean on) {
-		d.roundRect(x, y, x + 22, y + 10, 5, on ? t.good() : MenuTheme.alpha(t.muted(), 0x70));
+		round(x, y, x + 22, y + 10, 5, on ? t.good() : MenuTheme.alpha(t.muted(), 0x70));
 		int knob = on ? x + 13 : x + 1;
-		d.roundRect(knob, y + 1, knob + 8, y + 9, 4, 0xFFFFFFFF);
-	}
-
-	/**
-	 * Lunar's menu button: smoked glass with a thin light border that brightens on hover, and
-	 * plain uppercase text. {@code icon} draws a pixel icon instead of text (for square buttons).
-	 */
-	public void glassButton(int x, int y, int w, int h, String label, String[] icon, Runnable action) {
-		boolean hover = hover(x, y, x + w, y + h);
-		d.roundRect(x, y, x + w, y + h, R_CONTROL, hover ? 0x8C2A2E36 : 0x73000000);
-		d.roundOutline(x, y, x + w, y + h, R_CONTROL, hover ? 0xD9FFFFFF : 0x66FFFFFF);
-		if (icon != null) {
-			int scale = Math.min(w, h) >= 30 ? 2 : 1;
-			int size = PixelIcons.SIZE * scale;
-			PixelIcons.draw(d, icon, x + (w - size) / 2, y + (h - size) / 2, scale, 0xFFFFFFFF);
-		} else if (label != null) {
-			String text = label.toUpperCase(Locale.ROOT);
-			text(text, x + (w - width(text)) / 2, y + (h - 8) / 2 + 1, 0xFFFFFFFF);
-		}
-		hit(x, y, x + w, y + h, action);
+		round(knob, y + 1, knob + 8, y + 9, 4, 0xFFFFFFFF);
 	}
 
 	/** A slider track with a round knob; fraction is 0..1. */
 	public void slider(int x, int y, int w, double fraction) {
-		d.roundRect(x, y + 3, x + w, y + 6, 1, MenuTheme.alpha(t.muted(), 0x60));
+		round(x, y + 3, x + w, y + 6, 1.5f, MenuTheme.alpha(t.muted(), 0x60));
 		int filled = (int) Math.round(w * fraction);
-		d.roundRect(x, y + 3, x + filled, y + 6, 1, t.accent());
+		round(x, y + 3, x + filled, y + 6, 1.5f, t.accent());
 		int knob = x + filled - 4;
-		d.roundRect(knob, y, knob + 9, y + 9, 4, 0xFFFFFFFF);
-		d.roundOutline(knob, y, knob + 9, y + 9, 4, t.accent());
+		round(knob, y, knob + 9, y + 9, 4.5f, 0xFFFFFFFF);
+		ring(knob, y, knob + 9, y + 9, 4.5f, t.accent());
 	}
 
 	/** A text field. Draws a blinking caret when focused. */
 	public void field(int x, int y, int w, int h, String value, String placeholder, boolean focused, String[] icon) {
-		d.roundRect(x, y, x + w, y + h, R_CONTROL, t.field());
-		d.roundOutline(x, y, x + w, y + h, R_CONTROL, focused ? t.edgeStrong() : t.edge());
+		round(x, y, x + w, y + h, R_CONTROL, t.field());
+		ring(x, y, x + w, y + h, R_CONTROL, focused ? t.edgeStrong() : t.edge());
 		int tx = x + 6;
 		if (icon != null) {
 			PixelIcons.draw(d, icon, x + 4, y + (h - 12) / 2, 1, value.isEmpty() ? t.muted() : t.accent());
@@ -316,15 +329,15 @@ public final class Ui {
 
 	/** A small round dot, e.g. an on/off or online indicator. */
 	public void dot(int x, int y, int size, int color) {
-		d.roundRect(x, y, x + size, y + size, size / 2, color);
+		round(x, y, x + size, y + size, size / 2f, color);
 	}
 
 	/** Thin scrollbar on the right of a list. */
 	public void scrollbar(int x, int y, int h, double scroll, int maxScroll, int contentHeight) {
 		if (maxScroll <= 0) return;
-		d.roundRect(x, y, x + 2, y + h, 1, MenuTheme.alpha(t.muted(), 0x30));
+		round(x, y, x + 2, y + h, 1, MenuTheme.alpha(t.muted(), 0x30));
 		int thumb = Math.max(14, h * h / Math.max(1, contentHeight));
 		int ty = y + (int) Math.round((h - thumb) * (scroll / maxScroll));
-		d.roundRect(x, ty, x + 2, ty + thumb, 1, t.accent());
+		round(x, ty, x + 2, ty + thumb, 1, t.accent());
 	}
 }

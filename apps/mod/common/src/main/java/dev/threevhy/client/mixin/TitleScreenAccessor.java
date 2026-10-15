@@ -6,7 +6,7 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-/** The 3vhy main menu leaves out Minecraft's yellow splash text, and Realms' icons once 3vhy Mods takes Realms' place. */
+/** The 3vhy main menu leaves out Minecraft's yellow splash text, and Realms' icons (they'd sit beside the old spot of the Realms button). */
 @Mixin(TitleScreen.class)
 public interface TitleScreenAccessor {
 	@Accessor("splash")

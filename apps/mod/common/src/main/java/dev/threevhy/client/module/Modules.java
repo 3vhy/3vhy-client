@@ -204,7 +204,7 @@ public final class Modules {
 	public static final Toggle SWING_SPEED_OTHERS = SWING_SPEED.add(new Toggle("others", "Other players too",
 			"Everyone's swing on your screen, not just yours", false));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
-			"The 3vhy look on the title screen; buttons from other mods still show", Category.VISUAL, true);
+			"Lunar's layout on the title screen: Mods, side buttons and your account; other mods' buttons still show", Category.VISUAL, true);
 	public static final Choice MAIN_MENU_SEASON = MAIN_MENU.add(new Choice("season", "October look",
 			"White with ghosts and pumpkins: on by itself in October, or always or never", 0, "Auto", "Always", "Never"));
 	public static final Module THEME = new Module("theme", "Theme",
@@ -213,7 +213,7 @@ public final class Modules {
 	public static final Choice THEME_MENU_STYLE = THEME.add(new Choice("menu_style", "Mod menu",
 			"Cards like Lunar's, or a floating panel for each category", 0, "Classic", "Panels"));
 	public static final Choice THEME_FONT = THEME.add(new Choice("font", "Menu font",
-			"The font in the Panels menu and the Music HUD: a clean sans-serif, or Minecraft's pixel font", 0, "Clean",
+			"The font in 3vhy's menus and the Music HUD: a clean sans-serif, or Minecraft's pixel font", 0, "Clean",
 			"Minecraft"));
 	public static final Color THEME_PANEL_COLOR = THEME.add(new Color("panel_color", "Panels colour",
 			"The colour of the Panels menu, the module list and the menu logo", 0xFF5A9CFF));

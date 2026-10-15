@@ -2,27 +2,42 @@ package dev.threevhy.client.gui;
 
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.module.ConfirmDisconnect;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 
 /**
- * The "3vhy Mod Menu" button in the pause menu. It takes the row just above Disconnect (or Save and
- * Quit), and everything from Disconnect down moves one row lower.
+ * The pause menu laid out like Lunar's: a full-width Mods button with 3vhy's gem right under
+ * Advancements and Statistics, Options... beside 3vhy Options..., and Minecraft's feedback links left
+ * out. Open to LAN or Player Reporting, which 3vhy Options... takes the place of, moves up to where
+ * the feedback links were, beside the server's own button if it has one. Buttons other mods put in
+ * the column move along with their row.
  */
 public final class PauseMenuButton {
-	public static final String LABEL = "3vhy Mod Menu";
-	/** Minecraft's pause menu leaves 4 pixels between rows. */
+	public static final String LABEL = "Mods";
+	public static final String OPTIONS_LABEL = "3vhy Options...";
+	/** Minecraft's pause menu leaves 4 pixels between rows and 8 between the halves of a row. */
 	private static final int ROW_GAP = 4;
+	private static final int HALF_GAP = 8;
+	private static final Set<String> FEEDBACK = Set.of("menu.sendFeedback", "menu.reportBugs", "menu.feedback");
+	private static final Set<AbstractWidget> GEMS = Collections.newSetFromMap(new WeakHashMap<>());
 
 	private PauseMenuButton() {
 	}
 
 	public static void add(Minecraft mc, Screen screen) {
-		List<AbstractWidget> widgets = Compat.widgets(screen);
+		List<AbstractWidget> widgets = new ArrayList<>(Compat.widgets(screen));
+		AbstractWidget options = find(widgets, "menu.options");
 		AbstractWidget disconnect = null;
 		for (AbstractWidget widget : widgets) {
 			if (widget.visible && ConfirmDisconnect.isDisconnect(widget.getMessage())) {
@@ -30,16 +45,119 @@ public final class PauseMenuButton {
 				break;
 			}
 		}
-		Button.Builder builder = Button.builder(Component.literal(LABEL), button -> mc.setScreen(ModMenuScreen.create(screen)));
-		if (disconnect == null) {
-			Compat.addWidget(screen, builder.pos(6, 6).size(90, 20).build());
+		String label = taken(widgets, LABEL) ? "3vhy " + LABEL : LABEL;
+		Button mods = Button.builder(Component.literal(label), button -> mc.setScreen(ModMenuScreen.create(screen))).build();
+		GEMS.add(mods);
+		Compat.afterScreen(screen, d -> {
+			for (AbstractWidget widget : Compat.widgets(screen)) {
+				if (GEMS.contains(widget)) Gem.onButton(d, widget);
+			}
+		});
+		if (options == null || disconnect == null || !inColumn(options, disconnect)) {
+			mods.setX(6);
+			mods.setY(6);
+			mods.setWidth(90);
+			Compat.addWidget(screen, mods);
 			return;
 		}
-		int rowY = disconnect.getY();
-		int shift = disconnect.getHeight() + ROW_GAP;
+		int left = disconnect.getX();
+		int full = disconnect.getWidth();
+		int half = (full - HALF_GAP) / 2;
+
+		Map<Integer, List<AbstractWidget>> byY = new TreeMap<>();
 		for (AbstractWidget widget : widgets) {
-			if (widget.getY() >= rowY) widget.setY(widget.getY() + shift);
+			if (widget.visible && inColumn(widget, disconnect)) byY.computeIfAbsent(widget.getY(), y -> new ArrayList<>()).add(widget);
 		}
-		Compat.addWidget(screen, builder.pos(disconnect.getX(), rowY).size(disconnect.getWidth(), disconnect.getHeight()).build());
+		List<List<AbstractWidget>> rows = new ArrayList<>(byY.values());
+		int top = rows.get(0).get(0).getY();
+		int optionsRow = -1;
+		int feedbackRow = -1;
+		for (int i = 0; i < rows.size(); i++) {
+			if (rows.get(i).contains(options)) optionsRow = i;
+			if (feedbackRow < 0 && rows.get(i).stream().anyMatch(widget -> FEEDBACK.contains(key(widget)))) feedbackRow = i;
+		}
+		if (feedbackRow < 0 || feedbackRow > optionsRow) feedbackRow = -1;
+
+		List<AbstractWidget> moved = new ArrayList<>();
+		if (feedbackRow >= 0) {
+			for (AbstractWidget widget : rows.get(feedbackRow)) {
+				if (FEEDBACK.contains(key(widget))) {
+					widget.visible = false;
+					widget.active = false;
+				} else {
+					moved.add(widget);
+				}
+			}
+		}
+		Button ours = Button.builder(Component.literal(OPTIONS_LABEL),
+				button -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.SETTINGS))).build();
+		List<AbstractWidget> optionsLine = new ArrayList<>();
+		AbstractWidget displaced = null;
+		for (AbstractWidget widget : rows.get(optionsRow)) {
+			if (widget != options && displaced == null && widget.getX() > options.getX()) displaced = widget;
+			else optionsLine.add(widget);
+		}
+		ours.setWidth(displaced != null ? displaced.getWidth() : half);
+		ours.setHeight(options.getHeight());
+		ours.setX(displaced != null ? displaced.getX() : left + full - half);
+		optionsLine.add(ours);
+		if (displaced != null) moved.add(displaced);
+
+		mods.setX(left);
+		mods.setWidth(full);
+		mods.setHeight(disconnect.getHeight());
+		List<List<AbstractWidget>> layout = new ArrayList<>();
+		int modsAt = feedbackRow >= 0 ? feedbackRow : optionsRow;
+		for (int i = 0; i < rows.size(); i++) {
+			if (i == modsAt) {
+				layout.add(List.<AbstractWidget>of(mods));
+				for (int start = 0; start < moved.size(); start += 2) {
+					List<AbstractWidget> pair = moved.subList(start, Math.min(moved.size(), start + 2));
+					for (int j = 0; j < pair.size(); j++) {
+						AbstractWidget widget = pair.get(j);
+						widget.setWidth(pair.size() == 1 ? full : half);
+						widget.setX(left + j * (half + HALF_GAP));
+					}
+					layout.add(new ArrayList<>(pair));
+				}
+			}
+			if (i == feedbackRow) continue;
+			layout.add(i == optionsRow ? optionsLine : rows.get(i));
+		}
+		int y = top;
+		for (List<AbstractWidget> row : layout) {
+			int h = 0;
+			for (AbstractWidget widget : row) {
+				widget.setY(y);
+				h = Math.max(h, widget.getHeight());
+			}
+			y += h + ROW_GAP;
+		}
+		Compat.addWidget(screen, mods);
+		Compat.addWidget(screen, ours);
+	}
+
+	/** Whether a widget is in the pause menu's column (or just beside it), going by Disconnect's place. */
+	private static boolean inColumn(AbstractWidget widget, AbstractWidget disconnect) {
+		return widget.getX() + widget.getWidth() >= disconnect.getX() - 30 && widget.getX() <= disconnect.getX() + disconnect.getWidth() + 30;
+	}
+
+	/** Whether another mod already has a button with this label (Mod Menu's Mods, say). */
+	private static boolean taken(List<AbstractWidget> widgets, String label) {
+		for (AbstractWidget widget : widgets) {
+			if (widget.visible && widget.getMessage().getString().equals(label)) return true;
+		}
+		return false;
+	}
+
+	private static AbstractWidget find(List<AbstractWidget> widgets, String key) {
+		for (AbstractWidget widget : widgets) {
+			if (widget.visible && key.equals(key(widget))) return widget;
+		}
+		return null;
+	}
+
+	private static String key(AbstractWidget widget) {
+		return widget.getMessage().getContents() instanceof TranslatableContents contents ? contents.getKey() : "";
 	}
 }

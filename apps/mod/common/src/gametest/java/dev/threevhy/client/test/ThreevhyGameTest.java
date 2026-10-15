@@ -197,8 +197,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		check(failed, "clean font (Titillium Web) loads from the mod's resources", fontWidths[0] > 20 && fontWidths[0] != fontWidths[1]);
 		check(failed, "3vhy main menu styles the title screen",
 				context.computeOnClient(client -> client.screen instanceof TitleScreen) && Hooks.mainMenuShown);
-		check(failed, "main menu hides Minecraft's logo (LogoRenderer)", Hooks.minecraftLogoHidden);
-		check(failed, "main menu buttons drawn as 3vhy glass (AbstractWidget)", Hooks.titleButtonsStyled);
+		check(failed, "main menu side buttons drawn by 3vhy (AbstractWidget)", Hooks.titleButtonsStyled);
 		int menuScale = context.computeOnClient(client -> client.getWindow().getGuiScale());
 		int[] modsButton = context.computeOnClient(client -> {
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
@@ -208,29 +207,56 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			}
 			return null;
 		});
-		check(failed, "main menu has the 3vhy Mods button", modsButton != null);
-		check(failed, "3vhy Mods takes Minecraft Realms' place", context.computeOnClient(client -> {
-			boolean realmsShown = false;
+		check(failed, "main menu has the Mods button", modsButton != null);
+		check(failed, "Mods sits right under Minecraft Realms, like Lunar's", context.computeOnClient(client -> {
 			int modsRow = -1;
-			int multiplayerRow = -1;
+			int realmsRow = -1;
+			int optionsRow = -1;
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
 				if (widget.getMessage().getString().equals(TitleScreenStyle.MODS_LABEL)) modsRow = widget.getY();
-				if (widget.getMessage().getContents() instanceof TranslatableContents key) {
-					if (key.getKey().equals("menu.online") && widget.visible) realmsShown = true;
-					if (key.getKey().equals("menu.multiplayer")) multiplayerRow = widget.getY();
+				if (widget.visible && widget.getMessage().getContents() instanceof TranslatableContents key) {
+					if (key.getKey().equals("menu.online")) realmsRow = widget.getY();
+					if (key.getKey().equals("menu.options")) optionsRow = widget.getY();
 				}
 			}
-			ThreevhyClient.LOG.info("3vhy-check: main menu rows: multiplayer {}, 3vhy Mods {}, Realms shown {}", multiplayerRow, modsRow,
-					realmsShown);
-			return !realmsShown && multiplayerRow >= 0 && modsRow > multiplayerRow;
+			ThreevhyClient.LOG.info("3vhy-check: main menu rows: Realms {}, Mods {}, Options {}", realmsRow, modsRow, optionsRow);
+			return realmsRow >= 0 && modsRow == realmsRow + 24 && optionsRow == modsRow + 36;
 		}));
+		check(failed, "main menu has Lunar's column of side buttons", context.computeOnClient(client -> {
+			List<String> found = new ArrayList<>();
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				String label = widget.getMessage().getString();
+				if (widget.visible && List.of("Profiles", "Edit HUD", "Screenshots", "Settings").contains(label)) found.add(label);
+			}
+			return found.size() == 4;
+		}));
+		int[] settingsSide = context.computeOnClient(client -> {
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				if (widget.visible && widget.getMessage().getString().equals("Settings")) {
+					return new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
+				}
+			}
+			return null;
+		});
+		if (settingsSide != null) {
+			context.getInput().setCursorPos(settingsSide[0] * menuScale, settingsSide[1] * menuScale);
+			context.waitTicks(2);
+			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			context.waitTicks(10);
+		}
+		check(failed, "the Settings side button opens 3vhy's settings",
+				context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
+		for (int i = 0; i < 3 && context.computeOnClient(client -> !(client.screen instanceof TitleScreen)); i++) {
+			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+			context.waitTicks(5);
+		}
 		if (modsButton != null) {
 			context.getInput().setCursorPos(modsButton[0] * menuScale, modsButton[1] * menuScale);
 			context.waitTicks(2);
 			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			context.waitTicks(10);
 		}
-		check(failed, "3vhy Mods button opens the mod menu",
+		check(failed, "Mods button opens the mod menu",
 				context.computeOnClient(client -> client.screen instanceof ModMenuScreen || client.screen instanceof ClickGuiScreen));
 		context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 		context.waitTicks(5);
@@ -700,37 +726,75 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					client.screen instanceof HubScreen hub && hub.isEditOnly()));
 			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Classic"));
 
-			// Pause menu: the mod menu button, then Confirm Disconnect
+			// Pause menu: Lunar's layout with the Mods button, then Confirm Disconnect
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(10);
 			shot(context, "3vhy-pause-menu");
 			int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
-			int[] modMenuButton = context.computeOnClient(client -> {
+			int[][] pauseButtons = context.computeOnClient(client -> {
+				AbstractWidget mods = null;
 				AbstractWidget ours = null;
+				AbstractWidget stats = null;
+				AbstractWidget options = null;
 				AbstractWidget disconnect = null;
+				boolean feedback = false;
 				for (AbstractWidget widget : Compat.widgets(client.screen)) {
-					if (widget.getMessage().getString().equals(PauseMenuButton.LABEL)) ours = widget;
+					if (!widget.visible) continue;
+					String label = widget.getMessage().getString();
+					if (label.equals(PauseMenuButton.LABEL)) mods = widget;
+					if (label.equals(PauseMenuButton.OPTIONS_LABEL)) ours = widget;
 					if (ConfirmDisconnect.isDisconnect(widget.getMessage())) disconnect = widget;
+					if (widget.getMessage().getContents() instanceof TranslatableContents key) {
+						if (key.getKey().equals("gui.stats")) stats = widget;
+						if (key.getKey().equals("menu.options")) options = widget;
+						if (key.getKey().equals("menu.sendFeedback") || key.getKey().equals("menu.reportBugs")) feedback = true;
+					}
 				}
-				if (ours == null || disconnect == null) return null;
-				boolean above = ours.getX() == disconnect.getX() && ours.getY() + ours.getHeight() + 4 == disconnect.getY();
-				return new int[] {ours.getX() + ours.getWidth() / 2, ours.getY() + ours.getHeight() / 2, above ? 1 : 0};
+				if (mods == null || ours == null || stats == null || options == null || disconnect == null) return null;
+				ThreevhyClient.LOG.info("3vhy-check: pause menu: Statistics {}, Mods {} ({} wide), Options {}, 3vhy Options {}, Disconnect {}",
+						stats.getY(), mods.getY(), mods.getWidth(), options.getY(), ours.getY(), disconnect.getY());
+				boolean modsRow = mods.getY() == stats.getY() + stats.getHeight() + 4 && mods.getX() == disconnect.getX()
+						&& mods.getWidth() == disconnect.getWidth();
+				boolean optionsRow = ours.getY() == options.getY() && ours.getX() > options.getX();
+				return new int[][] {
+						{mods.getX() + mods.getWidth() / 2, mods.getY() + mods.getHeight() / 2},
+						{ours.getX() + ours.getWidth() / 2, ours.getY() + ours.getHeight() / 2},
+						{modsRow ? 1 : 0, optionsRow ? 1 : 0, feedback ? 1 : 0}};
 			});
-			check(failed, "3vhy Mod Menu button sits right above Disconnect", modMenuButton != null && modMenuButton[2] == 1);
-			if (modMenuButton != null) {
-				context.getInput().setCursorPos(modMenuButton[0] * scale, modMenuButton[1] * scale);
+			check(failed, "pause menu has Mods and 3vhy Options...", pauseButtons != null);
+			check(failed, "Mods is a full row right under Advancements and Statistics", pauseButtons != null && pauseButtons[2][0] == 1);
+			check(failed, "3vhy Options... sits beside Options...", pauseButtons != null && pauseButtons[2][1] == 1);
+			check(failed, "pause menu leaves out the feedback links", pauseButtons != null && pauseButtons[2][2] == 0);
+			if (pauseButtons != null) {
+				context.getInput().setCursorPos(pauseButtons[0][0] * scale, pauseButtons[0][1] * scale);
 				context.waitTicks(2);
 				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 				context.waitTicks(15);
 			}
-			check(failed, "pause menu button opens the mod menu",
+			check(failed, "pause menu's Mods opens the mod menu",
 					context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(5);
 			check(failed, "closing the mod menu goes back to the pause menu",
 					context.computeOnClient(client -> client.screen instanceof PauseScreen));
+			if (pauseButtons != null) {
+				context.getInput().setCursorPos(pauseButtons[1][0] * scale, pauseButtons[1][1] * scale);
+				context.waitTicks(2);
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				context.waitTicks(15);
+			}
+			check(failed, "3vhy Options... opens 3vhy's settings",
+					context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
+			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+			context.waitTicks(5);
+			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+			context.waitTicks(5);
+			if (context.computeOnClient(client -> !(client.screen instanceof PauseScreen))) {
+				context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+				context.waitTicks(10);
+			}
 
 			int[] quit = context.computeOnClient(client -> {
 				for (AbstractWidget widget : Compat.widgets(client.screen)) {

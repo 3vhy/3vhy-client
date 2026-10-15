@@ -65,6 +65,11 @@ public final class Icons {
 	}
 
 	public static void draw(Draw d, String[] icon, int x, int y, int color) {
+		draw(d, icon, 1, x, y, color);
+	}
+
+	/** Draws an icon with each of its pixels {@code scale} by {@code scale}. */
+	public static void draw(Draw d, String[] icon, int scale, int x, int y, int color) {
 		for (int row = 0; row < icon.length; row++) {
 			String line = icon[row];
 			int start = -1;
@@ -72,7 +77,7 @@ public final class Icons {
 				boolean on = col < line.length() && line.charAt(col) == '#';
 				if (on && start < 0) start = col;
 				if (!on && start >= 0) {
-					d.fill(x + start, y + row, x + col, y + row + 1, color);
+					d.fill(x + start * scale, y + row * scale, x + col * scale, y + (row + 1) * scale, color);
 					start = -1;
 				}
 			}

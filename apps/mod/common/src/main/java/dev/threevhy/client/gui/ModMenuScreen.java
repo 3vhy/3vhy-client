@@ -5,7 +5,7 @@ import dev.threevhy.client.Config.Waypoint;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.CompatScreen;
-import dev.threevhy.client.discord.DiscordPresence;
+import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidget;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.module.Module;
@@ -37,8 +37,13 @@ import org.lwjgl.glfw.GLFW;
 /**
  * The 3vhy mod menu in its Classic style, laid out like Lunar's: the 3vhy name and MODS / SETTINGS /
  * WAYPOINTS tabs along the top, your profiles down the left with Save as new profile and Edit HUD
- * layout, and a grid of mod cards with an OPTIONS bar and an ENABLED / DISABLED bar. The other
- * style, Panels, is {@link ClickGuiScreen}.
+ * layout, filter chips and a search box, and a grid of three mod cards a row, each with an OPTIONS bar
+ * and an ENABLED / DISABLED bar. The other style, Panels, is {@link ClickGuiScreen}.
+ *
+ * <p>Everything is measured off Lunar's menu and laid out in layout units, 0.6 of a GUI pixel at 100%
+ * HUD size, so the menu is Lunar's size next to the HUD (329 by 202 GUI pixels) and grows and shrinks
+ * with it; it only gets smaller to fit a small window. Round shapes are drawn by {@link Smooth}, so
+ * they stay clean at any scale.
  */
 public final class ModMenuScreen extends CompatScreen {
 	public enum Tab {
@@ -50,7 +55,42 @@ public final class ModMenuScreen extends CompatScreen {
 	}
 
 	private static final Tab[] SHOWN_TABS = {Tab.MODS, Tab.SETTINGS, Tab.WAYPOINTS};
-	private static final int SIDEBAR_W = 104;
+	/** GUI pixels per layout unit at 100% HUD size. */
+	private static final float UNIT = 0.6f;
+	private static final int PANEL_W = 548;
+	private static final int PANEL_H = 337;
+	private static final int HEADER_H = 36;
+	private static final int SIDEBAR_W = 117;
+	/** Where the chips (or a page) start, down from the panel's top, and the content's left edge. */
+	private static final int BODY_TOP = 48;
+	private static final int CONTENT_X = 123;
+	private static final int CONTENT_W = 401;
+	private static final int CHIP_H = 16;
+	private static final int CARDS_TOP = 71;
+	private static final int CARD_GAP_X = 10;
+	private static final int CARD_GAP_Y = 8;
+	/** The sizes of Lunar's labels: capitals 6 units tall, with room between the letters. */
+	private static final float LABEL = 0.9f;
+	private static final float LABEL_SPACING = 2.2f;
+	private static final int BLUE_GREY = 0xFF3B4F71;
+	private static final int OLIVE = 0xFF4B6B34;
+	private static final int ON_GREEN = 0xFF2FA068;
+	private static final int OFF_RED = 0xFFA52D51;
+	private static final int LOCKED = 0xFF8A8F99;
+
+	/** Lunar's colours for the dark theme, and the light theme's own. */
+	private record Look(int panel, int edge, int line, int sidebar, int row, int rowOn, int card, int cardHover, int cardEdge,
+			int bar, int barHover, int text, int label, int muted, int chipText) {
+		static Look of(MenuTheme t) {
+			if (t.isLight()) {
+				return new Look(t.panel(), t.edge(), t.edge(), MenuTheme.alpha(0x1A4FBA, 0x10), MenuTheme.alpha(0xFFFFFF, 0x80),
+						t.cardOn(), t.card(), t.cardHover(), t.edge(), MenuTheme.alpha(0x1A4FBA, 0x14), MenuTheme.alpha(0x1A4FBA, 0x26),
+						t.text(), t.text(), t.muted(), 0xFFFFFFFF);
+			}
+			return new Look(0xE6191C23, 0x2EFFFFFF, 0x1AFFFFFF, 0x24000000, 0x0FFFFFFF, 0x24FFFFFF, 0x12FFFFFF, 0x1CFFFFFF,
+					0x1FFFFFFF, 0x17FFFFFF, 0x2BFFFFFF, 0xFFDCE0E6, 0xFFC4C9D1, 0xFF8E949E, 0xFFBACBE0);
+		}
+	}
 
 	private enum Focus {
 		SEARCH,
@@ -65,8 +105,8 @@ public final class ModMenuScreen extends CompatScreen {
 		HOTKEY_KEY
 	}
 
-	private static final int CARD_W = 80;
-	private static final int CARD_H = 80;
+	private static final int CARD_W = 127;
+	private static final int CARD_H = 126;
 	private static final int ROW_H = 26;
 
 	private final Screen parent;
@@ -102,6 +142,8 @@ public final class ModMenuScreen extends CompatScreen {
 	private Setting.Slider draggingSlider = null;
 	private int sliderX = 0;
 	private int sliderW = 1;
+	/** GUI pixels per layout unit, worked out each frame. */
+	private float unit = UNIT;
 
 	public ModMenuScreen(Screen parent) {
 		super(Component.literal("3vhy Mod Menu"));
@@ -154,11 +196,24 @@ public final class ModMenuScreen extends CompatScreen {
 	// Drawing
 
 	@Override
+	protected boolean blurBackground() {
+		return false;
+	}
+
+	@Override
+	protected boolean panoramaBackground() {
+		return !TitleScreenStyle.drawsBackground();
+	}
+
+	@Override
 	protected void drawBackdrop(Draw d) {
-		MenuTheme t = MenuTheme.current();
-		if (Minecraft.getInstance().level == null) MainMenuScreen.drawBackdrop(d, this.width, this.height);
-		d.fill(0, 0, this.width, this.height, t.tint());
-		snow.draw(d, this.width, this.height);
+		HubScreen.drawLunarBackdrop(d, this.width, this.height, snow);
+	}
+
+	/** Lunar's size at the HUD size setting, made smaller only if the window can't fit it. */
+	private void measure() {
+		float fit = Math.min((this.width - 12) / (float) PANEL_W, (this.height - 12) / (float) PANEL_H);
+		unit = Math.max(0.25f, Math.min(UNIT * HudRenderer.scale(), fit));
 	}
 
 	@Override
@@ -170,149 +225,172 @@ public final class ModMenuScreen extends CompatScreen {
 		shownScroll += (scroll - shownScroll) * Math.min(1.0, seconds * 16.0);
 		if (Math.abs(scroll - shownScroll) < 0.5) shownScroll = scroll;
 
-		Ui ui = new Ui(d, mouseX, mouseY, hits);
-		MenuTheme t = ui.t;
-		int w = Math.min(this.width - 20, 560);
-		int h = Math.min(this.height - 20, 330);
-		int x0 = (this.width - w) / 2;
-		int y0 = (this.height - h) / 2;
+		measure();
+		int vw = Math.round(this.width / unit);
+		int vh = Math.round(this.height / unit);
+		d.push();
+		d.scale(unit);
+		Ui ui = new Ui(d, Math.round(mouseX / unit), Math.round(mouseY / unit), hits).cleanFont(UiFont.clean());
+		Look look = Look.of(ui.t);
+		int x0 = (vw - PANEL_W) / 2;
+		int y0 = (vh - PANEL_H) / 2;
 
 		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 200f);
-		d.push();
 		d.translate(0, (1 - (1 - (1 - intro) * (1 - intro))) * 10);
 
-		ui.panel(x0, y0, x0 + w, y0 + h, t.panel());
-		drawHeader(ui, x0, y0, w);
-		d.fill(x0 + 1, y0 + 26, x0 + w - 1, y0 + 27, t.edge());
+		ui.round(x0, y0, x0 + PANEL_W, y0 + PANEL_H, 5, look.panel());
+		ui.ring(x0, y0, x0 + PANEL_W, y0 + PANEL_H, 5, look.edge());
+		drawHeader(ui, look, x0, y0);
+		d.fill(x0 + 1, y0 + HEADER_H, x0 + PANEL_W - 1, y0 + HEADER_H + 1, look.line());
 
-		int sideX = x0 + 6;
-		int bodyTop = y0 + 32;
-		int bodyBottom = y0 + h - 20;
-		drawSidebar(ui, sideX, bodyTop, SIDEBAR_W, bodyBottom - bodyTop);
-		int cx = sideX + SIDEBAR_W + 8;
-		int cy = bodyTop;
-		int cw = x0 + w - 8 - cx;
-		int ch = bodyBottom - bodyTop;
+		drawSidebar(ui, look, x0, y0 + HEADER_H + 1, PANEL_H - HEADER_H - 1);
+		int cx = x0 + CONTENT_X;
+		int cy = y0 + BODY_TOP;
+		int cw = CONTENT_W + 8;
+		int ch = PANEL_H - BODY_TOP - 6;
 		switch (tab) {
 			case MODS, PROFILES -> {
 				if (page != null) drawPage(ui, cx, cy, cw, ch);
-				else drawGrid(ui, cx, cy, cw, ch);
+				else drawGrid(ui, look, cx, cy, CONTENT_W, ch);
 			}
 			case SETTINGS -> drawPage(ui, cx, cy, cw, ch);
 			case WAYPOINTS -> drawWaypoints(ui, cx, cy, cw, ch);
 		}
-		d.fill(x0 + 8, y0 + h - 18, x0 + w - 8, y0 + h - 17, t.edge());
-		drawFooter(ui, x0, y0 + h - 12, w);
+		drawNotice(ui, cx, y0 + PANEL_H - 22, cw);
 		d.pop();
 	}
 
-	private void drawHeader(Ui ui, int px, int y0, int pw) {
-		int y = y0 + 6;
-		HubScreen.drawEmblem(ui.d, px + 8, y - 1, 16, 1, 255, ui.t.text());
-		ui.title("3vhy", px + 29, y + 4, ui.t.text());
-		ui.text("CLIENT", px + 31 + ui.titleWidth("3vhy"), y + 4, ui.t.muted());
+	/** The 3vhy emblem and name, the tabs in the middle, and the theme switch and close button, measured off Lunar's. */
+	private void drawHeader(Ui ui, Look look, int px, int y0) {
+		Draw d = ui.d;
+		float k = Smooth.density(d);
+		int cell = Math.max(1, Math.round(19 * k / 16));
+		int size = 16 * cell;
+		d.push();
+		d.scale(1f / k);
+		HubScreen.drawEmblem(d, Math.round((px + 12) * k), Math.round((y0 + HEADER_H / 2f) * k - size / 2f), size, cell, 255, look.text());
+		d.pop();
+		float nameScale = 10 / (UiFont.clean() ? 6.8f : 7f);
+		int brandW = Math.round(ui.boldWidth("3VHY") * nameScale);
+		d.push();
+		d.translate(px + 36, y0 + 13);
+		d.scale(nameScale);
+		d.text(UiFont.clean() ? UiFont.bold("3VHY") : Ui.bold("3VHY"), 0, 0, look.text(), false);
+		d.pop();
+		ui.small(" CLIENT", px + 36 + brandW, y0 + 13, nameScale, look.text());
 
-		int total = -4;
-		for (Tab each : SHOWN_TABS) total += ui.titleWidth(each.name()) + 16 + 4;
-		int x = px + (pw - total) / 2;
+		int tabH = 18;
+		int pad = 9;
+		int gap = 9;
+		int total = -gap;
+		for (Tab each : SHOWN_TABS) total += Math.round(ui.spacedWidth(each.name(), LABEL, LABEL_SPACING, true)) + 2 * pad + gap;
+		int x = px + (PANEL_W - total) / 2;
+		int y = y0 + 9;
 		for (Tab each : SHOWN_TABS) {
 			String label = each.name();
-			int tw = ui.titleWidth(label) + 16;
+			int tw = Math.round(ui.spacedWidth(label, LABEL, LABEL_SPACING, true)) + 2 * pad;
 			boolean active = tab == each || (each == Tab.MODS && tab == Tab.PROFILES);
-			boolean hover = ui.hover(x, y, x + tw, y + 15);
-			ui.d.roundRect(x, y, x + tw, y + 15, Ui.R_CONTROL, active ? MenuTheme.alpha(ui.t.accent(), 0x40) : hover ? ui.t.cardHover() : 0);
-			ui.d.roundOutline(x, y, x + tw, y + 15, Ui.R_CONTROL, active ? ui.t.accent() : ui.t.edge());
-			ui.title(label, x + 8, y + 4, active || hover ? ui.t.text() : ui.t.muted());
-			ui.hit(x, y, x + tw, y + 15, () -> openTab(each));
-			x += tw + 4;
+			boolean hover = ui.hover(x, y, x + tw, y + tabH);
+			if (active || hover) ui.round(x, y, x + tw, y + tabH, 2.5f, active ? look.rowOn() : look.row());
+			ui.ring(x, y, x + tw, y + tabH, 2.5f, active ? look.edge() : look.line());
+			ui.spaced(label, x + pad, y + (tabH - 6) / 2f, LABEL, LABEL_SPACING, true, hover ? look.text() : active ? look.label() : look.muted());
+			ui.hit(x, y, x + tw, y + tabH, () -> openTab(each));
+			x += tw + gap;
 		}
 
-		int right = px + pw - 8;
-		boolean closeHover = ui.hover(right - 15, y, right, y + 15);
-		ui.d.roundRect(right - 15, y, right, y + 15, Ui.R_CONTROL, closeHover ? MenuTheme.alpha(ui.t.bad(), 0x70) : ui.t.card());
-		ui.d.roundOutline(right - 15, y, right, y + 15, Ui.R_CONTROL, closeHover ? ui.t.bad() : ui.t.edge());
-		Icons.draw(ui.d, Icons.CLOSE, right - 11, y + 4, closeHover ? 0xFFFFFFFF : ui.t.text());
-		ui.hit(right - 15, y, right, y + 15, this::onClose);
+		int right = px + PANEL_W - 10;
+		int size2 = 18;
+		boolean closeHover = ui.hover(right - size2, y, right, y + size2);
+		ui.round(right - size2, y, right, y + size2, 2.5f, closeHover ? MenuTheme.alpha(ui.t.bad(), 0xB0) : look.bar());
+		ui.ring(right - size2, y, right, y + size2, 2.5f, closeHover ? ui.t.bad() : look.line());
+		Smooth.icon(d, "cross", right - size2 + 3, y + 3, size2 - 6, closeHover ? 0xFFFFFFFF : look.label());
+		ui.hit(right - size2, y, right, y + size2, this::onClose);
 
-		int themeX = right - 34;
+		int themeX = right - size2 - 6 - size2;
 		boolean light = ui.t.isLight();
-		boolean hover = ui.hover(themeX, y, themeX + 15, y + 15);
-		if (hover) ui.d.roundRect(themeX, y, themeX + 15, y + 15, Ui.R_CONTROL, ui.t.cardHover());
-		PixelIcons.draw(ui.d, light ? PixelIcons.MOON : PixelIcons.SUN, themeX + 2, y + 2, 1, hover ? ui.t.accent() : ui.t.text());
-		ui.hit(themeX, y, themeX + 15, y + 15, () -> Modules.THEME_MODE.next());
-		if (hover) ui.tooltip(light ? "Dark theme" : "Light theme", themeX + 8, y + 18);
+		boolean hover = ui.hover(themeX, y, themeX + size2, y + size2);
+		if (hover) ui.round(themeX, y, themeX + size2, y + size2, 2.5f, look.bar());
+		ui.ring(themeX, y, themeX + size2, y + size2, 2.5f, look.line());
+		PixelIcons.draw(d, light ? PixelIcons.MOON : PixelIcons.SUN, themeX + 3, y + 3, 1, hover ? ui.t.accent() : look.label());
+		ui.hit(themeX, y, themeX + size2, y + size2, () -> Modules.THEME_MODE.next());
+		if (hover) ui.tooltip(light ? "Dark theme" : "Light theme", themeX + size2 / 2, y + size2 + 3);
 	}
 
-	/** Profiles down the left, like Lunar's: click one to switch to it; Save as new profile and Edit HUD layout at the bottom. */
-	private void drawSidebar(Ui ui, int x, int y, int w, int h) {
+	/**
+	 * Profiles down the left, like Lunar's: a list of rows, the one in use lit up; click another to
+	 * switch to it. The profile name box, Save as new profile and Edit HUD layout sit at the bottom.
+	 */
+	private void drawSidebar(Ui ui, Look look, int x0, int y, int h) {
 		MenuTheme t = ui.t;
-		ui.d.roundRect(x, y, x + w, y + h, Ui.R_CARD, MenuTheme.alpha(0x000000, t.isLight() ? 0x14 : 0x40));
-		ui.small("PROFILES", x + 6, y + 5, 0.75f, t.muted());
+		int x = x0 + 1;
+		int w = SIDEBAR_W;
+		ui.d.fill(x, y, x + w, y + h - 5, look.sidebar());
 		Config config = Config.get();
-		int listTop = y + 14;
-		int buttonsH = 16 + 4 + 16 + 4 + 16;
-		int listBottom = y + h - buttonsH - 8;
+		int listTop = y + 10;
+		int listBottom = y + h - 80;
+		int rowH = 18;
 		ui.clip(x, listTop, x + w, listBottom);
 		int ry = listTop;
 		for (String name : config.profileNames()) {
 			boolean active = name.equals(config.profile);
-			boolean hover = ui.hover(x + 3, ry, x + w - 3, ry + 16);
-			if (active || hover) ui.d.roundRect(x + 3, ry, x + w - 3, ry + 16, Ui.R_CONTROL, active ? t.cardOn() : t.cardHover());
-			if (active) ui.d.fill(x + 3, ry + 3, x + 5, ry + 13, t.accent());
-			ui.text(ui.trim(name, w - 30), x + 9, ry + 4, active ? t.text() : MenuTheme.alpha(t.text(), 0xC0));
+			boolean hover = ui.hover(x, ry, x + w, ry + rowH);
+			ui.d.fill(x, ry, x + w, ry + rowH, active ? look.rowOn() : hover ? look.barHover() : look.row());
+			ui.d.fill(x, ry + rowH - 1, x + w, ry + rowH, MenuTheme.alpha(0x000000, t.isLight() ? 0x14 : 0x38));
+			if (active) ui.d.fill(x, ry, x + 2, ry + rowH - 1, Accent.get());
+			float scale = 0.82f;
+			String shown = name;
+			while (shown.length() > 1 && ui.spacedWidth(shown, scale, 1.2f, true) > w - 40) shown = shown.substring(0, shown.length() - 1);
+			if (!shown.equals(name)) shown = shown.stripTrailing() + "...";
+			ui.spaced(shown, x + 9, ry + (rowH - 5.6f) / 2, scale, 1.2f, true, active ? look.text() : look.label());
 			if (!active) {
-				ui.hit(x + 3, ry, x + w - 3, ry + 16, () -> {
+				ui.hit(x, ry, x + w, ry + rowH, () -> {
 					config.loadProfile(name);
 					notice("Switched to " + name);
 				});
 				if (hover && !name.equals(Config.DEFAULT_PROFILE)) {
-					int dx = x + w - 18;
-					boolean delHover = ui.hover(dx, ry + 2, dx + 13, ry + 14);
-					PixelIcons.draw(ui.d, PixelIcons.TRASH, dx, ry + 2, 1, delHover ? t.bad() : t.muted());
-					ui.hit(dx, ry + 2, dx + 13, ry + 14, () -> {
+					int dx = x + w - 16;
+					boolean delHover = ui.hover(dx, ry + 3, dx + 13, ry + 15);
+					PixelIcons.draw(ui.d, PixelIcons.TRASH, dx, ry + 3, 1, delHover ? t.bad() : look.muted());
+					ui.hit(dx, ry + 3, dx + 13, ry + 15, () -> {
 						if (config.deleteProfile(name)) notice("Deleted " + name);
 					});
 				}
 			} else {
-				ui.small("ACTIVE", x + w - 6 - Math.round(ui.width("ACTIVE") * 0.6f), ry + 5, 0.6f, t.accent());
+				ui.spaced("ACTIVE", x + w - 6 - ui.spacedWidth("ACTIVE", 0.55f, 0.8f, true), ry + (rowH - 3.7f) / 2, 0.55f, 0.8f, true,
+						Accent.get());
 			}
-			ry += 18;
+			ry += rowH;
 		}
 		ui.endClip();
 
-		int by = y + h - buttonsH - 2;
-		ui.field(x + 3, by, w - 6, 16, profileName, "Profile name", focus == Focus.PROFILE_NAME, null);
-		ui.hit(x + 3, by, x + w - 3, by + 16, () -> focus = Focus.PROFILE_NAME);
-		by += 20;
-		sideButton(ui, x + 3, by, w - 6, 16, "Save as new profile", false, this::createProfile);
-		by += 20;
-		sideButton(ui, x + 3, by, w - 6, 16, "Edit HUD layout", true, () -> minecraft().setScreen(new HubScreen(this).editOnly()));
+		int bx = x0 + 7;
+		int bw = 103;
+		int by = y + h - 70;
+		ui.field(bx, by, bw, 14, profileName, "Profile name", focus == Focus.PROFILE_NAME, null);
+		ui.hit(bx, by, bx + bw, by + 14, () -> focus = Focus.PROFILE_NAME);
+		by += 18;
+		sideButton(ui, look, bx, by, bw, 13, "Save as new profile", false, this::createProfile);
+		sideButton(ui, look, x0 + 9, y + h - 19, 99, 15, "Edit HUD layout", true, () -> minecraft().setScreen(new HubScreen(this).editOnly()));
 	}
 
-	/** A sidebar button with its label in small capitals, so the whole label fits like Lunar's. */
-	private static void sideButton(Ui ui, int x, int y, int w, int h, String label, boolean primary, Runnable action) {
-		MenuTheme t = ui.t;
+	/** A sidebar button with its label in small spaced capitals, like Lunar's: outlined, or filled in the theme colour. */
+	private static void sideButton(Ui ui, Look look, int x, int y, int w, int h, String label, boolean primary, Runnable action) {
 		boolean hover = ui.hover(x, y, x + w, y + h);
-		int fill = primary ? (hover ? Draw.mix(t.accent(), 0xFFFFFFFF, 0.12) : t.accent()) : hover ? t.cardHover() : t.card();
-		ui.card(x, y, x + w, y + h, fill, primary ? fill : hover ? t.edgeStrong() : t.edge());
-		float scale = 0.75f;
-		String text = ui.trim(label.toUpperCase(Locale.ROOT), (int) ((w - 6) / scale));
-		float textW = ui.width(text) * scale;
-		ui.small(text, x + (w - textW) / 2f, y + (h - 6) / 2f, scale, primary ? t.onAccent() : t.text());
+		int accent = Accent.get();
+		if (primary) {
+			ui.round(x, y, x + w, y + h, 2.5f, hover ? Draw.mix(accent, 0xFFFFFFFF, 0.15) : accent);
+		} else {
+			ui.round(x, y, x + w, y + h, 2.5f, hover ? look.barHover() : look.row());
+			ui.ring(x, y, x + w, y + h, 2.5f, hover ? look.edge() : look.line());
+		}
+		float scale = 0.6f;
+		float spacing = 1.4f;
+		String text = label.toUpperCase(Locale.ROOT);
+		float textW = ui.spacedWidth(text, scale, spacing, true);
+		ui.spaced(text, x + (w - textW) / 2f, y + (h - 4.1f) / 2f, scale, spacing, true,
+				primary ? 0xFFFFFFFF : hover ? look.text() : look.muted());
 		ui.hit(x, y, x + w, y + h, action);
 	}
-
-	private static final String[] SEARCH_ICON = {
-			"..####......",
-			".#....#.....",
-			"#......#....",
-			"#......#....",
-			"#......#....",
-			".#....#.....",
-			"..####.#....",
-			".......##...",
-			"........##..",
-	};
 
 	private List<Module> shownModules() {
 		String query = search.trim().toLowerCase(Locale.ROOT);
@@ -329,7 +407,8 @@ public final class ModMenuScreen extends CompatScreen {
 		return shown;
 	}
 
-	private void drawGrid(Ui ui, int cx, int cy, int cw, int ch) {
+	/** Lunar's chips (ALL, NEW, then a category each), the search box on the right, and the cards under them. */
+	private void drawGrid(Ui ui, Look look, int cx, int cy, int cw, int ch) {
 		int x = cx;
 		record Chip(String label, Category category, boolean newOnly) {
 		}
@@ -338,50 +417,68 @@ public final class ModMenuScreen extends CompatScreen {
 		chips.add(new Chip("NEW", null, true));
 		for (Category each : Category.values()) chips.add(new Chip(each.label.toUpperCase(Locale.ROOT), each, false));
 		for (Chip chip : chips) {
-			int tw = ui.width(chip.label()) + 10;
+			int tw = Math.round(ui.spacedWidth(chip.label(), LABEL, 2f, true)) + 16;
 			boolean active = category == chip.category() && newOnly == chip.newOnly();
-			boolean hover = ui.hover(x, cy, x + tw, cy + 13);
-			int fill = active ? (chip.newOnly() ? MenuTheme.alpha(ui.t.good(), 0xC0) : MenuTheme.alpha(ui.t.accent(), 0xD8))
-					: hover ? ui.t.cardHover() : ui.t.card();
-			ui.d.roundRect(x, cy, x + tw, cy + 13, Ui.R_CONTROL, fill);
-			ui.text(chip.label(), x + 5, cy + 3, active ? ui.t.onAccent() : hover ? ui.t.text() : ui.t.muted());
-			ui.hit(x, cy, x + tw, cy + 13, () -> {
+			boolean hover = ui.hover(x, cy, x + tw, cy + CHIP_H);
+			int fill = active ? Accent.get() : chip.newOnly() ? OLIVE : BLUE_GREY;
+			if (ui.t.isLight() && !active) fill = MenuTheme.alpha(fill, 0xB0);
+			ui.round(x, cy, x + tw, cy + CHIP_H, 2.5f, hover && !active ? Draw.mix(fill, 0xFFFFFFFF, 0.12) : fill);
+			int textColor = active ? 0xFFFFFFFF : chip.newOnly() ? 0xFFBECFAA : look.chipText();
+			ui.spaced(chip.label(), x + 8, cy + (CHIP_H - 6) / 2f, LABEL, 2f, true, textColor);
+			ui.hit(x, cy, x + tw, cy + CHIP_H, () -> {
 				category = chip.category();
 				newOnly = chip.newOnly();
 				resetScroll();
 			});
-			x += tw + 3;
+			x += tw + 4;
 		}
-		int searchW = Math.max(60, Math.min(120, cx + cw - x - 6));
-		int searchX = cx + cw - searchW;
-		ui.field(searchX, cy - 1, searchW, 15, search, "Search", focus == Focus.SEARCH, SEARCH_ICON);
-		ui.hit(searchX, cy - 1, searchX + searchW, cy + 14, () -> focus = Focus.SEARCH);
-		int gy = cy + 17;
-		int gh = ch - 17;
+		int searchW = Math.max(60, Math.min(128, cx + cw + 8 - x - 8));
+		int searchX = cx + cw + 8 - searchW;
+		boolean searching = focus == Focus.SEARCH;
+		ui.round(searchX, cy, searchX + searchW, cy + CHIP_H, 2.5f, look.bar());
+		ui.ring(searchX, cy, searchX + searchW, cy + CHIP_H, 2.5f, !search.isEmpty() ? look.edge() : look.line());
+		Smooth.icon(ui.d, "search", searchX + 5, cy + 4, 8, look.muted());
+		int tx = searchX + 17;
+		String shownSearch = search;
+		while (!shownSearch.isEmpty() && ui.width(shownSearch) * 0.85f > searchW - 22) shownSearch = shownSearch.substring(1);
+		ui.small(shownSearch, tx, cy + 4.6f, 0.85f, look.text());
+		if (searching && (System.currentTimeMillis() / 500) % 2 == 0) {
+			int caret = tx + Math.round(ui.width(shownSearch) * 0.85f) + 1;
+			ui.d.fill(caret, cy + 4, caret + 1, cy + CHIP_H - 4, look.label());
+		}
+		ui.hit(searchX, cy, searchX + searchW, cy + CHIP_H, () -> focus = Focus.SEARCH);
+
+		int gy = cy + (CARDS_TOP - BODY_TOP);
+		int gh = ch - (CARDS_TOP - BODY_TOP);
 		List<Module> shown = shownModules();
-		int gap = 6;
-		int cols = Math.max(2, (cw - 6 + gap) / (CARD_W + gap));
-		int cardW = (cw - 6 - (cols - 1) * gap) / cols;
+		int cols = Math.max(2, (cw + CARD_GAP_X) / (CARD_W - 7 + CARD_GAP_X));
+		int cardW = (cw - (cols - 1) * CARD_GAP_X) / cols;
 		int rows = (shown.size() + cols - 1) / cols;
-		int contentH = Math.max(0, rows * (CARD_H + gap) - gap);
+		int contentH = Math.max(0, rows * (CARD_H + CARD_GAP_Y) - CARD_GAP_Y);
 		maxScroll = Math.max(0, contentH - gh);
 		scroll = Math.max(0, Math.min(scroll, maxScroll));
 		shownScroll = Math.max(0, Math.min(shownScroll, maxScroll));
 
 		if (shown.isEmpty()) {
 			String none = "No mods match \"" + search + "\"";
-			ui.text(none, cx + (cw - ui.width(none)) / 2, gy + gh / 2 - 4, ui.t.muted());
+			ui.text(none, cx + (cw - ui.width(none)) / 2, gy + gh / 2 - 4, look.muted());
 			return;
 		}
-		ui.clip(cx, gy, cx + cw, gy + gh);
+		ui.clip(cx - 1, gy - 1, cx + cw + 1, gy + gh);
 		for (int i = 0; i < shown.size(); i++) {
-			int x1 = cx + (i % cols) * (cardW + gap);
-			int y1 = gy + (i / cols) * (CARD_H + gap) - (int) Math.round(shownScroll);
+			int x1 = cx + (i % cols) * (cardW + CARD_GAP_X);
+			int y1 = gy + (i / cols) * (CARD_H + CARD_GAP_Y) - (int) Math.round(shownScroll);
 			if (y1 + CARD_H < gy || y1 > gy + gh) continue;
-			card(ui, shown.get(i), x1, y1, cardW);
+			card(ui, look, shown.get(i), x1, y1, cardW);
 		}
 		ui.endClip();
-		ui.scrollbar(cx + cw - 2, gy, gh, shownScroll, maxScroll, contentH);
+		if (maxScroll > 0) {
+			int barX = cx + cw + 11;
+			int thumb = Math.max(18, gh * gh / Math.max(1, contentH));
+			int ty = gy + (int) Math.round((gh - thumb) * (shownScroll / maxScroll));
+			ui.round(barX, gy, barX + 3, gy + gh, 1.5f, look.row());
+			ui.round(barX, ty, barX + 3, ty + thumb, 1.5f, MenuTheme.alpha(look.label(), 0x80));
+		}
 	}
 
 	static boolean hasPage(Module module) {
@@ -389,44 +486,70 @@ public final class ModMenuScreen extends CompatScreen {
 				|| HudWidgets.ALL.stream().anyMatch(widget -> widget.module == module);
 	}
 
-	/** A Lunar-style card: icon and name, an OPTIONS bar, and an ENABLED / DISABLED bar that switches the mod. */
-	private void card(Ui ui, Module module, int x, int y, int w) {
+	/**
+	 * A Lunar-style card: the mod's icon and name, then an OPTIONS bar with a gear in its own cell and an
+	 * ENABLED / DISABLED bar across the bottom that switches the mod. New mods get a small red NEW.
+	 */
+	private void card(Ui ui, Look look, Module module, int x, int y, int w) {
 		MenuTheme t = ui.t;
 		boolean on = module.enabled();
 		boolean toggleable = module.toggleable();
 		boolean hasPage = hasPage(module);
 		boolean hover = ui.hover(x, y, x + w, y + CARD_H);
-		ui.card(x, y, x + w, y + CARD_H, hover ? t.cardHover() : t.card(), hover ? t.edgeStrong() : t.edge());
-		if (module.isNew()) ui.small("NEW", x + 5, y + 4, 0.6f, t.good());
-
-		int iconColor = !toggleable || on ? t.text() : t.muted();
-		PixelIcons.draw(ui.d, PixelIcons.forModule(module), x + (w - 24) / 2, y + 7, 2, iconColor);
-		String name = ui.trim(module.name, w - 8);
-		ui.text(name, x + (w - ui.width(name)) / 2, y + 34, !toggleable || on ? t.text() : MenuTheme.alpha(t.text(), 0xB8));
-
+		float radius = 4.4f;
+		ui.round(x, y, x + w, y + CARD_H, radius, hover ? look.cardHover() : look.card());
 		Runnable openPage = () -> openModule(module);
 		ui.hit(x, y, x + w, y + CARD_H, hasPage ? openPage : module::toggle, openPage);
-		int barX1 = x + 4;
-		int barX2 = x + w - 4;
-		int optionsY = y + CARD_H - 31;
+
+		int iconColor = !toggleable || on ? look.text() : MenuTheme.alpha(look.text(), 0xB0);
+		float k = Smooth.density(ui.d);
+		int pixel = Math.max(1, Math.round(21 * k / PixelIcons.SIZE));
+		int iconSize = PixelIcons.SIZE * pixel;
+		ui.d.push();
+		ui.d.scale(1f / k);
+		PixelIcons.draw(ui.d, PixelIcons.forModule(module), Math.round((x + w / 2f) * k - iconSize / 2f), Math.round((y + 31) * k - iconSize / 2f),
+				pixel, iconColor);
+		ui.d.pop();
+		float nameScale = 8.6f / (UiFont.clean() ? 6.8f : 7f);
+		String name = module.name;
+		while (name.length() > 1 && ui.width(name) * nameScale > w - 10) name = name.substring(0, name.length() - 1);
+		if (!name.equals(module.name)) name = name.stripTrailing() + "...";
+		float nameW = ui.width(name) * nameScale;
+		float nameX = x + (w - nameW) / 2f;
+		ui.small(name, nameX, y + 66, nameScale, hover ? look.text() : MenuTheme.alpha(look.label(), on || !toggleable ? 0xE0 : 0xA8));
+		if (module.isNew()) ui.spaced("NEW", nameX + nameW - ui.spacedWidth("NEW", 0.5f, 0.5f, true) + 4, y + 60, 0.5f, 0.5f, true, 0xFFE0344F);
+
+		int optionsY = y + 82;
+		int barH = 21;
 		if (hasPage) {
-			boolean optionsHover = ui.hover(barX1, optionsY, barX2, optionsY + 13);
-			ui.d.roundRect(barX1, optionsY, barX2, optionsY + 13, 3, optionsHover ? t.cardOn() : MenuTheme.alpha(0x000000, t.isLight() ? 0x18 : 0x55));
-			String options = "OPTIONS";
-			int ow = ui.width(options);
-			int ox = barX1 + (barX2 - barX1 - ow - 10) / 2;
-			ui.text(options, ox, optionsY + 3, optionsHover ? t.text() : MenuTheme.alpha(t.text(), 0xC8));
-			Icons.draw(ui.d, Icons.GEAR, ox + ow + 3, optionsY + 3, optionsHover ? t.accent() : t.muted());
-			ui.hit(barX1, optionsY, barX2, optionsY + 13, openPage);
+			int gearW = 22;
+			boolean optionsHover = ui.hover(x, optionsY, x + w, optionsY + barH);
+			ui.d.fill(x, optionsY, x + w, optionsY + barH, optionsHover ? look.barHover() : look.bar());
+			ui.d.fill(x + w - gearW - 1, optionsY, x + w - gearW, optionsY + barH, MenuTheme.alpha(0x000000, t.isLight() ? 0x18 : 0x40));
+			float textW = ui.spacedWidth("OPTIONS", LABEL, LABEL_SPACING + 0.6f, true);
+			ui.spaced("OPTIONS", x + (w - gearW - textW) / 2f, optionsY + (barH - 6) / 2f, LABEL, LABEL_SPACING + 0.6f, true,
+					optionsHover ? look.text() : look.label());
+			int gear = Math.max(1, Math.round(10 * k / Icons.SIZE));
+			ui.d.push();
+			ui.d.scale(1f / k);
+			Icons.draw(ui.d, Icons.GEAR, gear, Math.round((x + w - gearW / 2f) * k - Icons.SIZE * gear / 2f),
+					Math.round((optionsY + barH / 2f) * k - Icons.SIZE * gear / 2f), optionsHover ? look.text() : look.label());
+			ui.d.pop();
+			ui.hit(x, optionsY, x + w, optionsY + barH, openPage);
 		}
-		int barY = y + CARD_H - 16;
+		int barY = y + CARD_H - barH - 1;
 		String label = !toggleable ? "ALWAYS ON" : on ? "ENABLED" : "DISABLED";
-		int fill = !toggleable ? MenuTheme.alpha(t.accent(), 0x55) : MenuTheme.alpha(on ? t.good() : t.bad(), 0xB8);
-		boolean barHover = ui.hover(barX1, barY, barX2, barY + 12);
-		ui.d.roundRect(barX1, barY, barX2, barY + 12, 3, barHover && toggleable ? Draw.mix(fill, 0xFFFFFFFF, 0.15) : fill);
-		String shown = ui.trimTitle(label, barX2 - barX1 - 4);
-		ui.d.text(Ui.bold(shown), barX1 + (barX2 - barX1 - ui.boldWidth(shown)) / 2, barY + 2, 0xFFFFFFFF, false);
-		ui.hit(barX1, barY, barX2, barY + 12, toggleable ? module::toggle : openPage, openPage);
+		int fill = !toggleable ? LOCKED : on ? ON_GREEN : OFF_RED;
+		boolean barHover = ui.hover(x, barY, x + w, y + CARD_H);
+		ui.d.push();
+		ui.d.enableScissor(x, barY, x + w, y + CARD_H);
+		ui.round(x, barY - radius, x + w, y + CARD_H, radius, barHover && toggleable ? Draw.mix(fill, 0xFFFFFFFF, 0.12) : fill);
+		ui.d.disableScissor();
+		ui.d.pop();
+		float labelW = ui.spacedWidth(label, LABEL, LABEL_SPACING + 0.6f, true);
+		ui.spaced(label, x + (w - labelW) / 2f, barY + (y + CARD_H - barY - 6) / 2f, LABEL, LABEL_SPACING + 0.6f, true, 0xFFFFFFFF);
+		ui.hit(x, barY, x + w, y + CARD_H, toggleable ? module::toggle : openPage, openPage);
+		ui.ring(x, y, x + w, y + CARD_H, radius, hover ? look.edge() : look.cardEdge());
 	}
 
 	private void drawPage(Ui ui, int cx, int cy, int cw, int ch) {
@@ -434,8 +557,8 @@ public final class ModMenuScreen extends CompatScreen {
 		Module module = page;
 		// Back, icon, name and description
 		boolean backHover = ui.hover(cx, cy, cx + 16, cy + 16);
-		ui.d.roundRect(cx, cy, cx + 16, cy + 16, 8, backHover ? t.cardHover() : t.card());
-		ui.d.roundOutline(cx, cy, cx + 16, cy + 16, 8, backHover ? t.edgeStrong() : t.edge());
+		ui.round(cx, cy, cx + 16, cy + 16, 8, backHover ? t.cardHover() : t.card());
+		ui.ring(cx, cy, cx + 16, cy + 16, 8, backHover ? t.edgeStrong() : t.edge());
 		Icons.draw(ui.d, Icons.BACK, cx + 4, cy + 4, t.text());
 		ui.hit(cx, cy, cx + 16, cy + 16, this::leavePage);
 		PixelIcons.draw(ui.d, PixelIcons.forModule(module), cx + 22, cy + 2, 1, t.text());
@@ -509,7 +632,7 @@ public final class ModMenuScreen extends CompatScreen {
 	/** A settings row whose controls take {@code reserved} pixels on the right; rows are split by thin lines, like Lunar's. */
 	private void row(Ui ui, int x, int y, int w, String name, String description, int reserved) {
 		boolean hover = ui.hover(x, y, x + w, y + ROW_H);
-		if (hover) ui.d.roundRect(x, y, x + w, y + ROW_H, Ui.R_CARD, ui.t.cardHover());
+		if (hover) ui.round(x, y, x + w, y + ROW_H, Ui.R_CARD, ui.t.cardHover());
 		ui.d.fill(x + 4, y + ROW_H + 1, x + w - 4, y + ROW_H + 2, ui.t.edge());
 		ui.text(ui.trim(name, w - reserved - 16), x + 8, y + 5, ui.t.text());
 		ui.small(ui.trim(description, (int) ((w - reserved - 16) / 0.75f)), x + 8, y + 16, 0.75f, ui.t.muted());
@@ -541,8 +664,8 @@ public final class ModMenuScreen extends CompatScreen {
 			int boxW = Math.max(92, widest + 30);
 			int bx = right - boxW;
 			boolean hover = ui.hover(bx, y + 6, bx + boxW, y + 20);
-			ui.d.roundRect(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
-			ui.d.roundOutline(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.edgeStrong() : t.edge());
+			ui.round(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
+			ui.ring(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.edgeStrong() : t.edge());
 			ui.text("<", bx + 4, y + 9, t.muted());
 			ui.text(">", bx + boxW - 9, y + 9, t.muted());
 			String value = choice.get().toUpperCase(Locale.ROOT);
@@ -564,8 +687,8 @@ public final class ModMenuScreen extends CompatScreen {
 			int sx = right - swatches.length * (size + 2) + 2;
 			for (int swatch : swatches) {
 				boolean selected = (color.get() | 0xFF000000) == swatch;
-				if (selected) ui.d.roundRect(sx - 2, y + 6, sx + size + 2, y + 10 + size, 4, t.accent());
-				ui.d.roundRect(sx, y + 8, sx + size, y + 8 + size, 3, swatch);
+				if (selected) ui.round(sx - 2, y + 6, sx + size + 2, y + 10 + size, 4, t.accent());
+				ui.round(sx, y + 8, sx + size, y + 8 + size, 3, swatch);
 				int pick = swatch;
 				ui.hit(sx, y + 8, sx + size, y + 8 + size, () -> color.set(pick));
 				sx += size + 2;
@@ -599,8 +722,8 @@ public final class ModMenuScreen extends CompatScreen {
 				int pw = ui.pillWidth(name) + 10;
 				if (sx + pw > x + w) break;
 				boolean hover = ui.hover(sx, y, sx + pw, y + 12);
-				ui.d.roundRect(sx, y, sx + pw, y + 12, 6, hover ? t.cardHover() : t.card());
-				ui.d.roundOutline(sx, y, sx + pw, y + 12, 6, hover ? t.edgeStrong() : t.edge());
+				ui.round(sx, y, sx + pw, y + 12, 6, hover ? t.cardHover() : t.card());
+				ui.ring(sx, y, sx + pw, y + 12, 6, hover ? t.edgeStrong() : t.edge());
 				ui.text("+ " + name, sx + 5, y + 2, hover ? t.accent() : t.text());
 				ui.hit(sx, y, sx + pw, y + 12, () -> {
 					if (PlayerList.add(name)) notice("Added " + name);
@@ -629,7 +752,7 @@ public final class ModMenuScreen extends CompatScreen {
 			int right = x + w - 8;
 			int dx = right - 16;
 			boolean delHover = ui.hover(dx, y + 3, dx + 16, y + 19);
-			if (delHover) ui.d.roundRect(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			if (delHover) ui.round(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
 			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 5, 1, delHover ? t.bad() : t.muted());
 			ui.hit(dx, y + 3, dx + 16, y + 19, () -> {
 				PlayerList.remove(name);
@@ -654,8 +777,8 @@ public final class ModMenuScreen extends CompatScreen {
 		int boxW = 120;
 		int bx = right - openW - 6 - boxW;
 		boolean hover = ui.hover(bx, y + 6, bx + boxW, y + 20);
-		ui.d.roundRect(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
-		ui.d.roundOutline(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.edgeStrong() : t.edge());
+		ui.round(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.cardHover() : t.field());
+		ui.ring(bx, y + 6, bx + boxW, y + 20, 7, hover ? t.edgeStrong() : t.edge());
 		String current = Config.get().skinFile;
 		String shown = files.isEmpty() ? "No files yet" : current.isBlank() || !files.contains(current) ? "Pick one" : current;
 		shown = ui.trim(shown, boxW - 24);
@@ -720,7 +843,7 @@ public final class ModMenuScreen extends CompatScreen {
 					rule.replace.isEmpty() ? t.muted() : t.text());
 			int dx = x + w - 24;
 			boolean delHover = ui.hover(dx, y + 3, dx + 16, y + 19);
-			if (delHover) ui.d.roundRect(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			if (delHover) ui.round(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
 			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 5, 1, delHover ? t.bad() : t.muted());
 			ui.hit(dx, y + 3, dx + 16, y + 19, () -> {
 				TextRules.remove(rule);
@@ -782,7 +905,7 @@ public final class ModMenuScreen extends CompatScreen {
 			ui.text(ui.trim(hotkey.text, x + w - 32 - textX), textX, y + 7, command ? t.accent() : t.text());
 			int dx = x + w - 24;
 			boolean delHover = ui.hover(dx, y + 3, dx + 16, y + 19);
-			if (delHover) ui.d.roundRect(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			if (delHover) ui.round(dx, y + 3, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
 			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 5, 1, delHover ? t.bad() : t.muted());
 			ui.hit(dx, y + 3, dx + 16, y + 19, () -> {
 				TextHotkeys.remove(hotkey);
@@ -877,7 +1000,7 @@ public final class ModMenuScreen extends CompatScreen {
 			boolean hover = ui.hover(cx, y, cx + cw - 6, y + 24);
 			ui.card(cx, y, cx + cw - 6, y + 24, hover ? t.cardHover() : t.card(), t.edge());
 			// Colour: click to change
-			ui.d.roundRect(cx + 6, y + 7, cx + 16, y + 17, 3, waypoint.color | 0xFF000000);
+			ui.round(cx + 6, y + 7, cx + 16, y + 17, 3, waypoint.color | 0xFF000000);
 			ui.hit(cx + 6, y + 7, cx + 16, y + 17, () -> {
 				int[] swatches = Setting.Color.SWATCHES;
 				int index = 0;
@@ -904,7 +1027,7 @@ public final class ModMenuScreen extends CompatScreen {
 			ui.text(distance, right - 44 - ui.width(distance), y + 8, t.muted());
 			int ex = right - 38;
 			boolean eyeHover = ui.hover(ex, y + 5, ex + 16, y + 19);
-			if (eyeHover) ui.d.roundRect(ex, y + 5, ex + 16, y + 19, 4, t.cardOn());
+			if (eyeHover) ui.round(ex, y + 5, ex + 16, y + 19, 4, t.cardOn());
 			PixelIcons.draw(ui.d, waypoint.visible ? PixelIcons.EYE : PixelIcons.EYE_OFF, ex + 2, y + 6, 1,
 					waypoint.visible ? t.text() : t.muted());
 			ui.hit(ex, y + 5, ex + 16, y + 19, () -> {
@@ -913,7 +1036,7 @@ public final class ModMenuScreen extends CompatScreen {
 			});
 			int dx = right - 18;
 			boolean delHover = ui.hover(dx, y + 5, dx + 16, y + 19);
-			if (delHover) ui.d.roundRect(dx, y + 5, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
+			if (delHover) ui.round(dx, y + 5, dx + 16, y + 19, 4, MenuTheme.alpha(t.bad(), 0x50));
 			PixelIcons.draw(ui.d, PixelIcons.TRASH, dx + 2, y + 6, 1, delHover ? t.bad() : t.muted());
 			ui.hit(dx, y + 5, dx + 16, y + 19, () -> Waypoints.remove(mc, waypoint));
 			y += 28;
@@ -930,28 +1053,17 @@ public final class ModMenuScreen extends CompatScreen {
 		return slash >= 0 ? key.substring(slash + 1).replace("]", "").trim() : key;
 	}
 
-	private void drawFooter(Ui ui, int px, int y, int pw) {
-		MenuTheme t = ui.t;
-		int enabled = 0;
-		int total = 0;
-		for (Module module : Modules.ALL) {
-			if (!module.toggleable()) continue;
-			total++;
-			if (module.enabled()) enabled++;
-		}
-		String left = notice != null && System.currentTimeMillis() - noticeAt < 2500 ? notice.toUpperCase(Locale.ROOT)
-				: enabled + " / " + total + " MODS ON  ·  PROFILE " + Config.get().profile.toUpperCase(Locale.ROOT);
-		ui.small(ui.trim(left, (int) ((pw / 2 - 8) / 0.75f)), px + 8, y + 1, 0.75f, t.muted());
-
-		float scale = 0.75f;
-		boolean connected = DiscordPresence.connected();
-		String status = !Modules.DISCORD.enabled() ? "DISCORD OFF"
-				: connected ? "DISCORD CONNECTED" : "DISCORD NOT OPEN";
-		float textW = ui.width(status) * scale;
-		float sx = px + pw - 8 - textW;
-		ui.small(status, sx, y + 1, scale, t.muted());
-		int dot = (int) sx - 8;
-		ui.dot(dot, y + 1, 5, connected ? t.good() : MenuTheme.alpha(t.muted(), 0x90));
+	/** A short message (profile switched, player added and so on) in a pill at the bottom for a moment. */
+	private void drawNotice(Ui ui, int cx, int y, int cw) {
+		long age = System.currentTimeMillis() - noticeAt;
+		if (notice == null || age > 2500) return;
+		int alpha = age > 2200 ? Math.round(255 * (2500 - age) / 300f) : 255;
+		String text = notice.toUpperCase(Locale.ROOT);
+		float w = ui.spacedWidth(text, 0.7f, 1.2f, true) + 20;
+		float x = cx + (cw - w) / 2f;
+		ui.round(x, y, x + w, y + 15, 7.5f, MenuTheme.alpha(0x0B0D12, alpha * 0xE6 / 255));
+		ui.ring(x, y, x + w, y + 15, 7.5f, MenuTheme.alpha(0xFFFFFF, alpha * 0x30 / 255));
+		ui.spaced(text, x + 10, y + 5.3f, 0.7f, 1.2f, true, MenuTheme.alpha(0xFFFFFF, alpha));
 	}
 
 	private Minecraft minecraft() {
@@ -970,7 +1082,7 @@ public final class ModMenuScreen extends CompatScreen {
 		if (button == 0 || button == 1) {
 			for (int i = hits.size() - 1; i >= 0; i--) {
 				Ui.Hit hit = hits.get(i);
-				if (!hit.contains(event.x(), event.y())) continue;
+				if (!hit.contains(event.x() / unit, event.y() / unit)) continue;
 				Runnable action = button == 0 ? hit.action() : hit.rightAction();
 				if (action == null) continue;
 				if (focus == Focus.WAYPOINT_NAME) finishRename();
@@ -995,7 +1107,7 @@ public final class ModMenuScreen extends CompatScreen {
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
 		if (draggingSlider != null) {
-			draggingSlider.setFraction((event.x() - sliderX) / sliderW);
+			draggingSlider.setFraction((event.x() / unit - sliderX) / sliderW);
 			return true;
 		}
 		return super.mouseDragged(event, dragX, dragY);

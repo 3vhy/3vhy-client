@@ -7,10 +7,12 @@ import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.hud.Theme;
 import dev.threevhy.client.mixin.TitleScreenAccessor;
 import dev.threevhy.client.module.Modules;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -19,37 +21,72 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.PlainTextButton;
-import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.util.Util;
 
 /**
- * The 3vhy main menu, laid over Minecraft's own title screen in Lunar's style: the 3vhy sky with
- * snow, the 3vhy emblem and name where Minecraft's logo was, and the menu buttons as slim glass.
- * The title screen itself stays, so buttons and panels other mods add to it (Mod Menu, Essential
- * and so on) still show up. Only Minecraft's and Mod Menu's own buttons are restyled; anything
- * else keeps its own look. "3vhy Mods" takes the place of Minecraft Realms (or Right Shift) and
- * opens the 3vhy mod menu. The menu's column is spaced out evenly between the top and the
- * copyright line, so it doesn't feel cramped in small windows. In October it wears {@link October}'s
- * white, ghostly look instead.
+ * The main menu laid out like Lunar's, over Minecraft's own title screen: Minecraft's logo, panorama
+ * and stone buttons, a Mods button with 3vhy's gem under Minecraft Realms, a column of dark buttons on
+ * the right (Profiles, Edit HUD, Screenshots, Settings), and your account in a pill at the top left.
+ * The title screen itself stays, so buttons other mods add still show up. In October the panorama
+ * makes way for {@link October}'s ghosts.
  */
 public final class TitleScreenStyle {
-	public static final String MODS_LABEL = "3vhy Mods";
+	public static final String MODS_LABEL = "Mods";
 	private static final int MARGIN = 6;
-	private static final int ROW_GAP = 6;
-	private static final int NAME_H = 12;
+	/** Minecraft's title screen rows are 24 apart, with 12 more above the Options row. */
+	private static final int ROW_GAP = 4;
+	private static final int OPTIONS_GAP = 12;
 	/** The version and copyright text along the bottom. */
-	private static final int FOOTER = 14;
-	private static final Set<AbstractWidget> STYLED = Collections.newSetFromMap(new WeakHashMap<>());
-	private static final Snow SNOW = new Snow();
-	private static long openedAt = 0;
-	/** Where the emblem goes, worked out with the buttons for a screen this tall. */
-	private static int headerTop = 0;
-	private static int headerCell = 2;
-	private static int headerFor = -1;
+	private static final int FOOTER = 12;
+	private static final int SIDE_W = 80;
+	private static final int SIDE_H = 20;
+	private static final Set<AbstractWidget> SIDE = Collections.newSetFromMap(new WeakHashMap<>());
+	private static final Map<AbstractWidget, String[]> SIDE_ICONS = new WeakHashMap<>();
+	private static final Set<AbstractWidget> GEMS = Collections.newSetFromMap(new WeakHashMap<>());
+
+	private static final String[] PROFILE_ICON = {
+			"...##...",
+			"..####..",
+			"..####..",
+			"...##...",
+			".######.",
+			"########",
+			"########",
+	};
+	private static final String[] HUD_ICON = {
+			"###.####",
+			"#.#.#..#",
+			"###.####",
+			"........",
+			"####.###",
+			"#..#.#.#",
+			"####.###",
+	};
+	private static final String[] PICTURE_ICON = {
+			"########",
+			"#......#",
+			"#.##...#",
+			"#....#.#",
+			"#...####",
+			"#.######",
+			"########",
+	};
+	private static final String[] SETTINGS_ICON = {
+			".##.....",
+			"########",
+			".##.....",
+			"........",
+			".....##.",
+			"########",
+			".....##.",
+	};
+
+	private record Side(String label, String[] icon, Runnable action) {
+	}
 
 	private TitleScreenStyle() {
 	}
@@ -58,48 +95,43 @@ public final class TitleScreenStyle {
 		return Modules.MAIN_MENU.enabled();
 	}
 
-	private static boolean onTitleScreen() {
-		return enabled() && Minecraft.getInstance().screen instanceof TitleScreen;
+	/** Whether the main menu shows October's backdrop instead of Minecraft's panorama. */
+	public static boolean drawsBackground() {
+		return enabled() && October.active();
 	}
 
-	/** Whether Minecraft's logo (and its splash text) should be left out right now. */
-	public static boolean hidesMinecraftLogo() {
-		return onTitleScreen();
+	private static boolean onTitleScreen() {
+		return enabled() && Minecraft.getInstance().screen instanceof TitleScreen;
 	}
 
 	/** Called once the title screen has made its buttons (and other mods have added theirs). */
 	public static void prepare(Screen screen) {
 		if (!enabled() || !(screen instanceof TitleScreen)) return;
-		((TitleScreenAccessor) screen).threevhy$setSplash(null);
-		List<AbstractWidget> widgets = Compat.widgets(screen);
-		for (AbstractWidget widget : widgets) {
-			if (restyles(widget)) STYLED.add(widget);
+		TitleScreenAccessor access = (TitleScreenAccessor) screen;
+		access.threevhy$setSplash(null);
+		if (access.threevhy$realmsNotifications() != null) {
+			access.threevhy$realmsNotifications().removed();
+			access.threevhy$setRealmsNotifications(null);
 		}
+		List<AbstractWidget> widgets = new ArrayList<>(Compat.widgets(screen));
 		Minecraft mc = Minecraft.getInstance();
-		Button.Builder mods = Button.builder(Component.literal(MODS_LABEL), button -> mc.setScreen(ModMenuScreen.create(screen)));
-		AbstractWidget realms = find(widgets, "menu.online");
-		Button added;
-		if (realms != null) {
-			realms.visible = false;
-			realms.active = false;
-			TitleScreenAccessor access = (TitleScreenAccessor) screen;
-			if (access.threevhy$realmsNotifications() != null) {
-				access.threevhy$realmsNotifications().removed();
-				access.threevhy$setRealmsNotifications(null);
-			}
-			added = mods.pos(realms.getX(), realms.getY()).size(realms.getWidth(), realms.getHeight()).build();
-		} else {
-			added = mods.pos(MARGIN, freeSpot(widgets, MARGIN, 80, 20)).size(80, 20).build();
+		String label = taken(widgets, MODS_LABEL) ? "3vhy " + MODS_LABEL : MODS_LABEL;
+		Button mods = Button.builder(Component.literal(label), button -> mc.setScreen(ModMenuScreen.create(screen))).build();
+		GEMS.add(mods);
+		int[] column = layOut(screen, widgets, mods);
+		if (column == null) {
+			mods.setX(MARGIN);
+			mods.setY(freeSpot(widgets, MARGIN, 80, 20));
+			mods.setWidth(80);
 		}
-		Compat.addWidget(screen, added);
-		STYLED.add(added);
-		layOut(screen, new ArrayList<>(widgets));
+		Compat.addWidget(screen, mods);
+		addSideButtons(screen, mc, column);
+		Compat.afterScreen(screen, d -> drawOverlay(d, screen));
 		ScreenKeyboardEvents.afterKeyPress(screen).register((shown, event) -> {
 			if (ThreevhyClient.openSettingsKey != null && ThreevhyClient.openSettingsKey.matches(event) && mc.screen == shown) {
 				mc.setScreen(ModMenuScreen.create(shown));
 			}
 		});
-		openedAt = System.currentTimeMillis();
 		Hooks.mainMenuShown = true;
 	}
 
@@ -114,43 +146,56 @@ public final class TitleScreenStyle {
 		return null;
 	}
 
+	/** Whether another mod already has a button with this label (Mod Menu's Mods, say). */
+	private static boolean taken(List<AbstractWidget> widgets, String label) {
+		for (AbstractWidget widget : widgets) {
+			if (widget.visible && widget.getMessage().getString().equals(label)) return true;
+		}
+		return false;
+	}
+
 	/**
-	 * Spreads the menu out: the emblem, the name, the button rows (Singleplayer down to the row
-	 * before Options) and the Options / Quit row, centred between the top and the copyright line with
-	 * even gaps. Only widgets in that centre column move; other mods' widgets elsewhere stay put.
+	 * Puts the Mods row under Minecraft Realms and stacks the centre column like Lunar's: rows 24
+	 * apart from a quarter of the way down (less 12), then the Options / Quit row 12 lower, moved up
+	 * if it would reach the copyright line. Only widgets in the centre column move. Returns the
+	 * column's {top, bottom}, or null if the title screen doesn't look like Minecraft's.
 	 */
-	private static void layOut(Screen screen, List<AbstractWidget> widgets) {
-		headerFor = -1;
+	private static int[] layOut(Screen screen, List<AbstractWidget> widgets, Button mods) {
 		AbstractWidget first = find(widgets, "menu.singleplayer");
 		AbstractWidget options = find(widgets, "menu.options");
-		if (first == null || options == null || options.getY() <= first.getY()) return;
+		if (first == null || options == null || options.getY() <= first.getY()) return null;
 		int center = screen.width / 2;
-		Map<Integer, List<AbstractWidget>> rows = new TreeMap<>();
+		Map<Integer, List<AbstractWidget>> byY = new TreeMap<>();
 		List<AbstractWidget> bottom = new ArrayList<>();
 		for (AbstractWidget widget : widgets) {
 			if (!widget.visible || widget.getX() < center - 130 || widget.getX() + widget.getWidth() > center + 130) continue;
 			if (Math.abs(widget.getY() - options.getY()) <= 2) bottom.add(widget);
-			else if (widget.getY() >= first.getY() && widget.getY() < options.getY()) rows.computeIfAbsent(widget.getY(), y -> new ArrayList<>()).add(widget);
+			else if (widget.getY() >= first.getY() && widget.getY() < options.getY()) byY.computeIfAbsent(widget.getY(), y -> new ArrayList<>()).add(widget);
 		}
-		if (rows.isEmpty()) return;
+		List<List<AbstractWidget>> rows = new ArrayList<>(byY.values());
+		AbstractWidget realms = find(widgets, "menu.online");
+		int at = rows.size();
+		for (int i = 0; i < rows.size(); i++) {
+			if (rows.get(i).contains(realms)) at = i + 1;
+		}
+		mods.setX(first.getX());
+		mods.setWidth(first.getWidth());
+		mods.setHeight(first.getHeight());
+		rows.add(at, List.<AbstractWidget>of(mods));
 		int columnH = -ROW_GAP;
-		for (List<AbstractWidget> row : rows.values()) columnH += rowHeight(row) + ROW_GAP;
+		for (List<AbstractWidget> row : rows) columnH += rowHeight(row) + ROW_GAP;
 		int bottomH = rowHeight(bottom);
-		int cell = screen.height >= 300 ? 3 : 2;
-		int header = 16 * cell + 6 + NAME_H + 16;
-		int total = header + columnH + (bottomH > 0 ? 12 + bottomH : 0);
-		int top = Math.max(MARGIN, (screen.height - FOOTER - total) / 2);
-		int y = top + header;
-		for (List<AbstractWidget> row : rows.values()) {
+		int total = columnH + OPTIONS_GAP + bottomH;
+		int top = Math.max(MARGIN, Math.min(screen.height / 4 + 36, screen.height - FOOTER - total));
+		int y = top;
+		for (List<AbstractWidget> row : rows) {
 			for (AbstractWidget widget : row) widget.setY(y);
 			y += rowHeight(row) + ROW_GAP;
 		}
-		int bottomY = y - ROW_GAP + 12;
+		int bottomY = y - ROW_GAP + OPTIONS_GAP;
 		int optionsY = options.getY();
 		for (AbstractWidget widget : bottom) widget.setY(bottomY + widget.getY() - optionsY);
-		headerTop = top;
-		headerCell = cell;
-		headerFor = screen.height;
+		return new int[] {top, bottomY + bottomH};
 	}
 
 	private static int rowHeight(List<AbstractWidget> row) {
@@ -178,83 +223,121 @@ public final class TitleScreenStyle {
 		return y;
 	}
 
-	/** Plain text buttons from Minecraft and Mod Menu. Icon buttons, links and other mods' own widgets keep their look. */
-	private static boolean restyles(AbstractWidget widget) {
-		if (!(widget instanceof Button) || widget instanceof SpriteIconButton || widget instanceof PlainTextButton) return false;
-		String type = widget.getClass().getName();
-		return type.startsWith("net.minecraft.") || type.contains("modmenu");
+	/**
+	 * Lunar's column of dark buttons on the right, centred beside the main buttons, with 3vhy's own
+	 * shortcuts. Left out when the window is too narrow for it next to the main column.
+	 */
+	private static void addSideButtons(Screen screen, Minecraft mc, int[] column) {
+		int center = screen.width / 2;
+		int x = Math.min(Math.max(center + 112, Math.round(screen.width * 0.768f)), screen.width - MARGIN - SIDE_W);
+		if (x < center + 106) return;
+		List<Side> sides = List.of(
+				new Side("Profiles", PROFILE_ICON, () -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.PROFILES))),
+				new Side("Edit HUD", HUD_ICON, () -> mc.setScreen(new HubScreen(screen).editOnly())),
+				new Side("Screenshots", PICTURE_ICON, TitleScreenStyle::openScreenshots),
+				new Side("Settings", SETTINGS_ICON, () -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.SETTINGS))));
+		int total = sides.size() * (SIDE_H + ROW_GAP) - ROW_GAP;
+		int middle = column != null ? (column[0] + column[1]) / 2 : screen.height / 2;
+		int y = Math.max(MARGIN, middle - total / 2);
+		for (Side side : sides) {
+			Button button = Button.builder(Component.literal(side.label()), pressed -> side.action().run())
+					.pos(x, y).size(SIDE_W, SIDE_H).build();
+			SIDE.add(button);
+			SIDE_ICONS.put(button, side.icon());
+			Compat.addWidget(screen, button);
+			y += SIDE_H + ROW_GAP;
+		}
 	}
 
+	private static void openScreenshots() {
+		Path folder = Minecraft.getInstance().gameDirectory.toPath().resolve("screenshots");
+		try {
+			Files.createDirectories(folder);
+			Util.getPlatform().openPath(folder);
+		} catch (IOException e) {
+			ThreevhyClient.LOG.warn("Couldn't open the screenshots folder", e);
+		}
+	}
+
+	/** Lunar's side buttons are drawn by 3vhy; Minecraft's own keep their stone look. */
 	public static boolean styled(AbstractWidget widget) {
-		return widget.visible && STYLED.contains(widget) && onTitleScreen();
+		return widget.visible && SIDE.contains(widget) && onTitleScreen();
 	}
 
-	/** The background: the 3vhy sky and snow, a light dim like Lunar's blur, then the emblem and name. */
+	/** October's backdrop, in place of the panorama. */
 	public static void drawBackground(Draw d, int w, int h) {
-		boolean october = October.active();
-		if (october) {
-			October.drawBackdrop(d, w, h);
-		} else {
-			MainMenuScreen.drawBackdrop(d, w, h);
-			SNOW.draw(d, w, h);
-			d.fill(0, 0, w, h, 0x26000000);
-		}
-		float intro = Math.min(1f, (System.currentTimeMillis() - openedAt) / 400f);
-		int alpha = Math.round(255 * intro);
-		int cell = headerFor == h ? headerCell : h >= 300 ? 3 : 2;
-		int size = 16 * cell;
-		int spot = headerFor == h ? headerTop : Math.max(4, h / 4 + 48 - 22 - 6 - size);
-		int top = spot + Math.round((1 - intro) * -6);
-		int nameY = spot + size + 6;
-		HubScreen.drawEmblem(d, (w - size) / 2, top, size, cell, alpha, october ? October.INK : 0xFFFFFFFF);
-		Minecraft mc = Minecraft.getInstance();
-		d.push();
-		d.translate(w / 2f, nameY);
-		d.scale(1.5f);
-		String brand = "3VHY";
-		String client = " CLIENT";
-		int brandW = mc.font.width(Ui.bold(brand));
-		int textW = brandW + mc.font.width(client);
-		d.text(Ui.bold(brand), -textW / 2, 0, MenuTheme.alpha(october ? October.INK : 0xFFFFFF, alpha), !october);
-		d.text(client, -textW / 2 + brandW, 0, MenuTheme.alpha(october ? October.INK_SOFT : 0xE3F3FC, october ? alpha : alpha * 0xD8 / 255),
-				!october);
-		d.pop();
-		if (october) {
-			String tagline = "HAPPY HALLOWEEN";
-			d.push();
-			d.translate(w / 2f, nameY + 15);
-			d.scale(0.75f);
-			d.text(tagline, -mc.font.width(tagline) / 2, 0, MenuTheme.alpha(October.PUMPKIN, alpha), false);
-			d.pop();
-		}
+		October.drawBackdrop(d, w, h);
 	}
 
-	/** Draws a restyled button in place of Minecraft's: slim smoked glass, an ice-blue edge on hover, uppercase text. */
+	/** A side button like Lunar's: near-black with a grey edge that turns white on hover, the label on the left, an icon on the right. */
 	public static void drawButton(Draw d, AbstractWidget widget, int mouseX, int mouseY) {
 		Hooks.titleButtonsStyled = true;
 		int x = widget.getX();
 		int y = widget.getY();
 		int w = widget.getWidth();
 		int h = widget.getHeight();
-		boolean active = widget.active;
-		boolean hover = active && (widget.isFocused() || mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h);
-		boolean ours = widget.getMessage().getString().equals(MODS_LABEL);
-		boolean october = October.active();
-		if (october) {
-			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xFFFFFFFF : 0xF2FFFFFF);
-			d.roundOutline(x, y, x + w, y + h, 4, hover ? October.INK : ours ? 0xCCFF8A2B : 0x4D2A2238);
-		} else {
-			d.roundRect(x, y, x + w, y + h, 4, hover ? 0xB0163056 : ours ? 0x9C0E2448 : 0x8C080C18);
-			d.roundOutline(x, y, x + w, y + h, 4, hover ? Theme.CYAN : ours ? 0x995BC8E6 : 0x59FFFFFF);
-		}
+		boolean hover = widget.active && (widget.isFocused() || mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h);
+		d.fill(x, y, x + w, y + h, hover ? 0xF0202226 : 0xE6101113);
+		d.outline(x, y, x + w, y + h, hover ? 0xFFFFFFFF : 0xFF5C5F66);
 		Minecraft mc = Minecraft.getInstance();
-		String label = widget.getMessage().getString().toUpperCase(Locale.ROOT);
-		int max = w - 8;
-		if (mc.font.width(label) > max) {
-			while (!label.isEmpty() && mc.font.width(label + "...") > max) label = label.substring(0, label.length() - 1);
-			label = label + "...";
+		String label = widget.getMessage().getString();
+		d.text(label, x + 6, y + (h - 8) / 2, hover ? 0xFFFFFFFF : 0xFFE0E0E0, true);
+		String[] icon = SIDE_ICONS.get(widget);
+		if (icon != null) {
+			int iw = icon[0].length();
+			int ix = x + w - 6 - iw;
+			int iy = y + (h - icon.length) / 2;
+			for (int row = 0; row < icon.length; row++) {
+				for (int col = 0; col < iw; col++) {
+					if (icon[row].charAt(col) == '#') d.fill(ix + col, iy + row, ix + col + 1, iy + row + 1, hover ? 0xFFFFFFFF : 0xFFD6D8DC);
+				}
+			}
 		}
-		int color = october ? (!active ? 0x802A2238 : October.INK) : !active ? 0x80FFFFFF : hover ? 0xFFFFFFFF : 0xFFE3F3FC;
-		d.text(label, x + (w - mc.font.width(label)) / 2, y + (h - 8) / 2, color, false);
+	}
+
+	/** The gem on the Mods button and the account pill, over the title screen's widgets. */
+	private static void drawOverlay(Draw d, Screen screen) {
+		if (!onTitleScreen()) return;
+		for (AbstractWidget widget : Compat.widgets(screen)) {
+			if (GEMS.contains(widget)) Gem.onButton(d, widget);
+		}
+		drawAccount(d);
+	}
+
+	/**
+	 * Lunar's account pill at the top left, in real pixels: the 3vhy app icon, your head and your
+	 * name on a dark rounded box 13 GUI pixels tall.
+	 */
+	private static void drawAccount(Draw d) {
+		Minecraft mc = Minecraft.getInstance();
+		float guiScale = (float) mc.getWindow().getGuiScale();
+		int h = Math.round(13.3f * guiScale);
+		int x = Math.round(MARGIN * guiScale);
+		int y = Math.round(MARGIN * guiScale);
+		int pad = Math.round(h * 0.3f);
+		int icon = Math.round(h * 0.5f);
+		int face = Math.round(h * 0.4f);
+		float textScale = h * 0.28f / 6.8f;
+		Component name = UiFont.semibold(mc.getUser().getName());
+		int nameW = Math.round(mc.font.width(name) * textScale);
+		int gap = Math.round(h * 0.22f);
+		int w = pad + icon + gap + face + gap + nameW + Math.round(h * 0.4f);
+		d.push();
+		d.scale(1f / guiScale);
+		Smooth.roundRect(d, x, y, x + w, y + h, h * 0.2f, 0xE616171B);
+		int cx = x + pad;
+		int iy = y + (h - icon) / 2;
+		Smooth.roundRect(d, cx, iy, cx + icon, iy + icon, icon * 0.25f, Theme.ROYAL);
+		int cell = Math.max(1, Math.round(icon * 0.6f / 12));
+		Wordmark.drawGlyph(d, cx + (icon - 10 * cell) / 2, iy + (icon - 12 * cell) / 2, cell, Theme.ICE);
+		cx += icon + gap;
+		d.face(MenuNameTag.ownSkin(mc), cx, y + (h - face) / 2, face);
+		cx += face + gap;
+		d.push();
+		d.translate(cx, y + (h - 6.8f * textScale) / 2f);
+		d.scale(textScale);
+		d.text(name, 0, 0, 0xFFE6E8EC, false);
+		d.pop();
+		d.pop();
 	}
 }
