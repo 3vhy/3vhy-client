@@ -87,7 +87,7 @@ public final class ModMenuScreen extends CompatScreen {
 						t.cardOn(), t.card(), t.cardHover(), t.edge(), MenuTheme.alpha(0x1A4FBA, 0x14), MenuTheme.alpha(0x1A4FBA, 0x26),
 						t.text(), t.text(), t.muted(), 0xFFFFFFFF);
 			}
-			return new Look(0xE6191C23, 0x2EFFFFFF, 0x1AFFFFFF, 0x24000000, 0x0FFFFFFF, 0x24FFFFFF, 0x12FFFFFF, 0x1CFFFFFF,
+			return new Look(0xF2191C23, 0x2EFFFFFF, 0x1AFFFFFF, 0x24000000, 0x0FFFFFFF, 0x24FFFFFF, 0x12FFFFFF, 0x1CFFFFFF,
 					0x1FFFFFFF, 0x17FFFFFF, 0x2BFFFFFF, 0xFFDCE0E6, 0xFFC4C9D1, 0xFF8E949E, 0xFFBACBE0);
 		}
 	}

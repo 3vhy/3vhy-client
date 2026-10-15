@@ -30,9 +30,9 @@ import net.minecraft.util.Util;
 /**
  * The main menu laid out like Lunar's, over Minecraft's own title screen: Minecraft's logo, panorama
  * and stone buttons, a Mods button with 3vhy's gem under Minecraft Realms, a column of dark buttons on
- * the right (Profiles, Edit HUD, Screenshots, Settings), and your account in a pill at the top left.
- * The title screen itself stays, so buttons other mods add still show up. In October the panorama
- * makes way for {@link October}'s ghosts.
+ * the right (Profiles, Edit HUD, Pictures for your screenshots, Settings), and your account in a pill
+ * at the top left. The title screen itself stays, so buttons other mods add still show up. In October
+ * the panorama makes way for {@link October}'s ghosts.
  */
 public final class TitleScreenStyle {
 	public static final String MODS_LABEL = "Mods";
@@ -185,14 +185,14 @@ public final class TitleScreenStyle {
 		int columnH = -ROW_GAP;
 		for (List<AbstractWidget> row : rows) columnH += rowHeight(row) + ROW_GAP;
 		int bottomH = rowHeight(bottom);
-		int total = columnH + OPTIONS_GAP + bottomH;
+		int total = columnH + ROW_GAP + OPTIONS_GAP + bottomH;
 		int top = Math.max(MARGIN, Math.min(screen.height / 4 + 36, screen.height - FOOTER - total));
 		int y = top;
 		for (List<AbstractWidget> row : rows) {
 			for (AbstractWidget widget : row) widget.setY(y);
 			y += rowHeight(row) + ROW_GAP;
 		}
-		int bottomY = y - ROW_GAP + OPTIONS_GAP;
+		int bottomY = y + OPTIONS_GAP;
 		int optionsY = options.getY();
 		for (AbstractWidget widget : bottom) widget.setY(bottomY + widget.getY() - optionsY);
 		return new int[] {top, bottomY + bottomH};
@@ -234,7 +234,7 @@ public final class TitleScreenStyle {
 		List<Side> sides = List.of(
 				new Side("Profiles", PROFILE_ICON, () -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.PROFILES))),
 				new Side("Edit HUD", HUD_ICON, () -> mc.setScreen(new HubScreen(screen).editOnly())),
-				new Side("Screenshots", PICTURE_ICON, TitleScreenStyle::openScreenshots),
+				new Side("Pictures", PICTURE_ICON, TitleScreenStyle::openScreenshots),
 				new Side("Settings", SETTINGS_ICON, () -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.SETTINGS))));
 		int total = sides.size() * (SIDE_H + ROW_GAP) - ROW_GAP;
 		int middle = column != null ? (column[0] + column[1]) / 2 : screen.height / 2;

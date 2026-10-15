@@ -226,7 +226,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			List<String> found = new ArrayList<>();
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
 				String label = widget.getMessage().getString();
-				if (widget.visible && List.of("Profiles", "Edit HUD", "Screenshots", "Settings").contains(label)) found.add(label);
+				if (widget.visible && List.of("Profiles", "Edit HUD", "Pictures", "Settings").contains(label)) found.add(label);
 			}
 			return found.size() == 4;
 		}));
