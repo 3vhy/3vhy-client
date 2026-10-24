@@ -239,6 +239,14 @@ public final class Modules {
 			"Colour of the box behind it", 0xFF0A0814));
 	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
 			"A darker strip behind the title, like Minecraft's", true));
+	public static final Module HOTBAR = new Module("hotbar", "Hotbar",
+			"Your hotbar as one glass bar, with your server's address beside it if you like", Category.HUD, false).icon("boxes").markNew();
+	public static final Choice HOTBAR_SELECTED = HOTBAR.add(new Choice("selected", "Selected slot",
+			"The square behind the item in your hand", 0, "White", "Accent"));
+	public static final Toggle HOTBAR_SERVER = HOTBAR.add(new Toggle("server", "Server address",
+			"The server's address in a pill beside the hotbar", true));
+	public static final Slider HOTBAR_BACKGROUND = HOTBAR.add(new Slider("background", "Background",
+			"How dark the bar is", 0, 100, 5, 75, "%"));
 	public static final Module MUSIC = sized(background(new Module("music", "Music Player",
 			"The song playing on Spotify, YouTube or any other app", Category.HUD, false).icon("music").markNew(), 90));
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
@@ -317,7 +325,7 @@ public final class Modules {
 			NAME_PROTECT, SKIN_PROTECT, PLAYER_LIST, TOGGLE_SPRINT,
 			WAYPOINTS, FULLBRIGHT, NO_FOG,
 			CHAT, TEXT_HOTKEYS, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS,
-			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, POTIONS, SCOREBOARD, MUSIC, MODULE_LIST,
+			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, POTIONS, SCOREBOARD, HOTBAR, MUSIC, MODULE_LIST,
 			BLADES, MENU_NAME, MAIN_MENU,
 			THEME, DISCORD, PROFILES);
 

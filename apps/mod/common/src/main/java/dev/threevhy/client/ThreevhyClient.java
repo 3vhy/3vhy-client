@@ -7,6 +7,7 @@ import dev.threevhy.client.gui.TitleScreenStyle;
 import dev.threevhy.client.gui.MenuNameTag;
 import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.gui.menu.MenuScreen;
+import dev.threevhy.client.hud.Hotbar;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.hud.ScoreboardWidget;
@@ -77,6 +78,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 
 		Compat.registerHud(Identifier.fromNamespaceAndPath(MOD_ID, "hud"), HudRenderer::render);
 		Compat.replaceHud(VanillaHudElements.CROSSHAIR, Crosshair::draw);
+		Compat.replaceHud(VanillaHudElements.HOTBAR, Hotbar::draw);
 		Compat.replaceHud(VanillaHudElements.SCOREBOARD, (d, original) -> ((ScoreboardWidget) HudWidgets.SCOREBOARD).drawInPlace(d));
 		ConfirmDisconnect.install();
 

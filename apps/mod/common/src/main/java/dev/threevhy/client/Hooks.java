@@ -39,6 +39,8 @@ public final class Hooks {
 	public static volatile boolean bladeModelSwapped = false;
 	public static volatile boolean inspectRan = false;
 	public static volatile boolean lyricsDrawn = false;
+	public static volatile boolean hotbarDrawn = false;
+	public static volatile boolean serverAddressDrawn = false;
 
 	private Hooks() {
 	}

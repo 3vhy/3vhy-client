@@ -478,6 +478,24 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			});
 			context.waitTicks(20);
 			shot(context, "3vhy-sky-lyrics");
+			context.setScreen(MusicShowcase::new);
+			context.waitTicks(12);
+			shot(context, "3vhy-music-closeup-lyrics");
+			context.setScreen(() -> null);
+			context.runOnClient(client -> {
+				Modules.HOTBAR.set(true);
+				client.getToastManager().clear();
+			});
+			context.waitTicks(5);
+			shot(context, "3vhy-hotbar");
+			check(failed, "the glass hotbar replaces Minecraft's", Hooks.hotbarDrawn);
+			check(failed, "the hotbar shows where you're playing", Hooks.serverAddressDrawn);
+			context.runOnClient(client -> Modules.HOTBAR_SELECTED.set("Accent"));
+			context.getInput().pressKey(InputConstants.KEY_3);
+			context.waitTicks(5);
+			shot(context, "3vhy-hotbar-accent");
+			context.getInput().pressKey(InputConstants.KEY_1);
+			context.runOnClient(client -> Modules.HOTBAR_SELECTED.reset());
 			check(failed, "sky lyrics drawn in the sky ahead", Hooks.lyricsDrawn);
 			check(failed, "lyrics read from LRC", Lyrics.parse("[00:01.50] a\n[00:03.00][00:09.00] b").size() == 3);
 			context.runOnClient(client -> {
