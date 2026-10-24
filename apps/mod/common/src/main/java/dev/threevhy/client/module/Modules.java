@@ -156,8 +156,6 @@ public final class Modules {
 			"Friends and rivals, and when they're on your server", Category.PLAYER, true).icon("users").markNew(), 90));
 	public static final Text PLAYER_LIST_TITLE = PLAYER_LIST.add(new Text("title", "Title", "The name at the top of the list",
 			"Players", 16));
-	public static final Choice PLAYER_LIST_ICON = PLAYER_LIST.add(new Choice("icon", "Icon",
-			"A dot, or the player's head, before each name", 0, "Plus", "Head"));
 	public static final Toggle PLAYER_LIST_OFFLINE = PLAYER_LIST.add(new Toggle("offline", "Show offline players",
 			"Also list players who aren't on, after the ones who are", false));
 	public static final Toggle PLAYER_LIST_ALERTS = PLAYER_LIST.add(new Toggle("alerts", "Join alerts",
@@ -268,7 +266,7 @@ public final class Modules {
 	public static final Toggle MODULE_LIST_HUD = MODULE_LIST.add(new Toggle("hud", "HUD mods",
 			"Also list the HUD mods you can already see, like FPS and Keystrokes", false));
 	public static final Toggle MODULE_LIST_GLOW = MODULE_LIST.add(new Toggle("glow", "Glow",
-			"A soft glow around the names", true));
+			"A soft glow behind the icons", true));
 
 	// Cosmetics
 	public static final Module BLADES = new Module("blades", "Blades",

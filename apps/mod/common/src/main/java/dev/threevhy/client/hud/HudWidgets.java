@@ -639,61 +639,7 @@ public final class HudWidgets {
 		}
 	};
 
-	public static final HudWidget POPS = new HudWidget("pops", Modules.POPS, Anchor.TOP_RIGHT) {
-		private static final int MAX = 5;
-		private static final float ROW = 11;
-
-		@Override
-		public int width(Minecraft mc) {
-			return 112;
-		}
-
-		private int rows() {
-			return Math.max(2, Math.min(MAX, PopTracker.top(MAX).size()));
-		}
-
-		@Override
-		public int height(Minecraft mc) {
-			return Math.round(17 + rows() * ROW + 4);
-		}
-
-		@Override
-		public boolean visible(Minecraft mc) {
-			return !PopTracker.top(1).isEmpty();
-		}
-
-		@Override
-		public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
-			List<PopTracker.Entry> entries = PopTracker.top(MAX);
-			int w = width(mc);
-			boolean shadow = textShadow();
-			glass(d, x, y, w, height(mc), Hud.RADIUS);
-			Paint.icon(d, "shield-plus", x + Hud.PAD_X, y + 5, 7.5f, Accent.text());
-			Type.spaced(d, "TOTEM POPS", x + Hud.PAD_X + 11, y + 6.6f, Hud.SMALL, 0.08f, Weight.SEMIBOLD, Tokens.TEXT_2);
-			List<String> names = new ArrayList<>();
-			List<Integer> pops = new ArrayList<>();
-			if (entries.isEmpty() && preview) {
-				names.add("Steve");
-				pops.add(3);
-				names.add("Alex");
-				pops.add(1);
-			}
-			for (PopTracker.Entry entry : entries) {
-				names.add(entry.name());
-				pops.add(entry.pops());
-			}
-			for (int i = 0; i < names.size(); i++) {
-				float cy = y + 17 + i * ROW + ROW / 2f;
-				String count = Integer.toString(pops.get(i));
-				float pw = Hud.width(count, Hud.SMALL, Weight.BOLD) + 7;
-				float px = x + w - Hud.PAD_X - pw;
-				Paint.rect(d, px, cy - 4, px + pw, cy + 4, 4, new Grad(0x575F04EB, 0x42D129F5, 90));
-				Type.center(d, count, px + pw / 2f, cy - Hud.SMALL / 2f, Hud.SMALL, Weight.BOLD, 0xFFFFFFFF);
-				Hud.text(d, Type.fit(names.get(i), px - x - Hud.PAD_X - 6, Hud.CAP * 0.9f, Weight.SEMIBOLD), x + Hud.PAD_X, cy - Hud.CAP * 0.45f,
-						Hud.CAP * 0.9f, Weight.SEMIBOLD, Tokens.TEXT, shadow);
-			}
-		}
-	};
+	public static final HudWidget POPS = new PopsWidget();
 
 	/**
 	 * The website's Target HUD: the face in violet corner brackets, the name, a badge for what they

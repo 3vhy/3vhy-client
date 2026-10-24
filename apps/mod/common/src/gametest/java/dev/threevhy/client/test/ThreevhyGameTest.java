@@ -130,7 +130,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				d.translate(this.width - widget.width(mc) * scale - 6, 6);
 			} else if (widget == HudWidgets.MUSIC) {
 				d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
-			} else if (widget == HudWidgets.STAFF_LIST) {
+			} else if (widget == HudWidgets.STAFF_LIST || widget == HudWidgets.PLAYER_LIST || widget == HudWidgets.POPS) {
 				d.translate((this.width - w) / 2f, 40);
 			} else {
 				d.translate((this.width - w) / 2f, (this.height - h) / 2f);
@@ -453,6 +453,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				PlayerList.names().clear();
 				PlayerList.names().addAll(listedPlayers);
 			});
+			context.setScreen(() -> new MusicShowcase(HudWidgets.POPS));
+			context.waitTicks(5);
+			shot(context, "3vhy-pops-closeup");
 			context.setScreen(() -> new MusicShowcase(HudWidgets.STAFF_LIST));
 			context.waitTicks(10);
 			shot(context, "3vhy-staff-list-closeup");

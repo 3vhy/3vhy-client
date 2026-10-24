@@ -2,8 +2,6 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.compat.Compat;
-import dev.threevhy.client.gui.Accent;
-import dev.threevhy.client.gui.menu.MenuScreen;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PlayerList;
 import dev.threevhy.client.ui.Anim;
@@ -23,31 +21,28 @@ import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.core.UUIDUtil;
 
 /**
- * The Player List on the HUD, on violet glass: the list's title with a badge counting who's on, then
- * each listed player with a dot (mint when they're on) or their head, six at most with "+N more"
- * under them. Someone joining slides in with a pulse on their dot, someone leaving dims and slides
- * out, the rest glide to their new places, and the count gives a little bump when it changes.
+ * The Player List, on the same card as the Staff List: a violet tile with the list's title and a pill
+ * counting who's on ("N online", mint while anyone is), then each listed player's head ringed in mint
+ * when they're on, their name and an Online / Offline tag, six at most with "+N more" under them.
+ * Someone coming online arrives with a mint glow, someone going offline dims, someone taken off the
+ * list slides away, and the count rolls when it changes.
  */
 final class PlayerListWidget extends HudWidget {
-	private static final float PAD = 7;
-	private static final float HEADER = 17;
-	private static final float ROW = 11;
-	private static final float ICON = 7;
-	private static final float CAP = Hud.CAP * 0.92f;
 	private static final int SHOWN = 6;
+	private static final float MORE_H = 40 * ListCard.K;
+	private static final int MINT_TEXT = 0xFFD4F7E8;
 	private static final String[] SAMPLE = {"Steve", "Alex", "Player372"};
 
 	private final Map<String, RowState> states = new LinkedHashMap<>();
 	private final Anim appear = new Anim(0, 420, Ease.OUT);
-	private final Anim widthAnim = new Anim(0, 380, Ease.OUT);
-	private final Anim heightAnim = new Anim(0, 380, Ease.OUT);
-	private boolean sized = false;
-	private int lastCount = -1;
-	private long countChangedAt = 0;
+	private final Anim height = new Anim(ListCard.HEADER, 420, Ease.OUT);
+	private final Anim lit = new Anim(0, 420, Ease.OUT);
+	private boolean primed = false;
+	private int shownCount = -1;
+	private int oldCount = 0;
+	private long countAt = 0;
 
 	private record Row(String name, PlayerInfo info, boolean online) {
 	}
@@ -72,10 +67,6 @@ final class PlayerListWidget extends HudWidget {
 		return rows;
 	}
 
-	private static String title() {
-		return Modules.PLAYER_LIST_TITLE.getOrDefault().toUpperCase(Locale.ROOT);
-	}
-
 	private static int online(List<Row> rows) {
 		int count = 0;
 		for (Row row : rows) {
@@ -84,50 +75,31 @@ final class PlayerListWidget extends HudWidget {
 		return count;
 	}
 
+	private static List<Row> shown(List<Row> rows) {
+		return rows.size() > SHOWN ? rows.subList(0, SHOWN) : rows;
+	}
+
+	private static float targetHeight(List<Row> rows) {
+		return ListCard.height(shown(rows).size(), rows.size() > SHOWN ? MORE_H : 0);
+	}
+
 	@Override
 	public boolean visible(Minecraft mc) {
 		return !rows(mc, false).isEmpty() || appear.get() > 0.01f;
 	}
 
-	private static String more(List<Row> rows) {
-		return "+" + (rows.size() - SHOWN) + " more";
-	}
-
-	private static List<Row> shown(List<Row> rows) {
-		return rows.size() > SHOWN ? rows.subList(0, SHOWN) : rows;
-	}
-
-	private static float badgeWidth(int count) {
-		return Math.max(12, Type.width(Integer.toString(count), Hud.SMALL, Weight.BOLD) + 7);
-	}
-
-	private float targetWidth(Minecraft mc, List<Row> rows) {
-		float widest = PAD + 9 + 4 + Type.spacedWidth(title(), Hud.SMALL, 0.08f, Weight.SEMIBOLD) + 10 + badgeWidth(online(rows)) + PAD;
-		for (Row row : shown(rows)) widest = Math.max(widest, PAD + ICON + 5 + Type.width(row.name(), CAP, Weight.SEMIBOLD) + 10 + PAD);
-		return Math.max(78, widest);
-	}
-
-	private static float targetHeight(List<Row> rows) {
-		return HEADER + Math.max(1, shown(rows).size()) * ROW + (rows.size() > SHOWN ? ROW - 2 : 0) + 4;
-	}
-
 	@Override
 	public int width(Minecraft mc) {
-		List<Row> rows = rows(mc, true);
-		if (!sized) return (int) Math.ceil(targetWidth(mc, rows));
-		widthAnim.set(targetWidth(mc, rows));
-		return (int) Math.ceil(widthAnim.get());
+		return ListCard.W;
 	}
 
 	@Override
 	public int height(Minecraft mc) {
-		List<Row> rows = rows(mc, true);
-		if (!sized) return (int) Math.ceil(targetHeight(rows));
-		heightAnim.set(targetHeight(rows));
-		return (int) Math.ceil(heightAnim.get());
+		if (!primed) return (int) Math.ceil(targetHeight(rows(mc, true)));
+		return (int) Math.ceil(height.get());
 	}
 
-	/** Brings each name's animation up to date: who joined, who left, who moved, and the count. */
+	/** Brings each name's animation up to date: who came on (to glow), who went off, who moved, and the count. */
 	private void follow(List<Row> shown, int count, boolean quiet) {
 		long now = System.currentTimeMillis();
 		Set<String> present = new HashSet<>();
@@ -145,104 +117,118 @@ final class PlayerListWidget extends HudWidget {
 				state.joinedAt = now;
 			}
 			if (!row.online()) state.joinedAt = 0;
+			state.leaving = false;
 			state.in.set(1);
 			state.slot.set(i);
 			state.online.set(row.online());
 			state.wasOnline = row.online();
 			state.row = row;
 		}
-		Iterator<Map.Entry<String, RowState>> it = states.entrySet().iterator();
+		Iterator<RowState> it = states.values().iterator();
 		while (it.hasNext()) {
-			RowState state = it.next().getValue();
+			RowState state = it.next();
 			if (present.contains(state.row.name().toLowerCase(Locale.ROOT))) continue;
+			state.leaving = true;
 			state.in.set(0);
 			if (state.in.get() < 0.01f) it.remove();
 		}
-		if (lastCount >= 0 && count != lastCount && !quiet) countChangedAt = now;
-		lastCount = count;
+		if (count != shownCount) {
+			oldCount = Math.max(0, shownCount);
+			countAt = quiet || shownCount < 0 ? now - 1000 : now;
+			shownCount = count;
+		}
 	}
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 		List<Row> rows = rows(mc, preview);
-		boolean quiet = !sized;
+		boolean quiet = !primed;
 		int count = online(rows);
 		follow(shown(rows), count, quiet);
-		if (!sized) {
-			widthAnim.snap(targetWidth(mc, rows));
-			heightAnim.snap(targetHeight(rows));
-			sized = true;
-		}
+		height.set(targetHeight(rows));
+		lit.set(count > 0);
 		appear.set(!rows.isEmpty());
-		if (preview || quiet) appear.snap(rows.isEmpty() ? 0 : 1);
+		if (quiet || preview) appear.snap(appear.target());
+		if (quiet) {
+			height.snap(height.target());
+			lit.snap(lit.target());
+			primed = true;
+		}
 		float a = appear.get();
 		if (a <= 0.01f) return;
 		long now = System.currentTimeMillis();
-		float w = width(mc);
-		float h = height(mc);
+		float h = height.get();
 		float old = Paint.opacity(Paint.opacity() * a);
 		float left = x + (1 - a) * 10;
 		boolean shadow = textShadow();
-		glass(d, left, y, w, h, Hud.RADIUS);
-		Paint.icon(d, "users", left + PAD, y + 5, 8, Accent.text());
-		Type.spaced(d, title(), left + PAD + 12, y + 7, Hud.SMALL, 0.08f, Weight.SEMIBOLD, Tokens.TEXT_2);
+		glass(d, left, y, ListCard.W, h, ListCard.RADIUS);
+		float right = left + ListCard.W - ListCard.PAD;
+		float pillLeft = pill(d, right, y + ListCard.HEADER / 2f, now);
+		ListCard.header(d, left, y, "users", Modules.PLAYER_LIST_TITLE.getOrDefault(), pillLeft, shadow);
 
-		String label = Integer.toString(count);
-		float bump = 1 + 0.28f * (1 - Ease.OUT.apply((now - countChangedAt) / 520.0));
-		float bw = badgeWidth(count);
-		float bcx = left + w - PAD - bw / 2f;
-		float bcy = y + 9;
-		float hw = bw / 2f * bump;
-		float hh = 4 * bump;
-		if (bump > 1.01f) Paint.shadow(d, bcx - hw, bcy - hh, bcx + hw, bcy + hh, hh, 0, 0, 8, 0, Accent.glow((bump - 1) * 2.5f));
-		Paint.rect(d, bcx - hw, bcy - hh, bcx + hw, bcy + hh, hh, Accent.primary());
-		float cap = Hud.SMALL * bump;
-		Type.center(d, label, bcx, bcy - cap / 2f, cap, Weight.BOLD, 0xFFFFFFFF);
-		Paint.rect(d, left + PAD, y + HEADER - 1.5f, left + w - PAD, y + HEADER - 1, 0, 0x14FFFFFF);
-
-		boolean heads = Modules.PLAYER_LIST_ICON.is("Head");
-		d.enableScissor((int) Math.floor(left), (int) Math.floor(y + HEADER - 1), (int) Math.ceil(left + w), (int) Math.ceil(y + h));
-		for (RowState state : states.values()) drawRow(d, state, left, y, heads, shadow, now);
-		d.disableScissor();
+		float listTop = y + ListCard.HEADER;
+		ListCard.divider(d, left, listTop, Math.min(1, (h - ListCard.HEADER) / (ListCard.ROW * 0.5f)));
+		d.enableScissor((int) Math.floor(left), (int) Math.floor(listTop), (int) Math.ceil(left + ListCard.W), (int) Math.ceil(y + h));
+		float top = listTop + ListCard.LIST_PAD;
+		for (RowState state : states.values()) drawRow(d, state, left, top, shadow, now);
 		if (rows.size() > SHOWN) {
-			float moreY = y + HEADER + SHOWN * ROW + ROW / 2f;
-			Hud.text(d, more(rows), left + PAD + ICON + 5, moreY - Hud.SMALL / 2f - 1, Hud.SMALL, Weight.SEMIBOLD, Tokens.TEXT_3, shadow);
+			float cy = top + SHOWN * ListCard.ROW + MORE_H / 2f;
+			String more = "+" + (rows.size() - SHOWN) + " more";
+			Hud.text(d, more, ListCard.nameX(left), cy - Hud.SMALL / 2f, Hud.SMALL, Weight.SEMIBOLD, Tokens.TEXT_3, shadow);
 		}
+		d.disableScissor();
 		Paint.opacity(old);
 	}
 
-	/**
-	 * One name: slides in from the right as they join (their dot pulsing for a moment), dims when they
-	 * go offline, and slides back out as they leave the list.
-	 */
-	private void drawRow(Draw d, RowState state, float left, float top, boolean heads, boolean shadow, long now) {
+	/** "N online", mint while anyone is on and grey when nobody is, the number rolling as it changes; returns the pill's left edge. */
+	private float pill(Draw d, float right, float cy, long now) {
+		float k = ListCard.K;
+		float cap = ListCard.PILL_CAP;
+		float on = lit.get();
+		int count = Math.max(0, shownCount);
+		float numW = Type.width(Integer.toString(count), cap, Weight.BOLD);
+		float w = 12 * k + 3 + 4 + numW + 2.5f + Type.width("online", cap, Weight.MEDIUM) + 14 * k;
+		int color = Draw.mix(Tokens.TEXT_3, Tokens.MINT, on);
+		float x1 = ListCard.pill(d, right, cy, w, Paint.fade(color, 0.12f), Paint.fade(color, 0.45f));
+		ListCard.clipPill(d, right, cy, w);
+		float cx = x1 + 12 * k;
+		if (on > 0.01f) Paint.glow(d, cx + 1.5f, cy, 1.5f, 4, Paint.fade(Tokens.MINT, 0.5f * on));
+		Paint.circle(d, cx + 1.5f, cy, 1.5f, color);
+		float nx = cx + 3 + 4;
+		ListCard.number(d, count, oldCount, countAt, now, nx, cy, Draw.mix(Tokens.TEXT_2, Tokens.TEXT, on));
+		Type.draw(d, "online", nx + numW + 2.5f, cy - cap / 2f, cap, Weight.MEDIUM, Draw.mix(Tokens.TEXT_3, MINT_TEXT, on));
+		d.disableScissor();
+		return x1;
+	}
+
+	/** One player: their head, name and Online / Offline tag, sliding and fading as they come and go. */
+	private void drawRow(Draw d, RowState state, float left, float top, boolean shadow, long now) {
 		float in = state.in.get();
 		if (in <= 0.01f) return;
 		Row row = state.row;
-		float mid = top + HEADER + ROW / 2f + state.slot.get() * ROW;
-		float shift = (1 - in) * 14;
 		float on = state.online.get();
+		float cy = top + state.slot.get() * ListCard.ROW + ListCard.ROW / 2f;
+		float shift = state.leaving ? -(1 - in) * 14 : (1 - in) * 6;
 		float old = Paint.opacity(Paint.opacity() * in);
-		float ix = left + PAD + shift;
-		if (heads) {
-			MenuScreen.face(d, row.info() != null ? row.info().getSkin() : DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), ix,
-					mid - ICON / 2f, ICON, 2);
-			if (on < 0.99f) {
-				float dim = Paint.opacity(Paint.opacity() * (1 - on) * 0.6f);
-				Paint.rect(d, ix, mid - ICON / 2f, ix + ICON, mid + ICON / 2f, 2, 0xFF0A0814);
-				Paint.opacity(dim);
-			}
-		} else {
-			float cx = ix + ICON / 2f;
-			float pulse = (now - state.joinedAt) / 1600f;
-			if (pulse < 1) {
-				float ring = Ease.OUT.apply(pulse);
-				Paint.ring(d, cx, mid, 2.2f + ring * 5, 0.8f, Paint.fade(Tokens.MINT, 0.7f * (1 - pulse)));
-			}
-			if (on > 0.01f) Paint.glow(d, cx, mid, 2, 5, Paint.fade(Tokens.MINT, 0.45f * on));
-			Paint.circle(d, cx, mid, 2.2f, Draw.mix(Tokens.TEXT_3, Tokens.MINT, on));
+		float glow = Math.max(0, 1 - (now - state.joinedAt) / 1600f);
+		ListCard.arrival(d, left + 8 * ListCard.K + shift, left + ListCard.W - 8 * ListCard.K + shift, cy, glow, Tokens.MINT);
+
+		int ring = Draw.mix(Tokens.TEXT_3, Tokens.MINT, on);
+		ListCard.head(d, row.info(), row.name(), ListCard.headX(left) + shift, cy, ring, 1 - 0.5f * (1 - on), glow);
+
+		float tagRight = left + ListCard.W - ListCard.PAD + shift;
+		float tagLeft = tagRight - Math.max(ListCard.tagWidth("ONLINE"), ListCard.tagWidth("OFFLINE"));
+		if (on > 0.01f) {
+			float tagOld = Paint.opacity(Paint.opacity() * on);
+			ListCard.tag(d, "ONLINE", tagRight, cy, Tokens.MINT);
+			Paint.opacity(tagOld);
 		}
-		Hud.text(d, row.name(), ix + ICON + 5, mid - CAP / 2f, CAP, Weight.SEMIBOLD, Draw.mix(Tokens.TEXT_3, Tokens.TEXT, on), shadow);
+		if (on < 0.99f) {
+			float tagOld = Paint.opacity(Paint.opacity() * (1 - on));
+			ListCard.tag(d, "OFFLINE", tagRight, cy, Tokens.TEXT_3);
+			Paint.opacity(tagOld);
+		}
+		ListCard.name(d, row.name(), ListCard.nameX(left) + shift, tagLeft, cy, Draw.mix(Tokens.TEXT_3, Tokens.TEXT, on), shadow);
 		Paint.opacity(old);
 	}
 
@@ -253,6 +239,7 @@ final class PlayerListWidget extends HudWidget {
 		final Anim online;
 		long joinedAt = 0;
 		boolean wasOnline;
+		boolean leaving = false;
 		Row row;
 
 		RowState(int index, boolean on) {
