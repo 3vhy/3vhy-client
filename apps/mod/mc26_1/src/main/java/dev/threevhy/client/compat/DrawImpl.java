@@ -1,17 +1,28 @@
 package dev.threevhy.client.compat;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import dev.threevhy.client.Draw;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3x2f;
 
 /** Draw for Minecraft 26.1 (GuiGraphicsExtractor). */
 public final class DrawImpl implements Draw {
 	private final GuiGraphicsExtractor graphics;
+	/** The scissor rectangles in screen space, so 3vhy's own shapes are clipped like Minecraft's. */
+	private final ArrayDeque<ScreenRectangle> scissors = new ArrayDeque<>();
 
 	public DrawImpl(GuiGraphicsExtractor graphics) {
 		this.graphics = graphics;
@@ -79,11 +90,61 @@ public final class DrawImpl implements Draw {
 	@Override
 	public void enableScissor(int x1, int y1, int x2, int y2) {
 		graphics.enableScissor(x1, y1, x2, y2);
+		ScreenRectangle rect = new ScreenRectangle(x1, y1, x2 - x1, y2 - y1).transformAxisAligned(graphics.pose());
+		if (!scissors.isEmpty()) rect = Objects.requireNonNullElse(rect.intersection(scissors.peek()), ScreenRectangle.empty());
+		scissors.push(rect);
 	}
 
 	@Override
 	public void disableScissor() {
 		graphics.disableScissor();
+		scissors.poll();
+	}
+
+	@Override
+	public float poseX() {
+		return graphics.pose().m20();
+	}
+
+	@Override
+	public float poseY() {
+		return graphics.pose().m21();
+	}
+
+	@Override
+	public void quads(float[] xy, float[] uv, int[] colors, int vertices, Identifier texture, boolean smooth) {
+		if (vertices < 4) return;
+		float minX = Float.MAX_VALUE;
+		float minY = Float.MAX_VALUE;
+		float maxX = -Float.MAX_VALUE;
+		float maxY = -Float.MAX_VALUE;
+		for (int i = 0; i < vertices; i++) {
+			minX = Math.min(minX, xy[2 * i]);
+			maxX = Math.max(maxX, xy[2 * i]);
+			minY = Math.min(minY, xy[2 * i + 1]);
+			maxY = Math.max(maxY, xy[2 * i + 1]);
+		}
+		Matrix3x2f pose = new Matrix3x2f(graphics.pose());
+		int left = (int) Math.floor(minX);
+		int top = (int) Math.floor(minY);
+		ScreenRectangle bounds = new ScreenRectangle(left, top, Math.max(1, (int) Math.ceil(maxX) - left),
+				Math.max(1, (int) Math.ceil(maxY) - top)).transformMaxBounds(pose);
+		ScreenRectangle scissor = scissors.peek();
+		if (scissor != null) {
+			bounds = bounds.intersection(scissor);
+			if (bounds == null) return;
+		}
+		TextureSetup setup;
+		if (texture == null) {
+			setup = TextureSetup.noTexture();
+		} else {
+			AbstractTexture loaded = Minecraft.getInstance().getTextureManager().getTexture(texture);
+			setup = TextureSetup.singleTexture(loaded.getTextureView(),
+					RenderSystem.getSamplerCache().getClampToEdge(smooth ? FilterMode.LINEAR : FilterMode.NEAREST));
+		}
+		graphics.guiRenderState.addGuiElement(new MeshRenderState(texture == null ? RenderPipelines.GUI : RenderPipelines.GUI_TEXTURED, setup, pose,
+				Arrays.copyOf(xy, 2 * vertices), texture == null ? null : Arrays.copyOf(uv, 2 * vertices), Arrays.copyOf(colors, vertices),
+				scissor, bounds));
 	}
 
 	@Override

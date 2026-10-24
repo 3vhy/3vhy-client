@@ -39,6 +39,20 @@ public interface Draw {
 	/** How much the current transform scales things up, in GUI units per unit. */
 	float poseScale();
 
+	/** Where the current transform puts the origin, in GUI units. */
+	float poseX();
+
+	float poseY();
+
+	/**
+	 * Draws quads in the current transform, for 3vhy's smooth shapes ({@link dev.threevhy.client.ui.Paint}).
+	 * {@code xy} holds two floats a vertex and four vertices a quad; {@code colors} holds one ARGB colour a
+	 * vertex, blended across the quad. With a {@code texture}, {@code uv} holds its coordinates (0..1) a
+	 * vertex, multiplied by the colours, and sampled smoothly when {@code smooth} (sharp for pixel art);
+	 * without one, {@code uv} is ignored.
+	 */
+	void quads(float[] xy, float[] uv, int[] colors, int vertices, Identifier texture, boolean smooth);
+
 	/** A player's face (with the hat layer), size x size. */
 	void face(PlayerSkin skin, int x, int y, int size);
 

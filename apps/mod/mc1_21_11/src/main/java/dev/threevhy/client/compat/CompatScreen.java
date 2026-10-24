@@ -36,6 +36,14 @@ public abstract class CompatScreen extends Screen {
 		return true;
 	}
 
+	/**
+	 * Whether Minecraft's dark menu texture goes over the blurred game; 3vhy's own menus draw their
+	 * violet tint instead, so they keep just the blur.
+	 */
+	protected boolean menuTexture() {
+		return true;
+	}
+
 	/** Whether Minecraft's panorama shows behind this menu when there's no world, as on the main menu. */
 	protected boolean panoramaBackground() {
 		return false;
@@ -45,7 +53,8 @@ public abstract class CompatScreen extends Screen {
 	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
 		if (!dimBackground()) return;
 		if (Minecraft.getInstance().level != null) {
-			if (blurBackground()) super.renderBackground(graphics, mouseX, mouseY, delta);
+			if (blurBackground() && menuTexture()) super.renderBackground(graphics, mouseX, mouseY, delta);
+			else if (blurBackground()) renderBlurredBackground(graphics);
 		} else if (panoramaBackground()) {
 			renderPanorama(graphics, delta);
 		}

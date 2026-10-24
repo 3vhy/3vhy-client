@@ -1,20 +1,26 @@
 package dev.threevhy.client.gui;
 
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.ui.Grad;
+import dev.threevhy.client.ui.Tokens;
 import java.util.List;
 
 /**
- * The client's colour, picked in the Panels menu's Themes panel (or Theme > Panels colour), like
- * 67's themes: the Panels menu, the module list and the menu logo use it. Rainbow cycles it.
+ * The client's accent colour, picked in Theme (Accent colour) with Rainbow as an option. Lit switches,
+ * active tabs, icon tiles, bars and glows use it as a gradient: Violet, the default, is the website's
+ * violet-to-magenta exactly, and every other colour gets a gradient the same way, by turning its hue a
+ * little either side.
  */
 public final class Accent {
-	/** A named colour in the Themes panel. */
+	/** A named colour in the accent picker. */
 	public record Preset(String name, int color) {
 	}
 
+	public static final int DEFAULT = Tokens.PRIMARY_MID;
+
 	public static final List<Preset> PRESETS = List.of(
+			new Preset("Violet", DEFAULT),
 			new Preset("Pink", 0xFFFF5FA2),
-			new Preset("Purple", 0xFFA77BFF),
 			new Preset("Blue", 0xFF5A9CFF),
 			new Preset("Red", 0xFFFF5A5F),
 			new Preset("Emerald", 0xFF3DDC97),
@@ -34,51 +40,116 @@ public final class Accent {
 		return Modules.THEME_PANEL_COLOR.get() | 0xFF000000;
 	}
 
+	private static boolean isDefault(int color) {
+		return (color | 0xFF000000) == DEFAULT;
+	}
+
+	/** The gradient's violet end. */
+	public static int from() {
+		int c = get();
+		return isDefault(c) ? Tokens.PRIMARY_FROM : turn(c, -17);
+	}
+
+	/** The gradient's magenta end. */
+	public static int to() {
+		int c = get();
+		return isDefault(c) ? Tokens.PRIMARY_TO : turn(c, 9);
+	}
+
+	/** Buttons and the active tab: 135 degrees, like the website's primary button. */
+	public static Grad primary() {
+		return new Grad(from(), to(), 135);
+	}
+
+	/** An icon tile that's on. */
+	public static Grad tile() {
+		int c = get();
+		return isDefault(c) ? new Grad(Tokens.TILE_FROM, Tokens.TILE_TO, 135) : new Grad(turn(c, -16), turn(c, 6), 135);
+	}
+
+	/** A switch that's on: left to right. */
+	public static Grad toggle() {
+		int c = get();
+		return isDefault(c) ? Grad.across(Tokens.SWITCH_FROM, Tokens.SWITCH_TO) : Grad.across(turn(c, -12), turn(c, 6));
+	}
+
+	/** Progress bars and sliders: from the accent to its pale tint. */
+	public static Grad bar() {
+		int c = get();
+		return isDefault(c) ? Grad.across(Tokens.BAR_FROM, Tokens.BAR_TO) : Grad.across(turn(c, -12), lighten(c, 0.45f));
+	}
+
+	/** The soft glow under lit things. */
+	public static int glow(float alpha) {
+		int c = get();
+		int base = isDefault(c) ? Tokens.PURPLE : c;
+		return Math.round(255 * Math.max(0, Math.min(1, alpha))) << 24 | (base & 0xFFFFFF);
+	}
+
+	/** A pale, readable tint of the accent for small text, like the website's lilac. */
+	public static int text() {
+		int c = get();
+		return isDefault(c) ? Tokens.LILAC : lighten(c, 0.55f);
+	}
+
+	/** {@code color} with its hue turned by {@code degrees}, keeping saturation and lightness. */
+	public static int turn(int color, float degrees) {
+		float r = ((color >> 16) & 255) / 255f;
+		float g = ((color >> 8) & 255) / 255f;
+		float b = (color & 255) / 255f;
+		float max = Math.max(r, Math.max(g, b));
+		float min = Math.min(r, Math.min(g, b));
+		float l = (max + min) / 2f;
+		float s = 0;
+		float h = 0;
+		if (max != min) {
+			float delta = max - min;
+			s = l > 0.5f ? delta / (2 - max - min) : delta / (max + min);
+			if (max == r) h = (g - b) / delta + (g < b ? 6 : 0);
+			else if (max == g) h = (b - r) / delta + 2;
+			else h = (r - g) / delta + 4;
+			h /= 6f;
+		}
+		h = (h + degrees / 360f) % 1f;
+		if (h < 0) h += 1;
+		return (color & 0xFF000000) | hsl(h, s, l);
+	}
+
+	private static int hsl(float h, float s, float l) {
+		if (s == 0) {
+			int v = Math.round(l * 255);
+			return v << 16 | v << 8 | v;
+		}
+		float q = l < 0.5f ? l * (1 + s) : l + s - l * s;
+		float p = 2 * l - q;
+		int r = Math.round(channel(p, q, h + 1f / 3f) * 255);
+		int g = Math.round(channel(p, q, h) * 255);
+		int b = Math.round(channel(p, q, h - 1f / 3f) * 255);
+		return r << 16 | g << 8 | b;
+	}
+
+	private static float channel(float p, float q, float t) {
+		if (t < 0) t += 1;
+		if (t > 1) t -= 1;
+		if (t < 1f / 6f) return p + (q - p) * 6 * t;
+		if (t < 1f / 2f) return q;
+		if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6;
+		return p;
+	}
+
+	/** {@code color} mixed toward white by {@code amount}. */
+	public static int lighten(int color, float amount) {
+		int r = (color >> 16) & 255;
+		int g = (color >> 8) & 255;
+		int b = color & 255;
+		r += Math.round((255 - r) * amount);
+		g += Math.round((255 - g) * amount);
+		b += Math.round((255 - b) * amount);
+		return (color & 0xFF000000) | r << 16 | g << 8 | b;
+	}
+
 	/** A soft rainbow colour at {@code hue} (0..1). */
 	public static int rainbow(float hue) {
-		float s = 0.55f;
-		float v = 1f;
-		float h = (hue - (float) Math.floor(hue)) * 6f;
-		int sector = (int) h;
-		float f = h - sector;
-		float p = v * (1 - s);
-		float q = v * (1 - s * f);
-		float t = v * (1 - s * (1 - f));
-		float r;
-		float g;
-		float b;
-		switch (sector) {
-			case 0 -> {
-				r = v;
-				g = t;
-				b = p;
-			}
-			case 1 -> {
-				r = q;
-				g = v;
-				b = p;
-			}
-			case 2 -> {
-				r = p;
-				g = v;
-				b = t;
-			}
-			case 3 -> {
-				r = p;
-				g = q;
-				b = v;
-			}
-			case 4 -> {
-				r = t;
-				g = p;
-				b = v;
-			}
-			default -> {
-				r = v;
-				g = p;
-				b = q;
-			}
-		}
-		return 0xFF000000 | Math.round(r * 255) << 16 | Math.round(g * 255) << 8 | Math.round(b * 255);
+		return 0xFF000000 | hsl(hue - (float) Math.floor(hue), 0.85f, 0.68f);
 	}
 }

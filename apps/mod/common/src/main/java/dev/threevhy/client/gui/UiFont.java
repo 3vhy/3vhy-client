@@ -9,16 +9,18 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 
 /**
- * The clean sans-serif (Titillium Web, SIL Open Font License) the Panels menu and the Music HUD use,
- * like the reference client's, in bold and semibold. It's in the mod's resources as TrueType fonts
- * (assets/threevhy/font), with Minecraft's own font behind it for any character it lacks. Theme's
- * Menu font setting can switch back to Minecraft's pixel font.
+ * 3vhy's clean sans-serif, Inter (SIL Open Font License), the same face as the website, in medium,
+ * semibold and bold. It's in the mod's resources as TrueType fonts (assets/threevhy/font) sized so a
+ * capital is 6.8 GUI pixels tall, with Minecraft's own font behind it for any character it lacks.
+ * Theme's Menu font setting can switch back to Minecraft's pixel font.
  */
 public final class UiFont {
 	private static final FontDescription BOLD = new FontDescription.Resource(
 			Identifier.fromNamespaceAndPath(ThreevhyClient.MOD_ID, "ui_bold"));
 	private static final FontDescription SEMIBOLD = new FontDescription.Resource(
 			Identifier.fromNamespaceAndPath(ThreevhyClient.MOD_ID, "ui_semibold"));
+	private static final FontDescription MEDIUM = new FontDescription.Resource(
+			Identifier.fromNamespaceAndPath(ThreevhyClient.MOD_ID, "ui_medium"));
 
 	private UiFont() {
 	}
@@ -36,6 +38,11 @@ public final class UiFont {
 	/** Semibold text in the clean font, for labels and smaller text. */
 	public static Component semibold(String text) {
 		return Component.literal(text).withStyle(Style.EMPTY.withFont(SEMIBOLD));
+	}
+
+	/** Medium text in the clean font, for longer descriptions. */
+	public static Component medium(String text) {
+		return Component.literal(text).withStyle(Style.EMPTY.withFont(MEDIUM));
 	}
 
 	public static int width(Component text) {
