@@ -144,6 +144,7 @@ final class PlayerListWidget extends HudWidget {
 			} else if (row.online() && !state.wasOnline && !quiet) {
 				state.joinedAt = now;
 			}
+			if (!row.online()) state.joinedAt = 0;
 			state.in.set(1);
 			state.slot.set(i);
 			state.online.set(row.online());

@@ -18,9 +18,10 @@ import net.minecraft.client.Minecraft;
 
 /**
  * The Music Player, laid out like the website's Spotify player: the line being sung above the card,
- * big and filling in like karaoke with the next line faint under it, then a glass card with the cover,
- * the title and artist, a thin violet progress bar with the times under it, and back / a light play
- * button / next. Every size is the website's, in CSS pixels scaled to the HUD by {@link #S}.
+ * big and filling in like karaoke with the next line faint under it, then a glass card with the cover
+ * (the app's icon on its corner), the title and artist, a thin violet progress bar with the times under
+ * it, and back / a light play button / next. Every size is the website's, in CSS pixels scaled to the
+ * HUD by {@link #S}.
  *
  * <p>It slides in when music starts and out when it stops, a new song's cover fades in as its title
  * slides up over the old one, the bar glides to where the song is, play and pause turn into each other,
@@ -281,7 +282,7 @@ final class MusicWidget extends HudWidget {
 		Hud.text(d, Type.fit(artist, width, artistCap, Weight.MEDIUM), x, artistTop, artistCap, Weight.MEDIUM, Tokens.TEXT_2, shadow);
 	}
 
-	/** The cover with soft corners, fading in for a new song over the website's violet tile with the 3vhy mark. */
+	/** The cover with soft corners, fading in for a new song over the website's violet tile with the 3vhy mark, and the app's icon on its corner. */
 	private static void drawArt(Draw d, NowPlaying song, float x, float y, float change) {
 		float r = 12 * S;
 		boolean hasArt = song.art() != null;
@@ -295,6 +296,13 @@ final class MusicWidget extends HudWidget {
 			float old = Paint.opacity(Paint.opacity() * change);
 			MusicArt.COVER.draw(d, song.art(), song.artVersion(), x, y, ART, r);
 			Paint.opacity(old);
+		}
+		if (song.icon() != null) {
+			float badge = ART * 0.36f;
+			float bx = x + ART - badge * 0.75f;
+			float by = y + ART - badge * 0.75f;
+			Paint.circle(d, bx + badge / 2f, by + badge / 2f, badge / 2f + 1, Tokens.GLASS_SOLID);
+			MusicArt.ICON.draw(d, song.icon(), song.iconVersion(), bx, by, badge, badge / 2f);
 		}
 	}
 
