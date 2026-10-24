@@ -1,5 +1,7 @@
 {
 	"key.category.threevhy.main": "3vhy Client",
-	"key.threevhy.open_settings": "Open 3vhy Settings",
-	"key.threevhy.zoom": "Zoom"
+	"key.threevhy.open_settings": "Open the 3vhy Orbit",
+	"key.threevhy.zoom": "Zoom",
+	"key.threevhy.freelook": "Freelook",
+	"key.threevhy.inspect": "Inspect Blade"
 }

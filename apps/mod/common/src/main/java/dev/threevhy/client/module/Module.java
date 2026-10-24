@@ -7,16 +7,26 @@ import java.util.List;
 
 /** A feature in the 3vhy mod menu: a card you click to switch on or off, with its own settings. */
 public final class Module {
+	/** A tab in the mod menu and a planet in the Orbit, in their order. */
 	public enum Category {
-		HUD("HUD"),
-		PVP("PvP"),
-		VISUAL("Visual"),
-		UTILITY("Utility");
+		COMBAT("Combat", "swords", "Know every fight before it's over"),
+		RENDER("Render", "eye", "Light, colour and a sharper view"),
+		PLAYER("Player", "user", "Your name, your skin, your rules"),
+		WORLD("World", "globe", "Mark a place once, find it again"),
+		UTILITY("Utility", "wrench", "The little things, handled"),
+		HUD("HUD", "layout-dashboard", "Your screen, arranged your way"),
+		COSMETICS("Cosmetics", "sparkles", "Blades and looks that stand out"),
+		CLIENT("Client", "settings", "Colours, fonts and how 3vhy feels");
 
 		public final String label;
+		/** A Lucide icon name. */
+		public final String icon;
+		public final String tagline;
 
-		Category(String label) {
+		Category(String label, String icon, String tagline) {
 			this.label = label;
+			this.icon = icon;
+			this.tagline = tagline;
 		}
 	}
 
@@ -24,6 +34,8 @@ public final class Module {
 	public final String name;
 	public final String description;
 	public final Category category;
+	/** The Lucide icon on the module's card. */
+	private String icon = "sparkle";
 	private final boolean defaultOn;
 	private boolean toggleable = true;
 	private boolean isNew = false;
@@ -47,6 +59,16 @@ public final class Module {
 	Module markNew() {
 		this.isNew = true;
 		return this;
+	}
+
+	/** Sets the Lucide icon on the module's card. */
+	Module icon(String name) {
+		this.icon = name;
+		return this;
+	}
+
+	public String icon() {
+		return icon;
 	}
 
 	<T extends Setting> T add(T setting) {

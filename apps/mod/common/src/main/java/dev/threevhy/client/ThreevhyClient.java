@@ -4,10 +4,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.discord.DiscordPresence;
 import dev.threevhy.client.gui.TitleScreenStyle;
-import dev.threevhy.client.gui.ClickGuiScreen;
-import dev.threevhy.client.gui.HubScreen;
 import dev.threevhy.client.gui.MenuNameTag;
 import dev.threevhy.client.gui.PauseMenuButton;
+import dev.threevhy.client.gui.menu.MenuScreen;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.hud.ScoreboardWidget;
@@ -48,6 +47,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 	public static KeyMapping openSettingsKey;
 	public static KeyMapping zoomKey;
 	public static KeyMapping freelookKey;
+	public static KeyMapping inspectKey;
 
 	private static String version = "?";
 	private static String minecraftVersion = "";
@@ -71,6 +71,8 @@ public final class ThreevhyClient implements ClientModInitializer {
 				GLFW.GLFW_KEY_C, category));
 		freelookKey = Compat.registerKey(new KeyMapping("key.threevhy.freelook", InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_LEFT_ALT, category));
+		inspectKey = Compat.registerKey(new KeyMapping("key.threevhy.inspect", InputConstants.Type.KEYSYM,
+				GLFW.GLFW_KEY_I, category));
 
 		Compat.registerHud(Identifier.fromNamespaceAndPath(MOD_ID, "hud"), HudRenderer::render);
 		Compat.replaceHud(VanillaHudElements.CROSSHAIR, Crosshair::draw);
@@ -116,9 +118,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 	private static void tick(Minecraft mc) {
 		FreezeWatch.tick();
 		while (openSettingsKey.consumeClick()) {
-			if (mc.screen == null) {
-				mc.setScreen(Modules.THEME_MENU_STYLE.is("Panels") ? new ClickGuiScreen(null) : new HubScreen(null));
-			}
+			if (mc.screen == null) mc.setScreen(MenuScreen.fromKey(null));
 		}
 		if (Borderless.needsReapply() && mc.getWindow().isFullscreen()) {
 			((dev.threevhy.client.mixin.WindowAccessor) (Object) mc.getWindow()).threevhy$setMode();
