@@ -2,54 +2,44 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.Accent;
-import dev.threevhy.client.gui.Smooth;
-import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.ui.Paint;
+import dev.threevhy.client.ui.Type;
+import dev.threevhy.client.ui.Type.Weight;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 
 /**
- * The Module List, like 67's: every mod you have on, longest name first, in small capitals down the
- * top right of the screen. Each name sits on its own dark rounded strip, tinted with the client's
- * colour, with a short rounded bar in that colour just right of it. Sizes are shares of the capital
- * height, measured off 67's.
+ * Active Modules: every mod you have on, longest name first, down the top right of the screen. Each
+ * name sits on its own strip of violet glass with a short accent bar just right of it that glows, the
+ * accent shifting a little down the list.
  */
 final class ModuleListWidget extends HudWidget {
-	private static final float TEXT = 0.62f;
-	private static final float CAP = 6.8f * TEXT;
-	private static final float LINE = 2.07f * CAP;
-	private static final float PAD = 0.65f * CAP;
-	private static final float RADIUS = 0.4f * CAP;
-	private static final float BAR_GAP = 0.25f * CAP;
-	private static final float BAR = 0.35f * CAP;
-	private static final float BAR_H = 0.78f * LINE;
-	private static final int FILL = 0x13101A;
-	/** The bar's glow: how far each faint copy reaches past it (in bar widths) and how strong it is. */
-	private static final float[][] BAR_GLOW = {{0.7f, 0.12f}, {0.35f, 0.25f}};
-	private static final String[] SAMPLE = {"CUSTOMCROSSHAIR", "KEYSTROKES", "FREELOOK", "ZOOM"};
-	private static final Set<Module> OUT_OF_GAME = Set.of(Modules.MENU_NAME, Modules.MAIN_MENU, Modules.DISCORD,
-			Modules.BORDERLESS, Modules.PROFILES);
+	private static final float CAP = Hud.CAP * 0.85f;
+	private static final float LINE = 2.15f * CAP;
+	private static final float PAD = 0.75f * CAP;
+	private static final float RADIUS = 0.5f * CAP;
+	private static final float BAR_GAP = 0.3f * CAP;
+	private static final float BAR = 0.38f * CAP;
+	private static final float BAR_H = 0.7f * LINE;
+	private static final String[] SAMPLE = {"Custom Crosshair", "Keystrokes", "Freelook", "Zoom"};
+	private static final Set<Module> OUT_OF_GAME = Set.of(Modules.MENU_NAME, Modules.MAIN_MENU, Modules.DISCORD, Modules.BORDERLESS,
+			Modules.PROFILES, Modules.THEME);
 
 	ModuleListWidget() {
 		super("module_list", Modules.MODULE_LIST, Anchor.TOP_RIGHT);
 	}
 
-	private static Component label(String name) {
-		return UiFont.clean() ? UiFont.bold(name) : Component.literal(name);
+	private static float nameWidth(String name) {
+		return Type.width(name, CAP, Weight.SEMIBOLD);
 	}
 
-	private static float nameWidth(Minecraft mc, String name) {
-		return mc.font.width(label(name)) * TEXT;
-	}
-
-	private static float lineWidth(Minecraft mc, String name) {
-		return PAD + nameWidth(mc, name) + PAD + BAR_GAP + BAR;
+	private static float lineWidth(String name) {
+		return PAD + nameWidth(name) + PAD + BAR_GAP + BAR;
 	}
 
 	/** Whether a mod that's on belongs in the list: not the menu and window ones, and HUD mods only if asked for. */
@@ -59,69 +49,55 @@ final class ModuleListWidget extends HudWidget {
 		return module.category != Module.Category.HUD || Modules.MODULE_LIST_HUD.get();
 	}
 
-	private static List<String> names(Minecraft mc, boolean preview) {
+	private static List<String> names(boolean preview) {
 		List<String> names = new ArrayList<>();
 		for (Module module : Modules.ALL) {
-			if (listed(module)) names.add(module.name.replace(" ", "").toUpperCase(Locale.ROOT));
+			if (listed(module)) names.add(module.name);
 		}
 		if (names.isEmpty() && preview) names.addAll(List.of(SAMPLE));
-		names.sort(Comparator.comparingDouble((String name) -> lineWidth(mc, name)).reversed());
+		names.sort(Comparator.comparingDouble(ModuleListWidget::lineWidth).reversed());
 		return names;
 	}
 
 	@Override
 	public boolean visible(Minecraft mc) {
-		return !names(mc, false).isEmpty();
+		return !names(false).isEmpty();
 	}
 
 	@Override
 	public int width(Minecraft mc) {
 		float widest = 30;
-		for (String name : names(mc, true)) widest = Math.max(widest, lineWidth(mc, name));
+		for (String name : names(true)) widest = Math.max(widest, lineWidth(name));
 		return (int) Math.ceil(widest);
 	}
 
 	@Override
 	public int height(Minecraft mc) {
-		return (int) Math.ceil(Math.max(1, names(mc, true).size()) * LINE);
+		return (int) Math.ceil(Math.max(1, names(true).size()) * LINE);
 	}
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
-		List<String> names = names(mc, preview);
+		List<String> names = names(preview);
 		int right = x + width(mc);
-		int alpha = backgroundAlpha();
 		boolean shadow = textShadow();
-		boolean glow = Modules.MODULE_LIST_GLOW.get() && !shadow;
+		boolean glow = Modules.MODULE_LIST_GLOW.get();
+		float strength = glassStrength();
 		for (int i = 0; i < names.size(); i++) {
 			String name = names.get(i);
 			float top = y + i * LINE;
-			float textW = nameWidth(mc, name);
 			float stripRight = right - BAR - BAR_GAP;
-			float left = stripRight - PAD - textW - PAD;
+			float left = stripRight - PAD - nameWidth(name) - PAD;
 			int accent = Accent.get(i * 0.035f);
-			if (alpha > 0) Smooth.roundRect(d, left, top, stripRight, top + LINE, RADIUS, (alpha << 24) | FILL);
+			if (strength > 0.01f) {
+				float old = Paint.opacity(Paint.opacity() * Math.min(1, strength * 1.15f));
+				Paint.rect(d, left, top, stripRight, top + LINE, radius(RADIUS), 0xA80A0814);
+				Paint.opacity(old);
+			}
 			float barTop = top + (LINE - BAR_H) / 2f;
-			if (glow) {
-				for (float[] halo : BAR_GLOW) {
-					float grow = halo[0] * BAR;
-					Smooth.roundRect(d, right - BAR - grow, barTop - grow, right + grow, barTop + BAR_H + grow, BAR / 2f + grow,
-							Math.round(255 * halo[1]) << 24 | (accent & 0xFFFFFF));
-				}
-			}
-			Smooth.roundRect(d, right - BAR, barTop, right, barTop + BAR_H, BAR / 2f, accent);
-			float textX = left + PAD;
-			float textY = top + (LINE - CAP) / 2f;
-			int color = Draw.mix(accent, 0xFFFFFFFF, 0.3);
-			if (glow) {
-				Smooth.glowText(d, label(name), textX, textY, TEXT, color);
-			} else {
-				d.push();
-				d.translate(textX, textY);
-				d.scale(TEXT);
-				d.text(label(name), 0, 0, color, shadow);
-				d.pop();
-			}
+			if (glow) Paint.shadow(d, right - BAR, barTop, right, barTop + BAR_H, BAR / 2f, 0, 0, BAR * 4, 0, Paint.fade(accent, 0.75f));
+			Paint.rect(d, right - BAR, barTop, right, barTop + BAR_H, BAR / 2f, accent);
+			Hud.text(d, name, left + PAD, top + (LINE - CAP) / 2f, CAP, Weight.SEMIBOLD, Draw.mix(accent, 0xFFFFFFFF, 0.55), shadow);
 		}
 	}
 }

@@ -39,13 +39,13 @@ public final class PopTracker {
 			if (Modules.POP_NOTIFIER.enabled()) {
 				boolean self = player == Minecraft.getInstance().player;
 				String who = self ? "You" : name;
-				Compat.chat(Component.literal("§b3vhy §8» §f" + who + " §7popped §b" + pops + " §7"
+				Compat.chat(Component.literal("§d3vhy §8» §f" + who + " §7popped §d" + pops + " §7"
 						+ (pops == 1 ? "totem" : "totems")));
 			}
 		} else if (event == DEATH) {
 			Entry previous = POPS.remove(id);
 			if (previous != null && Modules.POP_NOTIFIER.enabled() && player != Minecraft.getInstance().player) {
-				Compat.chat(Component.literal("§b3vhy §8» §f" + name + " §7died after popping §b" + previous.pops()
+				Compat.chat(Component.literal("§d3vhy §8» §f" + name + " §7died after popping §d" + previous.pops()
 						+ " §7" + (previous.pops() == 1 ? "totem" : "totems")));
 			}
 		}
@@ -56,6 +56,12 @@ public final class PopTracker {
 		List<Entry> list = new ArrayList<>(POPS.values());
 		list.sort((a, b) -> Integer.compare(b.pops(), a.pops()));
 		return list.size() > limit ? list.subList(0, limit) : list;
+	}
+
+	/** How many totems this player has popped this life. */
+	public static int pops(UUID id) {
+		Entry entry = POPS.get(id);
+		return entry == null ? 0 : entry.pops();
 	}
 
 	public static void reset() {

@@ -3,10 +3,13 @@ package dev.threevhy.client.hud;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.gui.Accent;
-import dev.threevhy.client.gui.Smooth;
-import dev.threevhy.client.gui.UiFont;
+import dev.threevhy.client.gui.menu.MenuScreen;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PlayerList;
+import dev.threevhy.client.ui.Paint;
+import dev.threevhy.client.ui.Tokens;
+import dev.threevhy.client.ui.Type;
+import dev.threevhy.client.ui.Type.Weight;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -15,40 +18,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.chat.Component;
 
 /**
- * The Player List on the HUD, like 67's staff list: a dark rounded box with a small title and a badge
- * in the client's colour counting who's on, then each listed player's name in bold capitals after a
- * green plus (or their head), six at most with "+N MORE" under them. Every size is a share of the
- * names' capital height, measured off 67's.
+ * The Player List on the HUD, on violet glass: the list's title with a badge counting who's on, then
+ * each listed player with a dot (mint when they're on) or their head, six at most with "+N more"
+ * under them.
  */
 final class PlayerListWidget extends HudWidget {
-	private static final float NAME = 0.76f;
-	private static final float TITLE = 0.65f * NAME;
-	private static final float COUNT = 0.5f;
-	private static final float MORE = 0.43f;
-	private static final float C = 6.8f * NAME;
-	private static final float PAD = 1f * C;
-	private static final float ICON = 0.95f * C;
-	private static final float NAME_X = 2.94f * C;
-	private static final float TITLE_TOP = 1.47f * C;
-	private static final float TITLE_MID = TITLE_TOP + 3.4f * TITLE;
-	private static final float FIRST_ROW = 4.6f * C;
-	private static final float ROW = 2.31f * C;
-	private static final float BOTTOM = 2.06f * C;
-	private static final float MORE_GAP = 1.9f * C;
-	private static final float MORE_BOTTOM = 1.5f * C;
-	private static final float END_PAD = 2.2f * C;
-	private static final float BADGE_R = 0.82f * C;
-	private static final float BADGE_PAD = 0.94f * C;
-	private static final float RADIUS = 0.9f * C;
+	private static final float PAD = 7;
+	private static final float HEADER = 17;
+	private static final float ROW = 11;
+	private static final float ICON = 7;
+	private static final float CAP = Hud.CAP * 0.92f;
 	private static final int SHOWN = 6;
-	private static final int FILL = 0x1A1B26;
-	private static final int TITLE_COLOR = 0xFFC9CAD3;
-	private static final int NAME_COLOR = 0xFFFFFFFF;
-	private static final int PLUS_COLOR = 0xFF3DDC97;
-	private static final int MORE_COLOR = 0xFF6C6672;
 	private static final String[] SAMPLE = {"Steve", "Alex", "Player372"};
 
 	private record Row(String name, PlayerInfo info, boolean online) {
@@ -86,93 +68,69 @@ final class PlayerListWidget extends HudWidget {
 		return count;
 	}
 
-	private static Component bold(String text) {
-		return UiFont.clean() ? UiFont.bold(text) : Component.literal(text);
-	}
-
-	private static float width(Minecraft mc, Component text, float scale) {
-		return mc.font.width(text) * scale;
-	}
-
 	@Override
 	public boolean visible(Minecraft mc) {
 		return !rows(mc, false).isEmpty();
 	}
 
 	private static String more(List<Row> rows) {
-		return "+" + (rows.size() - SHOWN) + " MORE";
-	}
-
-	@Override
-	public int width(Minecraft mc) {
-		float widest = PAD + width(mc, bold(title()), TITLE) + 2 * C + 2 * BADGE_R + BADGE_PAD;
-		for (Row row : shown(rows(mc, true))) {
-			float name = width(mc, bold(row.name().toUpperCase(Locale.ROOT)), NAME);
-			widest = Math.max(widest, NAME_X + name + END_PAD);
-		}
-		return (int) Math.ceil(widest);
+		return "+" + (rows.size() - SHOWN) + " more";
 	}
 
 	private static List<Row> shown(List<Row> rows) {
 		return rows.size() > SHOWN ? rows.subList(0, SHOWN) : rows;
 	}
 
+	private static float badgeWidth(List<Row> rows) {
+		return Math.max(12, Type.width(Integer.toString(online(rows)), Hud.SMALL, Weight.BOLD) + 7);
+	}
+
+	@Override
+	public int width(Minecraft mc) {
+		List<Row> rows = rows(mc, true);
+		float widest = PAD + 9 + 4 + Type.spacedWidth(title(), Hud.SMALL, 0.08f, Weight.SEMIBOLD) + 10 + badgeWidth(rows) + PAD;
+		for (Row row : shown(rows)) widest = Math.max(widest, PAD + ICON + 5 + Type.width(row.name(), CAP, Weight.SEMIBOLD) + 10 + PAD);
+		return (int) Math.ceil(Math.max(78, widest));
+	}
+
 	@Override
 	public int height(Minecraft mc) {
 		List<Row> rows = rows(mc, true);
-		float lastRow = FIRST_ROW + (Math.max(1, shown(rows).size()) - 1) * ROW;
-		return (int) Math.ceil(rows.size() > SHOWN ? lastRow + MORE_GAP + MORE_BOTTOM : lastRow + BOTTOM);
+		float h = HEADER + Math.max(1, shown(rows).size()) * ROW + (rows.size() > SHOWN ? ROW - 2 : 0) + 4;
+		return (int) Math.ceil(h);
 	}
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 		List<Row> rows = rows(mc, preview);
 		int w = width(mc);
-		int alpha = backgroundAlpha();
-		if (alpha > 0) Smooth.roundRect(d, x, y, x + w, y + height(mc), RADIUS, (alpha << 24) | FILL);
 		boolean shadow = textShadow();
-		text(d, bold(title()), x + PAD, y + TITLE_TOP, TITLE, TITLE_COLOR, shadow);
+		glass(d, x, y, w, height(mc), Hud.RADIUS);
+		Paint.icon(d, "users", x + PAD, y + 5, 8, Accent.text());
+		Type.spaced(d, title(), x + PAD + 12, y + 7, Hud.SMALL, 0.08f, Weight.SEMIBOLD, Tokens.TEXT_2);
+		String count = Integer.toString(online(rows));
+		float bw = badgeWidth(rows);
+		float bx = x + w - PAD - bw;
+		Paint.rect(d, bx, y + 5, bx + bw, y + 13, 4, Accent.primary());
+		Type.center(d, count, bx + bw / 2f, y + 9 - Hud.SMALL / 2f, Hud.SMALL, Weight.BOLD, 0xFFFFFFFF);
+		Paint.rect(d, x + PAD, y + HEADER - 1.5f, x + w - PAD, y + HEADER - 1, 0, 0x14FFFFFF);
 
-		int accent = Accent.get();
-		float badgeX = x + w - BADGE_PAD - BADGE_R;
-		float badgeY = y + TITLE_MID;
-		int boxAlpha = Math.max(alpha, 0x60) << 24;
-		Smooth.circle(d, badgeX, badgeY, BADGE_R, boxAlpha | (Draw.mix(FILL, accent, 0.36) & 0xFFFFFF));
-		Component count = bold(Integer.toString(online(rows)));
-		text(d, count, badgeX - width(mc, count, COUNT) / 2f, badgeY - 3.4f * COUNT, COUNT,
-				Draw.mix(accent, 0xFFFFFFFF, 0.3), false);
-
-		float mid = y + FIRST_ROW;
+		float mid = y + HEADER + ROW / 2f;
 		boolean heads = Modules.PLAYER_LIST_ICON.is("Head");
 		for (Row row : shown(rows)) {
 			if (heads) {
-				float head = 1.1f * C;
-				d.push();
-				d.translate(x + PAD + (ICON - head) / 2f, mid - head / 2f);
-				d.scale(head / 8f);
-				if (row.info() != null) {
-					d.face(row.info().getSkin(), 0, 0, 8);
-				} else {
-					d.face(DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())), 0, 0, 8);
-				}
-				d.pop();
+				MenuScreen.face(d, row.info() != null ? row.info().getSkin() : DefaultPlayerSkin.get(UUIDUtil.createOfflinePlayerUUID(row.name())),
+						x + PAD, mid - ICON / 2f, ICON, 2);
 			} else {
-				Smooth.icon(d, "plus", x + PAD, mid - ICON / 2f, ICON, PLUS_COLOR);
+				int dot = row.online() ? Tokens.MINT : Tokens.TEXT_3;
+				if (row.online()) Paint.glow(d, x + PAD + ICON / 2f, mid, 2, 5, Paint.fade(Tokens.MINT, 0.45f));
+				Paint.circle(d, x + PAD + ICON / 2f, mid, 2.2f, dot);
 			}
-			text(d, bold(row.name().toUpperCase(Locale.ROOT)), x + NAME_X, mid - C / 2f, NAME, NAME_COLOR, shadow);
+			Hud.text(d, row.name(), x + PAD + ICON + 5, mid - CAP / 2f, CAP, Weight.SEMIBOLD, row.online() ? Tokens.TEXT : Tokens.TEXT_3, shadow);
 			mid += ROW;
 		}
 		if (rows.size() > SHOWN) {
-			float moreY = mid - ROW + MORE_GAP;
-			text(d, bold(more(rows)), x + NAME_X, moreY - 3.4f * MORE, MORE, MORE_COLOR, shadow);
+			Hud.text(d, more(rows), x + PAD + ICON + 5, mid - Hud.SMALL / 2f - 1, Hud.SMALL, Weight.SEMIBOLD, Tokens.TEXT_3, shadow);
 		}
-	}
-
-	private static void text(Draw d, Component text, float x, float y, float scale, int color, boolean shadow) {
-		d.push();
-		d.translate(x, y);
-		d.scale(scale);
-		d.text(text, 0, 0, color, shadow);
-		d.pop();
 	}
 }

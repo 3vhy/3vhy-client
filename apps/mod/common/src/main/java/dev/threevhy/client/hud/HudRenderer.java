@@ -18,6 +18,7 @@ public final class HudRenderer {
 		Zoom.update(mc);
 		if (mc.options.hideGui || mc.player == null) return;
 		Waypoints.drawOnScreen(d, mc);
+		((LyricsWidget) HudWidgets.LYRICS).drawSky(d, mc);
 		if (mc.screen instanceof HudEditorScreen) return;
 		drawAll(d, mc);
 	}

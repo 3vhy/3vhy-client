@@ -165,7 +165,7 @@ public final class October {
 		int bob = (int) Math.round(Math.sin(time * 1.4 + GHOST_PHASE[i]) * 3 * cell);
 		int y = Math.round(GHOST_Y[i] * h) + bob;
 		int alpha = GHOST_ALPHA[i];
-		sprite(d, GHOST_SPRITE, x + cell, y + cell, cell, MenuTheme.alpha(GHOST_SHADOW, (GHOST_SHADOW >>> 24) * alpha / 255));
+		sprite(d, GHOST_SPRITE, x + cell, y + cell, cell, alpha(GHOST_SHADOW, (GHOST_SHADOW >>> 24) * alpha / 255));
 		boolean facingLeft = GHOST_SPEED[i] < 0;
 		for (int row = 0; row < GHOST_SPRITE.length; row++) {
 			String line = GHOST_SPRITE[row];
@@ -179,7 +179,7 @@ public final class October {
 				};
 				int px = x + col * cell;
 				int py = y + row * cell;
-				d.fill(px, py, px + cell, py + cell, MenuTheme.alpha(color, alpha));
+				d.fill(px, py, px + cell, py + cell, alpha(color, alpha));
 			}
 		}
 	}
@@ -264,5 +264,9 @@ public final class October {
 				d.fill(x + col * cell, y + row * cell, x + (col + 1) * cell, y + (row + 1) * cell, color);
 			}
 		}
+	}
+
+	private static int alpha(int argb, int alpha) {
+		return (Math.max(0, Math.min(255, alpha)) << 24) | (argb & 0xFFFFFF);
 	}
 }

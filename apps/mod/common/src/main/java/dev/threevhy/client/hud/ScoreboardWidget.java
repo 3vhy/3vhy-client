@@ -1,6 +1,7 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
+import dev.threevhy.client.ui.Paint;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.gui.HudEditorScreen;
 import dev.threevhy.client.module.Modules;
@@ -147,8 +148,8 @@ public final class ScoreboardWidget extends HudWidget {
 		int h = SAMPLE.length * LINE + TITLE;
 		background(d, x, y, SAMPLE_W, h);
 		String title = "Scoreboard";
-		d.text(title, x + (SAMPLE_W - mc.font.width(title)) / 2, y + 1, Theme.ICE, false);
-		for (int i = 0; i < SAMPLE.length; i++) d.text(SAMPLE[i], x + 2, y + TITLE + i * LINE, Theme.SKY, false);
+		d.text(title, x + (SAMPLE_W - mc.font.width(title)) / 2, y + 1, dev.threevhy.client.ui.Tokens.TEXT, false);
+		for (int i = 0; i < SAMPLE.length; i++) d.text(SAMPLE[i], x + 2, y + TITLE + i * LINE, dev.threevhy.client.ui.Tokens.TEXT_2, false);
 	}
 
 	private void drawBoard(Draw d, Minecraft mc, Board board, int x, int y) {
@@ -164,14 +165,18 @@ public final class ScoreboardWidget extends HudWidget {
 		}
 	}
 
-	/** The square box behind it, in the chosen colour and darkness, with a slightly darker title strip. */
+	/** The box behind it, in the chosen colour and darkness (soft corners with Rounded HUD), with a slightly darker title strip. */
 	private static void background(Draw d, int x, int y, int w, int h) {
 		int alpha = (int) Math.round(Modules.SCOREBOARD_BACKGROUND.get() / 100.0 * 255);
 		if (alpha <= 0) return;
 		int rgb = Modules.SCOREBOARD_COLOR.get() & 0xFFFFFF;
-		d.fill(x, y, x + w, y + h, (alpha << 24) | rgb);
+		float r = Modules.THEME_ROUNDED_HUD.get() ? 4 : 0;
+		Paint.rect(d, x, y, x + w, y + h, r, (alpha << 24) | rgb);
 		if (Modules.SCOREBOARD_TITLE_BAR.get()) {
-			d.fill(x, y, x + w, y + TITLE - 1, (Math.min(255, Math.max(26, alpha / 3)) << 24) | rgb);
+			int strip = (Math.min(255, Math.max(26, alpha / 3)) << 24) | rgb;
+			Paint.rect(d, x, y, x + w, y + TITLE - 1, r, strip);
+			if (r > 0) Paint.rect(d, x, y + TITLE - 1 - r, x + w, y + TITLE - 1, 0, strip);
 		}
+		if (r > 0) Paint.stroke(d, x, y, x + w, y + h, r, Hud.hairline(d), Paint.fade(0x1FFFFFFF, alpha / 255f));
 	}
 }

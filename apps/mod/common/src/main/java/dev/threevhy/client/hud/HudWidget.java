@@ -2,17 +2,13 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.gui.Accent;
 import dev.threevhy.client.gui.HudEditorScreen;
-import dev.threevhy.client.gui.Smooth;
-import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.mixin.BossHealthOverlayAccessor;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.Setting;
+import dev.threevhy.client.ui.Tokens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 
 /**
  * One movable piece of the HUD. Until the player drags it somewhere, it sits at its anchor,
@@ -34,16 +30,6 @@ public abstract class HudWidget {
 
 	private static final int MARGIN = 4;
 	private static final int GAP = 3;
-	private static final float PILL_TEXT = 0.85f;
-	/** The pills' capital height; every other pill size is a share of it, measured off 67's. */
-	protected static final float PILL_CAP = 6.8f * PILL_TEXT;
-	protected static final int PILL_H = Math.round(2.6f * PILL_CAP);
-	private static final float PILL_LEFT = 1.15f * PILL_CAP;
-	/** Less than the left: the font already leaves a little space after the last letter. */
-	private static final float PILL_RIGHT = 0.8f * PILL_CAP;
-	private static final float PILL_LABEL_GAP = 0.8f * PILL_CAP;
-	private static final int PILL_FILL = 0x1F2231;
-
 	public final String id;
 	public final Module module;
 	public final Anchor anchor;
@@ -171,19 +157,14 @@ public abstract class HudWidget {
 		return (int) Math.round(percent / 100.0 * 255);
 	}
 
-	/** Whether the box is there at all. */
-	protected boolean background() {
-		return backgroundAlpha() > 0;
+	/** How strong the glass is, 0..1, from the Background setting. */
+	protected float glassStrength() {
+		return backgroundAlpha() / 255f;
 	}
 
-	/** Text gets a shadow once the box is too faint to read it against the world. */
+	/** Text gets a shadow once the glass is too faint to read it against the world. */
 	protected boolean textShadow() {
 		return backgroundAlpha() < 90;
-	}
-
-	/** A key or slot fill at the widget's opacity. */
-	protected int backgroundColor() {
-		return (backgroundAlpha() << 24) | 0x060E2B;
 	}
 
 	protected boolean showLabel() {
@@ -193,85 +174,16 @@ public abstract class HudWidget {
 
 	protected int valueColor() {
 		Setting.Color color = module.colorSetting("color");
-		return color == null ? Theme.ICE : color.get();
+		return color == null ? Tokens.TEXT : color.get();
 	}
 
-	/** Whether HUD boxes get round corners (Theme > Rounded HUD). */
-	protected static boolean rounded() {
-		return Modules.THEME_ROUNDED_HUD.get();
+	/** The corner radius for HUD glass: soft with Theme > Rounded HUD, nearly square without. */
+	protected static float radius(float r) {
+		return Modules.THEME_ROUNDED_HUD.get() ? r : Math.min(r, 1.5f);
 	}
 
-	/**
-	 * The box behind a widget: dark navy glass with a thin ice edge on the left. With Rounded HUD on,
-	 * the corners are soft and the edge is a short line inside the box.
-	 */
-	protected void panel(Draw d, int x, int y, int w, int h) {
-		int alpha = backgroundAlpha();
-		if (alpha <= 0) return;
-		int edge = (Math.min(255, alpha + 60) << 24) | 0x5BC8E6;
-		if (rounded()) {
-			d.roundRect(x, y, x + w, y + h, 4, backgroundColor());
-			if (h > 8) d.fill(x + 1, y + 4, x + 2, y + h - 4, edge);
-			return;
-		}
-		d.fill(x, y, x + w, y + h, backgroundColor());
-		d.fill(x, y, x + 1, y + h, edge);
-	}
-
-	/** A key or slot: rounded with Rounded HUD on, square otherwise. */
-	protected static void box(Draw d, int x1, int y1, int x2, int y2, int color) {
-		if (rounded()) d.roundRect(x1, y1, x2, y2, 3, color);
-		else d.fill(x1, y1, x2, y2, color);
-	}
-
-	protected static int textWidth(Minecraft mc, String text) {
-		return mc.font.width(text);
-	}
-
-	/** Bold pill text: the clean font, or Minecraft's when Theme's Menu font is set to it. */
-	protected static Component boldText(String text) {
-		return UiFont.clean() ? UiFont.bold(text) : Component.literal(text).withStyle(Style.EMPTY.withBold(true));
-	}
-
-	/** How wide {@code text} is in a pill. */
-	protected static float pillTextWidth(Minecraft mc, String text) {
-		return mc.font.width(boldText(text)) * PILL_TEXT;
-	}
-
-	/** A pill's width with a label column {@code labelW} wide (0 for none) and the given value. */
-	protected static int pillWidth(Minecraft mc, float labelW, String value) {
-		return Math.round(PILL_LEFT + (labelW > 0 ? labelW + PILL_LABEL_GAP : 0) + pillTextWidth(mc, value) + PILL_RIGHT);
-	}
-
-	/** The dark box behind pills: fully round ends (or square with Rounded HUD off). */
-	protected void pillBox(Draw d, int x, int y, int w, int h) {
-		int alpha = backgroundAlpha();
-		if (alpha <= 0) return;
-		int fill = (alpha << 24) | PILL_FILL;
-		if (rounded()) Smooth.roundRect(d, x, y, x + w, y + h, Math.min(h, PILL_H) / 2f, fill);
-		else d.fill(x, y, x + w, y + h, fill);
-	}
-
-	/**
-	 * One line of a stat like 67's: the label in the theme colour, then the value, both bold, with the
-	 * label column {@code labelW} wide. {@code y} is the line's top in the pill.
-	 */
-	protected void pillLine(Draw d, Minecraft mc, int x, float y, float labelW, String label, String value, int valueColor) {
-		boolean shadow = textShadow();
-		float tx = x + PILL_LEFT;
-		float ty = y + (PILL_H - PILL_CAP) / 2f;
-		if (labelW > 0) {
-			pillText(d, label, tx, ty, Accent.get(), shadow);
-			tx += labelW + PILL_LABEL_GAP;
-		}
-		pillText(d, value, tx, ty, valueColor, shadow);
-	}
-
-	private static void pillText(Draw d, String text, float x, float y, int color, boolean shadow) {
-		d.push();
-		d.translate(x, y);
-		d.scale(PILL_TEXT);
-		d.text(boldText(text), 0, 0, color, shadow);
-		d.pop();
+	/** This widget's violet glass behind (x, y, w, h). */
+	protected void glass(Draw d, float x, float y, float w, float h, float r) {
+		Hud.glass(d, x, y, x + w, y + h, radius(r), glassStrength());
 	}
 }

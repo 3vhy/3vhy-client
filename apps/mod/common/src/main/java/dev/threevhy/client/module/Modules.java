@@ -234,9 +234,9 @@ public final class Modules {
 	public static final Slider SCOREBOARD_SIZE = SCOREBOARD.add(new Slider("size", "Size",
 			"Or scroll over it in Edit HUD", 50, 200, 5, 100, "%"));
 	public static final Slider SCOREBOARD_BACKGROUND = SCOREBOARD.add(new Slider("background", "Background",
-			"How dark the box behind it is. 0% removes it", 0, 100, 5, 30, "%"));
+			"How dark the box behind it is. 0% removes it", 0, 100, 5, 55, "%"));
 	public static final Color SCOREBOARD_COLOR = SCOREBOARD.add(new Color("color", "Background colour",
-			"Colour of the box behind it", 0xFF000000));
+			"Colour of the box behind it", 0xFF0A0814));
 	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
 			"A darker strip behind the title, like Minecraft's", true));
 	public static final Module MUSIC = sized(background(new Module("music", "Music Player",

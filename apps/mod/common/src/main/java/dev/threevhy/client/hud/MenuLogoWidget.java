@@ -2,7 +2,6 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.MenuNameTag;
-import dev.threevhy.client.gui.Smooth;
 import dev.threevhy.client.module.Modules;
 import net.minecraft.client.Minecraft;
 
@@ -48,7 +47,7 @@ final class MenuLogoWidget extends HudWidget {
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
-		float k = Smooth.density(d);
+		float k = dev.threevhy.client.ui.Paint.density(d);
 		if (k <= 0) return;
 		int[] size = MenuNameTag.size(mc);
 		d.push();
