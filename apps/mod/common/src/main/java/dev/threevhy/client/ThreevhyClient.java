@@ -10,6 +10,7 @@ import dev.threevhy.client.gui.menu.MenuScreen;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.hud.ScoreboardWidget;
+import dev.threevhy.client.module.Blades;
 import dev.threevhy.client.module.Borderless;
 import dev.threevhy.client.module.Combo;
 import dev.threevhy.client.module.ConfirmDisconnect;
@@ -120,6 +121,8 @@ public final class ThreevhyClient implements ClientModInitializer {
 		while (openSettingsKey.consumeClick()) {
 			if (mc.screen == null) mc.setScreen(MenuScreen.fromKey(null));
 		}
+		while (inspectKey.consumeClick()) Blades.inspect(mc);
+		Blades.tick(mc);
 		if (Borderless.needsReapply() && mc.getWindow().isFullscreen()) {
 			((dev.threevhy.client.mixin.WindowAccessor) (Object) mc.getWindow()).threevhy$setMode();
 		}

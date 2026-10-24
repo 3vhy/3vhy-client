@@ -1,0 +1,76 @@
+{
+	"parent": "minecraft:item/handheld",
+	"textures": {
+		"layer0": "threevhy:item/katana_golden"
+	},
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [
+				0,
+				-90,
+				55
+			],
+			"translation": [
+				0,
+				4.864,
+				0.5
+			],
+			"scale": [
+				1.003,
+				1.003,
+				1.003
+			]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [
+				0,
+				90,
+				-55
+			],
+			"translation": [
+				0,
+				4.864,
+				0.5
+			],
+			"scale": [
+				1.003,
+				1.003,
+				1.003
+			]
+		},
+		"firstperson_righthand": {
+			"rotation": [
+				0,
+				-90,
+				25
+			],
+			"translation": [
+				1.13,
+				4.64,
+				1.13
+			],
+			"scale": [
+				0.802,
+				0.802,
+				0.802
+			]
+		},
+		"firstperson_lefthand": {
+			"rotation": [
+				0,
+				90,
+				-25
+			],
+			"translation": [
+				1.13,
+				4.64,
+				1.13
+			],
+			"scale": [
+				0.802,
+				0.802,
+				0.802
+			]
+		}
+	}
+}

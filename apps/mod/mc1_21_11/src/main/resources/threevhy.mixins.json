@@ -15,6 +15,7 @@
 		"ClientPacketListenerMixin",
 		"EntityMixin",
 		"ItemInHandRendererMixin",
+		"ItemModelResolverMixin",
 		"ItemStackMixin",
 		"LivingEntityMixin",
 		"LivingEntityRendererMixin",
