@@ -89,4 +89,10 @@ public final class Compat {
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register(
 				(drawn, graphics, mouseX, mouseY, delta) -> drawer.accept(new DrawImpl(graphics)));
 	}
+
+	/** Draws over a screen after it, with the mouse position. */
+	public static void overlay(Screen screen, Draw.Overlay overlay) {
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterExtract(screen).register(
+				(drawn, graphics, mouseX, mouseY, delta) -> overlay.draw(new DrawImpl(graphics), mouseX, mouseY));
+	}
 }

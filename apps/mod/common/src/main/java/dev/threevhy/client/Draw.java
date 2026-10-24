@@ -11,6 +11,11 @@ import net.minecraft.world.item.ItemStack;
  * DrawImpl in compat/ and everything else draws through this interface.
  */
 public interface Draw {
+	/** Something drawn over a screen after it, knowing where the mouse is. */
+	interface Overlay {
+		void draw(Draw d, int mouseX, int mouseY);
+	}
+
 	int width();
 
 	int height();
@@ -26,6 +31,9 @@ public interface Draw {
 
 	/** Durability bar and count label; pass null to use the stack's own count. */
 	void itemOverlay(ItemStack stack, int x, int y, String countLabel);
+
+	/** Draws a sprite from Minecraft's GUI atlas, like a status effect's icon, at w x h. */
+	void sprite(Identifier sprite, int x, int y, int w, int h);
 
 	/** Draws a whole texture of the given size, stretched to w x h. */
 	void texture(Identifier texture, int x, int y, int w, int h, int textureWidth, int textureHeight);

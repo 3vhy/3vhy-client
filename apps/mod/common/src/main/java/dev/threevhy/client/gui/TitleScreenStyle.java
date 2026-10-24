@@ -27,11 +27,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 
@@ -78,6 +80,8 @@ public final class TitleScreenStyle {
 	private static float panelX;
 	private static float panelY;
 	private static float driftSpin = 0;
+	private static int lastMouseX = -1;
+	private static int lastMouseY = -1;
 
 	private TitleScreenStyle() {
 	}
@@ -125,13 +129,43 @@ public final class TitleScreenStyle {
 		}
 		showSegments(screen);
 		PANEL.snap(panelOpen ? 1 : 0);
-		Compat.afterScreen(screen, d -> drawOverlay(d, screen));
+		Compat.overlay(screen, (d, mouseX, mouseY) -> {
+			lastMouseX = mouseX;
+			lastMouseY = mouseY;
+			drawOverlay(d, screen);
+		});
+		ScreenMouseEvents.allowMouseClick(screen).register((shown, event) -> !clickPanel(shown, event));
 		ScreenKeyboardEvents.afterKeyPress(screen).register((shown, event) -> {
 			if (ThreevhyClient.openSettingsKey != null && ThreevhyClient.openSettingsKey.matches(event) && mc.screen == shown) {
 				mc.setScreen(MenuScreen.fromKey(shown));
 			}
 		});
 		Hooks.mainMenuShown = true;
+	}
+
+	private static boolean overPanel(double x, double y) {
+		return panelOpen && x >= panelX && x < panelX + PANEL_W && y >= panelY && y < panelY + panelHeight();
+	}
+
+	/**
+	 * A click on the open Scene panel goes to the panel only, never to the main menu's buttons under it:
+	 * the segment under the mouse takes it, and anywhere else on the panel does nothing.
+	 */
+	private static boolean clickPanel(Screen screen, MouseButtonEvent event) {
+		if (!onTitleScreen() || !overPanel(event.x(), event.y())) return false;
+		for (AbstractWidget widget : Compat.widgets(screen)) {
+			Part part = PARTS.get(widget);
+			if (part != null && part.kind() == Kind.SEGMENT && widget.visible && widget.isMouseOver(event.x(), event.y())) {
+				widget.mouseClicked(event, false);
+				break;
+			}
+		}
+		return true;
+	}
+
+	/** Whether the open Scene panel is over this widget where the mouse is, so it shouldn't light up. */
+	public static boolean hidesHover(AbstractWidget widget) {
+		return panelOpen && !PARTS.containsKey(widget) && onTitleScreen() && overPanel(lastMouseX, lastMouseY);
 	}
 
 	/** The Scene panel's segments can only be clicked (or reached with Tab) while it's open. */

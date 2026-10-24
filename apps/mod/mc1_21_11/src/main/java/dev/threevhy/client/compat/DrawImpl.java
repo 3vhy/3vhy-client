@@ -158,6 +158,11 @@ public final class DrawImpl implements Draw {
 	}
 
 	@Override
+	public void sprite(Identifier sprite, int x, int y, int w, int h) {
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, w, h);
+	}
+
+	@Override
 	public void texture(Identifier texture, int x, int y, int w, int h, int textureWidth, int textureHeight) {
 		graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0, 0, w, h, textureWidth, textureHeight,
 				textureWidth, textureHeight);

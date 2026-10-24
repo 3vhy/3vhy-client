@@ -67,7 +67,7 @@ public final class ButtonStyle {
 		float x2 = x1 + widget.getWidth();
 		float y2 = y1 + widget.getHeight();
 		Anim anim = HOVER.computeIfAbsent(widget, w -> new Anim(0, Tokens.T_COLOR, Ease.OUT));
-		boolean lit = widget.active && widget.isHoveredOrFocused();
+		boolean lit = widget.active && widget.isHoveredOrFocused() && !TitleScreenStyle.hidesHover(widget);
 		anim.set(lit);
 		float hover = anim.get();
 		float old = Paint.opacity(Paint.opacity() * widget.getAlpha() * (widget.active ? 1 : 0.5f));
@@ -122,11 +122,10 @@ public final class ButtonStyle {
 		Paint.rect(d, x1 + inset, y1 + inset, fx, y2 - inset, r - inset, Accent.bar());
 		Paint.opacity(old);
 		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(hair, 0.5f), hover > 0.5f ? EDGE_HOVER : EDGE);
-		float knob = (h - 2 * inset) / 2f;
-		float kx = fx - knob;
-		Paint.shadow(d, kx - knob, y1 + inset, kx + knob, y2 - inset, knob, 0, h * 0.05f, h * 0.2f, 0, 0x73000000);
-		Paint.circle(d, kx, (y1 + y2) / 2f, knob, 0xFFFFFFFF);
-		Paint.ring(d, kx, (y1 + y2) / 2f, knob, Math.max(hair * 1.5f, 0.75f), Widgets.mixColor(Accent.get(), 0xFFFFFFFF, 0.2f));
+		float handleW = Math.max(1.5f, h * 0.12f);
+		float hx = Math.max(x1 + inset + handleW / 2f, fx - handleW / 2f - inset * 0.5f);
+		Paint.shadow(d, hx - handleW / 2f, y1 + inset, hx + handleW / 2f, y2 - inset, handleW / 2f, 0, 0, h * 0.25f, 0, Accent.glow(0.6f));
+		Paint.rect(d, hx - handleW / 2f, y1 + inset * 0.6f, hx + handleW / 2f, y2 - inset * 0.6f, handleW / 2f, 0xF2FFFFFF);
 		label(d, slider.getMessage().getString(), x1, y1, x2, y2);
 	}
 }
