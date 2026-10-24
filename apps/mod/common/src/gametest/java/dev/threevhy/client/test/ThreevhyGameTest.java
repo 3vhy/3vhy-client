@@ -7,11 +7,10 @@ import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.compat.CompatScreen;
-import dev.threevhy.client.gui.ClickGuiScreen;
-import dev.threevhy.client.gui.HubScreen;
-import dev.threevhy.client.gui.MainMenuScreen;
-import dev.threevhy.client.gui.ModMenuScreen;
+import dev.threevhy.client.gui.HudEditorScreen;
 import dev.threevhy.client.gui.TitleScreenStyle;
+import dev.threevhy.client.gui.menu.MenuScreen;
+import dev.threevhy.client.gui.menu.OrbitScreen;
 import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.gui.PauseMenuButton;
 import dev.threevhy.client.FreezeWatch;
@@ -24,12 +23,15 @@ import dev.threevhy.client.module.CustomSkins;
 import dev.threevhy.client.module.TextHotkeys;
 import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Freelook;
+import dev.threevhy.client.module.Module;
+import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.NameProtect;
 import dev.threevhy.client.module.PlayerList;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
 import dev.threevhy.client.music.MusicBridge;
+import dev.threevhy.client.ui.Sky;
 import java.util.ArrayList;
 import java.util.List;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
@@ -90,7 +92,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		@Override
 		protected void drawBackdrop(Draw d) {
 			if (widget == HudWidgets.MUSIC) {
-				MainMenuScreen.drawBackdrop(d, this.width, this.height);
+				float unit = Math.min(this.width / 1600f, this.height / 900f);
+				d.push();
+				d.scale(unit);
+				Sky.backdrop(d, this.width / unit, this.height / unit, false, 1);
+				d.pop();
 			} else {
 				d.fill(0, 0, this.width, this.height, 0xFF4B4C4F);
 			}
@@ -182,99 +188,83 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		List<String> failed = new ArrayList<>();
 
 		context.waitTicks(40);
-		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Always"));
-		context.waitTicks(3);
-		shot(context, "3vhy-main-menu-october");
-		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Never"));
-		context.waitTicks(3);
 		shot(context, "3vhy-main-menu");
-		context.runOnClient(client -> Modules.MAIN_MENU_SEASON.set("Auto"));
 		int[] fontWidths = context.computeOnClient(client -> new int[] {
 				client.font.width(UiFont.bold("PANELS AND MUSIC")),
 				client.font.width(Component.literal("PANELS AND MUSIC").withStyle(net.minecraft.ChatFormatting.BOLD))});
 		ThreevhyClient.LOG.info("3vhy-check: \"PANELS AND MUSIC\" is {} wide in the clean font, {} in Minecraft's bold", fontWidths[0],
 				fontWidths[1]);
-		check(failed, "clean font (Titillium Web) loads from the mod's resources", fontWidths[0] > 20 && fontWidths[0] != fontWidths[1]);
+		check(failed, "clean font (Inter) loads from the mod's resources", fontWidths[0] > 20 && fontWidths[0] != fontWidths[1]);
 		check(failed, "3vhy main menu styles the title screen",
 				context.computeOnClient(client -> client.screen instanceof TitleScreen) && Hooks.mainMenuShown);
-		check(failed, "main menu side buttons drawn by 3vhy (AbstractWidget)", Hooks.titleButtonsStyled);
+		check(failed, "3vhy logo in place of Minecraft's (LogoRenderer)", Hooks.logoDrawn);
+		check(failed, "Minecraft's buttons drawn as violet glass pills (AbstractWidget)", Hooks.buttonsStyled);
+		check(failed, "main menu's round buttons drawn by 3vhy", Hooks.titleButtonsStyled);
 		int menuScale = context.computeOnClient(client -> client.getWindow().getGuiScale());
-		int[] modsButton = context.computeOnClient(client -> {
+		check(failed, "main menu keeps Singleplayer, Multiplayer, Realms, Options and Quit", context.computeOnClient(client -> {
+			int found = 0;
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
-				if (widget.getMessage().getString().equals(TitleScreenStyle.MODS_LABEL)) {
-					return new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
+				if (widget.visible && widget.getMessage().getContents() instanceof TranslatableContents key
+						&& List.of("menu.singleplayer", "menu.multiplayer", "menu.online", "menu.options", "menu.quit").contains(key.getKey())) {
+					found++;
 				}
 			}
-			return null;
-		});
-		check(failed, "main menu has the Mods button", modsButton != null);
-		check(failed, "Mods sits right under Minecraft Realms, like Lunar's", context.computeOnClient(client -> {
-			int modsRow = -1;
-			int realmsRow = -1;
-			int optionsRow = -1;
-			for (AbstractWidget widget : Compat.widgets(client.screen)) {
-				if (widget.getMessage().getString().equals(TitleScreenStyle.MODS_LABEL)) modsRow = widget.getY();
-				if (widget.visible && widget.getMessage().getContents() instanceof TranslatableContents key) {
-					if (key.getKey().equals("menu.online")) realmsRow = widget.getY();
-					if (key.getKey().equals("menu.options")) optionsRow = widget.getY();
-				}
-			}
-			ThreevhyClient.LOG.info("3vhy-check: main menu rows: Realms {}, Mods {}, Options {}", realmsRow, modsRow, optionsRow);
-			return realmsRow >= 0 && modsRow == realmsRow + 24 && optionsRow == modsRow + 36;
+			return found == 5;
 		}));
-		check(failed, "main menu has Lunar's column of side buttons", context.computeOnClient(client -> {
-			List<String> found = new ArrayList<>();
-			for (AbstractWidget widget : Compat.widgets(client.screen)) {
-				String label = widget.getMessage().getString();
-				if (widget.visible && List.of("Profiles", "Edit HUD", "Pictures", "Settings").contains(label)) found.add(label);
-			}
-			return found.size() == 4;
-		}));
-		int[] settingsSide = context.computeOnClient(client -> {
-			for (AbstractWidget widget : Compat.widgets(client.screen)) {
-				if (widget.visible && widget.getMessage().getString().equals("Settings")) {
-					return new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
-				}
-			}
-			return null;
+		click(context, menuScale, "Scene");
+		check(failed, "the Scene button opens the scene panel", context.computeOnClient(client -> find(client, "Time of day: Dusk") != null));
+		shot(context, "3vhy-main-menu-scene-panel");
+		click(context, menuScale, "Time of day: Dusk");
+		check(failed, "the scene panel picks the time of day", context.computeOnClient(client -> Modules.MAIN_MENU_TIME.is("Dusk")));
+		context.waitTicks(10);
+		shot(context, "3vhy-main-menu-dusk");
+		click(context, menuScale, "Scene: Night sky");
+		context.waitTicks(10);
+		check(failed, "the scene panel picks the scene", context.computeOnClient(client -> Modules.MAIN_MENU_SCENE.is("Night sky")));
+		shot(context, "3vhy-main-menu-night-sky");
+		click(context, menuScale, "Scene: October");
+		context.waitTicks(10);
+		shot(context, "3vhy-main-menu-october");
+		click(context, menuScale, "Scene: Panorama");
+		click(context, menuScale, "Time of day: Night");
+		click(context, menuScale, "Camera: Still");
+		context.waitTicks(10);
+		check(failed, "Camera Still stops the panorama turning", context.computeOnClient(client -> !TitleScreenStyle.panoramaSpins()));
+		shot(context, "3vhy-main-menu-night");
+		click(context, menuScale, "Scene");
+		context.runOnClient(client -> {
+			Modules.MAIN_MENU_TIME.reset();
+			Modules.MAIN_MENU_CAMERA.reset();
+			Modules.MAIN_MENU_SCENE.reset();
 		});
-		if (settingsSide != null) {
-			context.getInput().setCursorPos(settingsSide[0] * menuScale, settingsSide[1] * menuScale);
-			context.waitTicks(2);
-			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			context.waitTicks(10);
-		}
-		check(failed, "the Settings side button opens 3vhy's settings",
-				context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
-		for (int i = 0; i < 3 && context.computeOnClient(client -> !(client.screen instanceof TitleScreen)); i++) {
-			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
-			context.waitTicks(5);
-		}
-		if (modsButton != null) {
-			context.getInput().setCursorPos(modsButton[0] * menuScale, modsButton[1] * menuScale);
-			context.waitTicks(2);
-			context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			context.waitTicks(10);
-		}
-		check(failed, "Mods button opens the mod menu",
-				context.computeOnClient(client -> client.screen instanceof ModMenuScreen || client.screen instanceof ClickGuiScreen));
+		context.waitTicks(10);
+		check(failed, "closing the scene panel hides its buttons", context.computeOnClient(client -> find(client, "Time of day: Dusk") == null));
+
+		click(context, menuScale, "3vhy Client");
+		context.waitTicks(10);
+		check(failed, "the 3vhy button on the main menu opens the Orbit", context.computeOnClient(client -> client.screen instanceof OrbitScreen));
+		context.waitTicks(30);
+		shot(context, "3vhy-orbit-from-menu");
+		context.getInput().pressKey(InputConstants.KEY_RETURN);
+		context.waitTicks(30);
+		check(failed, "Enter in the Orbit opens the menu at that tab", context.computeOnClient(client ->
+				client.screen instanceof MenuScreen menu && menu.view().category() == Category.RENDER));
+		shot(context, "3vhy-menu-from-menu");
 		context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 		context.waitTicks(5);
-		check(failed, "closing the mod menu goes back to the main menu",
-				context.computeOnClient(client -> client.screen instanceof TitleScreen));
+		check(failed, "Esc in the menu goes back to the Orbit", context.computeOnClient(client -> client.screen instanceof OrbitScreen));
+		context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+		context.waitTicks(5);
+		check(failed, "Esc in the Orbit goes back to the main menu", context.computeOnClient(client -> client.screen instanceof TitleScreen));
 		context.getInput().pressKey(ThreevhyClient.openSettingsKey);
 		context.waitTicks(5);
-		check(failed, "Right Shift on the main menu opens the mod menu",
-				context.computeOnClient(client -> client.screen instanceof ModMenuScreen || client.screen instanceof ClickGuiScreen));
-		context.setScreen(() -> new ModMenuScreen(new TitleScreen()));
+		check(failed, "Right Shift on the main menu opens the Orbit", context.computeOnClient(client -> client.screen instanceof OrbitScreen));
+		context.setScreen(() -> new HudEditorScreen(new TitleScreen()));
 		context.waitTicks(10);
-		shot(context, "3vhy-modmenu-from-menu");
-		context.setScreen(() -> new HubScreen(new TitleScreen()));
+		shot(context, "3vhy-edit-hud-from-menu");
+		context.setScreen(() -> Compat.optionsScreen(new TitleScreen()));
 		context.waitTicks(10);
-		shot(context, "3vhy-hub-from-menu");
-		context.setScreen(() -> new ClickGuiScreen(new TitleScreen()).expand(Modules.FREELOOK));
-		context.waitTicks(10);
-		shot(context, "3vhy-panels-from-menu");
+		shot(context, "3vhy-options-buttons");
 		context.setScreen(TitleScreen::new);
 		context.waitTicks(5);
 
@@ -629,11 +619,53 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 							&& TextHotkeys.keyName(GLFW.GLFW_KEY_F6, false).equals("F6")
 							&& TextHotkeys.keyName(GLFW.GLFW_MOUSE_BUTTON_4, true).equals("Mouse 4")));
 
-			// The hub: HUD drawn sharp over the blur, with the logo and mod menu button
 			context.getInput().pressKey(ThreevhyClient.openSettingsKey);
-			context.waitTicks(15);
-			shot(context, "3vhy-hub");
-			check(failed, "Right Shift opens the hub", context.computeOnClient(client -> client.screen instanceof HubScreen));
+			context.waitTicks(30);
+			shot(context, "3vhy-orbit");
+			check(failed, "Right Shift opens the Orbit", context.computeOnClient(client -> client.screen instanceof OrbitScreen));
+			context.getInput().pressKey(InputConstants.KEY_LEFT);
+			context.getInput().pressKey(InputConstants.KEY_LEFT);
+			context.waitTicks(30);
+			check(failed, "the arrow keys turn the Orbit", context.computeOnClient(client ->
+					client.screen instanceof OrbitScreen orbit && orbit.view().front() == 0));
+			shot(context, "3vhy-orbit-profile");
+			context.getInput().pressKey(InputConstants.KEY_RIGHT);
+			context.getInput().pressKey(InputConstants.KEY_RIGHT);
+			context.waitTicks(30);
+			context.getInput().pressKey(InputConstants.KEY_RETURN);
+			context.waitTicks(30);
+			check(failed, "the Orbit opens the tab at the front", context.computeOnClient(client ->
+					client.screen instanceof MenuScreen menu && menu.view().category() == Category.RENDER));
+			shot(context, "3vhy-menu");
+			boolean zoomBefore = context.computeOnClient(client -> Modules.ZOOM.enabled());
+			float[] zoomCard = context.computeOnClient(client -> ((MenuScreen) client.screen).view().cardCenter(Modules.ZOOM));
+			check(failed, "the menu lays out a card for each module", zoomCard != null);
+			if (zoomCard != null) {
+				context.getInput().setCursorPos(zoomCard[0] * menuScale, zoomCard[1] * menuScale);
+				context.waitTicks(2);
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				context.waitTicks(5);
+				check(failed, "clicking a card switches its module", context.computeOnClient(client -> Modules.ZOOM.enabled() != zoomBefore));
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				context.waitTicks(5);
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+				context.waitTicks(15);
+				check(failed, "right-clicking a card opens its settings", context.computeOnClient(client ->
+						client.screen instanceof MenuScreen menu && menu.view().sheetModule() == Modules.ZOOM));
+				shot(context, "3vhy-menu-zoom-settings");
+				context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+				context.waitTicks(5);
+			}
+			check(failed, "zoom is back the way it was", context.computeOnClient(client -> Modules.ZOOM.enabled() == zoomBefore));
+			context.getInput().typeChars("totem");
+			context.waitTicks(10);
+			check(failed, "typing in the menu searches", context.computeOnClient(client ->
+					client.screen instanceof MenuScreen menu && menu.view().searchText().equals("totem")));
+			shot(context, "3vhy-menu-search");
+
+			context.setScreen(() -> new HudEditorScreen(null));
+			context.waitTicks(10);
+			shot(context, "3vhy-edit-hud");
 			double sizeBefore = context.computeOnClient(client -> Modules.SCOREBOARD_SIZE.get());
 			context.runOnClient(client -> {
 				var widget = HudWidgets.SCOREBOARD;
@@ -645,88 +677,54 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				double y = (pos[1] + widget.height(client) / 2.0) * scale;
 				client.screen.mouseScrolled(x, y, 0, -1);
 			});
-			check(failed, "scrolling over the scoreboard in the hub resizes it",
+			check(failed, "scrolling over the scoreboard in the HUD editor resizes it",
 					context.computeOnClient(client -> Modules.SCOREBOARD_SIZE.get() < sizeBefore));
 			context.runOnClient(client -> Modules.SCOREBOARD_SIZE.reset());
 
-			context.setScreen(() -> new ModMenuScreen(null));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu");
-			context.getInput().typeChars("totem");
-			context.waitTicks(5);
-			shot(context, "3vhy-modmenu-search");
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.CROSSHAIR));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-crosshair");
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.PLAYER_LIST));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-player-list");
+			for (Category category : List.of(Category.COMBAT, Category.HUD, Category.COSMETICS, Category.CLIENT)) {
+				context.setScreen(() -> new MenuScreen(null, category));
+				context.waitTicks(25);
+				shot(context, "3vhy-menu-" + category.label.toLowerCase(java.util.Locale.ROOT));
+			}
 			context.runOnClient(client -> TextRules.add("Kills: #", "Kills: 9999"));
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.NAME_PROTECT));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-name-protect");
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.TEXT_HOTKEYS));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-text-hotkeys");
+			for (Module module : List.of(Modules.CROSSHAIR, Modules.PLAYER_LIST, Modules.NAME_PROTECT, Modules.TEXT_HOTKEYS,
+					Modules.SKIN_PROTECT, Modules.WAYPOINTS, Modules.MUSIC, Modules.THEME, Modules.MAIN_MENU)) {
+				context.setScreen(() -> MenuScreen.settings(null, module));
+				context.waitTicks(15);
+				shot(context, "3vhy-menu-" + module.id.replace('_', '-'));
+			}
 			context.runOnClient(client -> List.copyOf(Config.get().textHotkeys).forEach(TextHotkeys::remove));
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.SKIN_PROTECT));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-skin-protect");
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.MUSIC));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-music");
-			context.setScreen(() -> new ModMenuScreen(null).openModule(Modules.SCOREBOARD));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-scoreboard");
 			context.runOnClient(client -> Config.get().createProfile("Crystal PvP"));
-			context.setScreen(() -> new ModMenuScreen(null).openTab(ModMenuScreen.Tab.PROFILES));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-profiles");
+			context.setScreen(() -> MenuScreen.profiles(null));
+			context.waitTicks(20);
+			shot(context, "3vhy-menu-profiles");
 			check(failed, "profiles can be created", context.computeOnClient(client ->
 					Config.get().profile.equals("Crystal PvP") && Config.get().profileNames().contains(Config.DEFAULT_PROFILE)));
 			context.runOnClient(client -> Config.get().loadProfile(Config.DEFAULT_PROFILE));
-			context.setScreen(() -> new ModMenuScreen(null).openTab(ModMenuScreen.Tab.WAYPOINTS));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-waypoints");
-			context.runOnClient(client -> Modules.THEME_MODE.next());
-			context.setScreen(() -> new ModMenuScreen(null));
-			context.waitTicks(10);
-			shot(context, "3vhy-modmenu-light");
-			context.runOnClient(client -> Modules.THEME_MODE.next());
-
-			// The Panels style of the mod menu
-			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Panels"));
-			check(failed, "Theme > Mod menu > Panels opens the panels menu",
-					context.computeOnClient(client -> ModMenuScreen.create(null) instanceof ClickGuiScreen));
-			context.runOnClient(client -> Config.get().panels.clear());
-			context.setScreen(() -> new ClickGuiScreen(null));
-			context.waitTicks(10);
-			shot(context, "3vhy-panels");
-			context.setScreen(() -> new ClickGuiScreen(null).expand(Modules.FREELOOK).expand(Modules.CROSSHAIR));
-			context.waitTicks(10);
-			shot(context, "3vhy-panels-settings");
-			context.setScreen(() -> new ClickGuiScreen(null).search("totem"));
-			context.waitTicks(5);
-			shot(context, "3vhy-panels-search");
 			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.set(0xFF5BC8E6));
-			context.setScreen(() -> new ClickGuiScreen(null).expand(Modules.SWING_SPEED));
-			context.waitTicks(10);
-			shot(context, "3vhy-panels-cyan");
-			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
+			context.setScreen(() -> new MenuScreen(null, Category.RENDER));
+			context.waitTicks(20);
+			shot(context, "3vhy-menu-cyan");
+			context.runOnClient(client -> {
+				Modules.THEME_PANEL_COLOR.reset();
+				Modules.THEME_FONT.set("Minecraft");
+			});
+			context.setScreen(() -> new MenuScreen(null, Category.RENDER));
+			context.waitTicks(20);
+			shot(context, "3vhy-menu-minecraft-font");
+			context.runOnClient(client -> {
+				Modules.THEME_FONT.reset();
+				Modules.THEME_RIGHT_SHIFT.set("Menu");
+			});
 			context.setScreen(() -> null);
 			context.waitTicks(3);
 			context.getInput().pressKey(ThreevhyClient.openSettingsKey);
 			context.waitTicks(5);
-			check(failed, "in the Panels style, Right Shift opens the panels (no hub)",
-					context.computeOnClient(client -> client.screen instanceof ClickGuiScreen));
-			context.setScreen(() -> new HubScreen(new ClickGuiScreen(null)).editOnly());
-			context.waitTicks(10);
-			shot(context, "3vhy-edit-hud");
-			check(failed, "Edit HUD is just the HUD editor", context.computeOnClient(client ->
-					client.screen instanceof HubScreen hub && hub.isEditOnly()));
-			context.runOnClient(client -> Modules.THEME_MENU_STYLE.set("Classic"));
+			check(failed, "Theme > Right Shift opens > Menu skips the Orbit",
+					context.computeOnClient(client -> client.screen instanceof MenuScreen));
+			context.runOnClient(client -> Modules.THEME_RIGHT_SHIFT.reset());
 
-			// Pause menu: Lunar's layout with the Mods button, then Confirm Disconnect
+			// Pause menu: the 3vhy Client button, then Confirm Disconnect
 			context.setScreen(() -> null);
 			context.waitTicks(5);
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
@@ -763,8 +761,8 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 						{ours.getX() + ours.getWidth() / 2, ours.getY() + ours.getHeight() / 2},
 						{modsRow ? 1 : 0, optionsRow ? 1 : 0, feedback ? 1 : 0}};
 			});
-			check(failed, "pause menu has Mods and 3vhy Options...", pauseButtons != null);
-			check(failed, "Mods is a full row right under Advancements and Statistics", pauseButtons != null && pauseButtons[2][0] == 1);
+			check(failed, "pause menu has 3vhy Client and 3vhy Options...", pauseButtons != null);
+			check(failed, "3vhy Client is a full row right under Advancements and Statistics", pauseButtons != null && pauseButtons[2][0] == 1);
 			check(failed, "3vhy Options... sits beside Options...", pauseButtons != null && pauseButtons[2][1] == 1);
 			check(failed, "pause menu leaves out the feedback links", pauseButtons != null && pauseButtons[2][2] == 0);
 			if (pauseButtons != null) {
@@ -773,8 +771,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 				context.waitTicks(15);
 			}
-			check(failed, "pause menu's Mods opens the mod menu",
-					context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
+			shot(context, "3vhy-menu-from-pause");
+			check(failed, "pause menu's 3vhy Client opens the menu",
+					context.computeOnClient(client -> client.screen instanceof MenuScreen));
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(5);
 			check(failed, "closing the mod menu goes back to the pause menu",
@@ -786,7 +785,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				context.waitTicks(15);
 			}
 			check(failed, "3vhy Options... opens 3vhy's settings",
-					context.computeOnClient(client -> client.screen instanceof ModMenuScreen));
+					context.computeOnClient(client -> client.screen instanceof MenuScreen menu && menu.view().sheetModule() == Modules.THEME));
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
 			context.waitTicks(5);
 			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
@@ -863,6 +862,28 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			return;
 		}
 		context.takeScreenshot(name);
+	}
+
+	/** The visible widget on the current screen with this label, or null. */
+	private static AbstractWidget find(Minecraft client, String label) {
+		for (AbstractWidget widget : Compat.widgets(client.screen)) {
+			if (widget.visible && widget.getMessage().getString().equals(label)) return widget;
+		}
+		return null;
+	}
+
+	/** Clicks the widget with this label on the current screen, if there is one. */
+	private static void click(ClientGameTestContext context, int scale, String label) {
+		int[] at = context.computeOnClient(client -> {
+			AbstractWidget widget = find(client, label);
+			return widget == null ? null : new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
+		});
+		ThreevhyClient.LOG.info("3vhy-check: clicking {} at {}", label, at == null ? "nowhere (not found)" : at[0] + ", " + at[1]);
+		if (at == null) return;
+		context.getInput().setCursorPos(at[0] * scale, at[1] * scale);
+		context.waitTicks(2);
+		context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		context.waitTicks(3);
 	}
 
 	private static void check(List<String> failed, String name, boolean ok) {
