@@ -307,7 +307,7 @@ public final class MenuView {
 		float old = Paint.opacity(Paint.opacity() * t);
 		float rise = (1 - t) * 10;
 		Type.draw(d, title, x0, 112 + rise, 26, Weight.BOLD, Tokens.TEXT);
-		Type.draw(d, subtitle, x0, 148 + rise, 12.5f, Weight.MEDIUM, Tokens.TEXT_2);
+		Type.draw(d, subtitle, x0, 151 + rise, 12.5f, Weight.MEDIUM, Tokens.TEXT_2);
 		Paint.opacity(old);
 	}
 

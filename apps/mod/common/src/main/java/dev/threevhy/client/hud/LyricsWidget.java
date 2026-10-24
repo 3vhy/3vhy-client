@@ -25,7 +25,7 @@ import net.minecraft.util.Mth;
  */
 final class LyricsWidget extends HudWidget {
 	private static final float WIDTH = 260;
-	private static final float ELEVATION = 24;
+	private static final float ELEVATION = 15;
 	private static final long FADE_MS = 520;
 
 	private int shownIndex = -2;
@@ -33,6 +33,8 @@ final class LyricsWidget extends HudWidget {
 	private String previous = "";
 	private long changedAt = 0;
 	private float anchorYaw = 0;
+	private double lineAt = 0;
+	private double lineEnd = 0;
 
 	LyricsWidget() {
 		super("lyrics", Modules.LYRICS, Anchor.TOP_CENTER);
@@ -80,6 +82,8 @@ final class LyricsWidget extends HudWidget {
 		int index = Lyrics.index(lines, song.positionNow() + 0.12);
 		if (index == shownIndex) return;
 		shownIndex = index;
+		lineAt = index < 0 ? 0 : lines.get(index).at();
+		lineEnd = index + 1 < lines.size() ? lines.get(index + 1).at() : lineAt + 4;
 		previous = current;
 		current = index < 0 ? "" : lines.get(index).text();
 		changedAt = System.currentTimeMillis();
@@ -127,18 +131,25 @@ final class LyricsWidget extends HudWidget {
 		Hooks.lyricsDrawn = true;
 	}
 
+	/** How much of the current line has been sung, 0..1, for the karaoke fill. */
+	private float sung() {
+		NowPlaying song = MusicBridge.current();
+		if (song == null || lineEnd <= lineAt) return 1;
+		return (float) Math.max(0, Math.min(1, (song.positionNow() - lineAt) / Math.min(lineEnd - lineAt, 8)));
+	}
+
 	private void drawLines(Draw d, float cx, float top, String line, String next, float glow) {
 		long now = System.currentTimeMillis();
 		float t = Ease.OUT.apply((now - changedAt) / (double) FADE_MS);
 		float cap = cap();
 		if (!previous.isEmpty() && t < 1) {
 			float old = Paint.opacity(Paint.opacity() * (1 - t));
-			block(d, cx, top - 8 * t, previous, cap, glow);
+			block(d, cx, top - 8 * t, previous, cap, glow, 1);
 			Paint.opacity(old);
 		}
 		if (!line.isEmpty()) {
 			float old = Paint.opacity(Paint.opacity() * t);
-			float h = block(d, cx, top + 8 * (1 - t), line, cap, glow);
+			float h = block(d, cx, top + 8 * (1 - t), line, cap, glow, line.equals(current) ? sung() : 1);
 			Paint.opacity(old);
 			if (Modules.LYRICS_NEXT.get() && !next.isEmpty()) {
 				float small = cap * 0.62f;
@@ -151,18 +162,34 @@ final class LyricsWidget extends HudWidget {
 		}
 	}
 
-	/** One sung line, wrapped to two rows at most, in white with a violet glow; returns its height. */
-	private static float block(Draw d, float cx, float top, String text, float cap, float glow) {
+	/**
+	 * One sung line, wrapped to two rows at most, with a violet glow: white as far as it's been sung
+	 * ({@code sung}, 0..1, like karaoke) and faint after that. Returns its height.
+	 */
+	private static float block(Draw d, float cx, float top, String text, float cap, float glow, float sung) {
 		List<String> rows = wrap(text, WIDTH, cap);
 		float lineH = cap * 1.5f;
+		float total = 0;
+		for (String row : rows) total += Type.width(row, cap, Weight.BOLD);
+		float lit = total * sung;
 		float y = top;
 		for (String row : rows) {
 			float w = Type.width(row, cap, Weight.BOLD);
 			float x = cx - w / 2f;
+			Paint.shadow(d, x - cap * 0.2f, y, x + w + cap * 0.2f, y + cap, cap * 0.5f, 0, 0, cap * 1.6f, cap * 0.2f, 0x590E0820);
 			Paint.shadow(d, x - cap * 0.3f, y - cap * 0.1f, x + w + cap * 0.3f, y + cap * 1.1f, cap * 0.6f, 0, 0, cap * 2.4f * glow, 0,
-					Accent.glow(0.42f));
-			Type.draw(d, row, x + cap * 0.08f, y + cap * 0.1f, cap, Weight.BOLD, 0x8C1A0A3C);
-			Type.draw(d, row, x, y, cap, Weight.BOLD, 0xFFFFFFFF);
+					Accent.glow(0.5f));
+			Type.draw(d, row, x + cap * 0.07f, y + cap * 0.09f, cap, Weight.BOLD, 0xB3140A30);
+			float here = Math.max(0, Math.min(w, lit));
+			if (here < w) Type.draw(d, row, x, y, cap, Weight.BOLD, 0xB8D9CCFF);
+			if (here >= w) {
+				Type.draw(d, row, x, y, cap, Weight.BOLD, 0xFFFFFFFF);
+			} else if (here > 0) {
+				d.enableScissor((int) Math.floor(x - cap), (int) Math.floor(y - cap), (int) Math.ceil(x + here), (int) Math.ceil(y + cap * 2));
+				Type.draw(d, row, x, y, cap, Weight.BOLD, 0xFFFFFFFF);
+				d.disableScissor();
+			}
+			lit -= w;
 			y += lineH;
 		}
 		return y - top - (lineH - cap);

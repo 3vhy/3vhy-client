@@ -705,6 +705,7 @@ public final class HudWidgets {
 		private static final float W = 180 * U;
 		private static final float PAD = 7 * U;
 		private static final EquipmentSlot[] ARMOR_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+		private static final float[] SAMPLE_ARMOR = {0.92f, 0.64f, 0.81f, 0.27f};
 		private final Anim shownHp = new Anim(1, 350, Ease.OUT);
 		private final Anim ghostHp = new Anim(1, 500, Ease.IN_OUT);
 		private LivingEntity last = null;
@@ -811,7 +812,7 @@ public final class HudWidgets {
 
 			float nx = x0 + 41 * U;
 			float nameCap = 10 * U * 0.727f;
-			String badge = badge(target == null ? new ItemStack(Items.NETHERITE_SWORD) : target.getMainHandItem());
+			String badge = target == null ? "SWORD" : badge(target.getMainHandItem());
 			float badgeCap = 6 * U * 0.727f;
 			float bh = 11 * U;
 			float bw = 5 * U + 6.5f * U + 3 * U + Type.spacedWidth(badge, badgeCap, 0.08f, Weight.BOLD) + 6 * U;
@@ -881,9 +882,14 @@ public final class HudWidgets {
 			float segment = (bx2 - bx1 - 3 * 2 * U) / 4f;
 			for (int i = 0; i < 4; i++) {
 				float sx = bx1 + i * (segment + 2 * U);
-				ItemStack piece = target == null ? (i == 1 ? ItemStack.EMPTY : new ItemStack(Items.DIAMOND_HELMET)) : target.getItemBySlot(ARMOR_SLOTS[i]);
-				float left = piece.isEmpty() || !piece.isDamageableItem() || piece.getMaxDamage() <= 0 ? (piece.isEmpty() ? 0 : 1)
-						: (piece.getMaxDamage() - piece.getDamageValue()) / (float) piece.getMaxDamage();
+				float left;
+				if (target == null) {
+					left = SAMPLE_ARMOR[i];
+				} else {
+					ItemStack piece = target.getItemBySlot(ARMOR_SLOTS[i]);
+					left = piece.isEmpty() ? 0 : !piece.isDamageableItem() || piece.getMaxDamage() <= 0 ? 1
+							: (piece.getMaxDamage() - piece.getDamageValue()) / (float) piece.getMaxDamage();
+				}
 				Paint.rect(d, sx, ay, sx + segment, ay + 1.5f * U, 0.75f * U, 0x1FFFFFFF);
 				if (left > 0) Paint.rect(d, sx, ay, sx + segment * left, ay + 1.5f * U, 0.75f * U, Hud.quality(1 - left));
 			}

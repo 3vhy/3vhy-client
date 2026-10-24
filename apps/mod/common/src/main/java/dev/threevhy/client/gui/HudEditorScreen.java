@@ -128,8 +128,8 @@ public final class HudEditorScreen extends CompatScreen {
 		float y2 = box[3] + 2;
 		float hair = 1f / Math.max(1, Paint.density(d));
 		if (lit > 0.01f) {
-			Paint.shadow(d, x1, y1, x2, y2, 4, 0, 0, 10, -2, Paint.fade(Accent.glow(0.7f), lit));
-			Paint.rect(d, x1, y1, x2, y2, 4, Paint.fade(0x1F880FF9, lit));
+			Paint.shadow(d, x1, y1, x2, y2, 4, 0, 0, 8, -3, Paint.fade(Accent.glow(0.45f), lit));
+			Paint.rect(d, x1, y1, x2, y2, 4, Paint.fade(0x14880FF9, lit));
 		}
 		Paint.stroke(d, x1, y1, x2, y2, 4, Math.max(hair, 0.5f), Widgets.mixColor(0x5ACDB6FF, Accent.lighten(Accent.get(), 0.25f), lit));
 	}
