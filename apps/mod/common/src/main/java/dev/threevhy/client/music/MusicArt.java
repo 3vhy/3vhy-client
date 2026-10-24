@@ -6,6 +6,7 @@ import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.Compat;
 import dev.threevhy.client.gui.Smooth;
+import dev.threevhy.client.ui.Paint;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.resources.Identifier;
@@ -33,7 +34,8 @@ public final class MusicArt {
 
 	/**
 	 * Draws the picture {@code size} units square at (x, y) with corners rounded by {@code radius}
-	 * (half of {@code size} makes a circle). Returns false when there's no picture (yet). Render thread only.
+	 * (half of {@code size} makes a circle), faded with {@link Paint#opacity()}. Returns false when there's
+	 * no picture (yet). Render thread only.
 	 */
 	public boolean draw(Draw d, byte[] png, long version, float x, float y, float size, float radius) {
 		if (png == null) return false;
@@ -52,7 +54,7 @@ public final class MusicArt {
 		if (id == null) return false;
 		d.push();
 		d.scale(1f / k);
-		d.mask(id, Math.round(x * k), Math.round(y * k), 0, 0, s, s, s, s, 0xFFFFFFFF);
+		d.mask(id, Math.round(x * k), Math.round(y * k), 0, 0, s, s, s, s, Paint.fade(0xFFFFFFFF, Paint.opacity()));
 		d.pop();
 		return true;
 	}

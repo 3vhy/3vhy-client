@@ -69,4 +69,21 @@ public final class Hud {
 		float fx = x1 + (x2 - x1) * Math.max(0, Math.min(1, fraction));
 		if (fx > x1 + h * 0.5f) Paint.rect(d, x1, y, fx, y + h, h / 2f, fill == null ? Accent.bar() : fill);
 	}
+
+	/**
+	 * One line of lyrics like karaoke: {@code lit} as far as it's been sung ({@code sung}, 0..1) and
+	 * {@code dim} after that.
+	 */
+	public static void karaoke(Draw d, String text, float x, float capTop, float cap, Weight weight, float sung, int lit, int dim, boolean shadow) {
+		float w = Type.width(text, cap, weight);
+		float here = w * Math.max(0, Math.min(1, sung));
+		if (here < w) text(d, text, x, capTop, cap, weight, dim, shadow);
+		if (here >= w) {
+			text(d, text, x, capTop, cap, weight, lit, shadow);
+		} else if (here > 0) {
+			d.enableScissor((int) Math.floor(x - cap), (int) Math.floor(capTop - cap), (int) Math.ceil(x + here), (int) Math.ceil(capTop + cap * 2));
+			Type.draw(d, text, x, capTop, cap, weight, lit);
+			d.disableScissor();
+		}
+	}
 }

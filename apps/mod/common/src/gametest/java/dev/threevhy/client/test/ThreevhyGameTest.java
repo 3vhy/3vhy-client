@@ -440,7 +440,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					PlayerList.names().add(name);
 				}
 			});
-			context.waitTicks(5);
+			context.waitTicks(3);
+			shot(context, "3vhy-player-list-closeup-joining");
+			context.waitTicks(12);
 			shot(context, "3vhy-player-list-closeup-more");
 			check(failed, "player list shows six and +N MORE", context.computeOnClient(client ->
 					PlayerList.names().size() == listedPlayers.size() + 6 && HudWidgets.PLAYER_LIST.visible(client)));

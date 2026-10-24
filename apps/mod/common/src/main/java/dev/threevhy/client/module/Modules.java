@@ -243,10 +243,12 @@ public final class Modules {
 			"The song playing on Spotify, YouTube or any other app", Category.HUD, false).icon("music").markNew(), 90));
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
 	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
-	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", true));
-	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The play button, progress bar and volume bar", 0xFFA52BF5));
+	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", false));
+	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The progress bar and volume bar", 0xFFA52BF5));
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
+	public static final Toggle MUSIC_LYRICS = MUSIC.add(new Toggle("lyrics", "Lyrics line",
+			"The line being sung, above the player, filling in as it's sung (lyrics from LRCLIB)", true));
 	public static final Module MODULE_LIST = sized(background(new Module("module_list", "Active Modules",
 			"The mods you have on, listed down the side of the screen", Category.HUD, true).icon("list").markNew(), 90));
 	public static final Toggle MODULE_LIST_HUD = MODULE_LIST.add(new Toggle("hud", "HUD mods",

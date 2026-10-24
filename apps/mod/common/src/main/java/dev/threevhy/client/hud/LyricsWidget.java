@@ -4,10 +4,7 @@ import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.gui.Accent;
 import dev.threevhy.client.module.Modules;
-import dev.threevhy.client.music.Lyrics;
 import dev.threevhy.client.music.MusicBridge;
-import dev.threevhy.client.music.NowPlaying;
-import dev.threevhy.client.ui.Ease;
 import dev.threevhy.client.ui.Paint;
 import dev.threevhy.client.ui.Tokens;
 import dev.threevhy.client.ui.Type;
@@ -26,15 +23,8 @@ import net.minecraft.util.Mth;
 final class LyricsWidget extends HudWidget {
 	private static final float WIDTH = 260;
 	private static final float ELEVATION = 15;
-	private static final long FADE_MS = 520;
-
-	private int shownIndex = -2;
-	private String current = "";
-	private String previous = "";
-	private long changedAt = 0;
+	private final LyricTracker lyrics = new LyricTracker();
 	private float anchorYaw = 0;
-	private double lineAt = 0;
-	private double lineEnd = 0;
 
 	LyricsWidget() {
 		super("lyrics", Modules.LYRICS, Anchor.TOP_CENTER);
@@ -55,7 +45,7 @@ final class LyricsWidget extends HudWidget {
 
 	@Override
 	public boolean visible(Minecraft mc) {
-		return !current.isEmpty() || !previous.isEmpty();
+		return !lyrics.current().isEmpty() || !lyrics.previous().isEmpty();
 	}
 
 	@Override
@@ -68,51 +58,24 @@ final class LyricsWidget extends HudWidget {
 		return Math.round(cap() * 2 * 1.5f + cap() * 1.4f + 8);
 	}
 
-	/** Follows the song: fetches its lyrics and notices when the next line starts. */
+	/** Follows the song; a new line is written where you're looking now. */
 	private void update(Minecraft mc) {
-		NowPlaying song = MusicBridge.current();
-		if (song == null) {
-			current = "";
-			previous = "";
-			shownIndex = -2;
-			return;
-		}
-		Lyrics.want(song);
-		List<Lyrics.Line> lines = Lyrics.lines(song);
-		int index = Lyrics.index(lines, song.positionNow() + 0.12);
-		if (index == shownIndex) return;
-		shownIndex = index;
-		lineAt = index < 0 ? 0 : lines.get(index).at();
-		lineEnd = index + 1 < lines.size() ? lines.get(index + 1).at() : lineAt + 4;
-		previous = current;
-		current = index < 0 ? "" : lines.get(index).text();
-		changedAt = System.currentTimeMillis();
-		Camera camera = mc.gameRenderer.getMainCamera();
-		anchorYaw = camera.yRot();
-	}
-
-	private String next() {
-		NowPlaying song = MusicBridge.current();
-		List<Lyrics.Line> lines = Lyrics.lines(song);
-		for (int i = shownIndex + 1; i < lines.size(); i++) {
-			if (!lines.get(i).text().isBlank()) return lines.get(i).text();
-		}
-		return "";
+		if (lyrics.update(MusicBridge.current())) anchorYaw = mc.gameRenderer.getMainCamera().yRot();
 	}
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
 		update(mc);
-		String line = current;
-		if (preview && line.isEmpty() && previous.isEmpty()) line = "Lyrics show here as the song plays";
-		drawLines(d, x + WIDTH / 2f, y + 4, line, preview ? "" : next(), 1);
+		String line = lyrics.current();
+		if (preview && line.isEmpty() && lyrics.previous().isEmpty()) line = "Lyrics show here as the song plays";
+		drawLines(d, x + WIDTH / 2f, y + 4, line, preview ? "" : lyrics.next(), 1);
 	}
 
 	/** In the sky: projects the line's spot above the horizon onto the screen, if it's in view. */
 	void drawSky(Draw d, Minecraft mc) {
 		if (!Modules.LYRICS.enabled() || !sky() || mc.player == null) return;
 		update(mc);
-		if (current.isEmpty() && previous.isEmpty()) return;
+		if (lyrics.current().isEmpty() && lyrics.previous().isEmpty()) return;
 		Camera camera = mc.gameRenderer.getMainCamera();
 		float yaw = Mth.wrapDegrees(anchorYaw - camera.yRot());
 		float up = ELEVATION + camera.xRot();
@@ -126,30 +89,22 @@ final class LyricsWidget extends HudWidget {
 		float sy = h / 2f - (float) Math.tan(Math.toRadians(up)) / halfH * h / 2f;
 		float edge = Math.min(1, Math.max(0, 1.4f - Math.abs(yaw) / 55f));
 		float old = Paint.opacity(Paint.opacity() * edge);
-		drawLines(d, sx, sy - cap() * 1.5f, current, next(), 1.25f);
+		drawLines(d, sx, sy - cap() * 1.5f, lyrics.current(), lyrics.next(), 1.25f);
 		Paint.opacity(old);
 		Hooks.lyricsDrawn = true;
 	}
 
-	/** How much of the current line has been sung, 0..1, for the karaoke fill. */
-	private float sung() {
-		NowPlaying song = MusicBridge.current();
-		if (song == null || lineEnd <= lineAt) return 1;
-		return (float) Math.max(0, Math.min(1, (song.positionNow() - lineAt) / Math.min(lineEnd - lineAt, 8)));
-	}
-
 	private void drawLines(Draw d, float cx, float top, String line, String next, float glow) {
-		long now = System.currentTimeMillis();
-		float t = Ease.OUT.apply((now - changedAt) / (double) FADE_MS);
+		float t = lyrics.change();
 		float cap = cap();
-		if (!previous.isEmpty() && t < 1) {
+		if (!lyrics.previous().isEmpty() && t < 1) {
 			float old = Paint.opacity(Paint.opacity() * (1 - t));
-			block(d, cx, top - 8 * t, previous, cap, glow, 1);
+			block(d, cx, top - 8 * t, lyrics.previous(), cap, glow, 1);
 			Paint.opacity(old);
 		}
 		if (!line.isEmpty()) {
 			float old = Paint.opacity(Paint.opacity() * t);
-			float h = block(d, cx, top + 8 * (1 - t), line, cap, glow, line.equals(current) ? sung() : 1);
+			float h = block(d, cx, top + 8 * (1 - t), line, cap, glow, line.equals(lyrics.current()) ? lyrics.sung(MusicBridge.current()) : 1);
 			Paint.opacity(old);
 			if (Modules.LYRICS_NEXT.get() && !next.isEmpty()) {
 				float small = cap * 0.62f;
