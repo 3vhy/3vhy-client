@@ -17,14 +17,19 @@ import net.minecraft.util.Mth;
 
 /**
  * Sky Lyrics: the words of the song playing, line by line as they're sung. In the sky (the default)
- * each new line is written high up in front of you and stays there in the world as you turn, glowing
- * violet, with the next line faint under it; on screen they sit at the top like a HUD widget instead.
+ * each new line is written a little above where you're looking when it starts and stays there in the
+ * world as you turn, glowing violet, with the next line faint under it; the line before drifts away
+ * from where it was. On screen they sit at the top like a HUD widget instead.
  */
 final class LyricsWidget extends HudWidget {
 	private static final float WIDTH = 260;
-	private static final float ELEVATION = 15;
+	/** How far above the crosshair a new line is written, in degrees. */
+	private static final float RAISE = 9;
 	private final LyricTracker lyrics = new LyricTracker();
 	private float anchorYaw = 0;
+	private float anchorUp = 0;
+	private float previousYaw = 0;
+	private float previousUp = 0;
 
 	LyricsWidget() {
 		super("lyrics", Modules.LYRICS, Anchor.TOP_CENTER);
@@ -58,9 +63,14 @@ final class LyricsWidget extends HudWidget {
 		return Math.round(cap() * 2 * 1.5f + cap() * 1.4f + 8);
 	}
 
-	/** Follows the song; a new line is written where you're looking now. */
+	/** Follows the song; a new line is written just above where you're looking now. */
 	private void update(Minecraft mc) {
-		if (lyrics.update(MusicBridge.current())) anchorYaw = mc.gameRenderer.getMainCamera().yRot();
+		if (!lyrics.update(MusicBridge.current())) return;
+		Camera camera = mc.gameRenderer.getMainCamera();
+		previousYaw = anchorYaw;
+		previousUp = anchorUp;
+		anchorYaw = camera.yRot();
+		anchorUp = RAISE - camera.xRot();
 	}
 
 	@Override
@@ -68,40 +78,63 @@ final class LyricsWidget extends HudWidget {
 		update(mc);
 		String line = lyrics.current();
 		if (preview && line.isEmpty() && lyrics.previous().isEmpty()) line = "Lyrics show here as the song plays";
-		drawLines(d, x + WIDTH / 2f, y + 4, line, preview ? "" : lyrics.next(), 1);
+		drawPrevious(d, x + WIDTH / 2f, y + 4, 1);
+		drawLine(d, x + WIDTH / 2f, y + 4, line, preview ? "" : lyrics.next(), 1);
 	}
 
-	/** In the sky: projects the line's spot above the horizon onto the screen, if it's in view. */
+	/** In the sky: each line at its spot in the world, drawn where that spot is on screen while it's in view. */
 	void drawSky(Draw d, Minecraft mc) {
 		if (!Modules.LYRICS.enabled() || !sky() || mc.player == null) return;
 		update(mc);
 		if (lyrics.current().isEmpty() && lyrics.previous().isEmpty()) return;
+		float[] before = project(d, mc, previousYaw, previousUp);
+		if (before != null) {
+			float old = Paint.opacity(Paint.opacity() * before[2]);
+			drawPrevious(d, before[0], before[1] - cap() * 1.5f, 1.25f);
+			Paint.opacity(old);
+		}
+		float[] now = project(d, mc, anchorYaw, anchorUp);
+		if (now == null) return;
+		float top = now[1] - cap() * 1.5f;
+		float old = Paint.opacity(Paint.opacity() * now[2]);
+		drawLine(d, now[0], top, lyrics.current(), lyrics.next(), 1.25f);
+		Paint.opacity(old);
+		if (!lyrics.current().isEmpty() && top > -cap() && top < d.height() - cap()) Hooks.lyricsDrawn = true;
+	}
+
+	/**
+	 * Where the spot {@code yaw} round and {@code up} degrees above the horizon is on screen now: x, y and
+	 * how much to fade it as it nears the side of your view. Null when it's out of view.
+	 */
+	private static float[] project(Draw d, Minecraft mc, float yaw, float up) {
 		Camera camera = mc.gameRenderer.getMainCamera();
-		float yaw = Mth.wrapDegrees(anchorYaw - camera.yRot());
-		float up = ELEVATION + camera.xRot();
-		if (Math.abs(yaw) > 75 || up > 80 || up < -80) return;
+		float side = Mth.wrapDegrees(yaw - camera.yRot());
+		float above = up + camera.xRot();
+		if (Math.abs(side) > 75 || above > 80 || above < -80) return null;
 		float fov = (float) Math.toRadians(mc.options.fov().get());
 		float halfH = (float) Math.tan(fov / 2);
 		float w = d.width();
 		float h = d.height();
 		float aspect = w / Math.max(1, h);
-		float sx = w / 2f + (float) Math.tan(Math.toRadians(yaw)) / (halfH * aspect) * w / 2f;
-		float sy = h / 2f - (float) Math.tan(Math.toRadians(up)) / halfH * h / 2f;
-		float edge = Math.min(1, Math.max(0, 1.4f - Math.abs(yaw) / 55f));
-		float old = Paint.opacity(Paint.opacity() * edge);
-		drawLines(d, sx, sy - cap() * 1.5f, lyrics.current(), lyrics.next(), 1.25f);
-		Paint.opacity(old);
-		Hooks.lyricsDrawn = true;
+		float sx = w / 2f + (float) Math.tan(Math.toRadians(side)) / (halfH * aspect) * w / 2f;
+		float sy = h / 2f - (float) Math.tan(Math.toRadians(above)) / halfH * h / 2f;
+		float edge = Math.min(1, Math.max(0, 1.4f - Math.abs(side) / 55f));
+		return new float[] {sx, sy, edge};
 	}
 
-	private void drawLines(Draw d, float cx, float top, String line, String next, float glow) {
+	/** The line before, drifting up and fading out as the new one comes in. */
+	private void drawPrevious(Draw d, float cx, float top, float glow) {
+		float t = lyrics.change();
+		if (lyrics.previous().isEmpty() || t >= 1) return;
+		float old = Paint.opacity(Paint.opacity() * (1 - t));
+		block(d, cx, top - 8 * t, lyrics.previous(), cap(), glow, 1);
+		Paint.opacity(old);
+	}
+
+	/** The line being sung, rising into place and filling in as it's sung, with the next one faint under it. */
+	private void drawLine(Draw d, float cx, float top, String line, String next, float glow) {
 		float t = lyrics.change();
 		float cap = cap();
-		if (!lyrics.previous().isEmpty() && t < 1) {
-			float old = Paint.opacity(Paint.opacity() * (1 - t));
-			block(d, cx, top - 8 * t, lyrics.previous(), cap, glow, 1);
-			Paint.opacity(old);
-		}
 		if (!line.isEmpty()) {
 			float old = Paint.opacity(Paint.opacity() * t);
 			float h = block(d, cx, top + 8 * (1 - t), line, cap, glow, line.equals(lyrics.current()) ? lyrics.sung(MusicBridge.current()) : 1);

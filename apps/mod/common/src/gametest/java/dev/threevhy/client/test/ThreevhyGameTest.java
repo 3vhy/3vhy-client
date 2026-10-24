@@ -508,9 +508,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 							&& PlayerList.seenByServer(client.getUser().getName())));
 
 			context.runOnClient(client -> {
+				Hooks.lyricsDrawn = false;
 				Modules.LYRICS.set(true);
 				client.player.setYRot(0f);
-				client.player.setXRot(-12f);
+				client.player.setXRot(15f);
 				Lyrics.simulate(MusicBridge.current(), "[00:50.00] Snow falls on the quiet town\n[00:55.00] Every light is burning down\n"
 						+ "[01:05.00] Hold on, we're almost home\n[01:20.00] Under violet skies we roam");
 			});
@@ -534,7 +535,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-hotbar-accent");
 			context.getInput().pressKey(InputConstants.KEY_1);
 			context.runOnClient(client -> Modules.HOTBAR_SELECTED.reset());
-			check(failed, "sky lyrics drawn in the sky ahead", Hooks.lyricsDrawn);
+			check(failed, "sky lyrics on screen while looking ahead and a little down", Hooks.lyricsDrawn);
 			check(failed, "lyrics read from LRC", Lyrics.parse("[00:01.50] a\n[00:03.00][00:09.00] b").size() == 3);
 			context.runOnClient(client -> {
 				Modules.LYRICS.set(false);

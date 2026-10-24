@@ -56,9 +56,9 @@ public final class MusicBridge {
 		return status;
 	}
 
-	/** Starts or stops the script to match the Music HUD switch, and restarts it if it stopped. */
+	/** Starts or stops the script to match the Music Player and Sky Lyrics switches, and restarts it if it stopped. */
 	public static void tick() {
-		boolean wanted = Modules.MUSIC.enabled() && supported();
+		boolean wanted = (Modules.MUSIC.enabled() || Modules.LYRICS.enabled()) && supported();
 		if (!wanted) {
 			if (process != null) stop();
 			failures = 0;

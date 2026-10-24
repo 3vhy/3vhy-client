@@ -127,7 +127,7 @@ public final class Modules {
 			"Everyone's swing on your screen, not just yours", false));
 	public static final Module LYRICS = new Module("sky_lyrics", "Sky Lyrics",
 			"The song you play, its words written across the sky", Category.RENDER, false).icon("mic-vocal").markNew();
-	public static final Choice LYRICS_PLACE = LYRICS.add(new Choice("place", "Where", "High in the sky ahead of you, or at the top of the screen",
+	public static final Choice LYRICS_PLACE = LYRICS.add(new Choice("place", "Where", "Just above where you're looking, staying put as you turn, or at the top of the screen",
 			0, "Sky", "Screen"));
 	public static final Slider LYRICS_SIZE = LYRICS.add(new Slider("size", "Size", "How big the words are", 50, 200, 10, 100, "%"));
 	public static final Toggle LYRICS_NEXT = LYRICS.add(new Toggle("next", "Next line", "The line coming up, faint under the one being sung", true));
