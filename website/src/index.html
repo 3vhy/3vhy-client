@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>3vhy Client</title>
+		<meta name="description" data-i18n-attr="content:meta.description" content="" />
+		<meta name="theme-color" content="#05040a" />
+		<link rel="icon" href="./brand/mark.svg" type="image/svg+xml" />
+		<link rel="stylesheet" href="./style.css" />
+	</head>
+	<body class="nocopy">
+		<a class="skip" href="#main">Skip to content</a>
+
+		<header class="nav" data-nav>
+			<div class="nav__bar">
+				<a class="nav__brand" href="#top" aria-label="3vhy Client">
+					<img class="nav__mark" src="./brand/mark.svg" alt="" width="26" height="26" />
+					<span class="nav__word">3VHY</span>
+				</a>
+				<nav class="nav__links" aria-label="Sections" data-nav-links>
+					<span class="nav__indicator" data-nav-indicator></span>
+					<a href="#combat" data-i18n="nav.combat">Combat</a>
+					<a href="#privacy" data-i18n="nav.privacy">Privacy</a>
+					<a href="#scenes" data-i18n="nav.scenes">Main menu</a>
+					<a href="#features" data-i18n="nav.features">Features</a>
+					<a href="#mods" data-i18n="nav.mods">All mods</a>
+					<a href="#engine" data-i18n="nav.engine">Engine</a>
+					<a href="#faq" data-i18n="nav.faq">FAQ</a>
+				</nav>
+				<div class="nav__end">
+					<div class="lang" role="group" aria-label="Language">
+						<a href="#" data-lang="en">EN</a>
+						<a href="#" data-lang="ru">RU</a>
+					</div>
+					<a class="nav__icon" href="https://github.com/3vhy/3vhy-client" target="_blank" rel="noopener" aria-label="GitHub">
+						<i data-lucide="github"></i>
+					</a>
+					<a class="btn btn--primary btn--sm" href="#download" data-i18n="nav.download">Download</a>
+					<button class="nav__toggle" type="button" aria-label="Menu" data-nav-toggle><span></span><span></span></button>
+				</div>
+			</div>
+			<div class="nav__sheet" data-nav-sheet>
+				<a href="#combat" data-i18n="nav.combat">Combat</a>
+				<a href="#privacy" data-i18n="nav.privacy">Privacy</a>
+				<a href="#scenes" data-i18n="nav.scenes">Main menu</a>
+				<a href="#features" data-i18n="nav.features">Features</a>
+				<a href="#mods" data-i18n="nav.mods">All mods</a>
+				<a href="#engine" data-i18n="nav.engine">Engine</a>
+				<a href="#faq" data-i18n="nav.faq">FAQ</a>
+			</div>
+		</header>
+
+		<main id="main">
+			<section class="hero" id="top">
+				<div class="hero__backdrop" aria-hidden="true">
+					<canvas class="hero__stars" data-stars></canvas>
+				</div>
+				<div class="container hero__content">
+					<div class="hero__mark" data-hero-mark>
+						<img src="./brand/mark.svg" alt="" width="112" height="112" />
+						<span class="hero__twinkle"></span>
+					</div>
+					<a class="pill hero__pill" href="#features" data-reveal>
+						<span class="pill__dot"></span><span data-i18n="hero.pill">New</span>
+					</a>
+					<h1 class="hero__title" data-hero-title>
+						<span class="line"><span data-i18n="hero.line1">Minecraft,</span></span>
+						<span class="line" style="--l: 1"><span class="grad" data-i18n="hero.line2">dressed in violet.</span></span>
+					</h1>
+					<p class="hero__sub" data-reveal style="--i: 3" data-i18n="hero.sub"></p>
+					<div class="hero__ctas" data-reveal style="--i: 4">
+						<a class="btn btn--primary btn--lg" href="#download" data-setup-link>
+							<i data-lucide="download"></i><span data-i18n="hero.cta">Download for Windows</span>
+						</a>
+						<a class="btn btn--ghost btn--lg" href="#combat"><span data-i18n="hero.more">See what’s inside</span><i data-lucide="arrow-right"></i></a>
+					</div>
+					<p class="hero__note" data-reveal style="--i: 5" data-i18n="hero.note"></p>
+				</div>
+				<div class="container hero__stage">
+					<div class="stage">
+						<div class="stage__glow" aria-hidden="true"></div>
+						<div class="stage__frame" data-stage-frame>
+							<img src="./shots/menu.webp" alt="The 3vhy menu in game: tabs, search and a grid of mod cards with switches" width="1708" height="960" />
+						</div>
+						<div class="hudbit hudbit--fps" aria-hidden="true">
+							<img class="hudbit__mark" src="./brand/mark.svg" alt="" width="18" height="18" />
+							<b data-fps>240</b><em>FPS</em>
+							<svg class="hudbit__graph" viewBox="0 0 48 14" preserveAspectRatio="none"><path data-fps-graph d="" /></svg>
+						</div>
+						<div class="hudbit hudbit--keys" aria-hidden="true" data-keys>
+							<span class="key" data-key="w">W</span>
+							<span class="key" data-key="a">A</span>
+							<span class="key" data-key="s">S</span>
+							<span class="key" data-key="d">D</span>
+							<span class="key key--mouse" data-key="lmb">LMB<small data-cps="l">9 CPS</small></span>
+							<span class="key key--mouse" data-key="rmb">RMB<small data-cps="r">0 CPS</small></span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="facts" aria-label="3vhy in numbers">
+				<div class="container">
+					<div class="facts__grid">
+						<div class="fact" data-reveal><b data-count="48">48</b><span data-i18n="facts.mods">mods in one menu</span></div>
+						<div class="fact" data-reveal style="--i: 1"><b data-count="8">8</b><span data-i18n="facts.tabs">tabs</span></div>
+						<div class="fact" data-reveal style="--i: 2"><b data-count="2">2</b><span data-i18n="facts.versions">versions</span></div>
+						<div class="fact" data-reveal style="--i: 3"><b data-i18n="facts.free">Free</b><span data-i18n="facts.freeNote">no account</span></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section combat" id="combat">
+				<div class="container">
+					<div class="combat__head">
+						<p class="eyebrow" data-reveal><i data-lucide="swords"></i><span data-i18n="combat.eyebrow">Combat</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="combat.title"></h2>
+						<div class="combat__sub">
+							<p class="lead" data-reveal style="--i: 2" data-i18n="combat.lead"></p>
+							<div class="fair" data-reveal style="--i: 3">
+								<span class="fair__icon"><i data-lucide="shield-check"></i></span>
+								<div class="fair__text" data-i18n="combat.fair"></div>
+							</div>
+						</div>
+					</div>
+					<div class="scene" data-reveal>
+						<div class="scene__shot" aria-hidden="true"><img src="./shots/world.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+						<div class="thud" data-thud role="img" aria-label="An animated Target HUD card following a fight">
+							<div class="thud__card">
+								<span class="thud__sweep"></span>
+								<div class="thud__face">
+									<img src="./shots/face.png" alt="" width="64" height="64" />
+									<span class="thud__hurt"></span>
+									<span class="thud__gold"></span>
+									<span class="thud__skull"><i data-lucide="skull"></i></span>
+								</div>
+								<div class="thud__brackets"><i></i><i></i><i></i><i></i></div>
+								<div class="thud__name"><span>Nightfall</span><s></s></div>
+								<div class="thud__badge"><i data-lucide="sword"></i><b>SWORD</b></div>
+								<div class="thud__health">
+									<span class="thud__heart"><i data-lucide="heart"></i></span>
+									<b data-hp>10</b><em class="thud__abs" data-abs></em>
+									<span class="thud__dist" data-dist>3.1 m</span>
+								</div>
+								<div class="thud__bar"><span class="thud__ghost"></span><span class="thud__fill"></span><span class="thud__absbar"></span></div>
+								<div class="thud__armor"><span style="--d: 0.92"></span><span style="--d: 0.64"></span><span style="--d: 0.81"></span><span style="--d: 0.38; --c: var(--gold)"></span></div>
+								<div class="thud__chips">
+									<span class="chip" data-chip="combo"><i data-lucide="flame"></i><b>0</b><em data-i18n="chip.combo">combo</em></span>
+									<span class="chip" data-chip="pops"><i data-lucide="shield-plus"></i><b>0</b><em data-i18n="chip.pops">pops</em></span>
+									<span class="chip" data-chip="armour"><i data-lucide="shield-half"></i><b>14</b><em data-i18n="chip.armour">armour</em></span>
+								</div>
+								<div class="thud__elim"><i data-lucide="skull"></i><b data-i18n="thud.eliminated">ELIMINATED</b></div>
+							</div>
+						</div>
+						<p class="scene__caption"><i data-lucide="crosshair"></i><span data-i18n="combat.caption"></span></p>
+					</div>
+					<div class="modules" data-cards="combat"></div>
+				</div>
+			</section>
+
+			<section class="section privacy" id="privacy">
+				<div class="container">
+					<header class="head">
+						<p class="eyebrow" data-reveal><i data-lucide="eye-off"></i><span data-i18n="privacy.eyebrow">Privacy</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="privacy.title"></h2>
+						<p class="lead" data-reveal style="--i: 2" data-i18n="privacy.lead"></p>
+					</header>
+					<div class="bento">
+						<article class="tile tile--wide spot" data-reveal>
+							<div class="tile__media"><img src="./shots/name-protect.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="nameprotect"></div>
+						</article>
+						<article class="tile tile--narrow spot" data-reveal style="--i: 1">
+							<div class="tile__media"><img src="./shots/freelook.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="skinprotect"></div>
+						</article>
+						<article class="tile tile--third spot" data-reveal>
+							<div class="tile__media tile__media--art"><img class="tile__art" src="./shots/player-list.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="playerlist"></div>
+						</article>
+						<article class="tile tile--third spot" data-reveal style="--i: 1">
+							<div class="tile__media"><img src="./shots/zoom.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="zoom"></div>
+						</article>
+						<article class="tile tile--third spot" data-reveal style="--i: 2">
+							<div class="tile__media"><img src="./shots/waypoints.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="waypoints"></div>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section scenes" id="scenes">
+				<div class="container">
+					<header class="head head--center">
+						<p class="eyebrow" data-reveal><i data-lucide="house"></i><span data-i18n="scenes.eyebrow">Main menu</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="scenes.title"></h2>
+						<p class="lead" data-reveal style="--i: 2" data-i18n="scenes.lead"></p>
+					</header>
+					<div class="viewer" data-viewer data-reveal>
+						<div class="viewer__screen">
+							<div class="viewer__slides" data-slides>
+								<img src="./shots/menu-day.webp" alt="" width="1708" height="960" class="is-active" data-slide="day" />
+								<img src="./shots/menu-dusk.webp" alt="" width="1708" height="960" loading="lazy" data-slide="dusk" />
+								<img src="./shots/menu-night.webp" alt="" width="1708" height="960" loading="lazy" data-slide="night" />
+								<img src="./shots/menu-sky.webp" alt="" width="1708" height="960" loading="lazy" data-slide="sky" />
+								<img src="./shots/menu-october.webp" alt="" width="1708" height="960" loading="lazy" data-slide="october" />
+								<img src="./shots/menu-panel.webp" alt="" width="1708" height="960" loading="lazy" data-slide="panel" />
+							</div>
+							<div class="viewer__shade"></div>
+							<div class="viewer__caption" data-caption><strong></strong><span></span></div>
+						</div>
+						<div class="viewer__tabs" data-tabs></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section features" id="features">
+				<div class="container">
+					<header class="head">
+						<p class="eyebrow" data-reveal><i data-lucide="sparkles"></i><span data-i18n="features.eyebrow">Features</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="features.title"></h2>
+						<p class="lead" data-reveal style="--i: 2" data-i18n="features.lead"></p>
+					</header>
+					<div class="bento">
+						<article class="tile tile--wide tile--tall spot" data-reveal data-blades>
+							<div class="tile__chips">
+								<span class="is-active" data-blade="katana" data-i18n="chip.katana">Katana</span>
+								<span data-blade="scythe" data-i18n="chip.scythe">Scythe</span>
+								<span data-blade="inspect" data-i18n="chip.inspect">Inspect</span>
+							</div>
+							<div class="tile__media tile__media--stack">
+								<img class="is-active" src="./shots/blade-katana.webp" alt="" width="1708" height="960" loading="lazy" data-blade-shot="katana" />
+								<img src="./shots/blade-scythe.webp" alt="" width="1708" height="960" loading="lazy" data-blade-shot="scythe" />
+								<img src="./shots/blade-inspect.webp" alt="" width="1708" height="960" loading="lazy" data-blade-shot="inspect" />
+							</div>
+							<div class="tile__text" data-card="blades"></div>
+						</article>
+						<article class="tile tile--narrow tile--tall spot" data-reveal style="--i: 1">
+							<div class="tile__media tile__media--art tile__media--sky">
+								<div class="lyrics" data-lyrics>
+									<p class="lyrics__line"></p>
+									<p class="lyrics__next"></p>
+								</div>
+							</div>
+							<div class="tile__text" data-card="lyrics"></div>
+						</article>
+						<article class="tile tile--wide spot" data-reveal>
+							<div class="tile__media tile__media--art">
+								<div class="player" data-player>
+									<div class="player__art"><img src="./shots/cover.png" alt="" width="80" height="80" /></div>
+									<div class="player__meta">
+										<b>Violet Hour</b><span>3vhy Sessions</span>
+										<div class="player__bar"><i></i></div>
+										<div class="player__time"><span data-time>1:04</span><span>3:12</span></div>
+									</div>
+									<div class="player__controls">
+										<i data-lucide="skip-back"></i>
+										<span class="player__play"><i data-lucide="pause"></i></span>
+										<i data-lucide="skip-forward"></i>
+									</div>
+								</div>
+							</div>
+							<div class="tile__text" data-card="music"></div>
+						</article>
+						<article class="tile tile--narrow spot" data-reveal style="--i: 1">
+							<div class="tile__media tile__media--art"><img class="tile__art" src="./shots/keystrokes.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="keystrokes"></div>
+						</article>
+						<article class="tile tile--third spot" data-reveal>
+							<div class="tile__media tile__media--art"><img class="tile__art" src="./shots/potions.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="potions"></div>
+						</article>
+						<article class="tile tile--twothirds spot" data-reveal style="--i: 1">
+							<div class="tile__media"><img src="./shots/menu-settings.webp" alt="" width="1708" height="960" loading="lazy" /></div>
+							<div class="tile__text" data-card="menu"></div>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section mods" id="mods">
+				<div class="container">
+					<header class="head head--center">
+						<p class="eyebrow" data-reveal><i data-lucide="layout-grid"></i><span data-i18n="mods.eyebrow">All mods</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="mods.title"></h2>
+						<p class="lead" data-reveal style="--i: 2" data-i18n="mods.lead"></p>
+					</header>
+					<div class="menu" data-menu data-reveal>
+						<div class="menu__bar">
+							<div class="menu__tabs" data-menu-tabs role="tablist"><span class="menu__pill" data-menu-pill></span></div>
+							<label class="menu__search">
+								<i data-lucide="search"></i>
+								<input type="search" data-menu-search data-i18n-attr="placeholder:mods.search" placeholder="Search mods" />
+								<kbd>/</kbd>
+							</label>
+						</div>
+						<div class="menu__title">
+							<div><strong data-menu-name></strong><span data-menu-tagline></span></div>
+							<p class="menu__count"><span class="menu__dot"></span><span data-menu-count></span></p>
+						</div>
+						<div class="menu__grid" data-menu-grid></div>
+						<p class="menu__empty" data-menu-empty data-i18n="mods.empty" hidden></p>
+					</div>
+				</div>
+			</section>
+
+			<section class="section engine" id="engine">
+				<div class="container engine__grid">
+					<div class="engine__copy">
+						<header class="head">
+							<p class="eyebrow" data-reveal><i data-lucide="cpu"></i><span data-i18n="engine.eyebrow">Under the hood</span></p>
+							<h2 data-reveal style="--i: 1" data-i18n="engine.title"></h2>
+							<p class="lead" data-reveal style="--i: 2" data-i18n="engine.lead"></p>
+						</header>
+						<ul class="points" data-points></ul>
+					</div>
+					<div class="orbit-wrap" data-reveal>
+						<div class="orbit" data-orbit>
+							<svg class="orbit__ring orbit__ring--back" viewBox="-300 -110 600 220" aria-hidden="true">
+								<defs>
+									<linearGradient id="ring" x1="0" x2="1"><stop offset="0" stop-color="#6a2cff" /><stop offset="1" stop-color="#e05cf0" /></linearGradient>
+								</defs>
+								<ellipse cx="0" cy="0" rx="260" ry="86" />
+							</svg>
+							<div class="orbit__core"><img src="./brand/mark.svg" alt="" width="120" height="120" /></div>
+							<div class="orbit__planets" data-planets></div>
+						</div>
+						<div class="orbit__label">
+							<p class="orbit__key"><kbd data-i18n="orbit.key">Right Shift</kbd><span data-i18n="orbit.hint"></span></p>
+							<strong data-orbit-name>Render</strong>
+							<span data-orbit-tagline></span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="section download" id="download">
+				<div class="container">
+					<header class="head head--center">
+						<p class="eyebrow" data-reveal><i data-lucide="download"></i><span data-i18n="download.eyebrow">Download</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="download.title"></h2>
+						<p class="lead" data-reveal style="--i: 2" data-i18n="download.lead"></p>
+					</header>
+					<div class="plans">
+						<article class="plan plan--main spot" data-reveal>
+							<p class="plan__tag" data-i18n="download.recommended">Recommended</p>
+							<div class="plan__head">
+								<img src="./brand/mark.svg" alt="" width="44" height="44" />
+								<div><h3 data-i18n="download.setup.name">3vhy Client</h3><p class="plan__price" data-i18n="download.free">Free</p></div>
+							</div>
+							<p class="plan__desc" data-i18n="download.setup.desc"></p>
+							<ul class="plan__list" data-plan-list="setup"></ul>
+							<a class="btn btn--primary btn--lg btn--block" data-setup-link href="https://github.com/3vhy/3vhy-client/releases/latest">
+								<i data-lucide="download"></i><span data-i18n="download.setup.cta">Download Setup</span>
+							</a>
+							<p class="plan__version"><span data-i18n="download.version">Latest version</span> <b data-version>—</b></p>
+						</article>
+						<article class="plan spot" data-reveal style="--i: 1">
+							<div class="plan__head">
+								<span class="plan__jar"><i data-lucide="package"></i></span>
+								<div><h3 data-i18n="download.mod.name">Mod only</h3><p class="plan__price" data-i18n="download.free">Free</p></div>
+							</div>
+							<p class="plan__desc" data-i18n="download.mod.desc"></p>
+							<ul class="plan__list" data-plan-list="mod"></ul>
+							<div class="plan__jars">
+								<a class="btn btn--ghost btn--lg" data-jar="1.21.11" href="https://github.com/3vhy/3vhy-client/releases/latest"><i data-lucide="download"></i>1.21.11</a>
+								<a class="btn btn--ghost btn--lg" data-jar="26.1" href="https://github.com/3vhy/3vhy-client/releases/latest"><i data-lucide="download"></i>26.1</a>
+							</div>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="section faq" id="faq">
+				<div class="container faq__grid">
+					<header class="head">
+						<p class="eyebrow" data-reveal><i data-lucide="circle-help"></i><span data-i18n="nav.faq">FAQ</span></p>
+						<h2 data-reveal style="--i: 1" data-i18n="faq.title"></h2>
+						<p class="lead" data-reveal style="--i: 2" data-i18n="faq.lead"></p>
+					</header>
+					<div class="faq__list" data-faq></div>
+				</div>
+			</section>
+
+			<section class="closing">
+				<div class="closing__glow" aria-hidden="true"></div>
+				<div class="container closing__content">
+					<img class="closing__mark" src="./brand/mark.svg" alt="" width="84" height="84" data-reveal />
+					<h2 data-reveal style="--i: 1" data-i18n="closing.title"></h2>
+					<a class="btn btn--primary btn--lg" data-reveal style="--i: 2" data-setup-link href="https://github.com/3vhy/3vhy-client/releases/latest">
+						<i data-lucide="download"></i><span data-i18n="hero.cta">Download for Windows</span>
+					</a>
+					<p class="hero__note" data-reveal style="--i: 3" data-i18n="closing.note"></p>
+				</div>
+			</section>
+		</main>
+
+		<footer class="footer">
+			<div class="container footer__grid">
+				<a class="nav__brand" href="#top"><img class="nav__mark" src="./brand/mark.svg" alt="" width="26" height="26" /><span class="nav__word">3VHY</span></a>
+				<nav class="footer__links">
+					<a href="https://github.com/3vhy/3vhy-client/releases" target="_blank" rel="noopener" data-i18n="footer.releases">Releases</a>
+					<a href="https://github.com/3vhy/3vhy-client/issues" target="_blank" rel="noopener" data-i18n="footer.issues">Report a bug</a>
+					<a href="https://github.com/3vhy/3vhy-client" target="_blank" rel="noopener" data-i18n="footer.source">Source code</a>
+				</nav>
+				<p class="footer__legal" data-i18n="footer.legal"></p>
+			</div>
+		</footer>
+
+		<script type="module" src="./main.js"></script>
+	</body>
+</html>

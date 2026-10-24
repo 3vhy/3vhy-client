@@ -1,0 +1,20 @@
+{
+	"name": "3vhy-website",
+	"private": true,
+	"type": "module",
+	"description": "The 3vhy Client download page. Builds into one self-contained index.html.",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build"
+	},
+	"devDependencies": {
+		"@fontsource-variable/inter": "5.2.5",
+		"autoprefixer": "10.4.20",
+		"gsap": "3.12.7",
+		"lucide": "0.475.0",
+		"postcss": "8.4.49",
+		"tailwindcss": "3.4.17",
+		"vite": "6.3.5",
+		"vite-plugin-singlefile": "2.2.0"
+	}
+}
