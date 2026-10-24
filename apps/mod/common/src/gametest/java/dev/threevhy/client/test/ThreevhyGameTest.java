@@ -30,6 +30,7 @@ import dev.threevhy.client.module.NameProtect;
 import dev.threevhy.client.module.PlayerList;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
+import dev.threevhy.client.music.Lyrics;
 import dev.threevhy.client.music.MusicBridge;
 import dev.threevhy.client.ui.Sky;
 import java.util.ArrayList;
@@ -282,6 +283,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				Modules.MUSIC.set(true);
 				MusicBridge.simulate(SAMPLE_SONG);
 				Modules.MENU_NAME_HUD.set(true);
+				Modules.POTIONS.set(true);
 				Modules.PLAYER_LIST_OFFLINE.set(true);
 				Modules.PLAYER_LIST_TITLE.set("Friends");
 				PlayerList.add(client.getUser().getName());
@@ -303,6 +305,8 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			server.runCommand("give @a experience_bottle 64");
 			server.runCommand("give @a enchanted_golden_apple 3");
 			server.runCommand("give @a splash_potion[potion_contents={potion:\"minecraft:strong_healing\"}] 3");
+			server.runCommand("effect give @a speed 90 1");
+			server.runCommand("effect give @a strength 40 0");
 			server.runCommand("scoreboard objectives add kills dummy \"Kills\"");
 			server.runCommand("scoreboard objectives setdisplay sidebar kills");
 			server.runCommand("scoreboard objectives setdisplay list kills");
@@ -374,6 +378,19 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			shot(context, "3vhy-stats-closeup");
 			context.runOnClient(client -> Modules.THEME_PANEL_COLOR.reset());
+			context.setScreen(() -> new MusicShowcase(HudWidgets.FPS, HudWidgets.CPS, HudWidgets.PING));
+			context.waitTicks(5);
+			shot(context, "3vhy-stats-closeup-violet");
+			context.setScreen(() -> new MusicShowcase(HudWidgets.COORDS, HudWidgets.CLOCK, HudWidgets.TPS));
+			context.waitTicks(5);
+			shot(context, "3vhy-coords-closeup");
+			context.setScreen(() -> new MusicShowcase(HudWidgets.TARGET));
+			context.waitTicks(15);
+			shot(context, "3vhy-target-closeup");
+			context.setScreen(() -> new MusicShowcase(HudWidgets.POTIONS, HudWidgets.ARMOR));
+			context.waitTicks(5);
+			shot(context, "3vhy-potions-closeup");
+			check(failed, "potion effects widget lists your effects", context.computeOnClient(client -> HudWidgets.POTIONS.visible(client)));
 			context.setScreen(MusicShowcase::new);
 			context.waitTicks(10);
 			shot(context, "3vhy-music-closeup");
@@ -449,6 +466,35 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "player list asks the server who's online (/msg suggestions)", context.computeOnClient(client ->
 					Hooks.playerListAskedServer && PlayerList.checkedWithServer("Steve") && !PlayerList.seenByServer("Steve")
 							&& PlayerList.seenByServer(client.getUser().getName())));
+
+			context.runOnClient(client -> {
+				Modules.LYRICS.set(true);
+				client.player.setYRot(0f);
+				client.player.setXRot(-12f);
+				Lyrics.simulate(MusicBridge.current(), "[00:50.00] Snow falls on the quiet town\n[00:55.00] Every light is burning down\n"
+						+ "[01:05.00] Hold on, we're almost home\n[01:20.00] Under violet skies we roam");
+			});
+			context.waitTicks(20);
+			shot(context, "3vhy-sky-lyrics");
+			check(failed, "sky lyrics drawn in the sky ahead", Hooks.lyricsDrawn);
+			check(failed, "lyrics read from LRC", Lyrics.parse("[00:01.50] a\n[00:03.00][00:09.00] b").size() == 3);
+			context.runOnClient(client -> {
+				Modules.LYRICS.set(false);
+				client.player.setXRot(10f);
+				Modules.BLADES.set(true);
+			});
+			context.waitTicks(10);
+			shot(context, "3vhy-blade-katana");
+			check(failed, "blades swap the sword's model (ItemModelResolver)", Hooks.bladeModelSwapped);
+			context.getInput().pressKey(ThreevhyClient.inspectKey);
+			context.waitTicks(15);
+			shot(context, "3vhy-blade-inspect");
+			check(failed, "inspecting turns the blade over (ItemInHandRenderer)", Hooks.inspectRan);
+			context.waitTicks(40);
+			context.runOnClient(client -> Modules.BLADES_STYLE.set("Scythe"));
+			context.waitTicks(5);
+			shot(context, "3vhy-blade-scythe");
+			context.runOnClient(client -> Modules.BLADES_STYLE.reset());
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
 			server.runCommand("damage @p 1000 minecraft:generic");
