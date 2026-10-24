@@ -108,6 +108,16 @@ jobs:
           cargo build --release -p threevhy_setup
           cp target/release/3vhy-client-setup.exe "dist/3vhy Client Setup.exe"
 
+      # The in-game mod on its own too, for players who use another launcher (Prism, MultiMC, the
+      # vanilla launcher with Fabric): one jar per Minecraft version
+      - name: Add the standalone mod jars
+        shell: bash
+        run: |
+          mkdir -p dist-mod
+          cp packages/app-lib/threevhy-mod/threevhy-client-1.21.11.jar "dist-mod/3vhy-mod-fabric-1.21.11.jar"
+          cp packages/app-lib/threevhy-mod/threevhy-client-26.1.jar "dist-mod/3vhy-mod-fabric-26.1.jar"
+          ls -la dist-mod
+
       - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
@@ -115,11 +125,20 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
 
+      - name: Upload standalone mod jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: 3vhy-mod-standalone
+          path: dist-mod/*.jar
+          if-no-files-found: error
+
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.exe
+          files: |
+            dist/*.exe
+            dist-mod/*.jar
           generate_release_notes: true
 
       # How the build went (and the end of the build log) goes to the ci-report/windows branch,
