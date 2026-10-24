@@ -453,9 +453,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				PlayerList.names().clear();
 				PlayerList.names().addAll(listedPlayers);
 			});
+			boolean popsOn = context.computeOnClient(client -> Modules.POPS.enabled());
+			context.runOnClient(client -> Modules.POPS.set(false));
 			context.setScreen(() -> new MusicShowcase(HudWidgets.POPS));
 			context.waitTicks(5);
 			shot(context, "3vhy-pops-closeup");
+			context.runOnClient(client -> Modules.POPS.set(popsOn));
 			context.setScreen(() -> new MusicShowcase(HudWidgets.STAFF_LIST));
 			context.waitTicks(10);
 			shot(context, "3vhy-staff-list-closeup");

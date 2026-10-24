@@ -99,7 +99,7 @@ final class ListCard {
 	/** The soft highlight in {@code color} behind a row that just arrived, fading as {@code glow} goes to 0. */
 	static void arrival(Draw d, float x1, float x2, float cy, float glow, int color) {
 		if (glow <= 0.01f) return;
-		float e = Ease.OUT.apply(glow);
+		float e = glow * glow;
 		float y1 = cy - ROW / 2f + 2 * K;
 		float y2 = cy + ROW / 2f - 2 * K;
 		float r = ROW / 2f;
