@@ -166,6 +166,12 @@ public final class Modules {
 			"For servers like DonutSMP whose tab list doesn't show everyone: checks /msg name suggestions", true));
 	public static final Text PLAYER_LIST_COMMAND = PLAYER_LIST.add(new Text("command", "Check with",
 			"The command whose name suggestions show who's online, like msg or tpa", "msg", 16));
+	public static final Module STAFF_LIST = sized(background(new Module("staff_list", "Staff List",
+			"The staff on your server's tab list, with their rank, and when they join or leave", Category.PLAYER, false)
+			.icon("shield-user").markNew()));
+	public static final Text STAFF_LIST_RANKS = STAFF_LIST.add(new Text("ranks", "Ranks",
+			"The rank words that mark staff in the tab list, highest first, split by commas",
+			"owner, admin, manager, dev, mod, helper, staff", 96));
 	public static final Module TOGGLE_SPRINT = new Module("toggle_sprint", "Toggle Sprint",
 			"Press sprint once and keep sprinting", Category.PLAYER, false).icon("footprints");
 	public static final Toggle TOGGLE_SNEAK = TOGGLE_SPRINT.add(new Toggle("sneak", "Toggle sneak too", "Press sneak once to keep sneaking", false));
@@ -322,7 +328,7 @@ public final class Modules {
 	public static final List<Module> ALL = List.of(
 			TARGET_HUD, COMBO, POPS, ITEMS, CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM, JUMP_RESET,
 			CROSSHAIR, ZOOM, FREELOOK, NAMETAGS, FOV_CHANGER, SHINY_POTS, SWING_SPEED, LYRICS,
-			NAME_PROTECT, SKIN_PROTECT, PLAYER_LIST, TOGGLE_SPRINT,
+			NAME_PROTECT, SKIN_PROTECT, PLAYER_LIST, STAFF_LIST, TOGGLE_SPRINT,
 			WAYPOINTS, FULLBRIGHT, NO_FOG,
 			CHAT, TEXT_HOTKEYS, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS,
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, POTIONS, SCOREBOARD, HOTBAR, MUSIC, MODULE_LIST,

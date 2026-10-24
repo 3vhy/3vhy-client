@@ -28,6 +28,7 @@ import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.NameProtect;
 import dev.threevhy.client.module.PlayerList;
+import dev.threevhy.client.module.StaffList;
 import dev.threevhy.client.module.PopTracker;
 import dev.threevhy.client.module.Target;
 import dev.threevhy.client.music.Lyrics;
@@ -129,6 +130,8 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				d.translate(this.width - widget.width(mc) * scale - 6, 6);
 			} else if (widget == HudWidgets.MUSIC) {
 				d.translate((this.width - w) / 2f, Math.max(4, this.height - h - 10));
+			} else if (widget == HudWidgets.STAFF_LIST) {
+				d.translate((this.width - w) / 2f, 40);
 			} else {
 				d.translate((this.width - w) / 2f, (this.height - h) / 2f);
 			}
@@ -450,6 +453,35 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				PlayerList.names().clear();
 				PlayerList.names().addAll(listedPlayers);
 			});
+			context.setScreen(() -> new MusicShowcase(HudWidgets.STAFF_LIST));
+			context.waitTicks(10);
+			shot(context, "3vhy-staff-list-closeup");
+			context.runOnClient(client -> {
+				StaffList.simulate("Frenk_btw", "owner", false);
+				StaffList.simulate("Kai", "mod", false);
+			});
+			context.waitTicks(4);
+			shot(context, "3vhy-staff-list-closeup-joining");
+			context.waitTicks(30);
+			context.runOnClient(client -> StaffList.simulate("Kai", "mod", true));
+			context.waitTicks(12);
+			shot(context, "3vhy-staff-list-closeup-spectating");
+			check(failed, "staff list sorts by rank and marks spectators", context.computeOnClient(client -> {
+				List<StaffList.Staff> staff = StaffList.current(client);
+				return staff.size() == 2 && staff.get(0).rank().equals("OWNER") && staff.get(1).spectating();
+			}));
+			context.runOnClient(client -> {
+				StaffList.leave("Frenk_btw");
+				StaffList.leave("Kai");
+			});
+			context.waitTicks(3);
+			shot(context, "3vhy-staff-list-closeup-leaving");
+			context.waitTicks(20);
+			shot(context, "3vhy-staff-list-closeup-clear");
+			check(failed, "staff list drawn", Hooks.staffListDrawn);
+			check(failed, "staff ranks read from the tab list", "mod".equals(StaffList.rankOf("[Sr.Mod] Kai"))
+					&& "admin".equals(StaffList.rankOf("§c§lADMIN §fAlex")) && StaffList.rankOf("[VIP] Steve") == null);
+			context.runOnClient(client -> StaffList.stopSimulating());
 			context.setScreen(() -> new MusicShowcase(HudWidgets.MODULE_LIST));
 			context.waitTicks(5);
 			shot(context, "3vhy-module-list-closeup");

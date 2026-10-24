@@ -1185,10 +1185,11 @@ public final class HudWidgets {
 	public static final HudWidget MENU_LOGO = new MenuLogoWidget();
 	public static final HudWidget MUSIC = new MusicWidget();
 	public static final HudWidget PLAYER_LIST = new PlayerListWidget();
+	public static final HudWidget STAFF_LIST = new StaffListWidget();
 	public static final HudWidget MODULE_LIST = new ModuleListWidget();
 	public static final HudWidget LYRICS = new LyricsWidget();
 
 	/** Drawing order; widgets that share an anchor stack in this order (upwards at the bottom). */
 	public static final List<HudWidget> ALL = List.of(FPS, CPS, PING, TPS, CLOCK, COMBO, COORDS, KEYSTROKES, ITEMS, ARMOR, MODULE_LIST, POPS,
-			PLAYER_LIST, POTIONS, TARGET, JUMP_RESET, TOTEM_WARNING, MENU_LOGO, MUSIC, LYRICS, SCOREBOARD);
+			PLAYER_LIST, STAFF_LIST, POTIONS, TARGET, JUMP_RESET, TOTEM_WARNING, MENU_LOGO, MUSIC, LYRICS, SCOREBOARD);
 }
