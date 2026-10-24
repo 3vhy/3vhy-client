@@ -1,22 +1,33 @@
 package dev.threevhy.client.mixin;
 
 import dev.threevhy.client.compat.DrawImpl;
+import dev.threevhy.client.gui.ButtonStyle;
 import dev.threevhy.client.gui.TitleScreenStyle;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-/** 3vhy main menu: the dark buttons down the right of the title screen, like Lunar's. */
+/**
+ * Minecraft's buttons and sliders as 3vhy's violet glass, and 3vhy's own title screen buttons. Only the
+ * drawing of the widget is swapped, so hover state and tooltips work as usual.
+ */
 @Mixin(AbstractWidget.class)
 public abstract class AbstractWidgetMixin {
-	@Inject(method = "render", at = @At("HEAD"), cancellable = true)
-	private void threevhy$titleButton(GuiGraphics graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-		AbstractWidget widget = (AbstractWidget) (Object) this;
-		if (!TitleScreenStyle.styled(widget)) return;
-		TitleScreenStyle.drawButton(new DrawImpl(graphics), widget, mouseX, mouseY);
-		ci.cancel();
+	@Shadow
+	protected abstract void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta);
+
+	@Redirect(method = "render", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/gui/components/AbstractWidget;renderWidget(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
+	private void threevhy$drawWidget(AbstractWidget widget, GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+		if (TitleScreenStyle.styled(widget)) {
+			TitleScreenStyle.drawWidget(new DrawImpl(graphics), widget);
+		} else if (ButtonStyle.styles(widget)) {
+			ButtonStyle.draw(new DrawImpl(graphics), widget);
+		} else {
+			renderWidget(graphics, mouseX, mouseY, delta);
+		}
 	}
 }

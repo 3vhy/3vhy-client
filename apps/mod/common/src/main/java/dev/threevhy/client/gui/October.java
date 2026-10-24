@@ -2,7 +2,6 @@ package dev.threevhy.client.gui;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.module.Modules;
-import java.time.LocalDate;
 import java.util.Random;
 
 /**
@@ -84,11 +83,9 @@ public final class October {
 	private October() {
 	}
 
-	/** Whether the main menu wears its October look right now. */
+	/** Whether the main menu shows the October scene (Main Menu > Scene). */
 	public static boolean active() {
-		if (Modules.MAIN_MENU_SEASON.is("Always")) return true;
-		if (Modules.MAIN_MENU_SEASON.is("Never")) return false;
-		return LocalDate.now().getMonthValue() == 10;
+		return Modules.MAIN_MENU.enabled() && Modules.MAIN_MENU_SCENE.is("October");
 	}
 
 	/** The whole October backdrop, behind the title screen's emblem and buttons. */

@@ -2,7 +2,7 @@ package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
-import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.gui.HudEditorScreen;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.TextRules;
 import java.util.Comparator;
@@ -123,7 +123,7 @@ public final class ScoreboardWidget extends HudWidget {
 	/** Called in place of Minecraft's own scoreboard, so it stays in the same layer of the HUD. */
 	public void drawInPlace(Draw d) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!module.enabled() || mc.screen instanceof HubScreen) return;
+		if (!module.enabled() || mc.screen instanceof HudEditorScreen) return;
 		Board board = board(mc);
 		if (board == null) return;
 		Hooks.scoreboardRan = true;

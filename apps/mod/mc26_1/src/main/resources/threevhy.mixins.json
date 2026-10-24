@@ -5,6 +5,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AbstractContainerScreenMixin",
+		"AbstractSliderButtonAccessor",
 		"AbstractWidgetMixin",
 		"AvatarRendererMixin",
 		"BossHealthOverlayAccessor",
@@ -16,6 +17,7 @@
 		"ItemStackMixin",
 		"LivingEntityMixin",
 		"LivingEntityRendererMixin",
+		"LogoRendererMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",

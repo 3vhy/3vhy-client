@@ -4,18 +4,27 @@ import dev.threevhy.client.Draw;
 import dev.threevhy.client.Hooks;
 import dev.threevhy.client.ThreevhyClient;
 import dev.threevhy.client.compat.Compat;
-import dev.threevhy.client.hud.Theme;
-import dev.threevhy.client.mixin.TitleScreenAccessor;
+import dev.threevhy.client.gui.menu.MenuScreen;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.Setting;
+import dev.threevhy.client.ui.Anim;
+import dev.threevhy.client.ui.Ease;
+import dev.threevhy.client.ui.Grad;
+import dev.threevhy.client.ui.Logo;
+import dev.threevhy.client.ui.Paint;
+import dev.threevhy.client.ui.Sky;
+import dev.threevhy.client.ui.Tokens;
+import dev.threevhy.client.ui.Type;
+import dev.threevhy.client.ui.Type.Weight;
+import dev.threevhy.client.ui.Widgets;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.WeakHashMap;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.Minecraft;
@@ -24,80 +33,57 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Util;
 
 /**
- * The main menu laid out like Lunar's, over Minecraft's own title screen: Minecraft's logo, panorama
- * and stone buttons, a Mods button with 3vhy's gem under Minecraft Realms, a column of dark buttons on
- * the right (Profiles, Edit HUD, Pictures for your screenshots, Settings), and your account in a pill
- * at the top left. The title screen itself stays, so buttons other mods add still show up. In October
- * the panorama makes way for {@link October}'s ghosts.
+ * 3vhy's main menu, over Minecraft's own title screen so buttons other mods add still show up: the 3vhy
+ * logo in place of Minecraft's (with the splash beside it), Minecraft's buttons as violet glass pills,
+ * the 3vhy version over Minecraft's in the bottom left, and round buttons in the bottom right for the
+ * Orbit, your screenshots and the Scene panel. The Scene panel picks the time of day (the light over
+ * the panorama), the scene (Minecraft's panorama, a night sky or October) and how the camera moves.
  */
 public final class TitleScreenStyle {
-	public static final String MODS_LABEL = "Mods";
 	private static final int MARGIN = 6;
-	/** Minecraft's title screen rows are 24 apart, with 12 more above the Options row. */
-	private static final int ROW_GAP = 4;
-	private static final int OPTIONS_GAP = 12;
-	/** The version and copyright text along the bottom. */
+	private static final int ROUND = 20;
+	private static final int ROUND_GAP = 6;
+	/** The copyright line along the bottom, which the round buttons sit above. */
 	private static final int FOOTER = 12;
-	private static final int SIDE_W = 80;
-	private static final int SIDE_H = 20;
-	private static final Set<AbstractWidget> SIDE = Collections.newSetFromMap(new WeakHashMap<>());
-	private static final Map<AbstractWidget, String[]> SIDE_ICONS = new WeakHashMap<>();
-	private static final Set<AbstractWidget> GEMS = Collections.newSetFromMap(new WeakHashMap<>());
+	private static final float PANEL_W = 176;
+	private static final float PANEL_PAD = 12;
+	private static final float ROW_LABEL = 15;
+	private static final float SEGMENT_H = 22;
+	private static final float ROW_GAP = 10;
 
-	private static final String[] PROFILE_ICON = {
-			"...##...",
-			"..####..",
-			"..####..",
-			"...##...",
-			".######.",
-			"########",
-			"########",
-	};
-	private static final String[] HUD_ICON = {
-			"###.####",
-			"#.#.#..#",
-			"###.####",
-			"........",
-			"####.###",
-			"#..#.#.#",
-			"####.###",
-	};
-	private static final String[] PICTURE_ICON = {
-			"########",
-			"#......#",
-			"#.##...#",
-			"#....#.#",
-			"#...####",
-			"#.######",
-			"########",
-	};
-	private static final String[] SETTINGS_ICON = {
-			".##.....",
-			"########",
-			".##.....",
-			"........",
-			".....##.",
-			"########",
-			".....##.",
-	};
-
-	private record Side(String label, String[] icon, Runnable action) {
+	private enum Kind {
+		ROUND, SEGMENT
 	}
+
+	/** One of 3vhy's own title screen buttons: what it is and what it draws. */
+	private record Part(Kind kind, String icon, Setting.Choice choice, int option) {
+	}
+
+	private record Row(String label, Setting.Choice choice, String[] icons) {
+	}
+
+	private static final List<Row> ROWS = List.of(
+			new Row("Time of day", Modules.MAIN_MENU_TIME, new String[] {"sunrise", "sun", "sunset", "moon-star", "clock"}),
+			new Row("Scene", Modules.MAIN_MENU_SCENE, new String[] {"image", "sparkles", "ghost"}),
+			new Row("Camera", Modules.MAIN_MENU_CAMERA, new String[] {"orbit", "wind", "pause"}));
+
+	private static final Map<AbstractWidget, Part> PARTS = new WeakHashMap<>();
+	private static final Map<AbstractWidget, Anim> HOVER = new WeakHashMap<>();
+	private static final Map<Setting.Choice, Anim> PICKED = new WeakHashMap<>();
+	private static final Anim PANEL = new Anim(0, Tokens.T_SHEET, Ease.OUT);
+	private static boolean panelOpen = false;
+	private static float panelX;
+	private static float panelY;
+	private static float driftSpin = 0;
 
 	private TitleScreenStyle() {
 	}
 
 	public static boolean enabled() {
 		return Modules.MAIN_MENU.enabled();
-	}
-
-	/** Whether the main menu shows October's backdrop instead of Minecraft's panorama. */
-	public static boolean drawsBackground() {
-		return enabled() && October.active();
 	}
 
 	private static boolean onTitleScreen() {
@@ -107,146 +93,65 @@ public final class TitleScreenStyle {
 	/** Called once the title screen has made its buttons (and other mods have added theirs). */
 	public static void prepare(Screen screen) {
 		if (!enabled() || !(screen instanceof TitleScreen)) return;
-		TitleScreenAccessor access = (TitleScreenAccessor) screen;
-		access.threevhy$setSplash(null);
-		if (access.threevhy$realmsNotifications() != null) {
-			access.threevhy$realmsNotifications().removed();
-			access.threevhy$setRealmsNotifications(null);
-		}
-		List<AbstractWidget> widgets = new ArrayList<>(Compat.widgets(screen));
 		Minecraft mc = Minecraft.getInstance();
-		String label = taken(widgets, MODS_LABEL) ? "3vhy " + MODS_LABEL : MODS_LABEL;
-		Button mods = Button.builder(Component.literal(label), button -> mc.setScreen(ModMenuScreen.create(screen))).build();
-		GEMS.add(mods);
-		int[] column = layOut(screen, widgets, mods);
-		if (column == null) {
-			mods.setX(MARGIN);
-			mods.setY(freeSpot(widgets, MARGIN, 80, 20));
-			mods.setWidth(80);
+		int y = screen.height - FOOTER - MARGIN - ROUND;
+		int x = screen.width - MARGIN - ROUND;
+		round(screen, x, y, "sliders-horizontal", "Scene", () -> {
+			panelOpen = !panelOpen;
+			showSegments(screen);
+		});
+		x -= ROUND + ROUND_GAP;
+		round(screen, x, y, "image", "Screenshots", TitleScreenStyle::openScreenshots);
+		x -= ROUND + ROUND_GAP;
+		round(screen, x, y, "orbit", "3vhy Client", () -> mc.setScreen(MenuScreen.fromKey(screen)));
+
+		panelX = screen.width - MARGIN - PANEL_W;
+		panelY = y - 8 - panelHeight();
+		float sy = panelY + PANEL_PAD;
+		for (Row row : ROWS) {
+			sy += ROW_LABEL;
+			List<String> options = row.choice().options();
+			float segment = (PANEL_W - 2 * PANEL_PAD) / options.size();
+			for (int i = 0; i < options.size(); i++) {
+				int sx = Math.round(panelX + PANEL_PAD + i * segment);
+				int ex = Math.round(panelX + PANEL_PAD + (i + 1) * segment);
+				String option = options.get(i);
+				Button button = Button.builder(Component.literal(row.label() + ": " + option), pressed -> row.choice().set(option))
+						.pos(sx, Math.round(sy)).size(ex - sx, Math.round(SEGMENT_H)).build();
+				PARTS.put(button, new Part(Kind.SEGMENT, null, row.choice(), i));
+				Compat.addWidget(screen, button);
+			}
+			sy += SEGMENT_H + ROW_GAP;
 		}
-		Compat.addWidget(screen, mods);
-		addSideButtons(screen, mc, column);
+		showSegments(screen);
+		PANEL.snap(panelOpen ? 1 : 0);
 		Compat.afterScreen(screen, d -> drawOverlay(d, screen));
 		ScreenKeyboardEvents.afterKeyPress(screen).register((shown, event) -> {
 			if (ThreevhyClient.openSettingsKey != null && ThreevhyClient.openSettingsKey.matches(event) && mc.screen == shown) {
-				mc.setScreen(ModMenuScreen.create(shown));
+				mc.setScreen(MenuScreen.fromKey(shown));
 			}
 		});
 		Hooks.mainMenuShown = true;
 	}
 
-	/** The title screen's widget whose label is this translation key, or null. */
-	private static AbstractWidget find(List<AbstractWidget> widgets, String key) {
-		for (AbstractWidget widget : widgets) {
-			if (widget.visible && widget.getMessage().getContents() instanceof TranslatableContents contents
-					&& contents.getKey().equals(key)) {
-				return widget;
-			}
+	/** The Scene panel's segments can only be clicked (or reached with Tab) while it's open. */
+	private static void showSegments(Screen screen) {
+		for (AbstractWidget widget : Compat.widgets(screen)) {
+			Part part = PARTS.get(widget);
+			if (part == null || part.kind() != Kind.SEGMENT) continue;
+			widget.visible = panelOpen;
+			widget.active = panelOpen;
 		}
-		return null;
 	}
 
-	/** Whether another mod already has a button with this label (Mod Menu's Mods, say). */
-	private static boolean taken(List<AbstractWidget> widgets, String label) {
-		for (AbstractWidget widget : widgets) {
-			if (widget.visible && widget.getMessage().getString().equals(label)) return true;
-		}
-		return false;
+	private static float panelHeight() {
+		return 2 * PANEL_PAD + ROWS.size() * (ROW_LABEL + SEGMENT_H + ROW_GAP) - ROW_GAP;
 	}
 
-	/**
-	 * Puts the Mods row under Minecraft Realms and stacks the centre column like Lunar's: rows 24
-	 * apart from a quarter of the way down (less 12), then the Options / Quit row 12 lower, moved up
-	 * if it would reach the copyright line. Only widgets in the centre column move. Returns the
-	 * column's {top, bottom}, or null if the title screen doesn't look like Minecraft's.
-	 */
-	private static int[] layOut(Screen screen, List<AbstractWidget> widgets, Button mods) {
-		AbstractWidget first = find(widgets, "menu.singleplayer");
-		AbstractWidget options = find(widgets, "menu.options");
-		if (first == null || options == null || options.getY() <= first.getY()) return null;
-		int center = screen.width / 2;
-		Map<Integer, List<AbstractWidget>> byY = new TreeMap<>();
-		List<AbstractWidget> bottom = new ArrayList<>();
-		for (AbstractWidget widget : widgets) {
-			if (!widget.visible || widget.getX() < center - 130 || widget.getX() + widget.getWidth() > center + 130) continue;
-			if (Math.abs(widget.getY() - options.getY()) <= 2) bottom.add(widget);
-			else if (widget.getY() >= first.getY() && widget.getY() < options.getY()) byY.computeIfAbsent(widget.getY(), y -> new ArrayList<>()).add(widget);
-		}
-		List<List<AbstractWidget>> rows = new ArrayList<>(byY.values());
-		AbstractWidget realms = find(widgets, "menu.online");
-		int at = rows.size();
-		for (int i = 0; i < rows.size(); i++) {
-			if (rows.get(i).contains(realms)) at = i + 1;
-		}
-		mods.setX(first.getX());
-		mods.setWidth(first.getWidth());
-		mods.setHeight(first.getHeight());
-		rows.add(at, List.<AbstractWidget>of(mods));
-		int columnH = -ROW_GAP;
-		for (List<AbstractWidget> row : rows) columnH += rowHeight(row) + ROW_GAP;
-		int bottomH = rowHeight(bottom);
-		int total = columnH + ROW_GAP + OPTIONS_GAP + bottomH;
-		int top = Math.max(MARGIN, Math.min(screen.height / 4 + 36, screen.height - FOOTER - total));
-		int y = top;
-		for (List<AbstractWidget> row : rows) {
-			for (AbstractWidget widget : row) widget.setY(y);
-			y += rowHeight(row) + ROW_GAP;
-		}
-		int bottomY = y + OPTIONS_GAP;
-		int optionsY = options.getY();
-		for (AbstractWidget widget : bottom) widget.setY(bottomY + widget.getY() - optionsY);
-		return new int[] {top, bottomY + bottomH};
-	}
-
-	private static int rowHeight(List<AbstractWidget> row) {
-		int h = 0;
-		for (AbstractWidget widget : row) h = Math.max(h, widget.getHeight());
-		return h;
-	}
-
-	/** The first height down the left edge where a button of this size doesn't cover another mod's button. */
-	private static int freeSpot(List<AbstractWidget> widgets, int x, int w, int h) {
-		int y = MARGIN;
-		boolean moved = true;
-		while (moved && y < 200) {
-			moved = false;
-			for (AbstractWidget other : widgets) {
-				if (!other.visible) continue;
-				boolean overlaps = other.getX() < x + w && other.getX() + other.getWidth() > x && other.getY() < y + h
-						&& other.getY() + other.getHeight() > y;
-				if (overlaps) {
-					y = other.getY() + other.getHeight() + 4;
-					moved = true;
-				}
-			}
-		}
-		return y;
-	}
-
-	/**
-	 * Lunar's column of dark buttons on the right, centred beside the main buttons, with 3vhy's own
-	 * shortcuts. Left out when the window is too narrow for it next to the main column.
-	 */
-	private static void addSideButtons(Screen screen, Minecraft mc, int[] column) {
-		int center = screen.width / 2;
-		int x = Math.min(Math.max(center + 112, Math.round(screen.width * 0.768f)), screen.width - MARGIN - SIDE_W);
-		if (x < center + 106) return;
-		List<Side> sides = List.of(
-				new Side("Profiles", PROFILE_ICON, () -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.PROFILES))),
-				new Side("Edit HUD", HUD_ICON, () -> mc.setScreen(new HubScreen(screen).editOnly())),
-				new Side("Pictures", PICTURE_ICON, TitleScreenStyle::openScreenshots),
-				new Side("Settings", SETTINGS_ICON, () -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.SETTINGS))));
-		int total = sides.size() * (SIDE_H + ROW_GAP) - ROW_GAP;
-		int middle = column != null ? (column[0] + column[1]) / 2 : screen.height / 2;
-		int y = Math.max(MARGIN, middle - total / 2);
-		for (Side side : sides) {
-			Button button = Button.builder(Component.literal(side.label()), pressed -> side.action().run())
-					.pos(x, y).size(SIDE_W, SIDE_H).build();
-			SIDE.add(button);
-			SIDE_ICONS.put(button, side.icon());
-			Compat.addWidget(screen, button);
-			y += SIDE_H + ROW_GAP;
-		}
+	private static void round(Screen screen, int x, int y, String icon, String label, Runnable action) {
+		Button button = Button.builder(Component.literal(label), pressed -> action.run()).pos(x, y).size(ROUND, ROUND).build();
+		PARTS.put(button, new Part(Kind.ROUND, icon, null, -1));
+		Compat.addWidget(screen, button);
 	}
 
 	private static void openScreenshots() {
@@ -259,85 +164,164 @@ public final class TitleScreenStyle {
 		}
 	}
 
-	/** Lunar's side buttons are drawn by 3vhy; Minecraft's own keep their stone look. */
+	/** Whether the title screen's mixin hands this widget to {@link #drawWidget}. */
 	public static boolean styled(AbstractWidget widget) {
-		return widget.visible && SIDE.contains(widget) && onTitleScreen();
+		return PARTS.containsKey(widget) && onTitleScreen();
 	}
 
-	/** October's backdrop, in place of the panorama. */
-	public static void drawBackground(Draw d, int w, int h) {
-		October.drawBackdrop(d, w, h);
-	}
-
-	/** A side button like Lunar's: near-black with a grey edge that turns white on hover, the label on the left, an icon on the right. */
-	public static void drawButton(Draw d, AbstractWidget widget, int mouseX, int mouseY) {
+	/** The round buttons; the Scene panel's segments are drawn with the panel. */
+	public static void drawWidget(Draw d, AbstractWidget widget) {
+		Part part = PARTS.get(widget);
 		Hooks.titleButtonsStyled = true;
-		int x = widget.getX();
-		int y = widget.getY();
-		int w = widget.getWidth();
-		int h = widget.getHeight();
-		boolean hover = widget.active && (widget.isFocused() || mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h);
-		d.fill(x, y, x + w, y + h, hover ? 0xF0202226 : 0xE6101113);
-		d.outline(x, y, x + w, y + h, hover ? 0xFFFFFFFF : 0xFF5C5F66);
-		Minecraft mc = Minecraft.getInstance();
-		String label = widget.getMessage().getString();
-		d.text(label, x + 6, y + (h - 8) / 2, hover ? 0xFFFFFFFF : 0xFFE0E0E0, true);
-		String[] icon = SIDE_ICONS.get(widget);
-		if (icon != null) {
-			int iw = icon[0].length();
-			int ix = x + w - 6 - iw;
-			int iy = y + (h - icon.length) / 2;
-			for (int row = 0; row < icon.length; row++) {
-				for (int col = 0; col < iw; col++) {
-					if (icon[row].charAt(col) == '#') d.fill(ix + col, iy + row, ix + col + 1, iy + row + 1, hover ? 0xFFFFFFFF : 0xFFD6D8DC);
+		if (part == null || part.kind() != Kind.ROUND || !widget.visible) return;
+		Anim anim = HOVER.computeIfAbsent(widget, w -> new Anim(0, Tokens.T_COLOR, Ease.OUT));
+		boolean on = widget.isHoveredOrFocused() || "sliders-horizontal".equals(part.icon()) && panelOpen;
+		anim.set(on);
+		float r = widget.getWidth() / 2f;
+		float cx = widget.getX() + r;
+		float cy = widget.getY() + r;
+		float old = Paint.opacity(Paint.opacity() * widget.getAlpha());
+		ButtonStyle.pill(d, widget.getX(), widget.getY(), widget.getX() + widget.getWidth(), widget.getY() + widget.getHeight(), anim.get(),
+				widget.isFocused());
+		float size = r * 1.0f;
+		Paint.icon(d, part.icon(), cx - size / 2f, cy - size / 2f, size, 0xFFF4F0FF);
+		Paint.opacity(old);
+	}
+
+	/** The 3vhy logo where Minecraft's goes: {@code y} is the top of Minecraft's logo, {@code alpha} its fade. */
+	public static void drawLogo(Draw d, int screenWidth, float alpha, int y) {
+		long now = System.currentTimeMillis();
+		float mark = 46;
+		float cap = 25;
+		float gap = mark * 0.36f;
+		float wordW = Logo.wordmarkWidth(cap);
+		float small = 6.2f;
+		float w = mark + gap + wordW;
+		float x = screenWidth / 2f - w / 2f;
+		float top = y - 1;
+		float old = Paint.opacity(Paint.opacity() * alpha);
+		Paint.glow(d, screenWidth / 2f, top + mark / 2f, w * 0.32f, w * 0.42f, 0x337A2CFF);
+		Logo.mark(d, x, top, mark, 1, now);
+		float tx = x + mark + gap;
+		float capTop = top + mark / 2f - cap / 2f - small * 0.9f;
+		Logo.wordmark(d, tx + 1, capTop + 1.2f, cap, 0x66000000);
+		Logo.wordmark(d, tx, capTop, cap, 0xFFFFFFFF);
+		Type.spaced(d, "CLIENT", tx + 1, capTop + cap + small * 1.2f, small, 0.9f, Weight.SEMIBOLD, Tokens.LILAC);
+		Paint.opacity(old);
+		Hooks.logoDrawn = true;
+	}
+
+	/** Whether the main menu draws its own scene in place of Minecraft's panorama. */
+	public static boolean drawsBackground() {
+		return enabled() && !Modules.MAIN_MENU_SCENE.is("Panorama");
+	}
+
+	/** The Night sky or October scene, in place of the panorama. */
+	public static void drawBackground(Draw d, int w, int h) {
+		if (Modules.MAIN_MENU_SCENE.is("October")) {
+			October.drawBackdrop(d, w, h);
+			return;
+		}
+		float unit = Math.min(w / 1600f, h / 900f);
+		d.push();
+		d.scale(unit);
+		Sky.backdrop(d, w / unit, h / unit, false, 1);
+		Sky.stars(d, w / unit, h / unit, 0.8f, 1, System.currentTimeMillis());
+		d.pop();
+		tint(d, w, h, true);
+	}
+
+	/** The time of day's light over the panorama, and a soft shade at the bottom so the buttons read. */
+	public static void drawTint(Draw d, int w, int h) {
+		if (!enabled()) return;
+		tint(d, w, h, false);
+	}
+
+	private static String timeOfDay() {
+		if (!Modules.MAIN_MENU_TIME.is("Live")) return Modules.MAIN_MENU_TIME.get();
+		int hour = LocalTime.now().getHour();
+		return hour >= 5 && hour < 8 ? "Dawn" : hour >= 8 && hour < 17 ? "Day" : hour >= 17 && hour < 20 ? "Dusk" : "Night";
+	}
+
+	private static void tint(Draw d, int w, int h, boolean sky) {
+		switch (timeOfDay()) {
+			case "Dawn" -> Paint.rect(d, 0, 0, w, h, 0, Grad.down(0x4DFF8AC8, 0x40FFB36B));
+			case "Dusk" -> Paint.rect(d, 0, 0, w, h, 0, Grad.down(0x66482A9C, 0x59FF7445));
+			case "Night" -> {
+				if (!sky) {
+					Paint.rect(d, 0, 0, w, h, 0, Grad.down(0xB8050414, 0xA0120A2E));
+					float unit = Math.min(w / 1600f, h / 900f);
+					d.push();
+					d.scale(unit);
+					Sky.stars(d, w / unit, h * 0.6f / unit, 0.55f, 1, System.currentTimeMillis());
+					d.pop();
 				}
 			}
+			default -> Paint.rect(d, 0, 0, w, h, 0, Grad.down(0x1F6A2CFF, 0x00000000));
 		}
-	}
-
-	/** The gem on the Mods button and the account pill, over the title screen's widgets. */
-	private static void drawOverlay(Draw d, Screen screen) {
-		if (!onTitleScreen()) return;
-		for (AbstractWidget widget : Compat.widgets(screen)) {
-			if (GEMS.contains(widget)) Gem.onButton(d, widget);
-		}
-		drawAccount(d);
+		Paint.rect(d, 0, h * 0.55f, w, h, 0, Grad.down(0x00000000, 0x8C06040F));
 	}
 
 	/**
-	 * Lunar's account pill at the top left, in real pixels: the 3vhy app icon, your head and your
-	 * name on a dark rounded box 13 GUI pixels tall.
+	 * Whether the panorama turns this frame: always for Orbit, never for Still, and every third frame
+	 * or so for Drift, which turns it at a third of the speed.
 	 */
-	private static void drawAccount(Draw d) {
-		Minecraft mc = Minecraft.getInstance();
-		float guiScale = (float) mc.getWindow().getGuiScale();
-		int h = Math.round(13.3f * guiScale);
-		int x = Math.round(MARGIN * guiScale);
-		int y = Math.round(MARGIN * guiScale);
-		int pad = Math.round(h * 0.3f);
-		int icon = Math.round(h * 0.5f);
-		int face = Math.round(h * 0.4f);
-		float textScale = h * 0.28f / 6.8f;
-		Component name = UiFont.semibold(mc.getUser().getName());
-		int nameW = Math.round(mc.font.width(name) * textScale);
-		int gap = Math.round(h * 0.22f);
-		int w = pad + icon + gap + face + gap + nameW + Math.round(h * 0.4f);
-		d.push();
-		d.scale(1f / guiScale);
-		Smooth.roundRect(d, x, y, x + w, y + h, h * 0.2f, 0xE616171B);
-		int cx = x + pad;
-		int iy = y + (h - icon) / 2;
-		Smooth.roundRect(d, cx, iy, cx + icon, iy + icon, icon * 0.25f, Theme.ROYAL);
-		int cell = Math.max(1, Math.round(icon * 0.6f / 12));
-		Wordmark.drawGlyph(d, cx + (icon - 10 * cell) / 2, iy + (icon - 12 * cell) / 2, cell, Theme.ICE);
-		cx += icon + gap;
-		d.face(MenuNameTag.ownSkin(mc), cx, y + (h - face) / 2, face);
-		cx += face + gap;
-		d.push();
-		d.translate(cx, y + (h - 6.8f * textScale) / 2f);
-		d.scale(textScale);
-		d.text(name, 0, 0, 0xFFE6E8EC, false);
-		d.pop();
-		d.pop();
+	public static boolean panoramaSpins() {
+		if (!enabled() || Modules.MAIN_MENU_CAMERA.is("Orbit")) return true;
+		if (Modules.MAIN_MENU_CAMERA.is("Still")) return false;
+		driftSpin += 0.34f;
+		if (driftSpin < 1) return false;
+		driftSpin -= 1;
+		return true;
+	}
+
+	private static void drawOverlay(Draw d, Screen screen) {
+		if (!onTitleScreen()) return;
+		drawVersion(d, screen);
+		PANEL.set(panelOpen);
+		float t = PANEL.get();
+		if (t > 0.01f) drawPanel(d, screen, t);
+	}
+
+	private static void drawVersion(Draw d, Screen screen) {
+		float cap = 5.2f;
+		float y = screen.height - 10 - 6 - cap;
+		float x = 2;
+		Widgets.pulseDot(d, x + 3, y + cap / 2f, 2, Tokens.MAGENTA, System.currentTimeMillis());
+		x += 9;
+		x += Type.width("3vhy Client ", cap, Weight.SEMIBOLD);
+		Type.draw(d, "3vhy Client", 11, y, cap, Weight.SEMIBOLD, 0xFFFFFFFF);
+		Type.draw(d, ThreevhyClient.version(), x, y, cap, Weight.SEMIBOLD, Tokens.LILAC);
+	}
+
+	private static void drawPanel(Draw d, Screen screen, float t) {
+		float old = Paint.opacity(Paint.opacity() * t);
+		float x1 = panelX;
+		float y1 = panelY + (1 - t) * 10;
+		float x2 = x1 + PANEL_W;
+		float y2 = y1 + panelHeight();
+		Widgets.glass(d, x1, y1, x2, y2, 14);
+		List<AbstractWidget> segments = new ArrayList<>();
+		for (AbstractWidget widget : Compat.widgets(screen)) {
+			Part part = PARTS.get(widget);
+			if (part != null && part.kind() == Kind.SEGMENT) segments.add(widget);
+		}
+		float y = y1 + PANEL_PAD;
+		for (Row row : ROWS) {
+			Type.spaced(d, row.label().toUpperCase(Locale.ROOT), x1 + PANEL_PAD, y + 2, 4.2f, 0.18f, Weight.SEMIBOLD, Tokens.TEXT_3);
+			String value = row.choice() == Modules.MAIN_MENU_TIME && row.choice().is("Live") ? "Live · " + timeOfDay() : row.choice().get();
+			Type.right(d, value, x2 - PANEL_PAD, y + 1.6f, 5, Weight.SEMIBOLD, Tokens.TEXT);
+			y += ROW_LABEL;
+			int hover = -1;
+			for (AbstractWidget widget : segments) {
+				Part part = PARTS.get(widget);
+				if (part.choice() == row.choice() && widget.isHoveredOrFocused()) hover = part.option();
+			}
+			Anim at = PICKED.computeIfAbsent(row.choice(), c -> new Anim(c.index(), Tokens.T_INDICATOR, Ease.OUT));
+			at.set(row.choice().index());
+			Widgets.segmented(d, x1 + PANEL_PAD - 2, y - 1, x2 - PANEL_PAD + 2, y + SEGMENT_H + 1, row.icons(), null, at.get(), hover);
+			y += SEGMENT_H + ROW_GAP;
+		}
+		Paint.opacity(old);
 	}
 }

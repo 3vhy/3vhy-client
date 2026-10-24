@@ -34,6 +34,11 @@ public final class Hooks {
 	public static volatile boolean textRuleRan = false;
 	public static volatile boolean customSkinLoaded = false;
 	public static volatile boolean menuNameDrawn = false;
+	public static volatile boolean logoDrawn = false;
+	public static volatile boolean buttonsStyled = false;
+	public static volatile boolean bladeModelSwapped = false;
+	public static volatile boolean inspectRan = false;
+	public static volatile boolean lyricsDrawn = false;
 
 	private Hooks() {
 	}

@@ -1,6 +1,10 @@
 package dev.threevhy.client.gui;
 
 import dev.threevhy.client.compat.Compat;
+import dev.threevhy.client.gui.menu.MenuScreen;
+import dev.threevhy.client.module.Module.Category;
+import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.ui.Logo;
 import dev.threevhy.client.module.ConfirmDisconnect;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,14 +21,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 
 /**
- * The pause menu laid out like Lunar's: a full-width Mods button with 3vhy's gem right under
+ * The pause menu with 3vhy in it: a full-width 3vhy Client button with the 3vhy mark right under
  * Advancements and Statistics, Options... beside 3vhy Options..., and Minecraft's feedback links left
  * out. Open to LAN or Player Reporting, which 3vhy Options... takes the place of, moves up to where
  * the feedback links were, beside the server's own button if it has one. Buttons other mods put in
  * the column move along with their row.
  */
 public final class PauseMenuButton {
-	public static final String LABEL = "Mods";
+	public static final String LABEL = "3vhy Client";
 	public static final String OPTIONS_LABEL = "3vhy Options...";
 	/** Minecraft's pause menu leaves 4 pixels between rows and 8 between the halves of a row. */
 	private static final int ROW_GAP = 4;
@@ -45,12 +49,16 @@ public final class PauseMenuButton {
 				break;
 			}
 		}
-		String label = taken(widgets, LABEL) ? "3vhy " + LABEL : LABEL;
-		Button mods = Button.builder(Component.literal(label), button -> mc.setScreen(ModMenuScreen.create(screen))).build();
+		String label = LABEL;
+		Button mods = Button.builder(Component.literal(label), button -> mc.setScreen(new MenuScreen(screen, Category.RENDER))).build();
 		GEMS.add(mods);
 		Compat.afterScreen(screen, d -> {
 			for (AbstractWidget widget : Compat.widgets(screen)) {
-				if (GEMS.contains(widget)) Gem.onButton(d, widget);
+				if (GEMS.contains(widget) && widget.visible) {
+					float size = Math.min(14, widget.getHeight() - 6);
+					Logo.mark(d, widget.getX() + widget.getWidth() - 5 - size, widget.getY() + (widget.getHeight() - size) / 2f, size,
+							widget.getAlpha(), System.currentTimeMillis());
+				}
 			}
 		});
 		if (options == null || disconnect == null || !inColumn(options, disconnect)) {
@@ -90,7 +98,7 @@ public final class PauseMenuButton {
 			}
 		}
 		Button ours = Button.builder(Component.literal(OPTIONS_LABEL),
-				button -> mc.setScreen(new ModMenuScreen(screen).openTab(ModMenuScreen.Tab.SETTINGS))).build();
+				button -> mc.setScreen(MenuScreen.settings(screen, Modules.THEME))).build();
 		List<AbstractWidget> optionsLine = new ArrayList<>();
 		AbstractWidget displaced = null;
 		for (AbstractWidget widget : rows.get(optionsRow)) {
@@ -140,14 +148,6 @@ public final class PauseMenuButton {
 	/** Whether a widget is in the pause menu's column (or just beside it), going by Disconnect's place. */
 	private static boolean inColumn(AbstractWidget widget, AbstractWidget disconnect) {
 		return widget.getX() + widget.getWidth() >= disconnect.getX() - 30 && widget.getX() <= disconnect.getX() + disconnect.getWidth() + 30;
-	}
-
-	/** Whether another mod already has a button with this label (Mod Menu's Mods, say). */
-	private static boolean taken(List<AbstractWidget> widgets, String label) {
-		for (AbstractWidget widget : widgets) {
-			if (widget.visible && widget.getMessage().getString().equals(label)) return true;
-		}
-		return false;
 	}
 
 	private static AbstractWidget find(List<AbstractWidget> widgets, String key) {

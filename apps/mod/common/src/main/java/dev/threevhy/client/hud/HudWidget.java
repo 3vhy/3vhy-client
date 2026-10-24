@@ -3,7 +3,7 @@ package dev.threevhy.client.hud;
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Draw;
 import dev.threevhy.client.gui.Accent;
-import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.gui.HudEditorScreen;
 import dev.threevhy.client.gui.Smooth;
 import dev.threevhy.client.gui.UiFont;
 import dev.threevhy.client.mixin.BossHealthOverlayAccessor;
@@ -144,7 +144,7 @@ public abstract class HudWidget {
 	/** Height taken by the earlier widgets stacked at the same anchor. */
 	private int stackedBefore(Minecraft mc) {
 		int total = 0;
-		boolean editing = mc.screen instanceof HubScreen;
+		boolean editing = mc.screen instanceof HudEditorScreen;
 		for (HudWidget other : HudWidgets.ALL) {
 			if (other == this) break;
 			if (other.anchor == anchor && other.shown() && other.storedPosition() == null

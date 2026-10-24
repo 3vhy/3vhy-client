@@ -1,7 +1,7 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.gui.HubScreen;
+import dev.threevhy.client.gui.HudEditorScreen;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.Waypoints;
 import dev.threevhy.client.module.Zoom;
@@ -18,8 +18,7 @@ public final class HudRenderer {
 		Zoom.update(mc);
 		if (mc.options.hideGui || mc.player == null) return;
 		Waypoints.drawOnScreen(d, mc);
-		// The hub draws the widgets itself, sharp above its blur
-		if (mc.screen instanceof HubScreen) return;
+		if (mc.screen instanceof HudEditorScreen) return;
 		drawAll(d, mc);
 	}
 

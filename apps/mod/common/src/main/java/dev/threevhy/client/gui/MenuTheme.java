@@ -1,7 +1,5 @@
 package dev.threevhy.client.gui;
 
-import dev.threevhy.client.module.Modules;
-
 /**
  * Colours for 3vhy's menus, in Lunar's style: dark is smoked glass with thin white edges and 3vhy's
  * ice-blue as the accent, light is frosted white with royal-blue text.
@@ -64,7 +62,7 @@ public record MenuTheme(
 			0xFFFFFFFF);
 
 	public static MenuTheme current() {
-		return Modules.THEME_MODE.is("Light") ? LIGHT : DARK;
+		return DARK;
 	}
 
 	public boolean isLight() {
