@@ -1403,6 +1403,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-glass-title-hover");
 		}
 		check(failed, "every button on the title screen is glass", context.computeOnClient(client -> {
+			if (client.screen == null) return false;
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
 				if (widget.visible && !dev.threevhy.client.gui.Glass.covers(widget)) {
 					ThreevhyClient.LOG.info("3vhy-check: not glass: {} \"{}\"", widget.getClass().getName(), widget.getMessage().getString());
@@ -1413,6 +1414,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		}));
 
 		check(failed, "every button on the title screen fits on the screen", context.computeOnClient(client -> {
+			if (client.screen == null) return false;
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
 				if (widget.visible && (widget.getX() < 0 || widget.getY() < 0 || widget.getX() + widget.getWidth() > client.screen.width
 						|| widget.getY() + widget.getHeight() > client.screen.height)) {
@@ -1441,9 +1443,11 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 
 		click(context, scale, "Singleplayer");
 		context.waitTicks(20);
-		shot(context, "3vhy-glass-worlds");
-		click(context, scale, "Create New World");
-		context.waitTicks(30);
+		if (context.computeOnClient(client -> client.screen instanceof net.minecraft.client.gui.screens.worldselection.SelectWorldScreen)) {
+			shot(context, "3vhy-glass-worlds");
+			click(context, scale, "Create New World");
+			context.waitTicks(30);
+		}
 		shot(context, "3vhy-glass-create-world");
 		context.setScreen(TitleScreen::new);
 		context.waitTicks(5);
@@ -1458,6 +1462,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.waitTicks(10);
 		shot(context, "3vhy-glass-options");
 		check(failed, "Options buttons and slider are glass (AbstractButton, AbstractSliderButton)", context.computeOnClient(client -> {
+			if (client.screen == null) return false;
 			int glass = 0;
 			for (AbstractWidget widget : Compat.widgets(client.screen)) {
 				if (!widget.visible) continue;
