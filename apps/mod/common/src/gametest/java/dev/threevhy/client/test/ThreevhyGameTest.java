@@ -549,6 +549,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			knives(context, singleplayer, failed, false);
 			glassWorldScreens(context, singleplayer, failed);
 			skies(context, singleplayer, failed, false);
+			performance(context, failed);
 			context.runOnClient(client -> client.player.setXRot(10f));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
@@ -965,6 +966,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			if (focus.contains("glass")) glassWorldScreens(context, singleplayer, failed);
 			if (focus.contains("skies")) skies(context, singleplayer, failed, true);
 			if (focus.contains("protect")) nameDetect(context, singleplayer, failed);
+			if (focus.contains("perf")) performance(context, failed);
 			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
 			if (focus.contains("knives")) knives(context, singleplayer, failed, true);
 			if (focus.contains("calibrate")) calibrateKnife(context, singleplayer);
@@ -1081,6 +1083,15 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		});
 		context.waitTicks(40);
 		double[] hud = measure(context, frames);
+		context.runOnClient(client -> Modules.PERFORMANCE_PRESET.set("Performance"));
+		context.waitTicks(20);
+		double[] lite = measure(context, frames);
+		context.runOnClient(client -> Modules.PERFORMANCE_PRESET.set("Balanced"));
+		context.waitTicks(5);
+		context.runOnClient(client -> {
+			for (dev.threevhy.client.module.Setting setting : Modules.PERFORMANCE.settings()) setting.reset();
+			Modules.SKIES_RESOLUTION.reset();
+		});
 		context.setScreen(() -> new MenuScreen(null, Category.HUD));
 		context.waitTicks(40);
 		double[] menu = measure(context, frames);
@@ -1088,6 +1099,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.runOnClient(client -> before.forEach(Module::set));
 		report("world, 3vhy mods off", off);
 		report("world, typical 3vhy HUD", hud);
+		report("world, typical 3vhy HUD, Performance preset", lite);
 		report("3vhy menu open", menu);
 		ThreevhyClient.LOG.info("3vhy-bench: 3vhy HUD costs {} ms a frame on average ({} ms at the 99th percentile)",
 				String.format(java.util.Locale.ROOT, "%.2f", hud[0] - off[0]), String.format(java.util.Locale.ROOT, "%.2f", hud[2] - off[2]));
@@ -1757,6 +1769,33 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			Modules.NAME_PROTECT.set(wasOn);
 		});
 		context.waitTicks(3);
+	}
+
+	/** Performance: a preset sets everything at once (shadows, blur, animations, particles, the sky's resolution); a change by hand makes it Custom. */
+	private static void performance(ClientGameTestContext context, List<String> failed) {
+		context.runOnClient(client -> Modules.PERFORMANCE_PRESET.set("Performance"));
+		context.waitTicks(3);
+		check(failed, "the Performance preset turns effects down", context.computeOnClient(client -> Modules.PERFORMANCE_SHADOWS.is("Off")
+				&& Modules.SKIES_RESOLUTION.is("Quarter") && client.options.particles().get() == net.minecraft.server.level.ParticleStatus.DECREASED));
+		context.waitTicks(10);
+		shot(context, "3vhy-hud-performance-preset");
+		context.setScreen(() -> MenuScreen.settings(null, Modules.PERFORMANCE));
+		context.waitTicks(15);
+		shot(context, "3vhy-menu-performance");
+		context.setScreen(() -> null);
+		context.runOnClient(client -> Modules.PERFORMANCE_SHADOWS.set("Simple"));
+		context.waitTicks(3);
+		check(failed, "changing a Performance option by hand makes the preset Custom", context.computeOnClient(client ->
+				Modules.PERFORMANCE_PRESET.is("Custom")));
+		context.runOnClient(client -> Modules.PERFORMANCE_PRESET.set("Balanced"));
+		context.waitTicks(3);
+		context.runOnClient(client -> {
+			for (dev.threevhy.client.module.Setting setting : Modules.PERFORMANCE.settings()) setting.reset();
+			Modules.SKIES_RESOLUTION.reset();
+		});
+		context.waitTicks(3);
+		check(failed, "Balanced puts everything back", context.computeOnClient(client -> Modules.PERFORMANCE_PRESET.is("Balanced")
+				&& Modules.PERFORMANCE_SHADOWS.is("Full") && client.options.particles().get() == net.minecraft.server.level.ParticleStatus.ALL));
 	}
 
 	/** Pictures of the knife at rest with one pose channel set at a time, to see which way each one moves it. */

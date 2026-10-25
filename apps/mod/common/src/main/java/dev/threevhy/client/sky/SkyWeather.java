@@ -23,7 +23,8 @@ public final class SkyWeather {
 	public static void tick(Minecraft mc) {
 		ClientLevel level = mc.level;
 		LocalPlayer player = mc.player;
-		if (level == null || player == null || mc.isPaused() || !Modules.SKIES_PARTICLES.get() || !LivingSky.active()) return;
+		if (level == null || player == null || mc.isPaused() || !Modules.SKIES_PARTICLES.get() || !LivingSky.active()
+				|| dev.threevhy.client.module.Performance.fewerParticles()) return;
 		if (level.dimensionType().hasCeiling() || level.dimensionType().skybox() == net.minecraft.world.level.dimension.DimensionType.Skybox.END) return;
 		SkyType sky = LivingSky.selected();
 		int count;

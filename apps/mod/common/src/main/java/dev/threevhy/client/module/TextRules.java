@@ -63,6 +63,14 @@ public final class TextRules {
 		List<Rule> all = new ArrayList<>(manual);
 		all.addAll(auto);
 		rules = List.copyOf(all);
+		version++;
+	}
+
+	private static volatile int version = 0;
+
+	/** Goes up whenever the rules change, so things worked out from them know to work them out again. */
+	public static int version() {
+		return version + (Modules.NAME_PROTECT.enabled() ? 0 : 1 << 30);
 	}
 
 	static Rule compile(String find, String replace) {

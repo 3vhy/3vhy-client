@@ -368,6 +368,20 @@ public final class Modules {
 	public static final Choice THEME_WINDOW_TITLE = THEME.add(new Choice("window_title", "Window title",
 			"Keep \"Minecraft\" in it so Medal, OBS and Discord recognise the game", 0,
 			"Minecraft - 3vhy Client", "3vhy Client"));
+	public static final Module PERFORMANCE = new Module("performance", "Performance",
+			"Smoother frames on slower PCs: lighter effects and fewer particles, or one preset", Category.CLIENT, true).icon("gauge").alwaysOn()
+			.markNew();
+	public static final Choice PERFORMANCE_PRESET = PERFORMANCE.add(new Choice("preset", "Preset", "Sets everything below at once", 1,
+			"Quality", "Balanced", "Performance", "Custom"));
+	public static final Choice PERFORMANCE_SHADOWS = PERFORMANCE.add(new Choice("shadows", "Shadows and glows",
+			"The soft shadows and glows under 3vhy's menus and HUD", 0, "Full", "Simple", "Off"));
+	public static final Choice PERFORMANCE_BLUR = PERFORMANCE.add(new Choice("blur", "Menu blur", "How much the world behind menus is blurred",
+			0, "High", "Low", "Off"));
+	public static final Choice PERFORMANCE_ANIMATIONS = PERFORMANCE.add(new Choice("animations", "Animations",
+			"Movement in 3vhy's menus and HUD", 0, "Full", "Quick", "Off"));
+	public static final Toggle PERFORMANCE_PARTICLES = PERFORMANCE.add(new Toggle("particles", "Fewer particles",
+			"Minecraft's particles on Decreased, and no weather particles from Skies", false));
+
 	public static final Module DISCORD = new Module("discord", "Discord Presence",
 			"3vhy Client and your server on your Discord profile", Category.CLIENT, true).icon("message-square");
 	public static final Toggle DISCORD_SERVER = DISCORD.add(new Toggle("server", "Show server address",
@@ -384,7 +398,7 @@ public final class Modules {
 			CHAT, TEXT_HOTKEYS, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS,
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, POTIONS, SCOREBOARD, HOTBAR, MUSIC, MODULE_LIST,
 			KNIVES, MENU_NAME, MAIN_MENU,
-			THEME, DISCORD, PROFILES);
+			THEME, PERFORMANCE, DISCORD, PROFILES);
 
 	/** The modules in one tab, in order. */
 	public static List<Module> in(Category category) {
@@ -417,6 +431,7 @@ public final class Modules {
 		ConfirmDisconnect.tick();
 		NameProtect.tick(mc);
 		NameDetect.tick(mc);
+		Performance.tick(mc);
 		TextRules.tick();
 		TextHotkeys.tick(mc);
 		CustomSkins.tick();

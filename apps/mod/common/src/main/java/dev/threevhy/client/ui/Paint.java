@@ -31,6 +31,14 @@ public final class Paint {
 	private static final float[] BY = new float[MAX_POINTS];
 	/** Glow falloff: offsets from the edge in standard deviations, like a CSS blur. */
 	private static final float[] GLOW_STEPS = {-2.2f, -1.4f, -0.8f, -0.35f, 0f, 0.35f, 0.8f, 1.4f, 2.2f, 3.2f};
+	/** The same falloff in fewer rings, for small blurs (where the difference can't be seen) and Simple shadows. */
+	private static final float[] GLOW_STEPS_LITE = {-1.6f, -0.6f, 0f, 0.6f, 1.5f, 2.6f};
+	/** Unit circle points for each corner segment count, so outlines don't call cos and sin per point. */
+	private static final float[][] CORNER_COS = new float[MAX_SEGMENTS + 1][];
+	private static final float[][] CORNER_SIN = new float[MAX_SEGMENTS + 1][];
+	private static final int[] CA = new int[MAX_POINTS];
+	private static final int[] CB = new int[MAX_POINTS];
+	private static int shadowQuality = 2;
 	private static final Map<String, Identifier> ICONS = new HashMap<>();
 	private static final float[] OFFSETS = new float[GLOW_STEPS.length];
 	private static final float[] ALPHAS = new float[GLOW_STEPS.length];
@@ -97,6 +105,11 @@ public final class Paint {
 
 	public static float opacity() {
 		return opacity;
+	}
+
+	/** How shadows and glows are drawn: 2 full, 1 simpler (fewer rings), 0 not at all (Performance). */
+	public static void shadowQuality(int quality) {
+		shadowQuality = quality;
 	}
 
 	// Filled shapes
@@ -248,22 +261,24 @@ public final class Paint {
 		if (sx2 <= sx1 || sy2 <= sy1) return;
 		float sr = Math.max(0, r + spread);
 		float sigma = blur / 2f;
+		if (shadowQuality <= 0) return;
 		if (sigma * k < 0.75f) {
 			rect(d, sx1, sy1, sx2, sy2, sr, color);
 			return;
 		}
 		solid(color, sx1, sy1, sx2, sy2);
 		float half = Math.min(sx2 - sx1, sy2 - sy1) / 2f;
-		for (int i = 0; i < GLOW_STEPS.length; i++) {
-			float offset = Math.max(-half, GLOW_STEPS[i] * sigma);
+		float[] steps = shadowQuality == 1 || sigma * k < 8f ? GLOW_STEPS_LITE : GLOW_STEPS;
+		for (int i = 0; i < steps.length; i++) {
+			float offset = Math.max(-half, steps[i] * sigma);
 			OFFSETS[i] = offset;
 			ALPHAS[i] = (float) (0.5 * erfc(offset / (sigma * Math.sqrt(2))));
 		}
 		begin(d, null, true);
-		int segments = segments(sr + OFFSETS[GLOW_STEPS.length - 1], k);
+		int segments = Math.max(2, Math.min(10, (int) Math.ceil((sr + OFFSETS[steps.length - 1]) * k / 5f)));
 		int n = outline(AX, AY, sx1, sy1, sx2, sy2, sr, OFFSETS[0], segments);
 		fan(AX, AY, n, (sx1 + sx2) / 2f, (sy1 + sy2) / 2f, ALPHAS[0]);
-		band(sx1, sy1, sx2, sy2, sr, segments, GLOW_STEPS.length);
+		band(sx1, sy1, sx2, sy2, sr, segments, steps.length);
 		flush();
 	}
 
@@ -498,15 +513,29 @@ public final class Paint {
 		}
 		float base = Math.min(r, Math.min(x2 - x1, y2 - y1) / 2f);
 		float rr = Math.max(0, Math.min(base + grow, Math.min(gx2 - gx1, gy2 - gy1) / 2f));
+		float[] cos = CORNER_COS[segments];
+		float[] sin = CORNER_SIN[segments];
+		if (cos == null) {
+			cos = new float[4 * (segments + 1)];
+			sin = new float[4 * (segments + 1)];
+			for (int corner = 0, j = 0; corner < 4; corner++) {
+				double start = Math.PI * (1 + corner * 0.5);
+				for (int i = 0; i <= segments; i++, j++) {
+					double a = start + Math.PI / 2 * i / segments;
+					cos[j] = (float) Math.cos(a);
+					sin[j] = (float) Math.sin(a);
+				}
+			}
+			CORNER_COS[segments] = cos;
+			CORNER_SIN[segments] = sin;
+		}
 		int n = 0;
 		for (int corner = 0; corner < 4; corner++) {
 			float cx = corner == 0 || corner == 3 ? gx1 + rr : gx2 - rr;
 			float cy = corner < 2 ? gy1 + rr : gy2 - rr;
-			double start = Math.PI * (1 + corner * 0.5);
 			for (int i = 0; i <= segments; i++) {
-				double a = start + Math.PI / 2 * i / segments;
-				px[n] = cx + (float) Math.cos(a) * rr;
-				py[n] = cy + (float) Math.sin(a) * rr;
+				px[n] = cx + cos[n] * rr;
+				py[n] = cy + sin[n] * rr;
 				n++;
 			}
 		}
@@ -516,20 +545,32 @@ public final class Paint {
 	/** Fills a closed outline from its middle, at {@code alpha}. */
 	private static void fan(float[] px, float[] py, int n, float cx, float cy, float alpha) {
 		int center = color(cx, cy, alpha);
+		int[] colors = colors(px, py, n, alpha, CA);
 		for (int i = 0; i < n; i += 2) {
 			int b = (i + 1) % n;
 			int c = (i + 2) % n;
-			quad(cx, cy, center, px[i], py[i], color(px[i], py[i], alpha), px[b], py[b], color(px[b], py[b], alpha), px[c], py[c],
-					color(px[c], py[c], alpha));
+			quad(cx, cy, center, px[i], py[i], colors[i], px[b], py[b], colors[b], px[c], py[c], colors[c]);
 		}
+	}
+
+	/** The colour at each of an outline's {@code n} points, at {@code alpha}, into {@code out} (one call per point, not per quad corner). */
+	private static int[] colors(float[] px, float[] py, int n, float alpha, int[] out) {
+		if (grad == null) {
+			int c = fade(solid, alpha * opacity);
+			for (int i = 0; i < n; i++) out[i] = c;
+		} else {
+			for (int i = 0; i < n; i++) out[i] = color(px[i], py[i], alpha);
+		}
+		return out;
 	}
 
 	/** Joins two outlines with the same number of points, fading from {@code alphaA} to {@code alphaB}. */
 	private static void strip(float[] ax, float[] ay, float alphaA, float[] bx, float[] by, float alphaB, int n) {
+		int[] ca = colors(ax, ay, n, alphaA, CA);
+		int[] cb = colors(bx, by, n, alphaB, CB);
 		for (int i = 0; i < n; i++) {
-			int j = (i + 1) % n;
-			quad(ax[i], ay[i], color(ax[i], ay[i], alphaA), bx[i], by[i], color(bx[i], by[i], alphaB), bx[j], by[j],
-					color(bx[j], by[j], alphaB), ax[j], ay[j], color(ax[j], ay[j], alphaA));
+			int j = i + 1 == n ? 0 : i + 1;
+			quad(ax[i], ay[i], ca[i], bx[i], by[i], cb[i], bx[j], by[j], cb[j], ax[j], ay[j], ca[j]);
 		}
 	}
 

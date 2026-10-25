@@ -1,10 +1,10 @@
 package dev.threevhy.client.compat;
 
+import dev.threevhy.client.ui.VertexArena;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import dev.threevhy.client.Draw;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -134,6 +134,7 @@ public final class DrawImpl implements Draw {
 			bounds = bounds.intersection(scissor);
 			if (bounds == null) return;
 		}
+		VertexArena.put(xy, texture == null ? null : uv, colors, vertices);
 		TextureSetup setup;
 		if (texture == null) {
 			setup = TextureSetup.noTexture();
@@ -143,8 +144,7 @@ public final class DrawImpl implements Draw {
 					RenderSystem.getSamplerCache().getClampToEdge(smooth ? FilterMode.LINEAR : FilterMode.NEAREST));
 		}
 		graphics.guiRenderState.submitGuiElement(new MeshRenderState(texture == null ? RenderPipelines.GUI : RenderPipelines.GUI_TEXTURED, setup, pose,
-				Arrays.copyOf(xy, 2 * vertices), texture == null ? null : Arrays.copyOf(uv, 2 * vertices), Arrays.copyOf(colors, vertices),
-				scissor, bounds));
+				VertexArena.block(), VertexArena.offset(), vertices, texture != null, scissor, bounds));
 	}
 
 	@Override

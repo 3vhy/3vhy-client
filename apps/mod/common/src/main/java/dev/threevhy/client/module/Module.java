@@ -89,15 +89,24 @@ public final class Module {
 		return isNew;
 	}
 
+	private boolean enabledNow;
+	private int enabledVersion = -1;
+
 	public boolean enabled() {
 		if (!toggleable) return true;
-		Boolean value = Config.get().modules.get(id);
-		return value != null ? value : defaultOn;
+		int version = Config.version();
+		if (version != enabledVersion) {
+			Boolean value = Config.get().modules.get(id);
+			enabledNow = value != null ? value : defaultOn;
+			enabledVersion = version;
+		}
+		return enabledNow;
 	}
 
 	public void set(boolean enabled) {
 		if (!toggleable) return;
 		Config.get().modules.put(id, enabled);
+		Config.changed();
 		Config.saveSoon();
 	}
 

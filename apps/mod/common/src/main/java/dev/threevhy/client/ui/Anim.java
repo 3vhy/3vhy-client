@@ -6,6 +6,7 @@ package dev.threevhy.client.ui;
  * the system clock, so motion runs at the same speed at any frame rate.
  */
 public final class Anim {
+	private static float speed = 1f;
 	private final Ease ease;
 	private final long durationNanos;
 	private float from;
@@ -46,9 +47,18 @@ public final class Anim {
 		return to;
 	}
 
+	/** How fast every glide plays (Performance > Animations): 1 as designed, 2 twice as fast, 0 no glides at all. */
+	public static void speed(float value) {
+		speed = Math.max(0, value);
+	}
+
 	public float get() {
 		if (settled) return to;
-		double t = (System.nanoTime() - startedAt) / (double) durationNanos;
+		if (speed <= 0) {
+			settled = true;
+			return to;
+		}
+		double t = (System.nanoTime() - startedAt) * speed / (double) durationNanos;
 		if (t >= 1) {
 			settled = true;
 			return to;

@@ -20,6 +20,7 @@
 		"EntityMixin",
 		"FogRendererMixin",
 		"GuiGraphicsMixin",
+		"GuiRendererMixin",
 		"ItemInHandRendererMixin",
 		"ItemStackMixin",
 		"LivingEntityMixin",

@@ -1,5 +1,6 @@
 package dev.threevhy.client.compat;
 
+import dev.threevhy.client.ui.VertexArena;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -10,14 +11,16 @@ import org.joml.Matrix3x2f;
 /**
  * One of 3vhy's shapes for Minecraft's GUI renderer: a batch of quads, each corner with its own colour
  * (and texture coordinates when textured). Smooth boxes, gradients, glows and icons are all made of
- * these. Minecraft 26.1 version.
+ * these. Their vertices live in the frame's {@link VertexArena}. Minecraft 26.1 version.
  */
-record MeshRenderState(RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2f pose, float[] xy, float[] uv, int[] colors,
-		ScreenRectangle scissorArea, ScreenRectangle bounds) implements GuiElementRenderState {
+record MeshRenderState(RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2f pose, VertexArena.Block block, int offset, int count,
+		boolean textured, ScreenRectangle scissorArea, ScreenRectangle bounds) implements GuiElementRenderState {
 	@Override
 	public void buildVertices(VertexConsumer consumer) {
-		boolean textured = uv != null;
-		for (int i = 0; i < colors.length; i++) {
+		float[] xy = block.xy;
+		float[] uv = block.uv;
+		int[] colors = block.colors;
+		for (int i = offset, end = offset + count; i < end; i++) {
 			VertexConsumer vertex = consumer.addVertexWith2DPose(pose, xy[2 * i], xy[2 * i + 1]);
 			if (textured) vertex.setUv(uv[2 * i], uv[2 * i + 1]);
 			vertex.setColor(colors[i]);

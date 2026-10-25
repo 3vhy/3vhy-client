@@ -63,10 +63,31 @@ public final class ScoreboardWidget extends HudWidget {
 		return objective != null ? objective : scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
 	}
 
-	/** The lines to show, worked out like Minecraft does; null when there's no sidebar. */
+	private static Board cached;
+	private static Objective cachedFor;
+	private static long cachedTick = Long.MIN_VALUE;
+	private static int cachedRules = -1;
+	private static boolean cachedHide;
+
+	/**
+	 * The lines to show, worked out like Minecraft does; null when there's no sidebar. Worked out once a game
+	 * tick (the scoreboard only changes when the server says so), not every time the HUD asks.
+	 */
 	private static Board board(Minecraft mc) {
 		Objective objective = sidebarObjective(mc);
 		if (objective == null) return null;
+		long tick = mc.level.getGameTime();
+		boolean hide = Modules.SCOREBOARD_HIDE_NUMBERS.get();
+		if (cached != null && objective == cachedFor && tick == cachedTick && TextRules.version() == cachedRules && hide == cachedHide) return cached;
+		cached = build(mc, objective);
+		cachedFor = objective;
+		cachedTick = tick;
+		cachedRules = TextRules.version();
+		cachedHide = hide;
+		return cached;
+	}
+
+	private static Board build(Minecraft mc, Objective objective) {
 		Scoreboard scoreboard = objective.getScoreboard();
 		NumberFormat format = objective.numberFormatOrDefault(StyledFormat.SIDEBAR_DEFAULT);
 		boolean hideNumbers = Modules.SCOREBOARD_HIDE_NUMBERS.get();

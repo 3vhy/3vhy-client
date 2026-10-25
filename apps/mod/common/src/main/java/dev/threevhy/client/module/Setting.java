@@ -35,21 +35,38 @@ public abstract class Setting {
 		return hidden;
 	}
 
+	private String key;
+
 	protected String key() {
-		return owner.id + "." + id;
+		String made = key;
+		if (made == null) {
+			made = owner.id + "." + id;
+			key = made;
+		}
+		return made;
 	}
 
+	private String rawNow;
+	private int rawVersion = -1;
+
 	protected String raw() {
-		return Config.get().settings.get(key());
+		int version = Config.version();
+		if (version != rawVersion) {
+			rawNow = Config.get().settings.get(key());
+			rawVersion = version;
+		}
+		return rawNow;
 	}
 
 	protected void store(String value) {
 		Config.get().settings.put(key(), value);
+		Config.changed();
 		Config.saveSoon();
 	}
 
 	public void reset() {
 		Config.get().settings.remove(key());
+		Config.changed();
 		Config.saveSoon();
 	}
 
@@ -94,14 +111,22 @@ public abstract class Setting {
 			this.unit = unit;
 		}
 
+		private String parsedFrom;
+		private double parsed;
+
 		public double get() {
 			String raw = raw();
 			if (raw == null) return def;
+			if (raw == parsedFrom) return parsed;
+			double value;
 			try {
-				return clamp(Double.parseDouble(raw));
+				value = clamp(Double.parseDouble(raw));
 			} catch (NumberFormatException e) {
-				return def;
+				value = def;
 			}
+			parsed = value;
+			parsedFrom = raw;
+			return value;
 		}
 
 		public int getInt() {
@@ -148,14 +173,23 @@ public abstract class Setting {
 			this.def = def;
 		}
 
+		private String indexedFrom;
+		private int indexed;
+
 		public int index() {
 			String raw = raw();
-			if (raw != null) {
-				for (int i = 0; i < options.length; i++) {
-					if (options[i].equals(raw)) return i;
+			if (raw == null) return def;
+			if (raw == indexedFrom) return indexed;
+			int found = def;
+			for (int i = 0; i < options.length; i++) {
+				if (options[i].equals(raw)) {
+					found = i;
+					break;
 				}
 			}
-			return def;
+			indexed = found;
+			indexedFrom = raw;
+			return found;
 		}
 
 		public String get() {
@@ -168,6 +202,11 @@ public abstract class Setting {
 
 		public boolean is(String option) {
 			return get().equals(option);
+		}
+
+		/** Whether option number {@code i} is picked (no string compare, for hot paths). */
+		public boolean isIndex(int i) {
+			return index() == i;
 		}
 
 		public void next() {
@@ -227,14 +266,22 @@ public abstract class Setting {
 			this.def = def;
 		}
 
+		private String parsedFrom;
+		private int parsed;
+
 		public int get() {
 			String raw = raw();
 			if (raw == null) return def;
+			if (raw == parsedFrom) return parsed;
+			int value;
 			try {
-				return (int) Long.parseLong(raw, 16);
+				value = (int) Long.parseLong(raw, 16);
 			} catch (NumberFormatException e) {
-				return def;
+				value = def;
 			}
+			parsed = value;
+			parsedFrom = raw;
+			return value;
 		}
 
 		public void set(int argb) {

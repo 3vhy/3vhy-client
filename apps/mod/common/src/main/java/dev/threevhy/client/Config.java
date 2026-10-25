@@ -93,6 +93,21 @@ public final class Config {
 		return instance;
 	}
 
+	private static int version = 0;
+
+	/**
+	 * Goes up whenever a mod is switched or a setting changes (or a profile or the file is loaded), so mods
+	 * and settings can keep their value instead of looking it up every time they're asked.
+	 */
+	public static int version() {
+		return version;
+	}
+
+	/** Call after changing {@link #modules} or {@link #settings}. */
+	public static void changed() {
+		version++;
+	}
+
 	private static Path file() {
 		return FabricLoader.getInstance().getConfigDir().resolve("3vhy-client.json");
 	}
@@ -130,6 +145,7 @@ public final class Config {
 					if (profile != null && profile.modules != null && profile.settings != null) migrateBlades(profile.modules, profile.settings);
 				}
 				instance = loaded;
+				changed();
 			}
 		} catch (Exception e) {
 			ThreevhyClient.LOG.warn("Couldn't read 3vhy-client.json, using defaults", e);
@@ -211,6 +227,7 @@ public final class Config {
 		settings = new LinkedHashMap<>(target.settings);
 		hud = copyHud(target.hud);
 		profile = name;
+		changed();
 		saveSoon();
 	}
 
