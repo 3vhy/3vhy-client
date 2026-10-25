@@ -11,7 +11,7 @@ import dev.threevhy.client.hud.Hotbar;
 import dev.threevhy.client.hud.HudRenderer;
 import dev.threevhy.client.hud.HudWidgets;
 import dev.threevhy.client.hud.ScoreboardWidget;
-import dev.threevhy.client.module.Blades;
+import dev.threevhy.client.module.Knives;
 import dev.threevhy.client.module.Borderless;
 import dev.threevhy.client.module.Combo;
 import dev.threevhy.client.module.ConfirmDisconnect;
@@ -74,7 +74,7 @@ public final class ThreevhyClient implements ClientModInitializer {
 		freelookKey = Compat.registerKey(new KeyMapping("key.threevhy.freelook", InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_LEFT_ALT, category));
 		inspectKey = Compat.registerKey(new KeyMapping("key.threevhy.inspect", InputConstants.Type.KEYSYM,
-				GLFW.GLFW_KEY_I, category));
+				GLFW.GLFW_KEY_Y, category));
 
 		Compat.registerHud(Identifier.fromNamespaceAndPath(MOD_ID, "hud"), HudRenderer::render);
 		Compat.replaceHud(VanillaHudElements.CROSSHAIR, Crosshair::draw);
@@ -123,8 +123,8 @@ public final class ThreevhyClient implements ClientModInitializer {
 		while (openSettingsKey.consumeClick()) {
 			if (mc.screen == null) mc.setScreen(MenuScreen.fromKey(null));
 		}
-		while (inspectKey.consumeClick()) Blades.inspect(mc);
-		Blades.tick(mc);
+		while (inspectKey.consumeClick()) Knives.inspect(mc);
+		Knives.tick(mc);
 		if (Borderless.needsReapply() && mc.getWindow().isFullscreen()) {
 			((dev.threevhy.client.mixin.WindowAccessor) (Object) mc.getWindow()).threevhy$setMode();
 		}

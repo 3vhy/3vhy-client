@@ -30,6 +30,11 @@ public final class SettingsSheet {
 		/** How tall they are, {@code width} wide. */
 		float height(Module module, float width);
 
+		/** Whether they come before the module's plain settings rather than after them. */
+		default boolean first(Module module) {
+			return false;
+		}
+
 		void draw(Draw d, Module module, float x, float y, float width, float mouseX, float mouseY, Hits hits, long nowMs);
 
 		boolean keyPressed(int key);
@@ -64,6 +69,8 @@ public final class SettingsSheet {
 	private Setting.Text editing = null;
 	private float sheetX;
 	private float sheetY1;
+	private float contentX;
+	private float contentY;
 	private float sheetY2;
 
 	public SettingsSheet(Extras extras, Runnable clickSound) {
@@ -102,6 +109,11 @@ public final class SettingsSheet {
 		open.set(0);
 	}
 
+	/** Where the sheet's rows started last frame (the left edge and top of the first row), in layout units. */
+	public float[] contentOrigin() {
+		return new float[] {contentX, contentY};
+	}
+
 	public boolean isOpen() {
 		return module != null;
 	}
@@ -138,7 +150,7 @@ public final class SettingsSheet {
 		float listBottom = y2 - 14;
 		float inner = WIDTH - 2 * PAD;
 		float contentH = 0;
-		for (Setting setting : shown.settings()) contentH += rowHeight(setting, inner);
+		for (Setting setting : shown.settings()) if (!setting.hidden()) contentH += rowHeight(setting, inner);
 		float extra = extras != null && extras.has(shown) ? extras.height(shown, inner) : 0;
 		contentH += extra + 10;
 		maxScroll = Math.max(0, contentH - (listBottom - listTop));
@@ -149,8 +161,16 @@ public final class SettingsSheet {
 		d.enableScissor(Math.round(x), Math.round(listTop), Math.round(x + WIDTH), Math.round(listBottom));
 		hits.clip(x, listTop, x + WIDTH, listBottom);
 		float y = listTop - (float) shownScroll;
+		contentX = x + PAD;
+		contentY = y;
 		boolean first = true;
+		if (extra > 0 && extras.first(shown)) {
+			extras.draw(d, shown, x + PAD, y + 12, inner, mx, my, hits, now);
+			y += extra;
+			first = false;
+		}
 		for (Setting setting : shown.settings()) {
+			if (setting.hidden()) continue;
 			float h = rowHeight(setting, inner);
 			if (y + h > listTop - 2 && y < listBottom + 2) {
 				if (!first) Paint.rect(d, x + PAD, y, x + WIDTH - PAD, y + 1, 0, 0x0FFFFFFF);
@@ -159,7 +179,7 @@ public final class SettingsSheet {
 			first = false;
 			y += h;
 		}
-		if (extra > 0) {
+		if (extra > 0 && !extras.first(shown)) {
 			if (!first) Paint.rect(d, x + PAD, y, x + WIDTH - PAD, y + 1, 0, 0x0FFFFFFF);
 			extras.draw(d, shown, x + PAD, y + 12, inner, mx, my, hits, now);
 		}

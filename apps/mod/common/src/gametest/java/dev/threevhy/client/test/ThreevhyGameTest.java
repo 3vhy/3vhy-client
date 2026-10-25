@@ -23,6 +23,9 @@ import dev.threevhy.client.module.CustomSkins;
 import dev.threevhy.client.module.TextHotkeys;
 import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Freelook;
+import dev.threevhy.client.module.Knives;
+import dev.threevhy.client.knife.KnifeModel;
+import dev.threevhy.client.knife.KnifeRenderer;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Module.Category;
 import dev.threevhy.client.module.Modules;
@@ -541,23 +544,9 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.getInput().pressKey(InputConstants.KEY_1);
 			context.runOnClient(client -> Modules.HOTBAR_SELECTED.reset());
 			check(failed, "lyrics read from LRC", Lyrics.parse("[00:01.50] a\n[00:03.00][00:09.00] b").size() == 3);
-			context.runOnClient(client -> {
-				Modules.LYRICS.set(false);
-				client.player.setXRot(10f);
-				Modules.BLADES.set(true);
-			});
-			context.waitTicks(10);
-			shot(context, "3vhy-blade-katana");
-			check(failed, "blades swap the sword's model (ItemModelResolver)", Hooks.bladeModelSwapped);
-			context.getInput().pressKey(ThreevhyClient.inspectKey);
-			context.waitTicks(15);
-			shot(context, "3vhy-blade-inspect");
-			check(failed, "inspecting turns the blade over (ItemInHandRenderer)", Hooks.inspectRan);
-			context.waitTicks(40);
-			context.runOnClient(client -> Modules.BLADES_STYLE.set("Scythe"));
-			context.waitTicks(5);
-			shot(context, "3vhy-blade-scythe");
-			context.runOnClient(client -> Modules.BLADES_STYLE.reset());
+			context.runOnClient(client -> Modules.LYRICS.set(false));
+			knives(context, singleplayer, failed, false);
+			context.runOnClient(client -> client.player.setXRot(10f));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
 			server.runCommand("damage @p 1000 minecraft:generic");
@@ -966,8 +955,149 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
 			context.waitTicks(100);
 			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
+			if (focus.contains("knives")) knives(context, singleplayer, failed, true);
+			if (focus.contains("calibrate")) calibrateKnife(context, singleplayer);
+			if (focus.contains("bench")) benchmark(context, singleplayer, 900);
 		}
 		context.waitTicks(10);
+	}
+
+	/** Frame times and memory allocated on the render thread, one sample a frame, taken by a HUD layer this test adds. */
+	private static final class FrameRecorder {
+		private static final FrameRecorder INSTANCE = new FrameRecorder();
+		private final long[] nanos = new long[4096];
+		private final long[] bytes = new long[4096];
+		private volatile int count = -1;
+		private long lastNanos;
+		private long lastBytes;
+		private boolean registered = false;
+
+		void frame() {
+			if (count < 0 || count >= nanos.length) return;
+			long now = System.nanoTime();
+			long allocated = allocatedBytes();
+			if (lastNanos != 0) {
+				nanos[count] = now - lastNanos;
+				bytes[count] = allocated - lastBytes;
+				count++;
+			}
+			lastNanos = now;
+			lastBytes = allocated;
+		}
+
+		private static long allocatedBytes() {
+			java.lang.management.ThreadMXBean bean = java.lang.management.ManagementFactory.getThreadMXBean();
+			return bean instanceof com.sun.management.ThreadMXBean sun ? sun.getCurrentThreadAllocatedBytes() : 0;
+		}
+
+		void start() {
+			lastNanos = 0;
+			count = 0;
+		}
+
+		/** {average ms, median ms, 99th percentile ms, average KB allocated a frame, frames}. */
+		double[] stop() {
+			int n = Math.max(0, count);
+			count = -1;
+			if (n == 0) return new double[] {0, 0, 0, 0, 0};
+			long[] sorted = java.util.Arrays.copyOf(nanos, n);
+			java.util.Arrays.sort(sorted);
+			double sum = 0;
+			double alloc = 0;
+			for (int i = 0; i < n; i++) {
+				sum += nanos[i];
+				alloc += bytes[i];
+			}
+			return new double[] {sum / n / 1e6, sorted[n / 2] / 1e6, sorted[Math.min(n - 1, (int) Math.ceil(n * 0.99) - 1)] / 1e6, alloc / n / 1024.0, n};
+		}
+	}
+
+	/**
+	 * Measures frame time and render-thread allocation over {@code frames} frames in three set scenes: the
+	 * world with every 3vhy mod off, the same with a typical HUD on, and the 3vhy menu open. Logged as
+	 * "3vhy-bench" lines, so runs before and after a change can be compared on the same machine.
+	 */
+	private static void benchmark(ClientGameTestContext context, TestSingleplayerContext singleplayer, int frames) {
+		var server = singleplayer.getServer();
+		server.runCommand("time set noon");
+		server.runCommand("weather clear");
+		server.runCommand("scoreboard objectives add bench dummy \"Kills\"");
+		server.runCommand("scoreboard objectives setdisplay sidebar bench");
+		server.runCommand("scoreboard players set Steve bench 29");
+		server.runCommand("scoreboard players set Alex bench 17");
+		server.runCommand("effect give @p speed 600 1");
+		server.runCommand("effect give @p strength 600 0");
+		server.runCommand("item replace entity @p weapon.mainhand with netherite_sword");
+		server.runCommand("item replace entity @p weapon.offhand with totem_of_undying");
+		server.runCommand("item replace entity @p armor.head with diamond_helmet");
+		server.runCommand("item replace entity @p armor.chest with diamond_chestplate");
+		context.runOnClient(client -> {
+			if (!FrameRecorder.INSTANCE.registered) {
+				FrameRecorder.INSTANCE.registered = true;
+				Compat.registerHud(net.minecraft.resources.Identifier.fromNamespaceAndPath("threevhy", "bench"), d -> FrameRecorder.INSTANCE.frame());
+			}
+			client.options.renderDistance().set(8);
+			client.options.fov().set(70);
+			client.options.cloudStatus().set(net.minecraft.client.CloudStatus.FANCY);
+			client.getToastManager().clear();
+		});
+		face(context, 30, 5);
+		context.waitTicks(200);
+		List<Module> toggleable = new ArrayList<>();
+		for (Module module : Modules.ALL) if (module.toggleable()) toggleable.add(module);
+		java.util.Map<Module, Boolean> before = new java.util.HashMap<>();
+		context.runOnClient(client -> {
+			for (Module module : toggleable) {
+				before.put(module, module.enabled());
+				module.set(false);
+			}
+		});
+		context.waitTicks(40);
+		double[] off = measure(context, frames);
+		context.runOnClient(client -> {
+			for (Module module : List.of(Modules.FPS, Modules.CPS, Modules.PING, Modules.TPS, Modules.CLOCK, Modules.COORDS, Modules.KEYSTROKES,
+					Modules.ARMOR, Modules.POTIONS, Modules.SCOREBOARD, Modules.MUSIC, Modules.MODULE_LIST, Modules.PLAYER_LIST, Modules.TARGET_HUD,
+					Modules.CROSSHAIR, Modules.ZOOM, Modules.FREELOOK, Modules.NAME_PROTECT, Modules.CHAT, Modules.MENU_NAME, Modules.LYRICS)) {
+				module.set(true);
+			}
+			Modules.MENU_NAME_HUD.set(true);
+			MusicBridge.simulate(SAMPLE_SONG);
+			Lyrics.simulate(MusicBridge.current(), "[00:50.00] Snow falls on the quiet town\n[00:55.00] Every light is burning down\n"
+					+ "[01:05.00] Hold on, we're almost home\n[01:20.00] Under violet skies we roam\n[02:00.00] Under violet skies we roam");
+			PlayerList.add("Steve");
+			PlayerList.add(client.getUser().getName());
+			TextRules.add("Kills: #", "Kills: 9999");
+		});
+		context.waitTicks(40);
+		double[] hud = measure(context, frames);
+		context.setScreen(() -> new MenuScreen(null, Category.HUD));
+		context.waitTicks(40);
+		double[] menu = measure(context, frames);
+		context.setScreen(() -> null);
+		context.runOnClient(client -> before.forEach(Module::set));
+		report("world, 3vhy mods off", off);
+		report("world, typical 3vhy HUD", hud);
+		report("3vhy menu open", menu);
+		ThreevhyClient.LOG.info("3vhy-bench: 3vhy HUD costs {} ms a frame on average ({} ms at the 99th percentile)",
+				String.format(java.util.Locale.ROOT, "%.2f", hud[0] - off[0]), String.format(java.util.Locale.ROOT, "%.2f", hud[2] - off[2]));
+	}
+
+	private static double[] measure(ClientGameTestContext context, int frames) {
+		context.runOnClient(client -> FrameRecorder.INSTANCE.start());
+		int waited = 0;
+		while (context.computeOnClient(client -> FrameRecorder.INSTANCE.count) < frames && waited < 20 * 120) {
+			context.waitTicks(10);
+			waited += 10;
+		}
+		return context.computeOnClient(client -> FrameRecorder.INSTANCE.stop());
+	}
+
+	private static void report(String scene, double[] result) {
+		ThreevhyClient.LOG.info("3vhy-bench: {}: {} frames, {} ms average ({} FPS), {} ms median, {} ms 99th percentile ({} FPS 1% low), {} KB allocated a frame",
+				scene, (int) result[4], String.format(java.util.Locale.ROOT, "%.2f", result[0]),
+				String.format(java.util.Locale.ROOT, "%.1f", 1000 / Math.max(0.001, result[0])), String.format(java.util.Locale.ROOT, "%.2f", result[1]),
+				String.format(java.util.Locale.ROOT, "%.2f", result[2]), String.format(java.util.Locale.ROOT, "%.1f", 1000 / Math.max(0.001, result[2])),
+				String.format(java.util.Locale.ROOT, "%.1f", result[3]));
 	}
 
 	/**
@@ -1090,6 +1220,174 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		});
 		face(context, (float) home[3], (float) home[4]);
 		context.waitTicks(20);
+	}
+
+	/**
+	 * Knives: the old Blades settings carry over, hotbar slots are marked as knives, and each knife is
+	 * drawn, slashes and inspects. With {@code every}, each knife gets a picture idle, mid-draw, mid-slash
+	 * and mid-inspect on a platform in the sky; otherwise a few pictures in place.
+	 */
+	private static void knives(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed, boolean every) {
+		var server = singleplayer.getServer();
+		check(failed, "Blades settings carry over to Knives", context.computeOnClient(client -> {
+			java.util.Map<String, Boolean> modules = new java.util.HashMap<>(java.util.Map.of("blades", true));
+			java.util.Map<String, String> settings = new java.util.HashMap<>(java.util.Map.of("blades.style", "Scythe", "blades.axes", "true"));
+			Config.migrateBlades(modules, settings);
+			return Boolean.TRUE.equals(modules.get("knives")) && !modules.containsKey("blades") && "Scythe".equals(settings.get("knives.model"))
+					&& "Swords and axes".equals(settings.get("knives.auto_type")) && !settings.containsKey("blades.style");
+		}));
+		double[] home = context.computeOnClient(client -> new double[] {client.player.getX(), client.player.getY(), client.player.getZ(),
+				client.player.getYRot(), client.player.getXRot()});
+		int x = (int) Math.floor(home[0]);
+		int y = (int) Math.floor(home[1]) + 40;
+		int z = (int) Math.floor(home[2]);
+		String[] items = {"netherite_sword", "diamond_sword", "stick", "iron_sword", "golden_sword", "blaze_rod", "netherite_sword", "iron_axe",
+				"totem_of_undying"};
+		for (int i = 0; i < 9; i++) server.runCommand("item replace entity @p hotbar." + i + " with " + items[i]);
+		if (every) {
+			server.runCommand("fill " + (x - 6) + " " + (y - 1) + " " + (z - 6) + " " + (x + 6) + " " + (y - 1) + " " + (z + 6) + " minecraft:smooth_stone");
+			server.runCommand("tp @p " + x + ".5 " + y + " " + z + ".5 0 -8");
+			server.runCommand("time set noon");
+		}
+		context.runOnClient(client -> {
+			Modules.KNIVES.set(true);
+			Modules.KNIVES_SLOTS.reset();
+			for (KnifeModel model : KnifeModel.values()) Knives.setSlot(model.ordinal(), model);
+			client.getToastManager().clear();
+			client.gui.getChat().clearMessages(false);
+		});
+		face(context, 0, every ? -8 : 10);
+		check(failed, "hotbar slots marked as knives keep their knife", context.computeOnClient(client ->
+				Knives.slot(1) == KnifeModel.BUTTERFLY && Knives.slot(7) == KnifeModel.SCYTHE && Knives.slot(8) == null
+						&& Modules.KNIVES_SLOTS.get().contains("2:bayonet")));
+		context.runOnClient(client -> Knives.toggleSlot(8));
+		check(failed, "a hotbar slot can be marked and unmarked", context.computeOnClient(client -> {
+			boolean marked = Knives.slot(8) != null;
+			Knives.toggleSlot(8);
+			return marked && Knives.slot(8) == null;
+		}));
+		List<KnifeModel> shown = every ? List.of(KnifeModel.values()) : List.of(KnifeModel.KARAMBIT, KnifeModel.BUTTERFLY, KnifeModel.PHANTOM);
+		for (KnifeModel model : shown) {
+			String name = model.id();
+			context.getInput().pressKey(GLFW.GLFW_KEY_1 + model.ordinal());
+			if (every) {
+				context.waitTicks(6);
+				shot(context, "3vhy-knife-" + name + "-draw");
+			}
+			context.waitTicks(every ? 26 : 30);
+			shot(context, "3vhy-knife-" + name);
+			if (every || model == KnifeModel.KARAMBIT) {
+				context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+				context.waitTicks(4);
+				shot(context, "3vhy-knife-" + name + "-slash");
+				context.waitTicks(16);
+			}
+			if (every || model == KnifeModel.BUTTERFLY) {
+				context.getInput().pressKey(ThreevhyClient.inspectKey);
+				context.waitTicks(every ? 22 : 26);
+				shot(context, "3vhy-knife-" + name + "-inspect");
+				if (model == KnifeModel.BUTTERFLY) check(failed, "the inspect key plays the knife's inspect", KnifeRenderer.inspecting()
+						|| Hooks.knifeInspectRan);
+				context.waitTicks(60);
+			}
+		}
+		knifeSettings(context, failed);
+		check(failed, "knives are drawn in your hand (ItemInHandRenderer)", Hooks.knifeRendered);
+		check(failed, "switching to a knife plays its draw", Hooks.knifeDrawRan);
+		check(failed, "a swing plays a slash (LocalPlayer.swing)", Hooks.knifeSlashRan);
+		check(failed, "the inspect key starts an inspect", Hooks.knifeInspectRan);
+		if (every) {
+			for (String finish : List.of("Purple", "Crimson", "Ice", "Gold")) {
+				context.runOnClient(client -> Modules.KNIVES_FINISH.set(finish));
+				context.getInput().pressKey(GLFW.GLFW_KEY_3);
+				context.waitTicks(30);
+				shot(context, "3vhy-knife-bayonet-" + finish.toLowerCase(java.util.Locale.ROOT));
+			}
+			context.runOnClient(client -> {
+				Modules.KNIVES_FINISH.reset();
+				client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.LEFT);
+				client.options.broadcastOptions();
+			});
+			context.getInput().pressKey(GLFW.GLFW_KEY_1);
+			context.waitTicks(30);
+			shot(context, "3vhy-knife-left-handed");
+			context.runOnClient(client -> {
+				client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT);
+				client.options.broadcastOptions();
+			});
+			server.runCommand("fill " + (x - 6) + " " + (y - 1) + " " + (z - 6) + " " + (x + 6) + " " + (y - 1) + " " + (z + 6) + " minecraft:air");
+			server.runCommand(String.format(java.util.Locale.ROOT, "tp @p %.4f %.4f %.4f %.2f %.2f", home[0], home[1], home[2], home[3], home[4]));
+		}
+		context.runOnClient(client -> {
+			Modules.KNIVES.set(false);
+			Modules.KNIVES_SLOTS.reset();
+		});
+		server.runCommand("item replace entity @p hotbar.0 with netherite_sword");
+		context.getInput().pressKey(GLFW.GLFW_KEY_1);
+		context.waitTicks(5);
+	}
+
+	/**
+	 * The Knives settings: the slot picker shows the hotbar, clicking slot 9 marks it, and a marked slot's
+	 * knife picker opens its list of knives.
+	 */
+	private static void knifeSettings(ClientGameTestContext context, List<String> failed) {
+		int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
+		context.setScreen(() -> MenuScreen.settings(null, Modules.KNIVES));
+		context.waitTicks(20);
+		shot(context, "3vhy-menu-knives");
+		float[] origin = context.computeOnClient(client -> ((MenuScreen) client.screen).view().sheetContent());
+		float unit = origin[2];
+		float width = 408;
+		float slot = (width - 8 * 6) / 9f;
+		context.getInput().setCursorPos((origin[0] + (8 * (slot + 6) + slot / 2f) * unit) * scale, (origin[1] + (26 + slot / 2f) * unit) * scale);
+		context.waitTicks(2);
+		context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		context.waitTicks(5);
+		check(failed, "clicking a slot in the Knives settings marks it", context.computeOnClient(client -> Knives.slot(8) != null));
+		float firstRow = 26 + slot + 12 + 24;
+		context.getInput().setCursorPos((origin[0] + (width - 48 - 75) * unit) * scale, (origin[1] + (firstRow + 22) * unit) * scale);
+		context.waitTicks(2);
+		context.getInput().pressMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		context.waitTicks(10);
+		shot(context, "3vhy-menu-knives-picker");
+		context.runOnClient(client -> Knives.setSlot(8, null));
+		context.setScreen(() -> null);
+		context.waitTicks(5);
+	}
+
+	/** Pictures of the knife at rest with one pose channel set at a time, to see which way each one moves it. */
+	private static void calibrateKnife(ClientGameTestContext context, TestSingleplayerContext singleplayer) {
+		var server = singleplayer.getServer();
+		server.runCommand("item replace entity @p hotbar.0 with netherite_sword");
+		server.runCommand("time set noon");
+		context.runOnClient(client -> {
+			Modules.KNIVES.set(true);
+			Modules.KNIVES_SLOTS.reset();
+			Knives.setSlot(0, KnifeModel.BAYONET);
+		});
+		face(context, 0, -8);
+		context.getInput().pressKey(GLFW.GLFW_KEY_1);
+		context.waitTicks(30);
+		String[] names = {"x", "y", "z", "pitch", "yaw", "roll", "kpitch", "kyaw", "kroll"};
+		float[] values = {0.15f, 0.15f, 0.15f, 30, 30, 30, 45, 45, 45};
+		context.runOnClient(client -> KnifeRenderer.preview(KnifeModel.BAYONET, "channel0", 0));
+		context.waitTicks(3);
+		shot(context, "3vhy-calibrate-rest");
+		for (int c = 0; c < names.length; c++) {
+			int channel = c;
+			context.runOnClient(client -> KnifeRenderer.preview(KnifeModel.BAYONET, "channel" + channel, values[channel]));
+			context.waitTicks(3);
+			shot(context, "3vhy-calibrate-" + names[c] + "-plus");
+		}
+		for (String which : List.of("slash0", "slash1", "slash2", "use")) {
+			for (float t : new float[] {0.15f, 0.3f, 0.45f, 0.6f, 0.8f}) {
+				context.runOnClient(client -> KnifeRenderer.preview(KnifeModel.BAYONET, which, t));
+				context.waitTicks(2);
+				shot(context, "3vhy-calibrate-" + which + "-" + Math.round(t * 100));
+			}
+		}
+		context.runOnClient(client -> KnifeRenderer.preview(null, null, 0));
 	}
 
 	/** Turns the player to this yaw and pitch at once, with no turning in between. */

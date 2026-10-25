@@ -121,11 +121,32 @@ public final class Config {
 				if (loaded.textHotkeys == null) loaded.textHotkeys = new ArrayList<>();
 				loaded.textHotkeys.removeIf(hotkey -> hotkey == null || hotkey.key < 0 || hotkey.text == null || hotkey.text.isBlank());
 				if (loaded.skinFile == null) loaded.skinFile = "";
+				migrateBlades(loaded.modules, loaded.settings);
+				for (Profile profile : loaded.profiles.values()) {
+					if (profile != null && profile.modules != null && profile.settings != null) migrateBlades(profile.modules, profile.settings);
+				}
 				instance = loaded;
 			}
 		} catch (Exception e) {
 			ThreevhyClient.LOG.warn("Couldn't read 3vhy-client.json, using defaults", e);
 		}
+	}
+
+	/**
+	 * Blades became Knives: its switch carries over, and its swords-as-katanas (or scythes) setup becomes
+	 * Knives' auto mode with the same blade, so nothing looks different until the player changes it.
+	 */
+	public static void migrateBlades(Map<String, Boolean> modules, Map<String, String> settings) {
+		Boolean on = modules.remove("blades");
+		String style = settings.remove("blades.style");
+		String axes = settings.remove("blades.axes");
+		String others = settings.remove("blades.others");
+		if (on == null && style == null && axes == null && others == null) return;
+		if (on != null) modules.putIfAbsent("knives", on);
+		settings.putIfAbsent("knives.auto", "true");
+		settings.putIfAbsent("knives.auto_type", "true".equals(axes) ? "Swords and axes" : "Swords");
+		settings.putIfAbsent("knives.model", style != null ? style : "Katana");
+		if (others != null) settings.putIfAbsent("knives.others", others);
 	}
 
 	public static void save() {

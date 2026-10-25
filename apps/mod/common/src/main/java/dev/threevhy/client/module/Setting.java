@@ -12,6 +12,7 @@ public abstract class Setting {
 	public final String name;
 	public final String description;
 	Module owner;
+	private boolean hidden = false;
 
 	protected Setting(String id, String name, String description) {
 		this.id = id;
@@ -21,6 +22,17 @@ public abstract class Setting {
 
 	public Module owner() {
 		return owner;
+	}
+
+	/** Leaves this setting off the settings page: data a module's own controls edit, like the Knives slots. */
+	@SuppressWarnings("unchecked")
+	<T extends Setting> T hide() {
+		hidden = true;
+		return (T) this;
+	}
+
+	public boolean hidden() {
+		return hidden;
 	}
 
 	protected String key() {

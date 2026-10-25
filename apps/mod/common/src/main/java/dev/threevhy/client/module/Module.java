@@ -15,7 +15,7 @@ public final class Module {
 		WORLD("World", "globe", "Mark a place once, find it again"),
 		UTILITY("Utility", "wrench", "The little things, handled"),
 		HUD("HUD", "layout-dashboard", "Your screen, arranged your way"),
-		COSMETICS("Cosmetics", "sparkles", "Blades and looks that stand out"),
+		COSMETICS("Cosmetics", "sparkles", "Knives and looks that stand out"),
 		CLIENT("Client", "settings", "Colours, fonts and how 3vhy feels");
 
 		public final String label;

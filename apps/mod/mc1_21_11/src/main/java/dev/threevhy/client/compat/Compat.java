@@ -116,4 +116,10 @@ public final class Compat {
 		if (define != null) builder.withShaderDefine(define);
 		return builder.build();
 	}
+
+	/** How a knife's parts are drawn: lit and two-sided, or glowing and see-through for energy blades. */
+	public static net.minecraft.client.renderer.rendertype.RenderType knifeRenderType(Identifier texture, boolean glow) {
+		return glow ? net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture)
+				: net.minecraft.client.renderer.rendertype.RenderTypes.entityCutoutNoCull(texture);
+	}
 }

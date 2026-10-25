@@ -178,6 +178,12 @@ public final class MenuView {
 		return sheet.module();
 	}
 
+	/** The open sheet's first row as last drawn ({x, y} in GUI units) and the layout scale, for clicking its parts. */
+	public float[] sheetContent() {
+		float[] origin = sheet.contentOrigin();
+		return new float[] {origin[0] * unit, origin[1] * unit, unit};
+	}
+
 	/** Draws the menu over a {@code guiW} x {@code guiH} screen; the mouse is in GUI units. */
 	public void draw(Draw d, float guiW, float guiH, double mouseX, double mouseY) {
 		long now = System.currentTimeMillis();

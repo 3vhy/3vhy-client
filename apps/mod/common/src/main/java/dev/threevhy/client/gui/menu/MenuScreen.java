@@ -85,7 +85,7 @@ public final class MenuScreen extends CompatScreen implements MenuView.Host {
 	@Override
 	public String keyFor(Module module) {
 		KeyMapping key = module == Modules.ZOOM ? ThreevhyClient.zoomKey : module == Modules.FREELOOK ? ThreevhyClient.freelookKey
-				: module == Modules.BLADES ? ThreevhyClient.inspectKey : null;
+				: module == Modules.KNIVES ? ThreevhyClient.inspectKey : null;
 		return key == null ? null : shortKey(key.getTranslatedKeyMessage().getString());
 	}
 

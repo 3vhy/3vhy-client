@@ -271,12 +271,38 @@ public final class Modules {
 			"A soft glow behind the icons", true));
 
 	// Cosmetics
-	public static final Module BLADES = new Module("blades", "Blades",
-			"Your swords become a katana or a scythe. Press I to inspect", Category.COSMETICS, false).icon("sword").markNew();
-	public static final Choice BLADES_STYLE = BLADES.add(new Choice("style", "Blade", "What your swords look like", 0,
-			"Katana", "Scythe"));
-	public static final Toggle BLADES_AXES = BLADES.add(new Toggle("axes", "Axes too", "Axes get the blade as well", false));
-	public static final Toggle BLADES_OTHERS = BLADES.add(new Toggle("others", "Other players", "Everyone's swords on your screen", true));
+	public static final Module KNIVES = new Module("knives", "Knives",
+			"Swords and the hotbar slots you pick as knives that flip, slash and inspect", Category.COSMETICS, false).icon("sword").markNew();
+	public static final Text KNIVES_SLOTS = KNIVES.add(new Text("slots", "Knife slots", "Hotbar slots held as knives, and which knife",
+			"", 200).hide());
+	public static final Choice KNIVES_MODEL = KNIVES.add(new Choice("model", "Knife", "Your swords' knife, and the first pick for a slot you mark",
+			0, dev.threevhy.client.knife.KnifeModel.labels()));
+	public static final Choice KNIVES_FINISH = KNIVES.add(new Choice("finish", "Finish", "The blade's colour", 0,
+			"Steel", "Purple", "Crimson", "Ice", "Gold"));
+	public static final Toggle KNIVES_AUTO = KNIVES.add(new Toggle("auto", "Auto knives",
+			"Every item of a kind is a knife too, not just the slots you mark", true));
+	public static final Choice KNIVES_AUTO_TYPE = KNIVES.add(new Choice("auto_type", "Which items", "What Auto knives turns into knives", 0,
+			"Swords", "Swords and axes", "Item ID"));
+	public static final Text KNIVES_AUTO_ITEM = KNIVES.add(new Text("auto_item", "Item ID", "For Which items: Item ID, like minecraft:stick",
+			"minecraft:stick", 48));
+	public static final Toggle KNIVES_ANIMATIONS = KNIVES.add(new Toggle("animations", "Custom animations",
+			"Off, knife slots show your usual held item again", true));
+	public static final Toggle KNIVES_ARM = KNIVES.add(new Toggle("arm", "Show arm", "Your arm holding the knife", true));
+	public static final Slider KNIVES_X = KNIVES.add(new Slider("x", "Left / right", "Moves the knife sideways", -100, 100, 1, 0, ""));
+	public static final Slider KNIVES_Y = KNIVES.add(new Slider("y", "Up / down", "Moves the knife up or down", -100, 100, 1, 0, ""));
+	public static final Slider KNIVES_Z = KNIVES.add(new Slider("z", "Near / far", "Moves the knife closer or further away", -100, 100, 1, 0, ""));
+	public static final Slider KNIVES_PITCH = KNIVES.add(new Slider("pitch", "Tilt", "Tips the knife forwards or back", -90, 90, 1, 0, "°"));
+	public static final Slider KNIVES_YAW = KNIVES.add(new Slider("yaw", "Turn", "Turns the knife left or right", -90, 90, 1, 0, "°"));
+	public static final Slider KNIVES_ROLL = KNIVES.add(new Slider("roll", "Roll", "Rolls the knife over", -90, 90, 1, 0, "°"));
+	public static final Slider KNIVES_SCALE = KNIVES.add(new Slider("scale", "Size", "How big the knife is", 50, 200, 5, 100, "%"));
+	public static final Slider KNIVES_SWING_SPEED = KNIVES.add(new Slider("swing_speed", "Slash speed", "How fast slashes and stabs play",
+			50, 200, 5, 100, "%"));
+	public static final Slider KNIVES_DRAW_SPEED = KNIVES.add(new Slider("draw_speed", "Draw speed", "How fast the knife comes out",
+			50, 200, 5, 100, "%"));
+	public static final Slider KNIVES_INSPECT_SPEED = KNIVES.add(new Slider("inspect_speed", "Inspect speed", "How fast the inspect plays",
+			50, 200, 5, 100, "%"));
+	public static final Slider KNIVES_IDLE = KNIVES.add(new Slider("idle", "Idle sway", "How much the knife breathes and sways as you look around",
+			0, 200, 5, 100, "%"));
 	public static final Module MENU_NAME = new Module("menu_name", "Menu Logo",
 			"The 3vhy logo in the corner of menus, chests and your inventory, or on your HUD", Category.COSMETICS, true)
 			.icon("badge").markNew();
@@ -332,7 +358,7 @@ public final class Modules {
 			WAYPOINTS, FULLBRIGHT, NO_FOG,
 			CHAT, TEXT_HOTKEYS, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS,
 			FPS, CPS, PING, TPS, CLOCK, COORDS, KEYSTROKES, ARMOR, POTIONS, SCOREBOARD, HOTBAR, MUSIC, MODULE_LIST,
-			BLADES, MENU_NAME, MAIN_MENU,
+			KNIVES, MENU_NAME, MAIN_MENU,
 			THEME, DISCORD, PROFILES);
 
 	/** The modules in one tab, in order. */

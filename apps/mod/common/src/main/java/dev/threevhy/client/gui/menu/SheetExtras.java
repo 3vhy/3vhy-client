@@ -3,9 +3,12 @@ package dev.threevhy.client.gui.menu;
 import dev.threevhy.client.Config;
 import dev.threevhy.client.Config.Waypoint;
 import dev.threevhy.client.Draw;
+import dev.threevhy.client.gui.Accent;
 import dev.threevhy.client.hud.HudWidget;
 import dev.threevhy.client.hud.HudWidgets;
+import dev.threevhy.client.knife.KnifeModel;
 import dev.threevhy.client.module.CustomSkins;
+import dev.threevhy.client.module.Knives;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.module.PlayerList;
@@ -31,11 +34,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * The parts of a settings sheet that aren't plain settings: the Player List's names, Name Protect's
- * text changes, Text Hotkeys, Skin Protect's skin file, the Music Player's status, Waypoints, and a
- * button into the HUD editor for every HUD widget.
+ * text changes, Text Hotkeys, Skin Protect's skin file, the Music Player's status, Waypoints, the
+ * Knives slot picker, and a button into the HUD editor for every HUD widget.
  */
 final class SheetExtras implements SettingsSheet.Extras {
 	private enum Focus {
@@ -49,6 +54,8 @@ final class SheetExtras implements SettingsSheet.Extras {
 	private static final float SECTION = 26;
 	private static final float HINT = 24;
 	private static final float EMPTY = 40;
+	private static final float SLOT_GAP = 6;
+	private static final float CHIP = 30;
 
 	private final MenuScreen screen;
 	private Focus focus = Focus.NONE;
@@ -61,6 +68,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 	private long keyPickedAt = 0;
 	private Waypoint renaming = null;
 	private String waypointName = "";
+	private int knifeMenu = -1;
 	private float mx;
 	private float my;
 
@@ -79,7 +87,12 @@ final class SheetExtras implements SettingsSheet.Extras {
 	public boolean has(Module module) {
 		return widgetOf(module) != null || module == Modules.THEME || module == Modules.MUSIC || module == Modules.LYRICS || module == Modules.SKIN_PROTECT
 				|| module == Modules.PLAYER_LIST || module == Modules.NAME_PROTECT || module == Modules.TEXT_HOTKEYS
-				|| module == Modules.WAYPOINTS;
+				|| module == Modules.WAYPOINTS || module == Modules.KNIVES;
+	}
+
+	@Override
+	public boolean first(Module module) {
+		return module == Modules.KNIVES;
 	}
 
 	@Override
@@ -94,6 +107,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.NAME_PROTECT) h += listHeight(Config.get().textRules.size());
 		if (module == Modules.TEXT_HOTKEYS) h += listHeight(Config.get().textHotkeys.size());
 		if (module == Modules.WAYPOINTS) h += waypointsHeight();
+		if (module == Modules.KNIVES) h += knivesHeight(width);
 		return h;
 	}
 
@@ -140,6 +154,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.NAME_PROTECT) drawRules(d, hits, x, y, w, now);
 		if (module == Modules.TEXT_HOTKEYS) drawHotkeys(d, hits, x, y, w, now);
 		if (module == Modules.WAYPOINTS) drawWaypoints(d, hits, x, y, w, now);
+		if (module == Modules.KNIVES) drawKnives(d, hits, x, y, w);
 	}
 
 	private boolean over(float x1, float y1, float x2, float y2) {
@@ -497,6 +512,154 @@ final class SheetExtras implements SettingsSheet.Extras {
 			Type.right(d, distance, right - 58, y + (h - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD, Tokens.LILAC);
 			y += h + ITEM_GAP;
 		}
+	}
+
+	private static int markedSlots() {
+		int count = 0;
+		for (int i = 0; i < 9; i++) if (Knives.slot(i) != null) count++;
+		return count;
+	}
+
+	private static float slotSize(float width) {
+		return (width - 8 * SLOT_GAP) / 9f;
+	}
+
+	private static float knifeChipsHeight() {
+		int rows = (KnifeModel.values().length + 3) / 4;
+		return rows * CHIP + (rows - 1) * SLOT_GAP + 10;
+	}
+
+	private float knivesHeight(float width) {
+		if (knifeMenu >= 0 && Knives.slot(knifeMenu) == null) knifeMenu = -1;
+		int marked = markedSlots();
+		return SECTION + slotSize(width) + 12 + HINT + marked * (ITEM + ITEM_GAP) + (knifeMenu >= 0 ? knifeChipsHeight() : 0) + 8 + ROW;
+	}
+
+	private static ItemStack hotbarItem(int slot) {
+		Player player = Minecraft.getInstance().player;
+		return player == null ? ItemStack.EMPTY : player.getInventory().getItem(slot);
+	}
+
+	/** An item's picture, {@code size} across, sharp and in place at any menu scale. */
+	private static void itemIcon(Draw d, ItemStack stack, float x, float y, float size) {
+		d.push();
+		d.translate(x, y);
+		d.scale(size / 16f);
+		d.item(stack, 0, 0);
+		d.pop();
+	}
+
+	/**
+	 * The Knives slot picker: your hotbar as nine glass slots with the items in them. Click a slot to hold it
+	 * as a knife (it lights up), right click to change its knife; each knife slot then gets a row with a
+	 * picker for its knife. Under them, a button that puts the viewmodel back.
+	 */
+	private void drawKnives(Draw d, Hits hits, float x, float y, float w) {
+		Player player = Minecraft.getInstance().player;
+		int selected = player == null ? -1 : player.getInventory().getSelectedSlot();
+		section(d, x, y, "Knife slots");
+		y += SECTION;
+		float size = slotSize(w);
+		int accent = Accent.get();
+		for (int i = 0; i < 9; i++) {
+			final int slot = i;
+			float sx = x + i * (size + SLOT_GAP);
+			KnifeModel model = Knives.slot(i);
+			boolean marked = model != null;
+			boolean hover = over(sx, y, sx + size, y + size);
+			if (marked) {
+				Paint.shadow(d, sx, y, sx + size, y + size, 12, 0, 0, 10, 0, Accent.glow(hover ? 0.9f : 0.65f));
+				Paint.rect(d, sx, y, sx + size, y + size, 12, Paint.fade(accent, hover ? 0.3f : 0.22f));
+				Paint.stroke(d, sx, y, sx + size, y + size, 12, 1.5f, Accent.lighten(accent, 0.25f));
+			} else {
+				Paint.rect(d, sx, y, sx + size, y + size, 12, hover ? 0x17FFFFFF : 0x0BFFFFFF);
+				Paint.stroke(d, sx, y, sx + size, y + size, 12, 1, hover ? 0x4DCDB6FF : 0x1AFFFFFF);
+			}
+			ItemStack stack = hotbarItem(i);
+			if (!stack.isEmpty()) {
+				itemIcon(d, stack, sx + (size - 24) / 2f, y + (size - 24) / 2f, 24);
+			} else if (marked) {
+				Paint.icon(d, "sword", sx + (size - 16) / 2f, y + (size - 16) / 2f, 16, 0xFFFFFFFF);
+			}
+			Type.draw(d, String.valueOf(i + 1), sx + 6, y + 5, 7, Weight.SEMIBOLD, marked ? 0xFFFFFFFF : Tokens.TEXT_3);
+			if (i == selected) Paint.rect(d, sx + size / 2f - 6, y + size + 4, sx + size / 2f + 6, y + size + 6, 1, 0x99FFFFFF);
+			hits.add(sx, y, sx + size, y + size, () -> {
+				Knives.toggleSlot(slot);
+				knifeMenu = -1;
+				KnifeModel now = Knives.slot(slot);
+				screen.view().notice(now == null ? "Slot " + (slot + 1) + " is back to normal" : "Slot " + (slot + 1) + " is a " + now.label);
+			}, () -> {
+				if (Knives.slot(slot) == null) Knives.toggleSlot(slot);
+				else Knives.cycleSlot(slot, 1);
+			});
+		}
+		y += size + 12;
+		hint(d, x, y, w, player == null ? "Click a slot to hold it as a knife. Your items show here in game" : "Click a slot to hold it as a knife, right click to change which");
+		y += HINT;
+		for (int i = 0; i < 9; i++) {
+			KnifeModel model = Knives.slot(i);
+			if (model == null) continue;
+			final int slot = i;
+			item(d, x, y, w);
+			float badge = 28;
+			float by = y + (ITEM - badge) / 2f;
+			Paint.rect(d, x + 10, by, x + 10 + badge, by + badge, 9, Paint.fade(accent, 0.22f));
+			Paint.stroke(d, x + 10, by, x + 10 + badge, by + badge, 9, 1, Paint.fade(Accent.lighten(accent, 0.25f), 0.7f));
+			ItemStack stack = hotbarItem(i);
+			if (!stack.isEmpty()) itemIcon(d, stack, x + 10 + (badge - 20) / 2f, by + (badge - 20) / 2f, 20);
+			else Type.center(d, String.valueOf(i + 1), x + 10 + badge / 2f, by + (badge - 10) / 2f, 10, Weight.SEMIBOLD, 0xFFFFFFFF);
+			float tx = x + 10 + badge + 12;
+			String held = stack.isEmpty() ? "Empty slot" : stack.getHoverName().getString();
+			Type.draw(d, "Slot " + (i + 1), tx, y + 11, 10.5f, Weight.SEMIBOLD, Tokens.TEXT);
+			Type.draw(d, Type.fit(held, 120, 9, Weight.MEDIUM), tx, y + 28, 9, Weight.MEDIUM, Tokens.TEXT_3);
+			float delX = x + w - 24;
+			iconButton(d, hits, delX, y + ITEM / 2f, "x", true, false, () -> {
+				Knives.setSlot(slot, null);
+				if (knifeMenu == slot) knifeMenu = -1;
+			});
+			float px2 = delX - 24;
+			float px1 = px2 - 150;
+			float py = y + (ITEM - 30) / 2f;
+			boolean open = knifeMenu == slot;
+			boolean hover = over(px1, py, px2, py + 30);
+			Paint.rect(d, px1, py, px2, py + 30, 15, open ? Paint.fade(accent, 0.25f) : hover ? 0x17FFFFFF : 0x0BFFFFFF);
+			Paint.stroke(d, px1, py, px2, py + 30, 15, 1, open ? Accent.lighten(accent, 0.25f) : hover ? 0x4DCDB6FF : 0x1AFFFFFF);
+			Paint.icon(d, "sword", px1 + 12, py + 8, 14, open ? 0xFFFFFFFF : Tokens.LILAC);
+			Type.draw(d, Type.fit(model.label, 150 - 62, 10.5f, Weight.SEMIBOLD), px1 + 34, py + (30 - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD, Tokens.TEXT);
+			Paint.icon(d, open ? "chevron-up" : "chevron-down", px2 - 24, py + 8, 14, Tokens.TEXT_2);
+			hits.add(px1, py, px2, py + 30, () -> knifeMenu = open ? -1 : slot, () -> Knives.cycleSlot(slot, 1));
+			y += ITEM + ITEM_GAP;
+			if (open) {
+				KnifeModel[] all = KnifeModel.values();
+				float chipW = (w - 3 * SLOT_GAP) / 4f;
+				for (int m = 0; m < all.length; m++) {
+					KnifeModel each = all[m];
+					float cx = x + (m % 4) * (chipW + SLOT_GAP);
+					float cy = y + (m / 4) * (CHIP + SLOT_GAP);
+					boolean current = each == model;
+					boolean chipHover = over(cx, cy, cx + chipW, cy + CHIP);
+					if (current) {
+						Widgets.accentPill(d, cx, cy, cx + chipW, cy + CHIP, 0.9f);
+					} else {
+						Paint.rect(d, cx, cy, cx + chipW, cy + CHIP, CHIP / 2f, chipHover ? 0x17FFFFFF : 0x0BFFFFFF);
+						Paint.stroke(d, cx, cy, cx + chipW, cy + CHIP, CHIP / 2f, 1, chipHover ? 0x4DCDB6FF : 0x1AFFFFFF);
+					}
+					Type.center(d, Type.fit(each.label, chipW - 16, 10, Weight.SEMIBOLD), cx + chipW / 2f, cy + (CHIP - 10) / 2f, 10, Weight.SEMIBOLD,
+							current ? 0xFFFFFFFF : chipHover ? Tokens.TEXT : Tokens.TEXT_2);
+					hits.add(cx, cy, cx + chipW, cy + CHIP, () -> {
+						Knives.setSlot(slot, each);
+						knifeMenu = -1;
+					});
+				}
+				y += knifeChipsHeight();
+			}
+		}
+		y += 8;
+		row(d, x, y, w, "Viewmodel", "Put the knife's place, turn, size and speeds back", 120);
+		button(d, hits, x + w - 112, y + 13, x + w, y + 13 + FIELD, "rotate-ccw", "Reset", false, () -> {
+			Knives.resetViewmodel();
+			screen.view().notice("Knife viewmodel reset");
+		});
 	}
 
 	private static String dimensionName(String key) {

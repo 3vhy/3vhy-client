@@ -36,8 +36,10 @@ public final class Hooks {
 	public static volatile boolean menuNameDrawn = false;
 	public static volatile boolean logoDrawn = false;
 	public static volatile boolean buttonsStyled = false;
-	public static volatile boolean bladeModelSwapped = false;
-	public static volatile boolean inspectRan = false;
+	public static volatile boolean knifeRendered = false;
+	public static volatile boolean knifeDrawRan = false;
+	public static volatile boolean knifeSlashRan = false;
+	public static volatile boolean knifeInspectRan = false;
 	public static volatile boolean lyricsDrawn = false;
 	public static volatile boolean staffListDrawn = false;
 	public static volatile boolean hotbarDrawn = false;
