@@ -9,7 +9,7 @@
 - `apps/app-frontend`, `apps/app`: the launcher (Vue 3 + Tauri) with 3vhy branding and the October look (`use-october.ts`, `3vhy-october.scss`, `PixelGhosts.vue`, `GhostSprite.vue`).
 - `apps/setup`: the installer UI (`ui/style.css`, `ui/app.js`).
 - `apps/mod`: the 3vhy Fabric mod (Java). `common/` holds the shared code; `mc1_21_11/` and `mc26_1/` hold each Minecraft version's `Compat` and `DrawImpl`.
-- `website/index.html`: the download page, one self-contained HTML file. It's published as a claude.ai artifact, so republish it after changing it. Its mod list mirrors `Modules.ALL` and needs updating when a mod is added (with the chip counts, the stat strip and the "N mods" heading). The published artifact is the newest version: if it differs from the repo, start from the artifact.
+- `website/index.html`: the download page, one self-contained HTML file. It's published as a claude.ai artifact, so republish it after changing it. It uses the mod's look (the `ui/Tokens` colours, Inter, Lucide icons in an SVG sprite at the top, the orbit logo), and its mod list is a copy of the in-game mod menu: the eight tabs, then every mod in `Modules.ALL` order with its name, description, icon and default. A new mod needs a card there (and its icon in the sprite), plus the "N mods" heading, the hero button and the facts strip updated. Screenshots come from the CI report. The published artifact is the newest version: if it differs from the repo, start from the artifact.
 
 ## Branches, CI and releases
 
