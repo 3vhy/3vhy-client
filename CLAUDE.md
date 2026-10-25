@@ -15,7 +15,7 @@
 
 - Work on `mod-dev`. `.github/workflows/3vhy-mod.yml` builds the mod and runs the in-game tests on 1.21.11 and 26.1. It doesn't run on push: start it by hand (workflow_dispatch) on the branch you pushed. Release builds run it without the tests.
 - `main` only moves by fast-forward to a commit that passed CI: `git merge-base --is-ancestor origin/main <sha> && git push origin <sha>:refs/heads/main`.
-- Releases: the owner drafts a GitHub release, tags `vX.Y.Z` on `main` and publishes it. `.github/workflows/3vhy-client-windows.yml` then builds and attaches `3vhy.Client.Setup.exe`, `3vhy.Client.Classic.Installer.exe` and the mod on its own (`3vhy-mod-fabric-1.21.11.jar`, `3vhy-mod-fabric-26.1.jar`). Give release notes as `## 3vhy Client vX.Y.Z` with New / Changed / Fixed lists, written for players.
+- Releases: the owner drafts a GitHub release, tags `vX.Y.Z` on `main` and publishes it. `.github/workflows/3vhy-client-windows.yml` then builds and attaches `3vhy.Client.Setup.exe`, `3vhy.Client.Classic.Installer.exe` and the mod on its own (`3vhy-mod-fabric-1.21.11.jar`, `3vhy-mod-fabric-26.1.jar`). Give release notes as `## 3vhy Client vX.Y.Z` with New / Changed / Fixed lists, written for players. Notes saved as `.github/release-notes/vX.Y.Z.md` before the tag is pushed become the release's text (pushing the tag alone also publishes the release, named "3vhy Client vX.Y.Z").
 - Commit as `xsaaacc-collab <xsaaaccg@gmail.com>`.
 
 ## Checking mod changes
