@@ -9,7 +9,7 @@
 - `apps/app-frontend`, `apps/app`: the launcher (Vue 3 + Tauri) with 3vhy branding and the October look (`use-october.ts`, `3vhy-october.scss`, `PixelGhosts.vue`, `GhostSprite.vue`).
 - `apps/setup`: the installer UI (`ui/style.css`, `ui/app.js`).
 - `apps/mod`: the 3vhy Fabric mod (Java). `common/` holds the shared code; `mc1_21_11/` and `mc26_1/` hold each Minecraft version's `Compat` and `DrawImpl`.
-- `website/index.html`: the download page, one self-contained HTML file. It's published as a claude.ai artifact, so republish it after changing it. Its mod list mirrors `Modules.ALL` and needs updating when a mod is added; it doesn't list Blades, Hotbar or Staff List yet.
+- `website/index.html`: the download page, one self-contained HTML file. It's published as a claude.ai artifact, so republish it after changing it. Its mod list mirrors `Modules.ALL` and needs updating when a mod is added (with the chip counts, the stat strip and the "N mods" heading). The published artifact is the newest version: if it differs from the repo, start from the artifact.
 
 ## Branches, CI and releases
 
@@ -22,17 +22,22 @@
 
 - There's no need to run Minecraft locally: push, start the workflow and read the CI report. Each run overwrites the branches `ci-report/mc1_21_11` and `ci-report/mc26_1`. Unpack one with `git fetch origin ci-report/mc1_21_11 && git archive origin/ci-report/mc1_21_11 | tar -x -C <dir>`, check that every `3vhy-check` line in the log ends `-> OK`, and look at `screenshots/`. Its commit message names the commit it tested.
 - If the build fails, the compiler errors are in the job's annotations: `gh api repos/3vhy/3vhy-client/check-runs/<job id>/annotations`.
-- 26.1 skips in-world screenshots (Sodium), so look at the 1.21.11 ones.
-- Tests live in `apps/mod/common/src/gametest/java/dev/threevhy/client/test/ThreevhyGameTest.java`. Add a `check(...)` for new behaviour and a `shot(...)` for new UI. HUD close-ups use `MusicShowcase` (1.5x, on grey; the Music Player on the 3vhy sky). Test-only entries: `Lyrics.simulate`, `StaffList.simulate`/`leave`/`stopSimulating`.
+- 26.1 skips in-world screenshots (Sodium), so look at the 1.21.11 ones. CI also adds Mod Menu, so its buttons are tested.
+- Locally (JDK 25, `CI=1`): `./gradlew :mc1_21_11:runProductionClientGameTest -Pgametest`, or one part with `-PtestFocus=` `knives`, `glass`, `skies`, `protect`, `perf`, `lyrics` or `bench` (frame times and allocation; add `--rerun` when nothing changed). Delete `run/config/3vhy-client.json` before a full run.
+- Tests live in `apps/mod/common/src/gametest/java/dev/threevhy/client/test/ThreevhyGameTest.java`. Add a `check(...)` for new behaviour and a `shot(...)` for new UI. HUD close-ups use `MusicShowcase` (1.5x, on grey; the Music Player on the 3vhy sky). Test-only entries: `Lyrics.simulate`, `StaffList.simulate`/`leave`/`stopSimulating`, `KnifeRenderer.preview`.
 - The CI window is 854x480 at GUI scale 2, so screenshots look smaller than on a real screen.
 
 ## Mod code
 
-- `Draw` is the version-neutral drawing interface. On top of it, `ui/Paint` draws round boxes, circles, strokes, soft shadows and glows, lines, rounded pictures and Lucide icons as meshes, sharp at any GUI scale. `Paint.opacity(...)` fades everything drawn after it (it returns the old value to put back).
+- `Draw` is the version-neutral drawing interface. On top of it, `ui/Paint` draws round boxes, circles, strokes, soft shadows and glows, lines, rounded pictures and Lucide icons as meshes, sharp at any GUI scale. `Paint.opacity(...)` fades everything drawn after it (it returns the old value to put back). Shapes keep their vertices in `ui/VertexArena` until the frame's GUI is drawn, so don't allocate per shape.
 - `ui/Type` draws text by capital height in Inter 500/600/700 (`gui/UiFont`, SIL OFL, in `assets/threevhy/font`). Theme > Menu font switches back to Minecraft's.
 - `ui/Tokens` holds the shared colours and sizes; `ui/Anim`, `Ease` and `Spring` do the motion; `ui/Widgets`, `Logo`, `Sky` and `Hits` are the shared controls, the 3vhy logo, the night sky and hit boxes.
-- Menus: `gui/menu/MenuScreen` hosts `MenuView` (the tabbed mod grid) and `SettingsSheet` (a mod's settings, with `SheetExtras` for the special rows). `OrbitScreen` is the Right Shift ring. `gui/HudEditorScreen` is Edit HUD. `gui/TitleScreenStyle` is the main menu and its Scene panel; `gui/ButtonStyle` turns Minecraft's buttons into glass pills.
+- Menus: `gui/menu/MenuScreen` hosts `MenuView` (the tabbed mod grid) and `SettingsSheet` (a mod's settings, with `SheetExtras` for the special rows). `OrbitScreen` is the Right Shift ring. `gui/HudEditorScreen` is Edit HUD. `gui/TitleScreenStyle` is the main menu and its Scene panel. `gui/ButtonStyle` and `gui/Glass` draw Minecraft's (and other mods') widgets as glass by hooking the widget art (button background, text fields, checkboxes, tabs, scrollbars, tooltips, lists), not by class; `ui/Widgets.control` is the same glass for 3vhy's own panels.
 - HUD: widgets extend `hud/HudWidget` and are listed in `HudWidgets.ALL` (widgets at the same anchor stack in that order). `hud/Hud` has the shared glass and text. `hud/Hotbar` replaces Minecraft's hotbar when the Hotbar mod is on.
+- Knives (formerly Blades; old configs migrate in `Config.migrateBlades`): `module/Knives` (slots, auto mode), `knife/` (models built from code, clips and animator, renderer hooked in `ItemInHandRendererMixin`).
+- Skies: `sky/LivingSky` draws `shaders/core/sky_<id>.fsh` (one per sky, shared `include/sky_lib.glsl`) as a full-screen pass in the sky pass, its settings packed in the transform block's texture matrix; thumbnails render into `SkyCanvas` textures.
+- Name Protect: `NameProtect` swaps names, `TextRules` applies rules (yours, then the ones `NameDetect` makes from the scoreboard and tab list) wherever text is drawn (`ProtectedText`).
+- `module/Performance` applies the Performance preset (shadows via `Paint.shadowQuality`, animations via `Anim.speed`, blur and particles via Minecraft's options).
 - `gui/Accent.get()` is the theme colour, set from Theme > Accent colour, with Rainbow as an option.
 - Mods and their settings are in `module/Modules.java`; the order of `ALL` is the menu order. Settings the player never changed use the default, so a new default reaches them.
 - A new mod needs an icon (`Module.icon("name")`, a Lucide name from `assets/threevhy/icons/lucide.txt`; add the path there if it's missing) and a card on the website.
