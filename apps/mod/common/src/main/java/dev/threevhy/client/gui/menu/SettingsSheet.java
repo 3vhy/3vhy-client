@@ -288,8 +288,7 @@ public final class SettingsSheet {
 				float bx = right - bw;
 				float by = y + 15;
 				boolean hover = within(mx, my, bx, by, right, by + 32);
-				Paint.rect(d, bx, by, right, by + 32, 16, hover ? 0x14FFFFFF : 0x0BFFFFFF);
-				Paint.stroke(d, bx, by, right, by + 32, 16, 1, hover ? 0x4DCDB6FF : 0x1AFFFFFF);
+				Widgets.control(d, bx, by, right, by + 32, 16, hover ? 1 : 0);
 				Paint.icon(d, "chevron-left", bx + 9, by + 9, 14, Tokens.TEXT_2);
 				Paint.icon(d, "chevron-right", right - 23, by + 9, 14, Tokens.TEXT_2);
 				Type.center(d, Type.fit(choice.get(), bw - 56, 10.5f, Weight.SEMIBOLD), bx + bw / 2f, by + (32 - 10.5f) / 2f, 10.5f,

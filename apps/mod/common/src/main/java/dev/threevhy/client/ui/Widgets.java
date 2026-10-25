@@ -11,6 +11,16 @@ import dev.threevhy.client.ui.Type.Weight;
  * on/off) comes in as 0..1 values from {@link Anim}s the caller keeps, so nothing here allocates state.
  */
 public final class Widgets {
+	private static final Grad CONTROL_FILL = Grad.down(0x17FFFFFF, 0x08FFFFFF);
+	private static final Grad CONTROL_FILL_HOVER = Grad.down(0x29FFFFFF, 0x12FFFFFF);
+	private static final Grad CONTROL_EDGE = Grad.down(0x3DFFFFFF, 0x0DFFFFFF);
+	private static final Grad CONTROL_EDGE_HOVER = Grad.down(0x85E2D4FF, 0x2ECDB6FF);
+	private static final Grad FIELD_FILL = Grad.down(0x12FFFFFF, 0x06FFFFFF);
+	private static final Grad FIELD_FILL_HOVER = Grad.down(0x1CFFFFFF, 0x0BFFFFFF);
+	private static final Grad SWITCH_FILL = Grad.down(0x2EFFFFFF, 0x14FFFFFF);
+	private static final Grad SHEEN = Grad.down(0x2EFFFFFF, 0x00FFFFFF);
+	private static final Grad SHEEN_EDGE = Grad.down(0x80FFFFFF, 0x14FFFFFF);
+
 	private Widgets() {
 	}
 
@@ -21,10 +31,12 @@ public final class Widgets {
 	public static void toggle(Draw d, float x, float y, float w, float h, float knob, float lit) {
 		float r = h / 2f;
 		if (lit > 0.01f) Paint.shadow(d, x, y, x + w, y + h, r, 0, 0, 16, -4, Accent.glow(0.9f * lit));
-		Paint.rect(d, x, y, x + w, y + h, r, Tokens.SWITCH_OFF);
+		Paint.rect(d, x, y, x + w, y + h, r, SWITCH_FILL);
+		Paint.stroke(d, x, y, x + w, y + h, r, 1, CONTROL_EDGE);
 		if (lit > 0.01f) {
 			float old = Paint.opacity(Paint.opacity() * lit);
 			Paint.rect(d, x, y, x + w, y + h, r, Accent.toggle());
+			Paint.stroke(d, x, y, x + w, y + h, r, 1, SHEEN_EDGE);
 			Paint.opacity(old);
 		}
 		float inset = h * 0.125f;
@@ -57,18 +69,31 @@ public final class Widgets {
 
 	/** A round icon button (the tab bar, a card's settings button): glass with a hairline edge. */
 	public static void roundButton(Draw d, float cx, float cy, float radius, String icon, float hover, float iconScale) {
-		Paint.circle(d, cx, cy, radius, mixColor(Tokens.CONTROL, Tokens.CONTROL_HOVER, hover));
-		Paint.ring(d, cx, cy, radius, 1, mixColor(Tokens.CONTROL_EDGE, 0x33FFFFFF, hover));
+		Paint.circle(d, cx, cy, radius, hover > 0.5f ? CONTROL_FILL_HOVER : CONTROL_FILL);
+		Paint.ring(d, cx, cy, radius, 1, hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
 		float size = radius * iconScale;
 		Paint.icon(d, icon, cx - size / 2f, cy - size / 2f, size, mixColor(Tokens.TEXT_2, Tokens.TEXT, hover));
 	}
 
 	/** The accent pill: the active tab, a primary button. A soft glow underneath, a sheen on top. */
 	public static void accentPill(Draw d, float x1, float y1, float x2, float y2, float glow) {
-		float r = (y2 - y1) / 2f;
-		if (glow > 0.01f) Paint.shadow(d, x1, y1, x2, y2, r, 0, (y2 - y1) * 0.26f, (y2 - y1) * 0.7f, -(y2 - y1) * 0.26f, Accent.glow(0.95f * glow));
+		float h = y2 - y1;
+		float r = h / 2f;
+		if (glow > 0.01f) Paint.shadow(d, x1, y1, x2, y2, r, 0, h * 0.26f, h * 0.7f, -h * 0.26f, Accent.glow(0.95f * glow));
+		float old = Paint.opacity(Paint.opacity() * 0.92f);
 		Paint.rect(d, x1, y1, x2, y2, r, Accent.primary());
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, Grad.down(0x47FFFFFF, 0x00FFFFFF));
+		Paint.opacity(old);
+		Paint.rect(d, x1 + 1, y1 + 1, x2 - 1, y1 + h * 0.55f, Math.min(r - 1, h * 0.27f), SHEEN);
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, SHEEN_EDGE);
+	}
+
+	/**
+	 * Quiet glass for a control (a button, a picker, a slot): a faint frosted fill lit along its top edge,
+	 * brighter with a lilac edge on hover. The same glass as Minecraft's buttons under Theme > Glass buttons.
+	 */
+	public static void control(Draw d, float x1, float y1, float x2, float y2, float r, float hover) {
+		Paint.rect(d, x1, y1, x2, y2, r, hover > 0.5f ? CONTROL_FILL_HOVER : CONTROL_FILL);
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
 	}
 
 	/** A key cap like the site's {@code kbd}: label centred, a thicker edge along the bottom. */
@@ -111,8 +136,9 @@ public final class Widgets {
 			boolean focused, float hover, long nowMs) {
 		float h = y2 - y1;
 		float r = h / 2f;
-		Paint.rect(d, x1, y1, x2, y2, r, mixColor(0x0AFFFFFF, 0x12FFFFFF, Math.max(hover, focused ? 1 : 0)));
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, focused ? 0x52CDB6FF : mixColor(Tokens.CONTROL_EDGE, 0x30FFFFFF, hover));
+		if (focused) Paint.shadow(d, x1, y1, x2, y2, r, 0, 0, h * 0.45f, -h * 0.15f, Accent.glow(0.35f));
+		Paint.rect(d, x1, y1, x2, y2, r, focused || hover > 0.5f ? FIELD_FILL_HOVER : FIELD_FILL);
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, focused ? Grad.down(0x8CCDB6FF, 0x40CDB6FF) : hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
 		float iconSize = h * 0.4f;
 		float ix = x1 + h * 0.43f;
 		Paint.icon(d, icon, ix, y1 + (h - iconSize) / 2f, iconSize, focused ? Tokens.TEXT : Tokens.TEXT_2);

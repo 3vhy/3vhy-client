@@ -351,8 +351,7 @@ public final class MenuView {
 			boolean hover = within(mx, my, bx, by, bx + w, by + 32);
 			editHover.set(hover);
 			float e = editHover.get();
-			Paint.rect(d, bx, by, bx + w, by + 32, 16, Widgets.mixColor(0x0BFFFFFF, 0x14FFFFFF, e));
-			Paint.stroke(d, bx, by, bx + w, by + 32, 16, 1, Widgets.mixColor(0x1AFFFFFF, 0x4DCDB6FF, e));
+			Widgets.control(d, bx, by, bx + w, by + 32, 16, e);
 			Paint.icon(d, "move", bx + 16, by + 9, 14, Widgets.mixColor(Tokens.LILAC, 0xFFFFFFFF, e));
 			Type.draw(d, label, bx + 38, by + (32 - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 			hits.add(bx, by, bx + w, by + 32, host::openHudEditor);
@@ -505,8 +504,7 @@ public final class MenuView {
 		float ey = y + youH - 24 - 40;
 		boolean editHovered = within(mx, my, ex, ey, ex + ew, ey + 40);
 		editHover.set(editHovered);
-		Paint.rect(d, ex, ey, ex + ew, ey + 40, 20, Widgets.mixColor(0x0BFFFFFF, 0x17FFFFFF, editHover.get()));
-		Paint.stroke(d, ex, ey, ex + ew, ey + 40, 20, 1, Widgets.mixColor(0x1AFFFFFF, 0x4DCDB6FF, editHover.get()));
+		Widgets.control(d, ex, ey, ex + ew, ey + 40, 20, editHover.get());
 		float lw = 14 + 8 + Type.width("Edit HUD layout", 11.5f, Weight.SEMIBOLD);
 		Paint.icon(d, "move", ex + (ew - lw) / 2f, ey + 13, 14, Tokens.LILAC);
 		Type.draw(d, "Edit HUD layout", ex + (ew - lw) / 2f + 22, ey + (40 - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, Tokens.TEXT);

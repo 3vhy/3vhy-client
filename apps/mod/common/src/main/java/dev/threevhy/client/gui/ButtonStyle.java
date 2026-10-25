@@ -1,9 +1,7 @@
 package dev.threevhy.client.gui;
 
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.Hooks;
 import dev.threevhy.client.mixin.AbstractSliderButtonAccessor;
-import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.ui.Anim;
 import dev.threevhy.client.ui.Ease;
 import dev.threevhy.client.ui.Grad;
@@ -16,19 +14,14 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.gui.components.ImageButton;
-import net.minecraft.client.gui.components.LockIconButton;
-import net.minecraft.client.gui.components.PlainTextButton;
-import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.network.chat.contents.TranslatableContents;
 
 /**
  * Minecraft's buttons and sliders as 3vhy's violet glass pills (Theme > Glass buttons): a translucent
- * lavender pill with a light top edge, white Inter text, and a soft accent glow on hover. Only
- * Minecraft's own plain buttons, cycle buttons, sliders and its language and accessibility icon
- * buttons change; anything with its own artwork keeps it.
+ * lavender pill with a light top edge, white Inter text, and a soft accent glow on hover. It hooks the
+ * button's own background and label, not its class, so any mod's button that draws Minecraft's button
+ * background turns glass too and keeps whatever it draws on top (like Mod Menu's update badge). Buttons
+ * with art of their own keep it; the language and accessibility icons become line icons.
  */
 public final class ButtonStyle {
 	private static final Map<AbstractWidget, Anim> HOVER = new WeakHashMap<>();
@@ -38,16 +31,6 @@ public final class ButtonStyle {
 	private static final Grad EDGE_HOVER = Grad.down(0xB3FFFFFF, 0x26FFFFFF);
 
 	private ButtonStyle() {
-	}
-
-	/** Whether this widget is drawn as a glass pill. */
-	public static boolean styles(AbstractWidget widget) {
-		if (!Modules.THEME_BUTTONS.get() || !widget.visible) return false;
-		if (!widget.getClass().getName().startsWith("net.minecraft.")) return false;
-		if (widget instanceof AbstractSliderButton) return true;
-		if (widget instanceof PlainTextButton || widget instanceof ImageButton || widget instanceof LockIconButton) return false;
-		if (widget instanceof SpriteIconButton) return iconFor(widget) != null;
-		return widget instanceof Button || widget instanceof CycleButton<?>;
 	}
 
 	/** The line icon for Minecraft's icon buttons 3vhy knows: language and accessibility. */
@@ -60,30 +43,54 @@ public final class ButtonStyle {
 		};
 	}
 
-	public static void draw(Draw d, AbstractWidget widget) {
-		Hooks.buttonsStyled = true;
-		float x1 = widget.getX();
-		float y1 = widget.getY();
-		float x2 = x1 + widget.getWidth();
-		float y2 = y1 + widget.getHeight();
+	private static float hover(AbstractWidget widget) {
 		Anim anim = HOVER.computeIfAbsent(widget, w -> new Anim(0, Tokens.T_COLOR, Ease.OUT));
-		boolean lit = widget.active && widget.isHoveredOrFocused() && !TitleScreenStyle.hidesHover(widget);
-		anim.set(lit);
-		float hover = anim.get();
-		float old = Paint.opacity(Paint.opacity() * widget.getAlpha() * (widget.active ? 1 : 0.5f));
-		if (widget instanceof AbstractSliderButton slider) {
-			drawSlider(d, slider, x1, y1, x2, y2, hover);
-		} else {
-			String icon = widget instanceof SpriteIconButton ? iconFor(widget) : null;
-			pill(d, x1, y1, x2, y2, hover, widget.isFocused());
-			if (icon != null) {
-				float size = Math.min(x2 - x1, y2 - y1) * 0.5f;
-				Paint.icon(d, icon, (x1 + x2 - size) / 2f, (y1 + y2 - size) / 2f, size, 0xFFF4F0FF);
-			} else {
-				label(d, widget.getMessage().getString(), x1, y1, x2, y2);
-			}
-		}
+		anim.set(widget.active && widget.isHoveredOrFocused() && !TitleScreenStyle.hidesHover(widget));
+		return anim.get();
+	}
+
+	private static float fade(AbstractWidget widget) {
+		return Paint.opacity(Paint.opacity() * widget.getAlpha() * (widget.active ? 1 : 0.5f));
+	}
+
+	/** A button's background, in place of Minecraft's: returns whether it was drawn as glass. */
+	public static boolean background(Draw d, AbstractWidget widget) {
+		if (!Glass.on()) return false;
+		Glass.mark(widget);
+		float old = fade(widget);
+		pill(d, widget.getX(), widget.getY(), widget.getX() + widget.getWidth(), widget.getY() + widget.getHeight(), hover(widget), widget.isFocused());
 		Paint.opacity(old);
+		return true;
+	}
+
+	/** A button's label in Inter, in place of Minecraft's font: returns whether it was drawn. */
+	public static boolean label(Draw d, AbstractWidget widget) {
+		if (!Glass.on()) return false;
+		float old = fade(widget);
+		label(d, widget.getMessage().getString(), widget.getX(), widget.getY(), widget.getX() + widget.getWidth(), widget.getY() + widget.getHeight());
+		Paint.opacity(old);
+		return true;
+	}
+
+	/** An icon button's picture: a line icon for the ones 3vhy knows, or false to draw Minecraft's. */
+	public static boolean icon(Draw d, AbstractWidget widget) {
+		String icon = Glass.on() ? iconFor(widget) : null;
+		if (icon == null) return false;
+		float old = fade(widget);
+		float size = Math.min(widget.getWidth(), widget.getHeight()) * 0.5f;
+		Paint.icon(d, icon, widget.getX() + (widget.getWidth() - size) / 2f, widget.getY() + (widget.getHeight() - size) / 2f, size, 0xFFF4F0FF);
+		Paint.opacity(old);
+		return true;
+	}
+
+	/** A slider, in place of Minecraft's: returns whether it was drawn as glass. */
+	public static boolean slider(Draw d, AbstractSliderButton slider) {
+		if (!Glass.on() || !slider.visible) return false;
+		Glass.mark(slider);
+		float old = fade(slider);
+		drawSlider(d, slider, slider.getX(), slider.getY(), slider.getX() + slider.getWidth(), slider.getY() + slider.getHeight(), hover(slider));
+		Paint.opacity(old);
+		return true;
 	}
 
 	/** The glass pill itself, also used by 3vhy's own title screen buttons. */

@@ -203,7 +203,8 @@ jobs:
           sudo apt-get install -y -q xvfb libgl1-mesa-dri
 
       # Same mods the launcher adds to every 3vhy instance: Sodium, Lithium, FerriteCore,
-      # Entity Culling and ImmediatelyFast, newest versions for this Minecraft version
+      # Entity Culling and ImmediatelyFast, newest versions for this Minecraft version. Mod Menu
+      # too: players often add it, and it puts its own buttons on Minecraft's screens
       - name: Get the performance pack
         working-directory: apps/mod
         run: |
@@ -213,7 +214,7 @@ jobs:
           esac
           dir="test-mods/${{ matrix.project }}"
           mkdir -p "$dir"
-          for id in AANobbMI gvQqBUqZ uXXizFIs NNAgCjsB 5ZwdcRci; do
+          for id in AANobbMI gvQqBUqZ uXXizFIs NNAgCjsB 5ZwdcRci mOgUt4GM; do
             url=$(curl -fsS "https://api.modrinth.com/v2/project/$id/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%22$mc%22%5D" \
               | jq -r 'first(.[] | .files | (map(select(.primary)) + .)[0].url) // empty')
             if [ -n "$url" ]; then

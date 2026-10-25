@@ -283,6 +283,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		shot(context, "3vhy-options-buttons");
 		context.setScreen(TitleScreen::new);
 		context.waitTicks(5);
+		glassTitleScreens(context, failed);
 
 		try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
 			context.waitTicks(200);
@@ -546,6 +547,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "lyrics read from LRC", Lyrics.parse("[00:01.50] a\n[00:03.00][00:09.00] b").size() == 3);
 			context.runOnClient(client -> Modules.LYRICS.set(false));
 			knives(context, singleplayer, failed, false);
+			glassWorldScreens(context, singleplayer, failed);
 			context.runOnClient(client -> client.player.setXRot(10f));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
@@ -835,11 +837,13 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				AbstractWidget stats = null;
 				AbstractWidget options = null;
 				AbstractWidget disconnect = null;
+				AbstractWidget modMenu = null;
 				boolean feedback = false;
 				for (AbstractWidget widget : Compat.widgets(client.screen)) {
 					if (!widget.visible) continue;
 					String label = widget.getMessage().getString();
 					if (label.equals(PauseMenuButton.LABEL)) mods = widget;
+					if (label.equals("Mods")) modMenu = widget;
 					if (label.equals(PauseMenuButton.OPTIONS_LABEL)) ours = widget;
 					if (ConfirmDisconnect.isDisconnect(widget.getMessage())) disconnect = widget;
 					if (widget.getMessage().getContents() instanceof TranslatableContents key) {
@@ -851,7 +855,8 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				if (mods == null || ours == null || stats == null || options == null || disconnect == null) return null;
 				ThreevhyClient.LOG.info("3vhy-check: pause menu: Statistics {}, Mods {} ({} wide), Options {}, 3vhy Options {}, Disconnect {}",
 						stats.getY(), mods.getY(), mods.getWidth(), options.getY(), ours.getY(), disconnect.getY());
-				boolean modsRow = mods.getY() == stats.getY() + stats.getHeight() + 4 && mods.getX() == disconnect.getX()
+				AbstractWidget above = modMenu != null && modMenu.getY() > stats.getY() && modMenu.getY() < mods.getY() ? modMenu : stats;
+				boolean modsRow = mods.getY() == above.getY() + above.getHeight() + 4 && mods.getX() == disconnect.getX()
 						&& mods.getWidth() == disconnect.getWidth();
 				boolean optionsRow = ours.getY() == options.getY() && ours.getX() > options.getX();
 				return new int[][] {
@@ -860,7 +865,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 						{modsRow ? 1 : 0, optionsRow ? 1 : 0, feedback ? 1 : 0}};
 			});
 			check(failed, "pause menu has 3vhy Client and 3vhy Options...", pauseButtons != null);
-			check(failed, "3vhy Client is a full row right under Advancements and Statistics", pauseButtons != null && pauseButtons[2][0] == 1);
+			check(failed, "3vhy Client is a full row right under Advancements and Statistics (or Mod Menu's Mods)", pauseButtons != null && pauseButtons[2][0] == 1);
 			check(failed, "3vhy Options... sits beside Options...", pauseButtons != null && pauseButtons[2][1] == 1);
 			check(failed, "pause menu leaves out the feedback links", pauseButtons != null && pauseButtons[2][2] == 0);
 			if (pauseButtons != null) {
@@ -952,8 +957,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	private static void runFocused(ClientGameTestContext context, String focus, List<String> failed) {
 		ThreevhyClient.LOG.info("3vhy-check: running only the {} part of the test", focus);
 		context.waitTicks(20);
+		if (focus.contains("glass")) glassTitleScreens(context, failed);
 		try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
 			context.waitTicks(100);
+			if (focus.contains("glass")) glassWorldScreens(context, singleplayer, failed);
 			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
 			if (focus.contains("knives")) knives(context, singleplayer, failed, true);
 			if (focus.contains("calibrate")) calibrateKnife(context, singleplayer);
@@ -1356,6 +1363,197 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.waitTicks(5);
 	}
 
+	private static void escape(ClientGameTestContext context) {
+		context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+		context.waitTicks(8);
+	}
+
+	/** Opens a screen through its button, takes its picture and goes back. */
+	private static void visit(ClientGameTestContext context, int scale, String button, String name, int wait) {
+		if (context.computeOnClient(client -> find(client, button) == null)) {
+			ThreevhyClient.LOG.info("3vhy-check: no {} button on {}", button, context.computeOnClient(client ->
+					client.screen == null ? "no screen" : client.screen.getClass().getSimpleName()));
+			return;
+		}
+		click(context, scale, button);
+		context.waitTicks(wait);
+		shot(context, "3vhy-glass-" + name);
+		escape(context);
+	}
+
+	/**
+	 * Minecraft's screens out of a world, each pictured to check that every button, field, slider, checkbox,
+	 * list, tab and tooltip is drawn as 3vhy glass: the title screen, servers, worlds, Realms, Options and its
+	 * pages, and a confirm dialog.
+	 */
+	private static void glassTitleScreens(ClientGameTestContext context, List<String> failed) {
+		int scale = context.computeOnClient(client -> client.getWindow().getGuiScale());
+		context.setScreen(TitleScreen::new);
+		context.waitTicks(20);
+		shot(context, "3vhy-glass-title");
+		int[] options = context.computeOnClient(client -> {
+			AbstractWidget widget = find(client, "Options...");
+			return widget == null ? null : new int[] {widget.getX() + widget.getWidth() / 2, widget.getY() + widget.getHeight() / 2};
+		});
+		if (options != null) {
+			context.getInput().setCursorPos(options[0] * scale, options[1] * scale);
+			context.waitTicks(10);
+			shot(context, "3vhy-glass-title-hover");
+		}
+		check(failed, "every button on the title screen is glass", context.computeOnClient(client -> {
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				if (widget.visible && !dev.threevhy.client.gui.Glass.covers(widget)) {
+					ThreevhyClient.LOG.info("3vhy-check: not glass: {} \"{}\"", widget.getClass().getName(), widget.getMessage().getString());
+					return false;
+				}
+			}
+			return true;
+		}));
+
+		check(failed, "every button on the title screen fits on the screen", context.computeOnClient(client -> {
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				if (widget.visible && (widget.getX() < 0 || widget.getY() < 0 || widget.getX() + widget.getWidth() > client.screen.width
+						|| widget.getY() + widget.getHeight() > client.screen.height)) {
+					ThreevhyClient.LOG.info("3vhy-check: off the screen: \"{}\" at {}, {} ({} x {})", widget.getMessage().getString(), widget.getX(),
+							widget.getY(), widget.getWidth(), widget.getHeight());
+					return false;
+				}
+			}
+			return true;
+		}));
+
+		context.runOnClient(client -> client.options.skipMultiplayerWarning = false);
+		click(context, scale, "Multiplayer");
+		context.waitTicks(20);
+		shot(context, "3vhy-glass-multiplayer-warning");
+		context.runOnClient(client -> client.options.skipMultiplayerWarning = true);
+		context.setScreen(TitleScreen::new);
+		context.waitTicks(5);
+		click(context, scale, "Multiplayer");
+		context.waitTicks(20);
+		shot(context, "3vhy-glass-servers");
+		visit(context, scale, "Direct Connection", "direct-connect", 10);
+		visit(context, scale, "Add Server", "add-server", 10);
+		context.setScreen(TitleScreen::new);
+		context.waitTicks(5);
+
+		click(context, scale, "Singleplayer");
+		context.waitTicks(20);
+		shot(context, "3vhy-glass-worlds");
+		click(context, scale, "Create New World");
+		context.waitTicks(30);
+		shot(context, "3vhy-glass-create-world");
+		context.setScreen(TitleScreen::new);
+		context.waitTicks(5);
+
+		click(context, scale, "Minecraft Realms");
+		context.waitTicks(40);
+		shot(context, "3vhy-glass-realms");
+		context.setScreen(TitleScreen::new);
+		context.waitTicks(5);
+
+		click(context, scale, "Options...");
+		context.waitTicks(10);
+		shot(context, "3vhy-glass-options");
+		check(failed, "Options buttons and slider are glass (AbstractButton, AbstractSliderButton)", context.computeOnClient(client -> {
+			int glass = 0;
+			for (AbstractWidget widget : Compat.widgets(client.screen)) {
+				if (!widget.visible) continue;
+				if (!dev.threevhy.client.gui.Glass.covers(widget)) {
+					ThreevhyClient.LOG.info("3vhy-check: not glass: {} \"{}\"", widget.getClass().getName(), widget.getMessage().getString());
+					return false;
+				}
+				glass++;
+			}
+			return glass > 5;
+		}));
+		click(context, scale, "Video Settings...");
+		context.waitTicks(10);
+		shot(context, "3vhy-glass-video");
+		int[] middle = context.computeOnClient(client -> new int[] {client.getWindow().getGuiScaledWidth() / 2 - 60,
+				client.getWindow().getGuiScaledHeight() / 2});
+		context.getInput().setCursorPos(middle[0] * scale, middle[1] * scale);
+		context.waitTicks(25);
+		shot(context, "3vhy-glass-video-tooltip");
+		escape(context);
+		click(context, scale, "Controls...");
+		context.waitTicks(10);
+		shot(context, "3vhy-glass-controls");
+		visit(context, scale, "Key Binds...", "key-binds", 10);
+		visit(context, scale, "Mouse Settings...", "mouse", 10);
+		escape(context);
+		visit(context, scale, "Language...", "language", 10);
+		visit(context, scale, "Accessibility Settings...", "accessibility", 10);
+		visit(context, scale, "Chat Settings...", "chat-settings", 10);
+		visit(context, scale, "Skin Customization...", "skin", 10);
+		visit(context, scale, "Online...", "online", 10);
+		visit(context, scale, "Resource Packs...", "packs", 20);
+		context.waitTicks(120);
+		java.util.Set<String> glazed = dev.threevhy.client.gui.Glass.glazed();
+		ThreevhyClient.LOG.info("3vhy-check: Minecraft widget art drawn as glass: {}", glazed);
+		check(failed, "text fields, checkboxes, tabs, scrollbars and tooltips drawn as glass (GuiGraphics.blitSprite)",
+				glazed.stream().anyMatch(path -> path.startsWith("widget/text_field")) && glazed.stream().anyMatch(path -> path.startsWith("widget/checkbox"))
+						&& glazed.stream().anyMatch(path -> path.startsWith("widget/tab")) && glazed.stream().anyMatch(path -> path.startsWith("widget/scroller"))
+						&& glazed.contains("tooltip/background"));
+		java.util.Set<String> unglazed = dev.threevhy.client.gui.Glass.unglazed();
+		ThreevhyClient.LOG.info("3vhy-check: Minecraft widget art left as it is: {}", unglazed);
+		check(failed, "no Minecraft button, field, checkbox, slider, scrollbar, tab or tooltip art left", unglazed.stream().noneMatch(path ->
+				path.matches("widget/(button|text_field|checkbox|slider|scroller|tab)(_.*)?|tooltip/(background|frame)")));
+		context.setScreen(() -> new net.minecraft.client.gui.screens.ConfirmScreen(yes -> {
+		}, Component.literal("Are you sure you want to delete this world?"), Component.literal("'New World' will be lost forever! (A long time!)")));
+		context.waitTicks(10);
+		shot(context, "3vhy-glass-confirm");
+		context.setScreen(TitleScreen::new);
+		context.waitTicks(5);
+	}
+
+	/** Minecraft's screens in a world, pictured like {@link #glassTitleScreens}: chat, a sign, a book and an anvil. */
+	private static void glassWorldScreens(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed) {
+		var server = singleplayer.getServer();
+		context.setScreen(() -> new net.minecraft.client.gui.screens.ChatScreen("Hello from 3vhy", false));
+		context.waitTicks(10);
+		shot(context, "3vhy-glass-chat");
+		context.setScreen(() -> null);
+		context.waitTicks(3);
+		int[] at = context.computeOnClient(client -> new int[] {(int) Math.floor(client.player.getX()), (int) Math.floor(client.player.getY()),
+				(int) Math.floor(client.player.getZ())});
+		net.minecraft.core.BlockPos sign = new net.minecraft.core.BlockPos(at[0] + 2, at[1], at[2]);
+		net.minecraft.core.BlockPos anvil = new net.minecraft.core.BlockPos(at[0] - 2, at[1], at[2]);
+		server.runCommand("setblock " + sign.getX() + " " + sign.getY() + " " + sign.getZ() + " minecraft:oak_sign");
+		server.runCommand("setblock " + anvil.getX() + " " + anvil.getY() + " " + anvil.getZ() + " minecraft:anvil");
+		context.waitTicks(10);
+		context.runOnClient(client -> {
+			if (client.level.getBlockEntity(sign) instanceof net.minecraft.world.level.block.entity.SignBlockEntity entity) {
+				client.player.openTextEdit(entity, true);
+			}
+		});
+		context.waitTicks(10);
+		shot(context, "3vhy-glass-sign");
+		context.setScreen(() -> null);
+		context.waitTicks(3);
+		context.runOnClient(client -> client.gameMode.useItemOn(client.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+				new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(anvil), net.minecraft.core.Direction.UP, anvil,
+						false)));
+		context.waitTicks(15);
+		shot(context, "3vhy-glass-anvil");
+		context.setScreen(() -> null);
+		context.waitTicks(3);
+		server.runCommand("item replace entity @p hotbar.8 with minecraft:writable_book");
+		context.waitTicks(3);
+		context.getInput().pressKey(GLFW.GLFW_KEY_9);
+		context.waitTicks(3);
+		context.runOnClient(client -> client.gameMode.useItem(client.player, net.minecraft.world.InteractionHand.MAIN_HAND));
+		context.waitTicks(15);
+		shot(context, "3vhy-glass-book");
+		context.setScreen(() -> null);
+		context.waitTicks(3);
+		server.runCommand("setblock " + sign.getX() + " " + sign.getY() + " " + sign.getZ() + " minecraft:air");
+		server.runCommand("setblock " + anvil.getX() + " " + anvil.getY() + " " + anvil.getZ() + " minecraft:air");
+		server.runCommand("item replace entity @p hotbar.8 with minecraft:air");
+		context.getInput().pressKey(GLFW.GLFW_KEY_1);
+		context.waitTicks(3);
+	}
+
 	/** Pictures of the knife at rest with one pose channel set at a time, to see which way each one moves it. */
 	private static void calibrateKnife(ClientGameTestContext context, TestSingleplayerContext singleplayer) {
 		var server = singleplayer.getServer();
@@ -1460,6 +1658,19 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	private static AbstractWidget find(Minecraft client, String label) {
 		for (AbstractWidget widget : Compat.widgets(client.screen)) {
 			if (widget.visible && widget.getMessage().getString().equals(label)) return widget;
+		}
+		return client.screen == null ? null : findIn(client.screen.children(), label, 0);
+	}
+
+	/** Looks through lists and other containers on a screen for a widget with this label. */
+	private static AbstractWidget findIn(List<? extends net.minecraft.client.gui.components.events.GuiEventListener> children, String label, int depth) {
+		if (depth > 4) return null;
+		for (var child : children) {
+			if (child instanceof AbstractWidget widget && widget.visible && widget.getMessage().getString().equals(label)) return widget;
+			if (child instanceof net.minecraft.client.gui.components.events.ContainerEventHandler container) {
+				AbstractWidget found = findIn(container.children(), label, depth + 1);
+				if (found != null) return found;
+			}
 		}
 		return null;
 	}

@@ -330,7 +330,7 @@ public final class Modules {
 	public static final Choice THEME_FONT = THEME.add(new Choice("font", "Menu font",
 			"Inter, like the website, or Minecraft's pixel font", 0, "Clean", "Minecraft"));
 	public static final Toggle THEME_BUTTONS = THEME.add(new Toggle("buttons", "Glass buttons",
-			"Minecraft's buttons as 3vhy's violet glass pills", true));
+			"Every screen's buttons, text boxes, sliders, lists and tooltips in 3vhy's violet glass, other mods' too", true));
 	public static final Choice THEME_RIGHT_SHIFT = THEME.add(new Choice("right_shift", "Right Shift opens",
 			"The Orbit, to pick a tab, or the menu straight away", 0, "Orbit", "Menu"));
 	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Stars", "Twinkling stars behind 3vhy's menus", true));
