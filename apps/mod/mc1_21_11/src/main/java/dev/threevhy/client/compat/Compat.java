@@ -117,6 +117,25 @@ public final class Compat {
 		return builder.build();
 	}
 
+	/**
+	 * A pipeline for the Skies module: a full-screen quad (positions already on screen) with its own vertex and
+	 * fragment shader, blended, with no depth test. {@code blit} ones sample Sampler0 and need no matrices.
+	 */
+	public static com.mojang.blaze3d.pipeline.RenderPipeline livingSkyPipeline(String name, Identifier vertex, Identifier fragment, boolean blit) {
+		com.mojang.blaze3d.pipeline.RenderPipeline.Builder builder = blit ? com.mojang.blaze3d.pipeline.RenderPipeline.builder()
+				: com.mojang.blaze3d.pipeline.RenderPipeline.builder(net.minecraft.client.renderer.RenderPipelines.MATRICES_PROJECTION_SNIPPET);
+		builder.withLocation(Identifier.fromNamespaceAndPath("threevhy", "pipeline/" + name))
+				.withVertexShader(vertex)
+				.withFragmentShader(fragment)
+				.withBlend(com.mojang.blaze3d.pipeline.BlendFunction.TRANSLUCENT)
+				.withDepthWrite(false)
+				.withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST)
+				.withCull(false)
+				.withVertexFormat(com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION, com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS);
+		if (blit) builder.withSampler("Sampler0");
+		return builder.build();
+	}
+
 	/** How a knife's parts are drawn: lit and two-sided, or glowing and see-through for energy blades. */
 	public static net.minecraft.client.renderer.rendertype.RenderType knifeRenderType(Identifier texture, boolean glow) {
 		return glow ? net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture)

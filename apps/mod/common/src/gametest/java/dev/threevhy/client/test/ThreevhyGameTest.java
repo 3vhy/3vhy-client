@@ -548,6 +548,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.runOnClient(client -> Modules.LYRICS.set(false));
 			knives(context, singleplayer, failed, false);
 			glassWorldScreens(context, singleplayer, failed);
+			skies(context, singleplayer, failed, false);
 			context.runOnClient(client -> client.player.setXRot(10f));
 
 			// Pop a totem: chat message, pop counter and the "no totem in offhand" warning
@@ -961,6 +962,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
 			context.waitTicks(100);
 			if (focus.contains("glass")) glassWorldScreens(context, singleplayer, failed);
+			if (focus.contains("skies")) skies(context, singleplayer, failed, true);
 			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
 			if (focus.contains("knives")) knives(context, singleplayer, failed, true);
 			if (focus.contains("calibrate")) calibrateKnife(context, singleplayer);
@@ -1552,6 +1554,132 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		server.runCommand("item replace entity @p hotbar.8 with minecraft:air");
 		context.getInput().pressKey(GLFW.GLFW_KEY_1);
 		context.waitTicks(3);
+	}
+
+	/** The average colour (r, g, b) of a part of a screenshot, given as shares of its width and height. */
+	private static int[] averageColor(Path shot, float x1, float y1, float x2, float y2) {
+		try {
+			BufferedImage image = ImageIO.read(shot.toFile());
+			long r = 0;
+			long g = 0;
+			long b = 0;
+			long n = 0;
+			for (int py = (int) (image.getHeight() * y1); py < (int) (image.getHeight() * y2); py++) {
+				for (int px = (int) (image.getWidth() * x1); px < (int) (image.getWidth() * x2); px++) {
+					int rgb = image.getRGB(px, py);
+					r += (rgb >> 16) & 255;
+					g += (rgb >> 8) & 255;
+					b += rgb & 255;
+					n++;
+				}
+			}
+			return n == 0 ? null : new int[] {(int) (r / n), (int) (g / n), (int) (b / n)};
+		} catch (java.io.IOException e) {
+			return null;
+		}
+	}
+
+	private static int colorDistance(int[] a, int[] b) {
+		return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+	}
+
+	/**
+	 * Skies: from a platform high in the air, looking up over the horizon, every sky in turn (each checked to
+	 * really replace Minecraft's sky), a switch caught mid-crossfade, daylight, a quarter-resolution sky, the
+	 * horizon from the ground (fog fading into the sky), and the settings with their live thumbnails.
+	 */
+	private static void skies(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed, boolean every) {
+		var server = singleplayer.getServer();
+		double[] home = context.computeOnClient(client -> new double[] {client.player.getX(), client.player.getY(), client.player.getZ(),
+				client.player.getYRot(), client.player.getXRot()});
+		int x = (int) Math.floor(home[0]);
+		int y = (int) Math.floor(home[1]) + 40;
+		int z = (int) Math.floor(home[2]);
+		server.runCommand("fill " + (x - 6) + " " + (y - 1) + " " + (z - 6) + " " + (x + 6) + " " + (y - 1) + " " + (z + 6) + " minecraft:smooth_stone");
+		server.runCommand("tp @p " + x + ".5 " + y + " " + z + ".5 0 -16");
+		server.runCommand("time set 18000");
+		server.runCommand("weather clear");
+		context.runOnClient(client -> {
+			client.options.hideGui = true;
+			client.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
+			client.getToastManager().clear();
+		});
+		face(context, 0, -16);
+		context.waitTicks(30);
+		Path vanilla = shotPath(context, "3vhy-sky-vanilla");
+		int[] vanillaSky = vanilla == null ? null : averageColor(vanilla, 0.2f, 0.05f, 0.8f, 0.4f);
+		context.runOnClient(client -> {
+			Modules.SKIES.set(true);
+			Modules.SKIES_TIME.set("Night");
+			Modules.SKIES_RESOLUTION.set("Full");
+			dev.threevhy.client.sky.LivingSky.select(dev.threevhy.client.sky.SkyType.GALAXY);
+		});
+		Hooks.skyDrawn = false;
+		context.waitTicks(25);
+		check(failed, "Skies draws the sky (SkyRenderer.renderSkyDisc)", Hooks.skyDrawn);
+		List<dev.threevhy.client.sky.SkyType> shown = every ? List.of(dev.threevhy.client.sky.SkyType.values())
+				: List.of(dev.threevhy.client.sky.SkyType.GALAXY, dev.threevhy.client.sky.SkyType.AMETHYST, dev.threevhy.client.sky.SkyType.FIRE);
+		int replaced = 0;
+		for (dev.threevhy.client.sky.SkyType sky : shown) {
+			server.runCommand(sky.day ? "time set noon" : "time set 18000");
+			context.runOnClient(client -> {
+				dev.threevhy.client.sky.LivingSky.select(sky);
+				Modules.SKIES_TIME.set(sky.day ? "Day" : "Night");
+			});
+			context.waitTicks(22);
+			Path picture = shotPath(context, "3vhy-sky-" + sky.id);
+			int[] color = picture == null ? null : averageColor(picture, 0.2f, 0.05f, 0.8f, 0.4f);
+			if (color != null && vanillaSky != null) {
+				int distance = colorDistance(color, vanillaSky);
+				ThreevhyClient.LOG.info("3vhy-check: {} sky averages {}, {}, {} ({} from Minecraft's)", sky.label, color[0], color[1], color[2], distance);
+				if (distance > 24) replaced++;
+			}
+		}
+		if (vanillaSky != null) check(failed, "every sky looks different from Minecraft's", replaced == shown.size());
+		server.runCommand("time set 18000");
+		context.runOnClient(client -> {
+			Modules.SKIES_TIME.set("Night");
+			dev.threevhy.client.sky.LivingSky.select(dev.threevhy.client.sky.SkyType.GALAXY);
+		});
+		context.waitTicks(22);
+		context.runOnClient(client -> dev.threevhy.client.sky.LivingSky.select(dev.threevhy.client.sky.SkyType.AFTERGLOW));
+		context.waitTicks(7);
+		shot(context, "3vhy-sky-crossfade");
+		context.runOnClient(client -> {
+			Modules.SKIES_TIME.set("Day");
+			dev.threevhy.client.sky.LivingSky.select(dev.threevhy.client.sky.SkyType.GALAXY);
+		});
+		context.waitTicks(22);
+		shot(context, "3vhy-sky-galaxy-day");
+		context.runOnClient(client -> {
+			Modules.SKIES_TIME.set("Night");
+			Modules.SKIES_RESOLUTION.set("Quarter");
+		});
+		context.waitTicks(8);
+		shot(context, "3vhy-sky-galaxy-quarter");
+		context.runOnClient(client -> Modules.SKIES_RESOLUTION.reset());
+		server.runCommand("fill " + (x - 6) + " " + (y - 1) + " " + (z - 6) + " " + (x + 6) + " " + (y - 1) + " " + (z + 6) + " minecraft:air");
+		server.runCommand(String.format(java.util.Locale.ROOT, "tp @p %.4f %.4f %.4f 0 0", home[0], home[1], home[2]));
+		face(context, 0, -2);
+		context.waitTicks(30);
+		shot(context, "3vhy-sky-horizon");
+		context.runOnClient(client -> client.options.hideGui = false);
+		context.setScreen(() -> MenuScreen.settings(null, Modules.SKIES));
+		context.waitTicks(30);
+		shot(context, "3vhy-menu-skies");
+		check(failed, "Skies settings show live thumbnails", context.computeOnClient(client ->
+				client.getTextureManager().getTexture(dev.threevhy.client.sky.LivingSky.thumbnail(dev.threevhy.client.sky.SkyType.FIRE)) != null));
+		ThreevhyClient.LOG.info("3vhy-check: the sky takes the graphics card {} ms a frame", String.format(java.util.Locale.ROOT, "%.3f",
+				dev.threevhy.client.sky.LivingSky.gpuMillis()));
+		context.setScreen(() -> null);
+		context.runOnClient(client -> {
+			Modules.SKIES.set(false);
+			Modules.SKIES_TIME.reset();
+			Modules.SKIES_SKY.reset();
+		});
+		server.runCommand("time set noon");
+		server.runCommand(String.format(java.util.Locale.ROOT, "tp @p %.4f %.4f %.4f %.2f %.2f", home[0], home[1], home[2], home[3], home[4]));
+		context.waitTicks(5);
 	}
 
 	/** Pictures of the knife at rest with one pose channel set at a time, to see which way each one moves it. */

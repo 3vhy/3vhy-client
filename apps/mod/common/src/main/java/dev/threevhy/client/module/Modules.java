@@ -270,6 +270,23 @@ public final class Modules {
 	public static final Toggle MODULE_LIST_GLOW = MODULE_LIST.add(new Toggle("glow", "Glow",
 			"A soft glow behind the icons", true));
 
+	public static final Module SKIES = new Module("skies", "Skies",
+			"Living skies drawn per pixel: auroras, a ringed planet, flame clouds and more", Category.RENDER, false).icon("moon-star").markNew();
+	public static final Choice SKIES_SKY = SKIES.add(new Choice("sky", "Sky", "Which sky you see", 0, dev.threevhy.client.sky.SkyType.labels()).hide());
+	public static final Slider SKIES_SPEED = SKIES.add(new Slider("speed", "Speed", "How fast the sky moves", 0, 300, 5, 100, "%"));
+	public static final Slider SKIES_BRIGHTNESS = SKIES.add(new Slider("brightness", "Brightness", "How bright the sky is", 20, 200, 5, 100, "%"));
+	public static final Color SKIES_TINT = SKIES.add(new Color("tint", "Tint", "A colour over the sky; white leaves it as it is", 0xFFFFFFFF));
+	public static final Toggle SKIES_STARS = SKIES.add(new Toggle("stars", "Stars", "Stars twinkling in the night skies", true));
+	public static final Toggle SKIES_SUN_MOON = SKIES.add(new Toggle("sun_moon", "Sun and moon", "Minecraft's sun and moon over the sky", true));
+	public static final Choice SKIES_TIME = SKIES.add(new Choice("time", "Time of day", "Follow the world's clock, or keep one time of day", 0,
+			"World time", "Night", "Dusk", "Day"));
+	public static final Toggle SKIES_PARTICLES = SKIES.add(new Toggle("particles", "Weather particles",
+			"Light rain, snow or embers around you with the Rain, Snow and Fire skies", true));
+	public static final Choice SKIES_RESOLUTION = SKIES.add(new Choice("resolution", "Sky resolution",
+			"Half and Quarter draw the sky smaller and stretch it, for more FPS", 1, "Full", "Half", "Quarter"));
+	public static final Choice SKIES_END = SKIES.add(new Choice("end", "In the End", "Your sky in the End too, or the End's own", 0,
+			"Your sky", "The End's"));
+
 	// Cosmetics
 	public static final Module KNIVES = new Module("knives", "Knives",
 			"Swords and the hotbar slots you pick as knives that flip, slash and inspect", Category.COSMETICS, false).icon("sword").markNew();
@@ -353,7 +370,7 @@ public final class Modules {
 	/** Every module, in menu order: by tab, then as listed here. */
 	public static final List<Module> ALL = List.of(
 			TARGET_HUD, COMBO, POPS, ITEMS, CRYSTAL_OPTIMIZER, POP_NOTIFIER, TOTEM_WARNING, ITEM_HIGHLIGHTER, HURT_CAM, JUMP_RESET,
-			CROSSHAIR, ZOOM, FREELOOK, NAMETAGS, FOV_CHANGER, SHINY_POTS, SWING_SPEED, LYRICS,
+			SKIES, CROSSHAIR, ZOOM, FREELOOK, NAMETAGS, FOV_CHANGER, SHINY_POTS, SWING_SPEED, LYRICS,
 			NAME_PROTECT, SKIN_PROTECT, PLAYER_LIST, STAFF_LIST, TOGGLE_SPRINT,
 			WAYPOINTS, FULLBRIGHT, NO_FOG,
 			CHAT, TEXT_HOTKEYS, TAB_EDITOR, CONFIRM_DISCONNECT, BORDERLESS,
@@ -397,6 +414,7 @@ public final class Modules {
 		PlayerList.tick(mc);
 		MusicBridge.tick();
 		if (LYRICS.enabled() || MUSIC.enabled() && MUSIC_LYRICS.get()) dev.threevhy.client.music.Lyrics.want(MusicBridge.current());
+		if (SKIES.enabled()) dev.threevhy.client.sky.SkyWeather.tick(mc);
 	}
 
 	/** Uses Minecraft's own "Sprint: Toggle" and "Sneak: Toggle", so they behave exactly like vanilla. */

@@ -54,4 +54,7 @@ public final class Hooks {
 		if (mc == null || mc.getWindow() == null) return 0;
 		return mc.getWindow().handle();
 	}
+
+	/** Set when the Skies module draws the sky (SkyRenderer.renderSkyDisc). */
+	public static volatile boolean skyDrawn = false;
 }

@@ -18,6 +18,9 @@ import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Waypoints;
 import dev.threevhy.client.hud.SkyLyrics;
 import dev.threevhy.client.music.Lyrics;
+import dev.threevhy.client.render.ShaderPacks;
+import dev.threevhy.client.sky.LivingSky;
+import dev.threevhy.client.sky.SkyType;
 import dev.threevhy.client.music.MusicBridge;
 import dev.threevhy.client.music.NowPlaying;
 import dev.threevhy.client.ui.Grad;
@@ -88,12 +91,12 @@ final class SheetExtras implements SettingsSheet.Extras {
 	public boolean has(Module module) {
 		return widgetOf(module) != null || module == Modules.THEME || module == Modules.MUSIC || module == Modules.LYRICS || module == Modules.SKIN_PROTECT
 				|| module == Modules.PLAYER_LIST || module == Modules.NAME_PROTECT || module == Modules.TEXT_HOTKEYS
-				|| module == Modules.WAYPOINTS || module == Modules.KNIVES;
+				|| module == Modules.WAYPOINTS || module == Modules.KNIVES || module == Modules.SKIES;
 	}
 
 	@Override
 	public boolean first(Module module) {
-		return module == Modules.KNIVES;
+		return module == Modules.KNIVES || module == Modules.SKIES;
 	}
 
 	@Override
@@ -109,6 +112,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.TEXT_HOTKEYS) h += listHeight(Config.get().textHotkeys.size());
 		if (module == Modules.WAYPOINTS) h += waypointsHeight();
 		if (module == Modules.KNIVES) h += knivesHeight(width);
+		if (module == Modules.SKIES) h += skiesHeight(width);
 		return h;
 	}
 
@@ -156,6 +160,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.TEXT_HOTKEYS) drawHotkeys(d, hits, x, y, w, now);
 		if (module == Modules.WAYPOINTS) drawWaypoints(d, hits, x, y, w, now);
 		if (module == Modules.KNIVES) drawKnives(d, hits, x, y, w);
+		if (module == Modules.SKIES) drawSkies(d, hits, x, y, w);
 	}
 
 	private boolean over(float x1, float y1, float x2, float y2) {
@@ -509,6 +514,73 @@ final class SheetExtras implements SettingsSheet.Extras {
 			String distance = Math.round(Waypoints.distance(mc, waypoint)) + "m";
 			Type.right(d, distance, right - 58, y + (h - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD, Tokens.LILAC);
 			y += h + ITEM_GAP;
+		}
+	}
+
+	private static final float PREVIEW_H = 150;
+	private static final float THUMB_GAP = 8;
+	private static final float THUMB_LABEL = 20;
+
+	private static float thumbWidth(float width) {
+		return (width - 4 * THUMB_GAP) / 5f;
+	}
+
+	private float skiesHeight(float width) {
+		float th = thumbWidth(width) * 9 / 16f;
+		int rows = (SkyType.values().length + 4) / 5;
+		return PREVIEW_H + 14 + rows * (th + THUMB_LABEL) + 6 + (LivingSky.gpuMillis() >= 0 ? ROW : 0) + (ShaderPacks.inUse() ? ROW : 0);
+	}
+
+	/**
+	 * The Skies picker, like the website's: a big live preview of the sky with its name, then every sky as a
+	 * live thumbnail; the one you see has a glowing border, and picking another crossfades to it.
+	 */
+	private void drawSkies(Draw d, Hits hits, float x, float y, float w) {
+		float tw = thumbWidth(w);
+		float th = tw * 9 / 16f;
+		boolean live = LivingSky.drawThumbnails(192, 108, 720, 264);
+		SkyType current = LivingSky.selected();
+		int accent = Accent.get();
+		Paint.shadow(d, x, y, x + w, y + PREVIEW_H, 18, 0, 8, 24, -6, 0x8C000000);
+		if (live) Paint.image(d, LivingSky.preview(), x, y, x + w, y + PREVIEW_H, 18, 0, 1, 1, 0, 0xFFFFFFFF, true);
+		else Paint.rect(d, x, y, x + w, y + PREVIEW_H, 18, Tokens.SURFACE);
+		Paint.rect(d, x, y + PREVIEW_H * 0.45f, x + w, y + PREVIEW_H, 18, Grad.down(0x00050410, 0xB3050410));
+		Paint.stroke(d, x, y, x + w, y + PREVIEW_H, 18, 1, Grad.down(0x40FFFFFF, 0x0DFFFFFF));
+		Type.draw(d, current.label, x + 18, y + PREVIEW_H - 46, 15, Weight.BOLD, 0xFFFFFFFF);
+		Type.draw(d, Type.fit(current.description, w - 36, 9.5f, Weight.MEDIUM), x + 18, y + PREVIEW_H - 22, 9.5f, Weight.MEDIUM, 0xD9F2EEFF);
+		y += PREVIEW_H + 14;
+		SkyType[] all = SkyType.values();
+		for (int i = 0; i < all.length; i++) {
+			SkyType sky = all[i];
+			float tx = x + (i % 5) * (tw + THUMB_GAP);
+			float ty = y + (i / 5) * (th + THUMB_LABEL);
+			boolean active = sky == current;
+			boolean hover = over(tx, ty, tx + tw, ty + th);
+			if (active) Paint.shadow(d, tx, ty, tx + tw, ty + th, 10, 0, 0, 12, 0, Accent.glow(0.85f));
+			if (live) Paint.image(d, LivingSky.thumbnail(sky), tx, ty, tx + tw, ty + th, 10, 0, 1, 1, 0, 0xFFFFFFFF, true);
+			else Paint.rect(d, tx, ty, tx + tw, ty + th, 10, Tokens.SURFACE);
+			if (active) {
+				Paint.stroke(d, tx, ty, tx + tw, ty + th, 10, 2, Accent.lighten(accent, 0.3f));
+			} else {
+				Paint.stroke(d, tx, ty, tx + tw, ty + th, 10, 1, hover ? Grad.down(0x99E2D4FF, 0x40CDB6FF) : Grad.down(0x33FFFFFF, 0x0DFFFFFF));
+			}
+			Type.center(d, Type.fit(sky.label, tw, 8.5f, Weight.SEMIBOLD), tx + tw / 2f, ty + th + 6, 8.5f, Weight.SEMIBOLD,
+					active ? Tokens.TEXT : hover ? Tokens.TEXT_2 : Tokens.TEXT_3);
+			hits.add(tx, ty, tx + tw, ty + th + THUMB_LABEL - 4, () -> {
+				LivingSky.select(sky);
+				if (!Modules.SKIES.enabled()) Modules.SKIES.set(true);
+			});
+		}
+		y += ((all.length + 4) / 5) * (th + THUMB_LABEL) + 6;
+		double cost = LivingSky.gpuMillis();
+		if (cost >= 0) {
+			String label = String.format(Locale.ROOT, "%.2f ms a frame", cost);
+			row(d, x, y, w, "Cost", "How long your graphics card spends on the sky", Type.width(label, 11, Weight.SEMIBOLD) + 16);
+			Type.right(d, label, x + w, y + 25, 11, Weight.SEMIBOLD, cost <= 0.6 ? Tokens.MINT : Tokens.GOLD);
+			y += ROW;
+		}
+		if (ShaderPacks.inUse()) {
+			row(d, x, y, w, "Shader pack on", "Your shader pack draws the sky, so Skies waits until you turn it off", 0);
 		}
 	}
 
