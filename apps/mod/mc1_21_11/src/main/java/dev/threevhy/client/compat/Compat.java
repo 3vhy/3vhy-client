@@ -95,4 +95,25 @@ public final class Compat {
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen).register(
 				(drawn, graphics, mouseX, mouseY, delta) -> overlay.draw(new DrawImpl(graphics), mouseX, mouseY));
 	}
+
+	/**
+	 * A pipeline for 3vhy's meshes drawn during the sky pass: blended, two-sided, and with no depth test
+	 * or depth write, so the world drawn afterwards covers them like it covers the sky.
+	 */
+	public static com.mojang.blaze3d.pipeline.RenderPipeline skyPipeline(String name, Identifier shader,
+			com.mojang.blaze3d.vertex.VertexFormat format, boolean textured, String define) {
+		com.mojang.blaze3d.pipeline.RenderPipeline.Builder builder = com.mojang.blaze3d.pipeline.RenderPipeline
+				.builder(net.minecraft.client.renderer.RenderPipelines.MATRICES_PROJECTION_SNIPPET)
+				.withLocation(Identifier.fromNamespaceAndPath("threevhy", "pipeline/" + name))
+				.withVertexShader(shader)
+				.withFragmentShader(shader)
+				.withBlend(com.mojang.blaze3d.pipeline.BlendFunction.TRANSLUCENT)
+				.withDepthWrite(false)
+				.withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST)
+				.withCull(false)
+				.withVertexFormat(format, com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS);
+		if (textured) builder.withSampler("Sampler0");
+		if (define != null) builder.withShaderDefine(define);
+		return builder.build();
+	}
 }

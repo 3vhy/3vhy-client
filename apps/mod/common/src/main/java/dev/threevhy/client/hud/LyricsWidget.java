@@ -1,7 +1,6 @@
 package dev.threevhy.client.hud;
 
 import dev.threevhy.client.Draw;
-import dev.threevhy.client.Hooks;
 import dev.threevhy.client.gui.Accent;
 import dev.threevhy.client.module.Modules;
 import dev.threevhy.client.music.MusicBridge;
@@ -11,20 +10,16 @@ import dev.threevhy.client.ui.Type;
 import dev.threevhy.client.ui.Type.Weight;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Mth;
 
 /**
- * Sky Lyrics: the words of the song playing, line by line as they're sung. In the sky (the default)
- * each new line is written high up in front of you and stays there in the world as you turn, glowing
- * violet, with the next line faint under it; on screen they sit at the top like a HUD widget instead.
+ * Sky Lyrics on screen: the words of the song playing at the top of the screen like a HUD widget, line by
+ * line as they're sung, glowing violet, with the next line faint under it. Set to Sky, {@link SkyLyrics}
+ * writes them in the sky instead, except where there is none (the Nether), which falls back to this.
  */
 final class LyricsWidget extends HudWidget {
 	private static final float WIDTH = 260;
-	private static final float ELEVATION = 15;
 	private final LyricTracker lyrics = new LyricTracker();
-	private float anchorYaw = 0;
 
 	LyricsWidget() {
 		super("lyrics", Modules.LYRICS, Anchor.TOP_CENTER);
@@ -38,9 +33,10 @@ final class LyricsWidget extends HudWidget {
 		return (float) (10 * Modules.LYRICS_SIZE.get() / 100.0);
 	}
 
+	/** On screen when set to Screen, and where there's no sky to write in (the Nether); otherwise {@link SkyLyrics} draws them. */
 	@Override
 	public boolean shown() {
-		return super.shown() && !sky();
+		return super.shown() && (!sky() || SkyLyrics.noSky(Minecraft.getInstance()));
 	}
 
 	@Override
@@ -58,40 +54,16 @@ final class LyricsWidget extends HudWidget {
 		return Math.round(cap() * 2 * 1.5f + cap() * 1.4f + 8);
 	}
 
-	/** Follows the song; a new line is written where you're looking now. */
-	private void update(Minecraft mc) {
-		if (lyrics.update(MusicBridge.current())) anchorYaw = mc.gameRenderer.getMainCamera().yRot();
+	private void update() {
+		lyrics.update(MusicBridge.current());
 	}
 
 	@Override
 	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
-		update(mc);
+		update();
 		String line = lyrics.current();
 		if (preview && line.isEmpty() && lyrics.previous().isEmpty()) line = "Lyrics show here as the song plays";
 		drawLines(d, x + WIDTH / 2f, y + 4, line, preview ? "" : lyrics.next(), 1);
-	}
-
-	/** In the sky: projects the line's spot above the horizon onto the screen, if it's in view. */
-	void drawSky(Draw d, Minecraft mc) {
-		if (!Modules.LYRICS.enabled() || !sky() || mc.player == null) return;
-		update(mc);
-		if (lyrics.current().isEmpty() && lyrics.previous().isEmpty()) return;
-		Camera camera = mc.gameRenderer.getMainCamera();
-		float yaw = Mth.wrapDegrees(anchorYaw - camera.yRot());
-		float up = ELEVATION + camera.xRot();
-		if (Math.abs(yaw) > 75 || up > 80 || up < -80) return;
-		float fov = (float) Math.toRadians(mc.options.fov().get());
-		float halfH = (float) Math.tan(fov / 2);
-		float w = d.width();
-		float h = d.height();
-		float aspect = w / Math.max(1, h);
-		float sx = w / 2f + (float) Math.tan(Math.toRadians(yaw)) / (halfH * aspect) * w / 2f;
-		float sy = h / 2f - (float) Math.tan(Math.toRadians(up)) / halfH * h / 2f;
-		float edge = Math.min(1, Math.max(0, 1.4f - Math.abs(yaw) / 55f));
-		float old = Paint.opacity(Paint.opacity() * edge);
-		drawLines(d, sx, sy - cap() * 1.5f, lyrics.current(), lyrics.next(), 1.25f);
-		Paint.opacity(old);
-		Hooks.lyricsDrawn = true;
 	}
 
 	private void drawLines(Draw d, float cx, float top, String line, String next, float glow) {

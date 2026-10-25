@@ -425,6 +425,11 @@ public final class Paint {
 		flush();
 	}
 
+	/** A Lucide icon as a white texture {@code pixels} square (made once, then kept), or null for an unknown name. */
+	public static Identifier iconTexture(String name, int pixels) {
+		return iconMask(name, pixels, 1f, false);
+	}
+
 	private static Identifier iconMask(String name, int pixels, float weight, boolean solidShape) {
 		String key = name + "_" + pixels + "_" + Math.round(weight * 100) + (solidShape ? "_solid" : "");
 		if (ICONS.containsKey(key)) return ICONS.get(key);

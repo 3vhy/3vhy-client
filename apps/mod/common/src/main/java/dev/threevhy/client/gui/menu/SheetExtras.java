@@ -13,7 +13,10 @@ import dev.threevhy.client.module.Setting;
 import dev.threevhy.client.module.TextHotkeys;
 import dev.threevhy.client.module.TextRules;
 import dev.threevhy.client.module.Waypoints;
+import dev.threevhy.client.hud.SkyLyrics;
+import dev.threevhy.client.music.Lyrics;
 import dev.threevhy.client.music.MusicBridge;
+import dev.threevhy.client.music.NowPlaying;
 import dev.threevhy.client.ui.Hits;
 import dev.threevhy.client.ui.Keys;
 import dev.threevhy.client.ui.Paint;
@@ -74,7 +77,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 
 	@Override
 	public boolean has(Module module) {
-		return widgetOf(module) != null || module == Modules.THEME || module == Modules.MUSIC || module == Modules.SKIN_PROTECT
+		return widgetOf(module) != null || module == Modules.THEME || module == Modules.MUSIC || module == Modules.LYRICS || module == Modules.SKIN_PROTECT
 				|| module == Modules.PLAYER_LIST || module == Modules.NAME_PROTECT || module == Modules.TEXT_HOTKEYS
 				|| module == Modules.WAYPOINTS;
 	}
@@ -84,7 +87,8 @@ final class SheetExtras implements SettingsSheet.Extras {
 		float h = 0;
 		if (widgetOf(module) != null) h += ROW;
 		if (module == Modules.THEME) h += ROW;
-		if (module == Modules.MUSIC) h += ROW;
+		if (module == Modules.MUSIC) h += 2 * ROW;
+		if (module == Modules.LYRICS) h += ROW + (SkyLyrics.blocked() && Modules.LYRICS_PLACE.is("Sky") ? ROW : 0);
 		if (module == Modules.SKIN_PROTECT) h += 2 * ROW;
 		if (module == Modules.PLAYER_LIST) h += playersHeight(width);
 		if (module == Modules.NAME_PROTECT) h += listHeight(Config.get().textRules.size());
@@ -120,6 +124,16 @@ final class SheetExtras implements SettingsSheet.Extras {
 			if (connected) Widgets.pulseDot(d, x + w - tw - 12, y + 30.5f, 3.5f, Tokens.MINT, now);
 			else Paint.circle(d, x + w - tw - 12, y + 30.5f, 3.5f, Tokens.TEXT_3);
 			y += ROW;
+			drawLyricsStatus(d, hits, x, y, w);
+			y += ROW;
+		}
+		if (module == Modules.LYRICS) {
+			drawLyricsStatus(d, hits, x, y, w);
+			y += ROW;
+			if (SkyLyrics.blocked() && Modules.LYRICS_PLACE.is("Sky")) {
+				row(d, x, y, w, "Shader pack on", "A shader pack draws the sky, so lyrics can't go in it. Pick Screen to see them", 0);
+				y += ROW;
+			}
 		}
 		if (module == Modules.SKIN_PROTECT) drawSkinFile(d, hits, x, y, w);
 		if (module == Modules.PLAYER_LIST) drawPlayers(d, hits, x, y, w, now);
@@ -199,6 +213,31 @@ final class SheetExtras implements SettingsSheet.Extras {
 
 	private static float listHeight(int items) {
 		return SECTION + FIELD + 10 + HINT + (items == 0 ? EMPTY : items * (ITEM + ITEM_GAP));
+	}
+
+	/** Whether the song playing has lyrics (synced, not synced, searching, or why not), and a button to look again. */
+	private void drawLyricsStatus(Draw d, Hits hits, float x, float y, float w) {
+		String status = Lyrics.status();
+		String detail = Lyrics.detail();
+		Lyrics.State state = Lyrics.state();
+		int color = state == Lyrics.State.SYNCED ? Tokens.MINT : state == Lyrics.State.UNSYNCED ? Tokens.GOLD
+				: state == Lyrics.State.NOT_FOUND || state == Lyrics.State.UNREACHABLE ? Tokens.LOW : Tokens.TEXT_2;
+		float buttonW = 104;
+		float statusW = Math.min(w * 0.42f, Type.width(status, 11, Weight.SEMIBOLD));
+		String about = detail.isEmpty() ? "For the song playing now, from LRCLIB, NetEase or lyrics.ovh" : detail;
+		row(d, x, y, w, "Lyrics", about, buttonW + statusW + 34);
+		button(d, hits, x + w - buttonW, y + 13, x + w, y + 13 + FIELD, "refresh-cw", "Reload", false, () -> {
+			NowPlaying song = MusicBridge.current();
+			if (song == null) {
+				screen.view().notice("Play a song first");
+				return;
+			}
+			Lyrics.reload(song);
+			screen.view().notice("Looking for the lyrics again");
+		});
+		float sx = x + w - buttonW - 14;
+		Type.right(d, Type.fit(status, w * 0.42f, 11, Weight.SEMIBOLD), sx, y + 25, 11, Weight.SEMIBOLD, color);
+		Paint.circle(d, sx - statusW - 9, y + 30.5f, 3.5f, color);
 	}
 
 	private void drawSkinFile(Draw d, Hits hits, float x, float y, float w) {

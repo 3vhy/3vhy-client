@@ -34,8 +34,11 @@ import dev.threevhy.client.module.Target;
 import dev.threevhy.client.music.Lyrics;
 import dev.threevhy.client.music.MusicBridge;
 import dev.threevhy.client.ui.Sky;
+import java.awt.image.BufferedImage;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.imageio.ImageIO;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -190,6 +193,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 	@Override
 	public void runTest(ClientGameTestContext context) {
 		List<String> failed = new ArrayList<>();
+		String focus = System.getProperty("threevhy.testFocus", "");
+		if (!focus.isEmpty()) {
+			runFocused(context, focus, failed);
+			if (!failed.isEmpty()) throw new AssertionError("3vhy checks that failed: " + String.join(", ", failed));
+			return;
+		}
 
 		context.waitTicks(40);
 		shot(context, "3vhy-main-menu");
@@ -507,15 +516,12 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 					Hooks.playerListAskedServer && PlayerList.checkedWithServer("Steve") && !PlayerList.seenByServer("Steve")
 							&& PlayerList.seenByServer(client.getUser().getName())));
 
+			skyLyrics(context, singleplayer, failed);
 			context.runOnClient(client -> {
-				Modules.LYRICS.set(true);
-				client.player.setYRot(0f);
-				client.player.setXRot(-12f);
+				MusicBridge.simulate(SAMPLE_SONG);
 				Lyrics.simulate(MusicBridge.current(), "[00:50.00] Snow falls on the quiet town\n[00:55.00] Every light is burning down\n"
 						+ "[01:05.00] Hold on, we're almost home\n[01:20.00] Under violet skies we roam");
 			});
-			context.waitTicks(20);
-			shot(context, "3vhy-sky-lyrics");
 			context.setScreen(MusicShowcase::new);
 			context.waitTicks(12);
 			shot(context, "3vhy-music-closeup-lyrics");
@@ -534,7 +540,6 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			shot(context, "3vhy-hotbar-accent");
 			context.getInput().pressKey(InputConstants.KEY_1);
 			context.runOnClient(client -> Modules.HOTBAR_SELECTED.reset());
-			check(failed, "sky lyrics drawn in the sky ahead", Hooks.lyricsDrawn);
 			check(failed, "lyrics read from LRC", Lyrics.parse("[00:01.50] a\n[00:03.00][00:09.00] b").size() == 3);
 			context.runOnClient(client -> {
 				Modules.LYRICS.set(false);
@@ -792,7 +797,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			}
 			context.runOnClient(client -> TextRules.add("Kills: #", "Kills: 9999"));
 			for (Module module : List.of(Modules.CROSSHAIR, Modules.PLAYER_LIST, Modules.NAME_PROTECT, Modules.TEXT_HOTKEYS,
-					Modules.SKIN_PROTECT, Modules.WAYPOINTS, Modules.MUSIC, Modules.THEME, Modules.MAIN_MENU)) {
+					Modules.SKIN_PROTECT, Modules.WAYPOINTS, Modules.MUSIC, Modules.LYRICS, Modules.THEME, Modules.MAIN_MENU)) {
 				context.setScreen(() -> MenuScreen.settings(null, module));
 				context.waitTicks(15);
 				shot(context, "3vhy-menu-" + module.id.replace('_', '-'));
@@ -951,6 +956,191 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		check(failed, "totem pop hook (ClientPacketListener.handleEntityEvent)", Hooks.entityEventHookRan);
 		if (!failed.isEmpty()) {
 			throw new AssertionError("3vhy checks that failed: " + String.join(", ", failed));
+		}
+	}
+
+	/** Runs one part of the test on its own (-PtestFocus=...), for quicker checks while working on it. */
+	private static void runFocused(ClientGameTestContext context, String focus, List<String> failed) {
+		ThreevhyClient.LOG.info("3vhy-check: running only the {} part of the test", focus);
+		context.waitTicks(20);
+		try (TestSingleplayerContext singleplayer = context.worldBuilder().create()) {
+			context.waitTicks(100);
+			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
+		}
+		context.waitTicks(10);
+	}
+
+	/**
+	 * Sky Lyrics, on a platform high above spawn so the sky is open: they're drawn while the sky is, and
+	 * then a wall, a tree, a cliff and a closed room each hide them like they hide the sky, while glass
+	 * lets them through. The wall and the room are also checked pixel by pixel: the same view with the
+	 * lyrics on and off may only differ in the sky.
+	 */
+	private static void skyLyrics(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed) {
+		var server = singleplayer.getServer();
+		String song = "{\"key\":\"sky\",\"app\":\"Spotify.exe\",\"title\":\"Northern Lights\",\"artist\":\"3vhy Test Band\",\"album\":\"CI\","
+				+ "\"playing\":false,\"position\":120,\"duration\":240}";
+		String lrc = "[01:40.00] The city falls asleep\n[01:58.00] Written in the northern sky\n[02:10.00] Every word becomes a star\n";
+		boolean musicWasOn = context.computeOnClient(client -> Modules.MUSIC.enabled());
+		boolean warningWasOn = context.computeOnClient(client -> Modules.TOTEM_WARNING.enabled());
+		double[] home = context.computeOnClient(client -> new double[] {client.player.getX(), client.player.getY(), client.player.getZ(),
+				client.player.getYRot(), client.player.getXRot()});
+		int x = (int) Math.floor(home[0]);
+		int y = (int) Math.floor(home[1]) + 40;
+		int z = (int) Math.floor(home[2]);
+		server.runCommand("fill " + (x - 14) + " " + (y - 1) + " " + (z - 6) + " " + (x + 14) + " " + (y - 1) + " " + (z + 24) + " minecraft:smooth_stone");
+		server.runCommand("tp @p " + x + ".5 " + y + " " + z + ".5 0 -14");
+		server.runCommand("time set noon");
+		server.runCommand("weather clear");
+		server.runCommand("effect clear @p");
+		server.runCommand("item replace entity @p weapon.mainhand with air");
+		server.runCommand("item replace entity @p weapon.offhand with air");
+		context.runOnClient(client -> {
+			client.gui.getChat().clearMessages(false);
+			Modules.MUSIC.set(false);
+			Modules.TOTEM_WARNING.set(false);
+			Modules.LYRICS.set(true);
+			Modules.LYRICS_PLACE.set("Sky");
+			client.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
+			client.getToastManager().clear();
+			MusicBridge.simulate(song);
+			Lyrics.simulate(MusicBridge.current(), lrc);
+		});
+		face(context, 0, -14);
+		context.waitTicks(40);
+		Hooks.lyricsDrawn = false;
+		context.waitTicks(5);
+		check(failed, "sky lyrics are drawn while the sky is (SkyRenderer)", Hooks.lyricsDrawn);
+		shot(context, "3vhy-sky-lyrics-open");
+
+		server.runCommand("fill " + (x + 1) + " " + y + " " + (z + 6) + " " + (x + 14) + " " + (y + 16) + " " + (z + 6) + " minecraft:red_concrete");
+		context.waitTicks(10);
+		Path walled = shotPath(context, "3vhy-sky-lyrics-behind-wall");
+		context.runOnClient(client -> Modules.LYRICS.set(false));
+		context.waitTicks(5);
+		Path walledOff = shotPath(context, "3vhy-sky-lyrics-behind-wall-off");
+		context.runOnClient(client -> Modules.LYRICS.set(true));
+		if (walled != null && walledOff != null) {
+			int[] diff = compareShots(walled, walledOff);
+			ThreevhyClient.LOG.info("3vhy-check: lyrics on vs off: {} of {} wall pixels changed, {} of {} sky pixels changed", diff[0], diff[1], diff[2],
+					diff[3]);
+			check(failed, "a wall hides the sky lyrics behind it", diff[1] > 2000 && diff[0] <= diff[1] / 400);
+			check(failed, "the sky lyrics still show in the open sky beside the wall", diff[2] > 150);
+		}
+		server.runCommand("fill " + (x + 1) + " " + y + " " + (z + 6) + " " + (x + 14) + " " + (y + 16) + " " + (z + 6) + " minecraft:air");
+
+		server.runCommand("fill " + (x - 4) + " " + y + " " + (z + 7) + " " + (x - 4) + " " + (y + 5) + " " + (z + 7) + " minecraft:oak_log");
+		server.runCommand("fill " + (x - 7) + " " + (y + 3) + " " + (z + 5) + " " + (x - 1) + " " + (y + 7) + " " + (z + 9)
+				+ " minecraft:oak_leaves[persistent=true] replace minecraft:air");
+		context.waitTicks(10);
+		shot(context, "3vhy-sky-lyrics-behind-tree");
+		server.runCommand("fill " + (x - 7) + " " + y + " " + (z + 5) + " " + (x - 1) + " " + (y + 7) + " " + (z + 9) + " minecraft:air");
+
+		server.runCommand("fill " + (x - 2) + " " + y + " " + (z + 10) + " " + (x + 14) + " " + (y + 5) + " " + (z + 16) + " minecraft:stone");
+		server.runCommand("fill " + (x - 14) + " " + y + " " + (z + 10) + " " + (x - 3) + " " + (y + 2) + " " + (z + 16) + " minecraft:stone");
+		context.waitTicks(10);
+		shot(context, "3vhy-sky-lyrics-behind-cliff");
+		server.runCommand("fill " + (x - 14) + " " + y + " " + (z + 10) + " " + (x + 14) + " " + (y + 5) + " " + (z + 16) + " minecraft:air");
+
+		server.runCommand("fill " + (x - 14) + " " + y + " " + (z + 5) + " " + (x + 14) + " " + (y + 20) + " " + (z + 5)
+				+ " minecraft:light_blue_stained_glass");
+		context.waitTicks(10);
+		shot(context, "3vhy-sky-lyrics-through-glass");
+		server.runCommand("fill " + (x - 14) + " " + y + " " + (z + 5) + " " + (x + 14) + " " + (y + 20) + " " + (z + 5) + " minecraft:air");
+
+		server.runCommand("fill " + (x - 3) + " " + (y - 1) + " " + (z - 3) + " " + (x + 3) + " " + (y + 4) + " " + (z + 3) + " minecraft:stone");
+		server.runCommand("fill " + (x - 1) + " " + y + " " + (z - 1) + " " + (x + 1) + " " + (y + 2) + " " + (z + 1) + " minecraft:air");
+		server.runCommand("tp @p " + x + ".5 " + y + " " + z + ".5 0 -14");
+		face(context, 0, -14);
+		context.waitTicks(10);
+		Path inside = shotPath(context, "3vhy-sky-lyrics-indoors");
+		context.runOnClient(client -> Modules.LYRICS.set(false));
+		context.waitTicks(5);
+		Path insideOff = shotPath(context, "3vhy-sky-lyrics-indoors-off");
+		context.runOnClient(client -> Modules.LYRICS.set(true));
+		if (inside != null && insideOff != null) {
+			int[] diff = compareShots(inside, insideOff);
+			ThreevhyClient.LOG.info("3vhy-check: indoors, lyrics on vs off: {} of {} pixels changed", diff[0] + diff[2], diff[1] + diff[3]);
+			check(failed, "no sky lyrics leak into a closed room", diff[0] + diff[2] <= (diff[1] + diff[3]) / 400);
+		}
+		server.runCommand("fill " + (x - 3) + " " + (y - 1) + " " + (z - 3) + " " + (x + 3) + " " + (y + 4) + " " + (z + 3) + " minecraft:air");
+		server.runCommand("fill " + (x - 14) + " " + (y - 1) + " " + (z - 6) + " " + (x + 14) + " " + (y - 1) + " " + (z + 24) + " minecraft:smooth_stone");
+		server.runCommand("tp @p " + x + ".5 " + y + " " + z + ".5 0 -14");
+		face(context, 0, -14);
+
+		context.runOnClient(client -> Lyrics.simulate(MusicBridge.current(), "[01:40.00] The city falls asleep\n[01:50.00]\n[02:30.00] And we fly\n"));
+		context.waitTicks(15);
+		shot(context, "3vhy-sky-lyrics-instrumental");
+		context.runOnClient(client -> Lyrics.simulatePlain(MusicBridge.current(),
+				"The city falls asleep\nWritten in the northern sky\nEvery word becomes a star\n\nAnd we fly\nOver violet seas\nUntil the morning\n"));
+		context.waitTicks(15);
+		shot(context, "3vhy-sky-lyrics-unsynced");
+		check(failed, "plain lyrics show, spread over the song", context.computeOnClient(client -> Lyrics.view(MusicBridge.current()).state()
+				== Lyrics.State.UNSYNCED && !Lyrics.view(MusicBridge.current()).synced() && !Lyrics.lines(MusicBridge.current()).isEmpty()));
+
+		server.runCommand("fill " + (x - 14) + " " + (y - 1) + " " + (z - 6) + " " + (x + 14) + " " + (y - 1) + " " + (z + 24) + " minecraft:air");
+		server.runCommand(String.format(java.util.Locale.ROOT, "tp @p %.4f %.4f %.4f %.2f %.2f", home[0], home[1], home[2], home[3], home[4]));
+		server.runCommand("item replace entity @p weapon.mainhand with netherite_sword");
+		server.runCommand("item replace entity @p weapon.offhand with totem_of_undying");
+		context.runOnClient(client -> {
+			Modules.MUSIC.set(musicWasOn);
+			Modules.TOTEM_WARNING.set(warningWasOn);
+			Modules.LYRICS_PLACE.reset();
+			client.options.cloudStatus().set(net.minecraft.client.CloudStatus.FANCY);
+		});
+		face(context, (float) home[3], (float) home[4]);
+		context.waitTicks(20);
+	}
+
+	/** Turns the player to this yaw and pitch at once, with no turning in between. */
+	private static void face(ClientGameTestContext context, float yaw, float pitch) {
+		context.runOnClient(client -> {
+			client.player.setYRot(yaw);
+			client.player.setXRot(pitch);
+			client.player.yRotO = yaw;
+			client.player.xRotO = pitch;
+		});
+	}
+
+	/** A screenshot's file, or null where in-world screenshots are skipped. */
+	private static Path shotPath(ClientGameTestContext context, String name) {
+		boolean sodiumOn26 = FabricLoader.getInstance().isModLoaded("sodium") && ThreevhyClient.minecraftVersion().startsWith("26.");
+		if (sodiumOn26 && context.computeOnClient(client -> client.level != null)) {
+			ThreevhyClient.LOG.info("3vhy-check: screenshot {} skipped (Sodium on 26.1)", name);
+			return null;
+		}
+		return context.takeScreenshot(name);
+	}
+
+	/**
+	 * Compares two screenshots of the same view over the middle of the screen (clear of the HUD's corners):
+	 * {changed blocks, blocks, changed sky, sky}, counting pixels. Sky is where the second picture is blue;
+	 * everything else is a block.
+	 */
+	private static int[] compareShots(Path a, Path b) {
+		try {
+			BufferedImage first = ImageIO.read(a.toFile());
+			BufferedImage second = ImageIO.read(b.toFile());
+			int w = Math.min(first.getWidth(), second.getWidth());
+			int h = Math.min(first.getHeight(), second.getHeight());
+			int[] out = new int[4];
+			for (int py = h / 10; py < h * 7 / 10; py++) {
+				for (int px = w / 5; px < w * 4 / 5; px++) {
+					int one = first.getRGB(px, py);
+					int two = second.getRGB(px, py);
+					int r = (two >> 16) & 255;
+					int g = (two >> 8) & 255;
+					int bl = two & 255;
+					boolean sky = bl > r + 15 && bl > g;
+					boolean changed = Math.abs(((one >> 16) & 255) - r) > 12 || Math.abs(((one >> 8) & 255) - g) > 12 || Math.abs((one & 255) - bl) > 12;
+					out[sky ? 3 : 1]++;
+					if (changed) out[sky ? 2 : 0]++;
+				}
+			}
+			return out;
+		} catch (java.io.IOException | RuntimeException e) {
+			ThreevhyClient.LOG.warn("3vhy-check: couldn't compare {} and {}", a, b, e);
+			return new int[] {1, 0, 0, 0};
 		}
 	}
 

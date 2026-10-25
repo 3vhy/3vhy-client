@@ -25,6 +25,7 @@
 		"OptionInstanceAccessor",
 		"PlayerInfoMixin",
 		"PlayerTabOverlayMixin",
+		"SkyRendererMixin",
 		"StringDecomposerMixin",
 		"StringSplitterMixin",
 		"TitleScreenAccessor",
