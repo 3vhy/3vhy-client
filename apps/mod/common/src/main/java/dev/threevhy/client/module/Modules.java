@@ -126,11 +126,13 @@ public final class Modules {
 	public static final Toggle SWING_SPEED_OTHERS = SWING_SPEED.add(new Toggle("others", "Other players too",
 			"Everyone's swing on your screen, not just yours", false));
 	public static final Module LYRICS = new Module("sky_lyrics", "Sky Lyrics",
-			"The song you play, its words written across the sky", Category.RENDER, false).icon("mic-vocal").markNew();
+			"The song you play, its words written in the sky, behind anything in the way", Category.RENDER, false).icon("mic-vocal").markNew();
 	public static final Choice LYRICS_PLACE = LYRICS.add(new Choice("place", "Where", "High in the sky ahead of you, or at the top of the screen",
 			0, "Sky", "Screen"));
 	public static final Slider LYRICS_SIZE = LYRICS.add(new Slider("size", "Size", "How big the words are", 50, 200, 10, 100, "%"));
 	public static final Toggle LYRICS_NEXT = LYRICS.add(new Toggle("next", "Next line", "The line coming up, faint under the one being sung", true));
+	public static final Toggle LYRICS_DEBUG = LYRICS.add(new Toggle("debug", "Debug log",
+			"Write every lyrics search to the game log: what was tried, where it was found and why not", false));
 
 	// Player
 	public static final Module NAME_PROTECT = new Module("name_protect", "Name Protect",
@@ -368,6 +370,7 @@ public final class Modules {
 		CustomSkins.tick();
 		PlayerList.tick(mc);
 		MusicBridge.tick();
+		if (LYRICS.enabled() || MUSIC.enabled() && MUSIC_LYRICS.get()) dev.threevhy.client.music.Lyrics.want(MusicBridge.current());
 	}
 
 	/** Uses Minecraft's own "Sprint: Toggle" and "Sneak: Toggle", so they behave exactly like vanilla. */

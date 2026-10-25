@@ -22,13 +22,14 @@ import net.fabricmc.loader.api.FabricLoader;
  * Asks Windows what's playing, for the Music HUD. Windows keeps the current song of every media app
  * (Spotify, browsers, Apple Music...) in its media controls; a small PowerShell script that ships
  * with the mod reads them once a second and prints a JSON line, which a background thread picks up.
- * The script only runs while the Music HUD is on, and quits on its own when the game closes.
+ * The script only runs while the Music Player or Sky Lyrics is on, and quits on its own when the game closes.
  */
 public final class MusicBridge {
 	private static final String SCRIPT_RESOURCE = "/assets/threevhy/music/now-playing.ps1";
 	private static final long RESTART_DELAY_MS = 15_000;
 	private static final int MAX_FAILURES = 4;
 	private static final AtomicLong ART_VERSIONS = new AtomicLong();
+	private static final PlaybackClock CLOCK = new PlaybackClock();
 
 	private static volatile NowPlaying current = null;
 	private static volatile String status = "Off";
@@ -56,9 +57,17 @@ public final class MusicBridge {
 		return status;
 	}
 
-	/** Starts or stops the script to match the Music HUD switch, and restarts it if it stopped. */
+	/** Seconds into {@code song} right now, smooth between Windows' reports (see {@link PlaybackClock}). */
+	public static double position(NowPlaying song) {
+		return CLOCK.seconds(song);
+	}
+
+	/**
+	 * Starts or stops the script to match the Music Player and Sky Lyrics switches (either needs to know
+	 * what's playing), and restarts it if it stopped.
+	 */
 	public static void tick() {
-		boolean wanted = Modules.MUSIC.enabled() && supported();
+		boolean wanted = (Modules.MUSIC.enabled() || Modules.LYRICS.enabled()) && supported();
 		if (!wanted) {
 			if (process != null) stop();
 			failures = 0;
@@ -133,6 +142,7 @@ public final class MusicBridge {
 		}
 		if (json.has("none")) {
 			current = null;
+			CLOCK.clear();
 			status = "Nothing playing";
 			return;
 		}
@@ -167,6 +177,7 @@ public final class MusicBridge {
 				number(json, "duration"), System.nanoTime(), art, artVersion, icon, iconVersion, artProblem,
 				json.has("volume") ? (int) Math.round(number(json, "volume")) : -1,
 				json.has("muted") && json.get("muted").getAsBoolean());
+		CLOCK.report(current);
 		status = "Connected";
 	}
 
@@ -189,6 +200,7 @@ public final class MusicBridge {
 		Process running = process;
 		process = null;
 		current = null;
+		CLOCK.clear();
 		if (running != null) {
 			running.descendants().forEach(ProcessHandle::destroy);
 			running.destroy();
