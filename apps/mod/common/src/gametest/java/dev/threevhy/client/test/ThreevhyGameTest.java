@@ -630,6 +630,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			check(failed, "floating text with your name in it draws (text display, line wrapping)",
 					context.computeOnClient(client -> Hooks.wrapProtectRan && client.level != null));
 			server.runCommand("kill @e[type=text_display]");
+			nameDetect(context, singleplayer, failed);
 			context.runOnClient(client -> {
 				Modules.NAME_PROTECT_NAME.set("Streamer");
 				client.player.setXRot(10f);
@@ -963,6 +964,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			context.waitTicks(100);
 			if (focus.contains("glass")) glassWorldScreens(context, singleplayer, failed);
 			if (focus.contains("skies")) skies(context, singleplayer, failed, true);
+			if (focus.contains("protect")) nameDetect(context, singleplayer, failed);
 			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
 			if (focus.contains("knives")) knives(context, singleplayer, failed, true);
 			if (focus.contains("calibrate")) calibrateKnife(context, singleplayer);
@@ -1685,6 +1687,76 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		server.runCommand("time set noon");
 		server.runCommand(String.format(java.util.Locale.ROOT, "tp @p %.4f %.4f %.4f %.2f %.2f", home[0], home[1], home[2], home[3], home[4]));
 		context.waitTicks(5);
+	}
+
+	/**
+	 * Name Protect's Auto on a server-style sidebar built from teams (label in the prefix, value as the line's
+	 * name, like real servers do): it finds the stats, the address and the rank tag by itself, hides them
+	 * everywhere (the number may change), leaves your name to the name swap, and an excluded stat shows again.
+	 */
+	private static void nameDetect(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed) {
+		var server = singleplayer.getServer();
+		String own = context.computeOnClient(client -> client.getUser().getName());
+		boolean wasOn = context.computeOnClient(client -> Modules.NAME_PROTECT.enabled());
+		server.runCommand("scoreboard objectives add auto dummy \"MY SERVER\"");
+		server.runCommand("scoreboard objectives setdisplay sidebar auto");
+		String[][] lines = {{"Kills: ", "12", ""}, {"Coins » ", "1234", ""}, {"", "7", " Wins"}, {"", "play.example.net", ""}, {"[MVP+] ", "Nobody", ""},
+				{"Name: ", own, ""}};
+		for (int i = 0; i < lines.length; i++) {
+			server.runCommand("team add auto" + i);
+			server.runCommand("team modify auto" + i + " prefix \"" + lines[i][0] + "\"");
+			server.runCommand("team modify auto" + i + " suffix \"" + lines[i][2] + "\"");
+			server.runCommand("team join auto" + i + " " + lines[i][1]);
+			server.runCommand("scoreboard players set " + lines[i][1] + " auto " + (lines.length - i));
+		}
+		List<Config.TextRule> ownRules = context.computeOnClient(client -> {
+			List<Config.TextRule> kept = new ArrayList<>(Config.get().textRules);
+			Config.get().textRules.clear();
+			Modules.NAME_PROTECT.set(true);
+			Modules.NAME_PROTECT_NAME.set("Streamer");
+			Modules.NAME_PROTECT_RANKS.set(true);
+			Config.get().protectExcluded.clear();
+			return kept;
+		});
+		context.waitTicks(10);
+		List<String> keys = context.computeOnClient(client ->
+				dev.threevhy.client.module.NameDetect.found().stream().map(dev.threevhy.client.module.NameDetect.Found::key).toList());
+		ThreevhyClient.LOG.info("3vhy-check: Auto found {}", keys);
+		check(failed, "Auto finds stats on the sidebar (label then number, number then label)",
+				keys.contains("number:kills") && keys.contains("number:coins") && keys.contains("count:wins"));
+		check(failed, "Auto finds the server address and the rank tag", keys.contains("address:play.example.net") && keys.contains("rank:[MVP+]"));
+		check(failed, "Auto hides stats wherever they show, even once the number changes", context.computeOnClient(client ->
+				NameProtect.apply("Kills: 12").equals("Kills: ???") && NameProtect.apply("Kills: 13").equals("Kills: ???")
+						&& NameProtect.apply("7 Wins").equals("??? Wins")));
+		check(failed, "Auto hides the address and rank tag in any text", context.computeOnClient(client ->
+				NameProtect.apply("join play.example.net now").equals("join server.ip now") && NameProtect.apply("[MVP+] Nobody").equals("[Rank] Nobody")));
+		check(failed, "Auto works on sidebar lines made of coloured pieces", context.computeOnClient(client -> {
+			var line = net.minecraft.network.chat.Component.literal("Coins » ").withStyle(net.minecraft.ChatFormatting.GOLD)
+					.append(net.minecraft.network.chat.Component.literal("1234").withStyle(net.minecraft.ChatFormatting.WHITE));
+			return TextRules.apply(line).getString().equals("Coins » ???");
+		}));
+		check(failed, "your name on the sidebar is swapped, not hidden as a stat", context.computeOnClient(client ->
+				NameProtect.apply("Name: " + own).equals("Name: Streamer") && !keys.contains("number:name")));
+		shot(context, "3vhy-name-protect-auto");
+		context.setScreen(() -> MenuScreen.settings(null, Modules.NAME_PROTECT));
+		context.waitTicks(15);
+		shot(context, "3vhy-menu-name-protect-auto");
+		context.setScreen(() -> null);
+		context.runOnClient(client -> dev.threevhy.client.module.NameDetect.found().stream().filter(item -> item.key().equals("number:kills"))
+				.findFirst().ifPresent(dev.threevhy.client.module.NameDetect::toggleExcluded));
+		context.waitTicks(3);
+		check(failed, "a found stat can be left as it is", context.computeOnClient(client -> NameProtect.apply("Kills: 12").equals("Kills: 12")
+				&& NameProtect.apply("Coins » 1234").equals("Coins » ???")));
+		for (int i = 0; i < lines.length; i++) server.runCommand("team remove auto" + i);
+		server.runCommand("scoreboard objectives remove auto");
+		server.runCommand("scoreboard objectives setdisplay sidebar kills");
+		context.runOnClient(client -> {
+			Config.get().protectExcluded.clear();
+			Config.get().textRules.addAll(ownRules);
+			Modules.NAME_PROTECT_RANKS.reset();
+			Modules.NAME_PROTECT.set(wasOn);
+		});
+		context.waitTicks(3);
 	}
 
 	/** Pictures of the knife at rest with one pose channel set at a time, to see which way each one moves it. */

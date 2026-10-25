@@ -11,6 +11,8 @@ import dev.threevhy.client.module.CustomSkins;
 import dev.threevhy.client.module.Knives;
 import dev.threevhy.client.module.Module;
 import dev.threevhy.client.module.Modules;
+import dev.threevhy.client.module.NameDetect;
+import dev.threevhy.client.module.ProtectedText;
 import dev.threevhy.client.module.PlayerList;
 import dev.threevhy.client.module.Setting;
 import dev.threevhy.client.module.TextHotkeys;
@@ -108,7 +110,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.LYRICS) h += ROW + (SkyLyrics.blocked() && Modules.LYRICS_PLACE.is("Sky") ? ROW : 0);
 		if (module == Modules.SKIN_PROTECT) h += 2 * ROW;
 		if (module == Modules.PLAYER_LIST) h += playersHeight(width);
-		if (module == Modules.NAME_PROTECT) h += listHeight(Config.get().textRules.size());
+		if (module == Modules.NAME_PROTECT) h += foundHeight() + listHeight(Config.get().textRules.size());
 		if (module == Modules.TEXT_HOTKEYS) h += listHeight(Config.get().textHotkeys.size());
 		if (module == Modules.WAYPOINTS) h += waypointsHeight();
 		if (module == Modules.KNIVES) h += knivesHeight(width);
@@ -359,9 +361,61 @@ final class SheetExtras implements SettingsSheet.Extras {
 		}
 	}
 
-	/** Name Protect's text changes: find this, show that, on scoreboards, chat, tab and nametags. */
+	private static float foundHeight() {
+		if (!NameDetect.on()) return 0;
+		int count = NameDetect.found().size();
+		return SECTION + (count == 0 ? EMPTY : count * (ITEM + ITEM_GAP)) + 10;
+	}
+
+	/**
+	 * What Auto found on screen, live: each thing as found, what it shows as instead, where it was, and an
+	 * eye to leave it as it is. The found text is drawn as it really is (protection paused) so you can see it.
+	 */
+	private float drawFound(Draw d, Hits hits, float x, float y, float w) {
+		if (!NameDetect.on()) return y;
+		List<NameDetect.Found> list = NameDetect.found();
+		section(d, x, y, list.isEmpty() ? "Found on screen" : "Found on screen  ·  " + list.size());
+		y += SECTION;
+		if (list.isEmpty()) {
+			empty(d, x, y, w, "Nothing yet. On a server, Auto finds your name, stats and its address");
+			return y + EMPTY + 10;
+		}
+		int accent = Accent.get();
+		for (NameDetect.Found item : list) {
+			boolean off = item.excluded();
+			item(d, x, y, w);
+			float badge = 28;
+			float by = y + (ITEM - badge) / 2f;
+			Paint.rect(d, x + 10, by, x + 10 + badge, by + badge, 9, off ? 0x0AFFFFFF : Paint.fade(accent, 0.22f));
+			Paint.icon(d, item.kind().icon, x + 10 + (badge - 14) / 2f, by + (badge - 14) / 2f, 14, off ? Tokens.TEXT_3 : 0xFFFFFFFF);
+			float tx = x + 10 + badge + 12;
+			float eyeX = x + w - 24;
+			float room = eyeX - 22 - tx;
+			float half = room * 0.5f;
+			float ty = y + 10;
+			ProtectedText.paused(() -> {
+				Type.draw(d, Type.fit(item.shown(), half - 18, 10.5f, Weight.SEMIBOLD), tx, ty, 10.5f, Weight.SEMIBOLD, off ? Tokens.TEXT_2 : Tokens.TEXT);
+				return null;
+			});
+			Paint.icon(d, "arrow-right", tx + half - 14, ty - 1, 12, off ? Tokens.TEXT_3 : Tokens.LILAC);
+			Type.draw(d, Type.fit(off ? "left as it is" : item.replacement(), half, 10.5f, Weight.SEMIBOLD), tx + half + 4, ty, 10.5f, Weight.SEMIBOLD,
+					off ? Tokens.TEXT_3 : Tokens.LILAC);
+			Type.draw(d, Type.fit(item.kind().label + "  ·  " + item.where(), room, 9, Weight.MEDIUM), tx, y + 28, 9, Weight.MEDIUM, Tokens.TEXT_3);
+			if (item.kind() != NameDetect.Kind.NAME) {
+				iconButton(d, hits, eyeX, y + ITEM / 2f, off ? "eye" : "eye-off", false, !off, () -> {
+					NameDetect.toggleExcluded(item);
+					screen.view().notice(off ? "Hiding " + item.kind().label.toLowerCase(Locale.ROOT) + " again" : "Leaving it as it is");
+				});
+			}
+			y += ITEM + ITEM_GAP;
+		}
+		return y + 10;
+	}
+
+	/** Name Protect: what Auto found, then your own text changes (find this, show that) for anything else. */
 	private void drawRules(Draw d, Hits hits, float x, float y, float w, long now) {
-		section(d, x, y, "Change text on screen");
+		y = drawFound(d, hits, x, y, w);
+		section(d, x, y, NameDetect.on() ? "Your own changes (advanced)" : "Change text on screen");
 		y += SECTION;
 		float addW = 44;
 		float fieldW = (w - addW - 16) / 2f;

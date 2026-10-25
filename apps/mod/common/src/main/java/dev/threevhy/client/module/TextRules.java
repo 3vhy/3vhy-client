@@ -14,7 +14,8 @@ import net.minecraft.network.chat.Style;
 
 /**
  * Name Protect's text changes: anything on screen matching a rule shows as something else, e.g.
- * "Money: #" becomes "Money: 1T". # matches any number (500.9T, 1,234, 5.1K) and * any word.
+ * "Money: #" becomes "Money: 1T". # matches any number (500.9T, 1,234, 5.1K) and * any word. The player's
+ * own rules come first, then the ones Auto made from what it found on screen ({@link NameDetect}).
  * Single pieces of text are changed where Minecraft draws text (see ProtectedText); scoreboard lines are
  * changed whole, because servers often colour the label and the number as separate pieces.
  */
@@ -23,9 +24,12 @@ public final class TextRules {
 	private static final String WORD = "\\S+";
 
 	/** One rule ready to use. {@code literal} is the text before the first # or *, for a quick check. */
-	private record Rule(Pattern pattern, String literal, String replacement, int keep) {
+	record Rule(Pattern pattern, String literal, String replacement, int keep) {
 	}
 
+	private static volatile List<Rule> manual = List.of();
+	private static volatile List<Rule> auto = List.of();
+	/** The player's own rules, then Auto's; replaced as a whole, so drawing never sees it half built. */
 	private static volatile List<Rule> rules = List.of();
 	private static String builtFrom = "";
 
@@ -45,7 +49,20 @@ public final class TextRules {
 			if (rule.find == null || rule.find.isBlank()) continue;
 			compiled.add(compile(rule.find, rule.replace == null ? "" : rule.replace));
 		}
-		rules = List.copyOf(compiled);
+		manual = List.copyOf(compiled);
+		combine();
+	}
+
+	/** Auto's rules (see {@link NameDetect}), used after the player's own. */
+	static void setAuto(List<Rule> found) {
+		auto = List.copyOf(found);
+		combine();
+	}
+
+	private static void combine() {
+		List<Rule> all = new ArrayList<>(manual);
+		all.addAll(auto);
+		rules = List.copyOf(all);
 	}
 
 	static Rule compile(String find, String replace) {

@@ -45,6 +45,8 @@ public final class Config {
 	public List<String> players = new ArrayList<>();
 	/** Name Protect's text changes: what to look for on screen and what to show instead. */
 	public List<TextRule> textRules = new ArrayList<>();
+	/** Name Protect's auto-detected text the player chose to leave as it is, by key (like "number:Kills"). */
+	public List<String> protectExcluded = new ArrayList<>();
 	/** Text Hotkeys: each key and the chat message or /command it sends. */
 	public List<TextHotkey> textHotkeys = new ArrayList<>();
 	/** The skin file (in 3vhy/skins) Skin Protect shows when set to use a file. */
@@ -118,6 +120,8 @@ public final class Config {
 				loaded.textRules.forEach(rule -> {
 					if (rule.replace == null) rule.replace = "";
 				});
+				if (loaded.protectExcluded == null) loaded.protectExcluded = new ArrayList<>();
+				loaded.protectExcluded.removeIf(key -> key == null || key.isBlank());
 				if (loaded.textHotkeys == null) loaded.textHotkeys = new ArrayList<>();
 				loaded.textHotkeys.removeIf(hotkey -> hotkey == null || hotkey.key < 0 || hotkey.text == null || hotkey.text.isBlank());
 				if (loaded.skinFile == null) loaded.skinFile = "";

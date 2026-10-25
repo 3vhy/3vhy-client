@@ -29,6 +29,7 @@
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor",
 		"PlayerInfoMixin",
+		"PlayerTabOverlayAccessor",
 		"PlayerTabOverlayMixin",
 		"SkyRendererMixin",
 		"SkyStateMixin",

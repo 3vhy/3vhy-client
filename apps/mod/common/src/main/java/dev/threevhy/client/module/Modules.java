@@ -138,9 +138,17 @@ public final class Modules {
 	public static final Module NAME_PROTECT = new Module("name_protect", "Name Protect",
 			"Your name hidden everywhere, and any text on screen changed", Category.PLAYER, false).icon("user-x").markNew();
 	public static final Text NAME_PROTECT_NAME = NAME_PROTECT.add(new Text("name", "Show me as",
-			"The name shown instead of yours", "You", 16));
+			"The name shown instead of yours", "Player", 16));
+	public static final Toggle NAME_PROTECT_AUTO = NAME_PROTECT.add(new Toggle("auto", "Auto",
+			"Finds what to hide on the scoreboard and tab list by itself, no rules needed", true));
 	public static final Toggle NAME_PROTECT_OTHERS = NAME_PROTECT.add(new Toggle("others", "Hide other players",
 			"Other players' names become Player 1, Player 2 and so on", false));
+	public static final Toggle NAME_PROTECT_NUMBERS = NAME_PROTECT.add(new Toggle("numbers", "Hide stats",
+			"Kills, wins, coins and other numbers on the scoreboard show as ???", true));
+	public static final Toggle NAME_PROTECT_ADDRESS = NAME_PROTECT.add(new Toggle("address", "Hide server address",
+			"The server's address, wherever it shows", true));
+	public static final Toggle NAME_PROTECT_RANKS = NAME_PROTECT.add(new Toggle("ranks", "Hide rank tags",
+			"Tags like [MVP+] or [VIP] show as [Rank]", false));
 	public static final Module SKIN_PROTECT = new Module("skin_protect", "Skin Protect",
 			"Wear a default skin, any player's, or your own file", Category.PLAYER, false).icon("shirt").markNew();
 	public static final Toggle SKIN_PROTECT_OWN = SKIN_PROTECT.add(new Toggle("own", "Your skin",
@@ -408,6 +416,7 @@ public final class Modules {
 		JumpReset.tick(mc);
 		ConfirmDisconnect.tick();
 		NameProtect.tick(mc);
+		NameDetect.tick(mc);
 		TextRules.tick();
 		TextHotkeys.tick(mc);
 		CustomSkins.tick();
