@@ -1,45 +1,79 @@
 package dev.threevhy.client.knife;
 
 /**
- * Plays a knife's animations on the clock, so they're smooth at any frame rate. A new animation fades in
- * over the one it interrupts (angles taken the short way round, so a half-done spin never unwinds), and
- * every animation ends at rest. On top: a slow breathing sway, and a sway that lags behind the mouse.
+ * Plays a knife's animations on the clock, so they're smooth at any frame rate. A new animation takes over
+ * from wherever the knife is and however fast it's moving: the difference between the two is carried along
+ * and eased away (inertial blending), so a slash cut short by the next one, or an inspect interrupted by a
+ * hit, never stops dead or jumps. Angles are taken the short way round, so a half-done spin never unwinds.
+ * On top: a slow breathing sway, and a sway that lags behind the mouse.
  */
 final class KnifeAnimator {
-	private static final long FADE_NANOS = 150_000_000L;
+	/** How long the hand-over between two animations takes. */
+	private static final float BLEND_SECONDS = 0.2f;
+	/** The step used to measure how fast the knife is moving when a new animation starts. */
+	private static final long PROBE_NANOS = 4_000_000L;
+	/** The channels that are angles, wrapped to the short way round. */
+	private static final boolean[] ANGLE = new boolean[Clip.CHANNELS];
+	/** The most a carried-over movement may add, so a fast spin settles instead of flinging the knife. */
+	private static final float[] MOMENTUM_LIMIT = new float[Clip.CHANNELS];
+
+	static {
+		for (int c : new int[] {Clip.PITCH, Clip.YAW, Clip.ROLL, Clip.K_PITCH, Clip.K_YAW, Clip.K_ROLL, Clip.HANDLE_A, Clip.HANDLE_B, Clip.SWEEP}) {
+			ANGLE[c] = true;
+		}
+		for (int c = 0; c < Clip.CHANNELS; c++) MOMENTUM_LIMIT[c] = ANGLE[c] ? 240 : c == Clip.SLIDE ? 6 : 0.5f;
+	}
 
 	private Clip clip;
 	private long started;
 	private float speed = 1;
-	private final float[] from = Clip.rest();
-	private final float[] base = Clip.rest();
-	private long fadeStarted = 0;
-	private boolean fading = false;
+	private final float[] offset = new float[Clip.CHANNELS];
+	private final float[] drift = new float[Clip.CHANNELS];
+	private long blendStarted = 0;
+	private boolean blending = false;
 	private int slash = 0;
 	private float lastYaw = Float.NaN;
 	private float lastPitch;
 	private float swayX;
 	private float swayY;
 	private long lastFrame = 0;
+	private final float[] current = Clip.rest();
+	private final float[] earlier = Clip.rest();
+	private final float[] target = Clip.rest();
+	private final float[] targetSoon = Clip.rest();
 
-	/** Starts {@code next} (or goes back to rest for null), fading from wherever the knife is now. */
-	void play(Clip next, float speed, long now) {
-		current(now, from);
-		for (int c : new int[] {Clip.PITCH, Clip.YAW, Clip.ROLL, Clip.K_PITCH, Clip.K_YAW, Clip.K_ROLL, Clip.HANDLE_A, Clip.HANDLE_B, Clip.SWEEP}) {
-			from[c] = wrap(from[c]);
+	/** Starts {@code clip} (or goes back to rest for null), taking over from wherever the knife is now. */
+	void play(Clip clip, float speed, long now) {
+		evaluate(now, current);
+		evaluate(now - PROBE_NANOS, earlier);
+		float newSpeed = Math.max(0.05f, speed);
+		sampleAt(clip, 0, target);
+		sampleAt(clip, PROBE_NANOS * newSpeed / (clip == null ? 1f : clip.millis * 1_000_000f), targetSoon);
+		float probe = PROBE_NANOS / 1e9f;
+		for (int c = 0; c < Clip.CHANNELS; c++) {
+			float gap = current[c] - target[c];
+			if (ANGLE[c]) gap = wrap(gap);
+			float carried = (current[c] - earlier[c]) / probe - (targetSoon[c] - target[c]) / probe;
+			float limit = MOMENTUM_LIMIT[c] / BLEND_SECONDS;
+			offset[c] = gap;
+			drift[c] = Math.max(-limit, Math.min(limit, carried));
 		}
-		fadeStarted = now;
-		fading = true;
-		clip = next;
+		blendStarted = now;
+		blending = true;
+		this.clip = clip;
 		started = now;
-		this.speed = Math.max(0.05f, speed);
+		this.speed = newSpeed;
 	}
 
-	/** The next slash, taking turns between the knife's slashes so it doesn't look the same every time. */
-	void slash(KnifeModel model, float speed, long now) {
-		if (clip != null && clip.name.startsWith("slash") || clip != null && clip.name.equals("stab")) {
-			float t = (now - started) * this.speed / (clip.millis * 1_000_000f);
-			if (t < 0.55f) return;
+	/**
+	 * The next slash, taking turns between the knife's slashes so it doesn't look the same every time.
+	 * Clicking again starts the next one once the blade has gone through; holding the button on a block
+	 * (which swings every tick) lets each slash finish first.
+	 */
+	void slash(KnifeModel model, float speed, long now, boolean mining) {
+		if (clip != null && (clip.name.startsWith("slash") || clip.name.equals("stab"))) {
+			float t = progress(now);
+			if (t < (mining ? 0.92f : 0.34f)) return;
 		}
 		play(model.slash(slash), speed, now);
 		slash = (slash + 1) % model.slashCount();
@@ -49,10 +83,16 @@ final class KnifeAnimator {
 		return clip == which && clip != null;
 	}
 
-	/** Snaps to rest with nothing playing, for a knife that just appeared without a draw. */
-	void reset() {
-		clip = null;
-		fading = false;
+	private float progress(long now) {
+		return clip == null ? 1 : (now - started) * speed / (clip.millis * 1_000_000f);
+	}
+
+	private static void sampleAt(Clip clip, float t, float[] out) {
+		if (clip == null) {
+			System.arraycopy(Clip.rest(), 0, out, 0, Clip.CHANNELS);
+		} else {
+			clip.sample(Math.max(0, Math.min(1, t)), out);
+		}
 	}
 
 	private static float wrap(float degrees) {
@@ -62,29 +102,18 @@ final class KnifeAnimator {
 		return d;
 	}
 
-	/** The animation's pose now, without the idle sway. */
-	private void current(long now, float[] out) {
-		if (clip != null) {
-			float t = (now - started) * speed / (clip.millis * 1_000_000f);
-			if (t >= 1) {
-				clip.sample(1, base);
-				clip = null;
-			} else {
-				clip.sample(Math.max(0, t), base);
-			}
-		}
-		if (clip == null) {
-			float[] rest = Clip.rest();
-			System.arraycopy(rest, 0, base, 0, Clip.CHANNELS);
-		}
-		if (fading) {
-			float w = Math.min(1, (now - fadeStarted) / (float) FADE_NANOS);
-			w = w * w * (3 - 2 * w);
-			for (int c = 0; c < Clip.CHANNELS; c++) out[c] = from[c] + (base[c] - from[c]) * w;
-			if (w >= 1) fading = false;
-		} else {
-			System.arraycopy(base, 0, out, 0, Clip.CHANNELS);
-		}
+	/** The animation's pose at {@code at}, with the carried-over difference easing away; changes nothing. */
+	private void evaluate(long at, float[] out) {
+		sampleAt(clip, progress(at), out);
+		if (!blending) return;
+		float seconds = (at - blendStarted) / 1e9f;
+		if (seconds >= BLEND_SECONDS) return;
+		float s = Math.max(0, seconds / BLEND_SECONDS);
+		float s2 = s * s;
+		float s3 = s2 * s;
+		float keep = 2 * s3 - 3 * s2 + 1;
+		float carry = (s3 - 2 * s2 + s) * BLEND_SECONDS;
+		for (int c = 0; c < Clip.CHANNELS; c++) out[c] += keep * offset[c] + carry * drift[c];
 	}
 
 	/**
@@ -92,7 +121,9 @@ final class KnifeAnimator {
 	 * off). {@code cameraYaw}/{@code cameraPitch} are where the camera looks this frame.
 	 */
 	void pose(long now, float cameraYaw, float cameraPitch, float idle, float[] out) {
-		current(now, out);
+		evaluate(now, out);
+		if (clip != null && progress(now) >= 1) clip = null;
+		if (blending && now - blendStarted >= BLEND_SECONDS * 1e9f) blending = false;
 		float dt = lastFrame == 0 ? 0 : Math.min(0.1f, (now - lastFrame) / 1e9f);
 		lastFrame = now;
 		if (Float.isNaN(lastYaw)) {

@@ -3,7 +3,6 @@ package dev.threevhy.client.knife;
 import dev.threevhy.client.knife.KnifeMesh.Mat;
 import dev.threevhy.client.knife.KnifeMesh.Ring;
 import dev.threevhy.client.knife.KnifeMesh.Station;
-import dev.threevhy.client.ui.Ease;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -13,14 +12,14 @@ import java.util.Locale;
  * animations ({@link Clip}). Shapes are made the first time a knife is drawn and kept.
  */
 public enum KnifeModel {
-	KARAMBIT("Karambit", 1.0f, 0, -5.6f),
-	BUTTERFLY("Butterfly", 0.95f, -0.45f, 0.5f),
-	BAYONET("Bayonet", 0.9f, 0, -1.5f),
-	HUNTSMAN("Huntsman", 0.92f, 0, -1.5f),
-	DAGGER("Dagger", 0.95f, 0, -1.0f),
-	PHANTOM("Phantom", 0.85f, 0, -1.0f),
-	KATANA("Katana", 0.66f, 0, -2.0f),
-	SCYTHE("Scythe", 0.72f, 0, -1.0f);
+	KARAMBIT("Karambit", 1.0f, 0, -5.6f, -1.8f),
+	BUTTERFLY("Butterfly", 0.95f, -0.45f, 0.5f, -3.4f),
+	BAYONET("Bayonet", 0.9f, 0, -1.5f, -2.5f),
+	HUNTSMAN("Huntsman", 0.92f, 0, -1.5f, -2.4f),
+	DAGGER("Dagger", 0.95f, 0, -1.0f, -2.1f),
+	PHANTOM("Phantom", 0.85f, 0, -1.0f, -2.0f),
+	KATANA("Katana", 0.66f, 0, -2.0f, -2.9f),
+	SCYTHE("Scythe", 0.72f, 0, -1.0f, -2.8f);
 
 	/** What a part of a knife does when the knife moves. */
 	enum PartKind {
@@ -42,17 +41,20 @@ public enum KnifeModel {
 	/** The point it spins about in tricks, in pixels: a karambit's ring, a butterfly knife's pin. */
 	final float spinX;
 	final float spinY;
+	/** Where your fist closes on it, in pixels along the handle: the middle of the grip. */
+	final float grip;
 	private List<Part> parts;
 	private Clip draw;
 	private Clip inspect;
 	private Clip[] slashes;
 	private Clip use;
 
-	KnifeModel(String label, float scale, float spinX, float spinY) {
+	KnifeModel(String label, float scale, float spinX, float spinY, float grip) {
 		this.label = label;
 		this.scale = scale;
 		this.spinX = spinX;
 		this.spinY = spinY;
+		this.grip = grip;
 	}
 
 	/** Every knife's name, in menu order. */
@@ -409,139 +411,139 @@ public enum KnifeModel {
 		float reach = this == KATANA || this == SCYTHE ? 1.35f : this == PHANTOM ? 1.2f : this == KARAMBIT ? 0.9f : 1f;
 		slashes = new Clip[] {
 				Clip.of("slash right to left", 430)
-						.key(0, Ease.LINEAR)
-						.key(0.2f, Ease.OUT, Clip.X, 0.05f, Clip.Y, 0.05f, Clip.SWEEP, -24, Clip.PITCH, 8)
-						.key(0.5f, Ease.OUT, Clip.X, -0.2f * reach, Clip.Y, -0.06f, Clip.Z, -0.04f, Clip.SWEEP, 58 * reach, Clip.PITCH, -6)
-						.key(1, Ease.IN_OUT),
+						.key(0)
+						.key(0.2f, Clip.X, 0.05f, Clip.Y, 0.05f, Clip.SWEEP, -24, Clip.PITCH, 8)
+						.key(0.5f, Clip.X, -0.2f * reach, Clip.Y, -0.06f, Clip.Z, -0.04f, Clip.SWEEP, 58 * reach, Clip.PITCH, -6)
+						.key(1),
 				Clip.of("slash left to right", 430)
-						.key(0, Ease.LINEAR)
-						.key(0.2f, Ease.OUT, Clip.X, -0.1f, Clip.Y, 0.04f, Clip.SWEEP, 42, Clip.PITCH, 6)
-						.key(0.5f, Ease.OUT, Clip.X, 0.12f * reach, Clip.Y, -0.04f, Clip.Z, -0.03f, Clip.SWEEP, -40 * reach, Clip.PITCH, -6)
-						.key(1, Ease.IN_OUT),
+						.key(0)
+						.key(0.2f, Clip.X, -0.1f, Clip.Y, 0.04f, Clip.SWEEP, 42, Clip.PITCH, 6)
+						.key(0.5f, Clip.X, 0.12f * reach, Clip.Y, -0.04f, Clip.Z, -0.03f, Clip.SWEEP, -40 * reach, Clip.PITCH, -6)
+						.key(1),
 				Clip.of("stab", 380)
-						.key(0, Ease.LINEAR)
-						.key(0.25f, Ease.OUT, Clip.Z, 0.08f, Clip.PITCH, 8, Clip.Y, 0.02f)
-						.key(0.5f, Ease.OUT, Clip.Z, -0.3f, Clip.X, -0.1f, Clip.Y, 0.05f, Clip.PITCH, -6, Clip.YAW, -8)
-						.key(0.68f, Ease.SINE, Clip.Z, -0.22f, Clip.X, -0.08f, Clip.Y, 0.04f, Clip.PITCH, -4, Clip.YAW, -6)
-						.key(1, Ease.IN_OUT)};
+						.key(0)
+						.key(0.25f, Clip.Z, 0.08f, Clip.PITCH, 8, Clip.Y, 0.02f)
+						.key(0.5f, Clip.Z, -0.3f, Clip.X, -0.1f, Clip.Y, 0.05f, Clip.PITCH, -6, Clip.YAW, -8)
+						.key(0.68f, Clip.Z, -0.22f, Clip.X, -0.08f, Clip.Y, 0.04f, Clip.PITCH, -4, Clip.YAW, -6)
+						.key(1)};
 		use = Clip.of("heavy stab", 640)
-				.key(0, Ease.LINEAR)
-				.key(0.32f, Ease.SINE, Clip.Z, 0.12f, Clip.Y, 0.06f, Clip.PITCH, 16, Clip.ROLL, -14)
-				.key(0.52f, Ease.OUT, Clip.Z, -0.4f, Clip.X, -0.14f, Clip.Y, 0.02f, Clip.PITCH, -14, Clip.YAW, -10, Clip.ROLL, 10)
-				.key(0.7f, Ease.SINE, Clip.Z, -0.32f, Clip.X, -0.12f, Clip.PITCH, -10, Clip.YAW, -8, Clip.ROLL, 8)
-				.key(1, Ease.IN_OUT);
+				.key(0)
+				.key(0.32f, Clip.Z, 0.12f, Clip.Y, 0.06f, Clip.PITCH, 16, Clip.ROLL, -14)
+				.key(0.52f, Clip.Z, -0.4f, Clip.X, -0.14f, Clip.Y, 0.02f, Clip.PITCH, -14, Clip.YAW, -10, Clip.ROLL, 10)
+				.key(0.7f, Clip.Z, -0.32f, Clip.X, -0.12f, Clip.PITCH, -10, Clip.YAW, -8, Clip.ROLL, 8)
+				.key(1);
 		switch (this) {
 			case KARAMBIT -> {
 				draw = Clip.of("draw", 950)
-						.key(0, Ease.LINEAR, Clip.Y, -0.55f, Clip.ROLL, 50, Clip.K_ROLL, -540)
-						.key(0.62f, Ease.OUT, Clip.Y, 0.02f, Clip.ROLL, -6, Clip.K_ROLL, -12)
-						.key(1, Ease.IN_OUT);
+						.key(0, Clip.Y, -0.55f, Clip.ROLL, 50, Clip.K_ROLL, -540)
+						.key(0.62f, Clip.Y, 0.02f, Clip.ROLL, -6, Clip.K_ROLL, -12)
+						.key(1);
 				inspect = Clip.of("inspect", 3300)
-						.key(0, Ease.LINEAR)
-						.key(0.14f, Ease.OUT, Clip.YAW, -26, Clip.ROLL, 34, Clip.PITCH, 10, Clip.X, -0.04f, Clip.Z, 0.06f)
-						.then(0.3f, Ease.SINE, Clip.K_YAW, 160)
-						.then(0.42f, Ease.SINE, Clip.K_YAW, 0)
-						.then(0.66f, Ease.IN_OUT, Clip.K_ROLL, -720, Clip.ROLL, 12)
-						.then(0.8f, Ease.OUT, Clip.K_ROLL, -720, Clip.ROLL, 0, Clip.YAW, -20)
-						.key(1, Ease.IN_OUT, Clip.K_ROLL, -720);
+						.key(0)
+						.key(0.14f, Clip.YAW, 22, Clip.ROLL, -80, Clip.PITCH, -42, Clip.X, -0.05f, Clip.Z, 0.13f, Clip.Y, -0.04f)
+						.then(0.3f, Clip.K_YAW, 160)
+						.then(0.42f, Clip.K_YAW, 0)
+						.then(0.66f, Clip.K_ROLL, -720, Clip.ROLL, -102)
+						.then(0.8f, Clip.K_ROLL, -720, Clip.ROLL, -114, Clip.YAW, 28)
+						.key(1, Clip.K_ROLL, -720);
 			}
 			case BUTTERFLY -> {
 				draw = Clip.of("draw", 1150)
-						.key(0, Ease.LINEAR, Clip.Y, -0.5f, Clip.OPEN, 0)
-						.key(0.3f, Ease.OUT, Clip.Y, 0.0f, Clip.OPEN, 0)
-						.key(0.52f, Ease.SINE, Clip.OPEN, 0.45f, Clip.HANDLE_B, 140, Clip.K_ROLL, -180)
-						.key(0.78f, Ease.OUT, Clip.OPEN, 1, Clip.HANDLE_B, 0, Clip.K_ROLL, -360)
-						.key(1, Ease.IN_OUT, Clip.K_ROLL, -360);
+						.key(0, Clip.Y, -0.5f, Clip.OPEN, 0)
+						.key(0.3f, Clip.Y, 0.0f, Clip.OPEN, 0)
+						.key(0.52f, Clip.OPEN, 0.45f, Clip.HANDLE_B, 140, Clip.K_ROLL, -180)
+						.key(0.78f, Clip.OPEN, 1, Clip.HANDLE_B, 0, Clip.K_ROLL, -360)
+						.key(1, Clip.K_ROLL, -360);
 				inspect = Clip.of("inspect", 3700)
-						.key(0, Ease.LINEAR)
-						.key(0.1f, Ease.OUT, Clip.YAW, -22, Clip.ROLL, 26, Clip.PITCH, 8, Clip.Z, 0.05f)
-						.then(0.25f, Ease.SINE, Clip.OPEN, 0.5f, Clip.HANDLE_A, -150, Clip.K_ROLL, 180)
-						.then(0.38f, Ease.SINE, Clip.OPEN, 0, Clip.HANDLE_A, 0, Clip.K_ROLL, 360)
-						.then(0.52f, Ease.SINE, Clip.OPEN, 0.5f, Clip.HANDLE_B, 150, Clip.K_ROLL, 540)
-						.then(0.66f, Ease.SINE, Clip.OPEN, 1, Clip.HANDLE_B, 0, Clip.K_ROLL, 720)
-						.then(0.82f, Ease.IN_OUT, Clip.K_YAW, 180)
-						.key(1, Ease.IN_OUT, Clip.K_ROLL, 720, Clip.K_YAW, 360);
+						.key(0)
+						.key(0.1f, Clip.YAW, 22, Clip.ROLL, -80, Clip.PITCH, -42, Clip.Z, 0.13f, Clip.X, -0.05f, Clip.Y, -0.04f)
+						.then(0.25f, Clip.OPEN, 0.5f, Clip.HANDLE_A, -150, Clip.K_ROLL, 180)
+						.then(0.38f, Clip.OPEN, 0, Clip.HANDLE_A, 0, Clip.K_ROLL, 360)
+						.then(0.52f, Clip.OPEN, 0.5f, Clip.HANDLE_B, 150, Clip.K_ROLL, 540)
+						.then(0.66f, Clip.OPEN, 1, Clip.HANDLE_B, 0, Clip.K_ROLL, 720)
+						.then(0.82f, Clip.K_YAW, 180)
+						.key(1, Clip.K_ROLL, 720, Clip.K_YAW, 360);
 			}
 			case BAYONET -> {
 				draw = Clip.of("draw", 820)
-						.key(0, Ease.LINEAR, Clip.X, 0.35f, Clip.Y, -0.45f, Clip.K_YAW, 360, Clip.ROLL, -30)
-						.key(0.68f, Ease.OUT, Clip.X, -0.01f, Clip.Y, 0.03f, Clip.K_YAW, 0, Clip.ROLL, 4)
-						.key(1, Ease.IN_OUT);
+						.key(0, Clip.X, 0.35f, Clip.Y, -0.45f, Clip.K_YAW, 360, Clip.ROLL, -30)
+						.key(0.68f, Clip.X, -0.01f, Clip.Y, 0.03f, Clip.K_YAW, 0, Clip.ROLL, 4)
+						.key(1);
 				inspect = Clip.of("inspect", 3200)
-						.key(0, Ease.LINEAR)
-						.key(0.14f, Ease.OUT, Clip.YAW, -24, Clip.ROLL, 40, Clip.PITCH, 10, Clip.Z, 0.06f)
-						.then(0.34f, Ease.SINE, Clip.K_YAW, 180)
-						.then(0.5f, Ease.OUT, Clip.SLIDE, 4, Clip.K_PITCH, -180)
-						.then(0.62f, Ease.SINE, Clip.SLIDE, 0, Clip.K_PITCH, -360)
-						.then(0.85f, Ease.IN_OUT, Clip.K_YAW, 360)
-						.key(1, Ease.IN_OUT, Clip.K_YAW, 360, Clip.K_PITCH, -360);
+						.key(0)
+						.key(0.14f, Clip.YAW, 22, Clip.ROLL, -80, Clip.PITCH, -42, Clip.Z, 0.13f, Clip.X, -0.05f, Clip.Y, -0.04f)
+						.then(0.34f, Clip.K_YAW, 180)
+						.then(0.5f, Clip.SLIDE, 4, Clip.K_PITCH, -180)
+						.then(0.62f, Clip.SLIDE, 0, Clip.K_PITCH, -360)
+						.then(0.85f, Clip.K_YAW, 360)
+						.key(1, Clip.K_YAW, 360, Clip.K_PITCH, -360);
 			}
 			case HUNTSMAN -> {
 				draw = Clip.of("draw", 820)
-						.key(0, Ease.LINEAR, Clip.Y, -0.5f, Clip.PITCH, -60, Clip.YAW, 20)
-						.key(0.55f, Ease.OUT, Clip.Y, 0.04f, Clip.PITCH, 8, Clip.YAW, -4)
-						.key(1, Ease.IN_OUT);
+						.key(0, Clip.Y, -0.5f, Clip.PITCH, -60, Clip.YAW, 20)
+						.key(0.55f, Clip.Y, 0.04f, Clip.PITCH, 8, Clip.YAW, -4)
+						.key(1);
 				inspect = Clip.of("inspect", 3000)
-						.key(0, Ease.LINEAR)
-						.key(0.15f, Ease.OUT, Clip.YAW, -26, Clip.ROLL, 30, Clip.PITCH, 6, Clip.Z, 0.06f, Clip.X, -0.05f)
-						.then(0.35f, Ease.SINE, Clip.ROLL, 75)
-						.then(0.55f, Ease.SINE, Clip.K_YAW, 180)
-						.then(0.72f, Ease.SINE, Clip.ROLL, 0, Clip.K_YAW, 360)
-						.key(1, Ease.IN_OUT, Clip.K_YAW, 360);
+						.key(0)
+						.key(0.15f, Clip.YAW, 22, Clip.ROLL, -80, Clip.PITCH, -42, Clip.Z, 0.13f, Clip.X, -0.05f, Clip.Y, -0.04f)
+						.then(0.35f, Clip.ROLL, -35)
+						.then(0.55f, Clip.K_YAW, 180)
+						.then(0.72f, Clip.ROLL, -110, Clip.K_YAW, 360)
+						.key(1, Clip.K_YAW, 360);
 			}
 			case DAGGER -> {
 				draw = Clip.of("draw", 900)
-						.key(0, Ease.LINEAR, Clip.Y, -0.45f)
-						.key(0.28f, Ease.OUT, Clip.Y, -0.04f)
-						.key(0.55f, Ease.SINE, Clip.Y, 0.02f, Clip.SLIDE, 6, Clip.K_PITCH, -200)
-						.key(0.82f, Ease.SINE, Clip.SLIDE, 0, Clip.K_PITCH, -360)
-						.key(1, Ease.OUT, Clip.K_PITCH, -360);
+						.key(0, Clip.Y, -0.45f)
+						.key(0.28f, Clip.Y, -0.04f)
+						.key(0.55f, Clip.Y, 0.02f, Clip.SLIDE, 6, Clip.K_PITCH, -200)
+						.key(0.82f, Clip.SLIDE, 0, Clip.K_PITCH, -360)
+						.key(1, Clip.K_PITCH, -360);
 				inspect = Clip.of("inspect", 3000)
-						.key(0, Ease.LINEAR)
-						.key(0.12f, Ease.OUT, Clip.YAW, -22, Clip.ROLL, 28, Clip.PITCH, 8, Clip.Z, 0.05f)
-						.then(0.32f, Ease.SINE, Clip.K_ROLL, 360, Clip.SLIDE, 2)
-						.then(0.5f, Ease.SINE, Clip.K_ROLL, 720, Clip.SLIDE, 0)
-						.then(0.7f, Ease.SINE, Clip.K_YAW, 180)
-						.key(1, Ease.IN_OUT, Clip.K_ROLL, 720, Clip.K_YAW, 360);
+						.key(0)
+						.key(0.12f, Clip.YAW, 22, Clip.ROLL, -80, Clip.PITCH, -42, Clip.Z, 0.13f, Clip.X, -0.05f, Clip.Y, -0.04f)
+						.then(0.32f, Clip.K_ROLL, 360, Clip.SLIDE, 2)
+						.then(0.5f, Clip.K_ROLL, 720, Clip.SLIDE, 0)
+						.then(0.7f, Clip.K_YAW, 180)
+						.key(1, Clip.K_ROLL, 720, Clip.K_YAW, 360);
 			}
 			case PHANTOM -> {
 				draw = Clip.of("draw", 900)
-						.key(0, Ease.LINEAR, Clip.Y, -0.42f, Clip.OPEN, 0)
-						.key(0.38f, Ease.OUT, Clip.Y, 0.0f, Clip.OPEN, 0)
-						.key(0.62f, Ease.OUT, Clip.OPEN, 1.08f)
-						.key(1, Ease.IN_OUT);
+						.key(0, Clip.Y, -0.42f, Clip.OPEN, 0)
+						.key(0.38f, Clip.Y, 0.0f, Clip.OPEN, 0)
+						.key(0.62f, Clip.OPEN, 1.08f)
+						.key(1);
 				inspect = Clip.of("inspect", 3200)
-						.key(0, Ease.LINEAR)
-						.key(0.12f, Ease.OUT, Clip.YAW, -20, Clip.ROLL, 24, Clip.PITCH, 8, Clip.Z, 0.04f)
-						.then(0.4f, Ease.IN_OUT, Clip.K_ROLL, -360, Clip.OPEN, 0.85f)
-						.then(0.62f, Ease.IN_OUT, Clip.K_ROLL, -720, Clip.OPEN, 1.08f)
-						.then(0.8f, Ease.SINE, Clip.K_YAW, 180, Clip.OPEN, 1)
-						.key(1, Ease.IN_OUT, Clip.K_ROLL, -720, Clip.K_YAW, 360);
+						.key(0)
+						.key(0.12f, Clip.YAW, 22, Clip.ROLL, -80, Clip.PITCH, -42, Clip.Z, 0.13f, Clip.X, -0.05f, Clip.Y, -0.04f)
+						.then(0.4f, Clip.K_ROLL, -360, Clip.OPEN, 0.85f)
+						.then(0.62f, Clip.K_ROLL, -720, Clip.OPEN, 1.08f)
+						.then(0.8f, Clip.K_YAW, 180, Clip.OPEN, 1)
+						.key(1, Clip.K_ROLL, -720, Clip.K_YAW, 360);
 			}
 			case KATANA -> {
 				draw = Clip.of("draw", 950)
-						.key(0, Ease.LINEAR, Clip.X, -0.3f, Clip.Y, -0.2f, Clip.YAW, -40, Clip.ROLL, 30)
-						.key(0.6f, Ease.OUT, Clip.X, 0.03f, Clip.YAW, 6, Clip.ROLL, -4)
-						.key(1, Ease.IN_OUT);
+						.key(0, Clip.X, -0.3f, Clip.Y, -0.2f, Clip.YAW, -40, Clip.ROLL, 30)
+						.key(0.6f, Clip.X, 0.03f, Clip.YAW, 6, Clip.ROLL, -4)
+						.key(1);
 				inspect = Clip.of("inspect", 3700)
-						.key(0, Ease.LINEAR)
-						.key(0.16f, Ease.OUT, Clip.ROLL, 64, Clip.YAW, -18, Clip.Y, 0.08f, Clip.Z, 0.04f)
-						.then(0.42f, Ease.SINE, Clip.X, -0.12f)
-						.then(0.58f, Ease.SINE, Clip.K_YAW, 180)
-						.then(0.74f, Ease.SINE, Clip.X, 0.02f)
-						.key(1, Ease.IN_OUT, Clip.K_YAW, 360);
+						.key(0)
+						.key(0.16f, Clip.ROLL, -80, Clip.YAW, 22, Clip.Y, -0.04f, Clip.Z, 0.13f, Clip.PITCH, -42, Clip.X, -0.05f)
+						.then(0.42f, Clip.X, -0.17f)
+						.then(0.58f, Clip.K_YAW, 180)
+						.then(0.74f, Clip.X, -0.03f)
+						.key(1, Clip.K_YAW, 360);
 			}
 			case SCYTHE -> {
 				draw = Clip.of("draw", 1000)
-						.key(0, Ease.LINEAR, Clip.X, 0.35f, Clip.Y, -0.5f, Clip.K_ROLL, 360)
-						.key(0.68f, Ease.OUT, Clip.Y, 0.03f, Clip.K_ROLL, 0, Clip.X, 0)
-						.key(1, Ease.IN_OUT);
+						.key(0, Clip.X, 0.35f, Clip.Y, -0.5f, Clip.K_ROLL, 360)
+						.key(0.68f, Clip.Y, 0.03f, Clip.K_ROLL, 0, Clip.X, 0)
+						.key(1);
 				inspect = Clip.of("inspect", 3000)
-						.key(0, Ease.LINEAR)
-						.key(0.14f, Ease.OUT, Clip.YAW, -16, Clip.ROLL, 20, Clip.Y, 0.06f, Clip.Z, 0.05f)
-						.then(0.45f, Ease.IN_OUT, Clip.K_ROLL, 360)
-						.then(0.72f, Ease.IN_OUT, Clip.K_ROLL, 720, Clip.YAW, -10)
-						.key(1, Ease.IN_OUT, Clip.K_ROLL, 720);
+						.key(0)
+						.key(0.14f, Clip.YAW, 22, Clip.ROLL, -80, Clip.Y, -0.04f, Clip.Z, 0.13f, Clip.PITCH, -42, Clip.X, -0.05f)
+						.then(0.45f, Clip.K_ROLL, 360)
+						.then(0.72f, Clip.K_ROLL, 720, Clip.YAW, 28)
+						.key(1, Clip.K_ROLL, 720);
 			}
 		}
 	}

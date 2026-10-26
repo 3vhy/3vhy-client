@@ -1316,6 +1316,19 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		}
 		knifeSettings(context, failed);
 		check(failed, "knives are drawn in your hand (ItemInHandRenderer)", Hooks.knifeRendered);
+		check(failed, "knives sit in the fist at rest, not pushed back by the near-plane check", context.computeOnClient(client -> {
+			for (KnifeModel model : KnifeModel.values()) {
+				if (KnifeRenderer.restPush(model) > 0.001f) return false;
+			}
+			return true;
+		}));
+		float roughest = context.computeOnClient(client -> {
+			float worst = 0;
+			for (KnifeModel model : KnifeModel.values()) worst = Math.max(worst, KnifeRenderer.motionCheck(model));
+			return worst;
+		});
+		ThreevhyClient.LOG.info("3vhy-check: knife motion, biggest change in turning speed between frames: {} deg/s", Math.round(roughest));
+		check(failed, "knife animations move smoothly between frames, with no sudden stops or starts", roughest < 900);
 		check(failed, "switching to a knife plays its draw", Hooks.knifeDrawRan);
 		check(failed, "a swing plays a slash (LocalPlayer.swing)", Hooks.knifeSlashRan);
 		check(failed, "the inspect key starts an inspect", Hooks.knifeInspectRan);
@@ -1798,38 +1811,52 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 				&& Modules.PERFORMANCE_SHADOWS.is("Full") && client.options.particles().get() == net.minecraft.server.level.ParticleStatus.ALL));
 	}
 
-	/** Pictures of the knife at rest with one pose channel set at a time, to see which way each one moves it. */
+	/**
+	 * The knife lab (-PtestFocus=calibrate): every knife on a platform in the sky with the HUD off, held at
+	 * rest, then frozen at points through its slash, stab, draw and inspect, to check the hold and the
+	 * animations frame by frame.
+	 */
 	private static void calibrateKnife(ClientGameTestContext context, TestSingleplayerContext singleplayer) {
 		var server = singleplayer.getServer();
-		server.runCommand("item replace entity @p hotbar.0 with netherite_sword");
+		double[] home = context.computeOnClient(client -> new double[] {client.player.getX(), client.player.getY(), client.player.getZ()});
+		int x = (int) Math.floor(home[0]);
+		int y = (int) Math.floor(home[1]) + 40;
+		int z = (int) Math.floor(home[2]);
+		server.runCommand("fill " + (x - 8) + " " + (y - 1) + " " + (z - 8) + " " + (x + 8) + " " + (y - 1) + " " + (z + 8) + " minecraft:smooth_stone");
+		server.runCommand("tp @p " + x + ".5 " + y + " " + z + ".5 0 -8");
 		server.runCommand("time set noon");
+		for (int i = 0; i < 8; i++) server.runCommand("item replace entity @p hotbar." + i + " with iron_sword");
 		context.runOnClient(client -> {
+			for (Module module : Modules.ALL) {
+				if (module.category == Category.HUD) module.set(false);
+			}
 			Modules.KNIVES.set(true);
 			Modules.KNIVES_SLOTS.reset();
-			Knives.setSlot(0, KnifeModel.BAYONET);
+			for (KnifeModel model : KnifeModel.values()) Knives.setSlot(model.ordinal(), model);
+			client.getToastManager().clear();
+			client.gui.getChat().clearMessages(false);
 		});
 		face(context, 0, -8);
-		context.getInput().pressKey(GLFW.GLFW_KEY_1);
-		context.waitTicks(30);
-		String[] names = {"x", "y", "z", "pitch", "yaw", "roll", "kpitch", "kyaw", "kroll"};
-		float[] values = {0.15f, 0.15f, 0.15f, 30, 30, 30, 45, 45, 45};
-		context.runOnClient(client -> KnifeRenderer.preview(KnifeModel.BAYONET, "channel0", 0));
-		context.waitTicks(3);
-		shot(context, "3vhy-calibrate-rest");
-		for (int c = 0; c < names.length; c++) {
-			int channel = c;
-			context.runOnClient(client -> KnifeRenderer.preview(KnifeModel.BAYONET, "channel" + channel, values[channel]));
-			context.waitTicks(3);
-			shot(context, "3vhy-calibrate-" + names[c] + "-plus");
-		}
-		for (String which : List.of("slash0", "slash1", "slash2", "use")) {
-			for (float t : new float[] {0.15f, 0.3f, 0.45f, 0.6f, 0.8f}) {
-				context.runOnClient(client -> KnifeRenderer.preview(KnifeModel.BAYONET, which, t));
-				context.waitTicks(2);
-				shot(context, "3vhy-calibrate-" + which + "-" + Math.round(t * 100));
+		String focus = System.getProperty("threevhy.testFocus", "");
+		String only = focus.contains(":") ? focus.substring(focus.indexOf(':') + 1) : "";
+		for (KnifeModel model : KnifeModel.values()) {
+			if (!only.isEmpty() && !only.contains(model.id())) continue;
+			context.getInput().pressKey(GLFW.GLFW_KEY_1 + model.ordinal());
+			context.waitTicks(30);
+			String name = model.id();
+			context.runOnClient(client -> KnifeRenderer.preview(model, "channel0", 0));
+			context.waitTicks(2);
+			shot(context, "lab-" + name + "-rest");
+			for (String which : List.of("slash0", "slash1", "use", "draw", "inspect")) {
+				float[] points = which.equals("inspect") ? new float[] {0.2f, 0.4f, 0.6f, 0.8f} : new float[] {0.15f, 0.35f, 0.55f, 0.8f};
+				for (float t : points) {
+					context.runOnClient(client -> KnifeRenderer.preview(model, which, t));
+					context.waitTicks(2);
+					shot(context, "lab-" + name + "-" + which + "-" + Math.round(t * 100));
+				}
 			}
+			context.runOnClient(client -> KnifeRenderer.preview(null, null, 0));
 		}
-		context.runOnClient(client -> KnifeRenderer.preview(null, null, 0));
 	}
 
 	/** Turns the player to this yaw and pitch at once, with no turning in between. */
