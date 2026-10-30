@@ -6,20 +6,21 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-/** Freelook: the camera uses its own angles instead of the player's. */
+/** Freelook: the camera uses its own angles instead of the player's. Knives: the small kick a slash gives the view. */
 @Mixin(Camera.class)
 public abstract class CameraMixin {
 	@ModifyArg(method = {"setup", "alignWithEntity"},
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;setRotation(FF)V"), index = 0)
 	private float threevhy$freelookYaw(float yaw) {
-		if (!Freelook.active()) return yaw;
+		float kick = dev.threevhy.client.knife.KnifeRenderer.kickYaw();
+		if (!Freelook.active()) return yaw + kick;
 		dev.threevhy.client.Hooks.freelookCameraRan = true;
-		return Freelook.yaw();
+		return Freelook.yaw() + kick;
 	}
 
 	@ModifyArg(method = {"setup", "alignWithEntity"},
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;setRotation(FF)V"), index = 1)
 	private float threevhy$freelookPitch(float pitch) {
-		return Freelook.active() ? Freelook.pitch() : pitch;
+		return (Freelook.active() ? Freelook.pitch() : pitch) + dev.threevhy.client.knife.KnifeRenderer.kickPitch();
 	}
 }

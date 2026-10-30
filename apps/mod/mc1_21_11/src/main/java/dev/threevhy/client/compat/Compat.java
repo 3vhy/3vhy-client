@@ -136,6 +136,30 @@ public final class Compat {
 		return builder.build();
 	}
 
+	private static net.minecraft.client.renderer.rendertype.RenderType knifeShaded;
+
+	/**
+	 * 3vhy's own shading for knives and gloves (shaders/core/knife): reflections, highlights, finishes and
+	 * wear worked out per pixel from what each vertex says it's made of. One render type, so a hand and
+	 * the knife in it draw together.
+	 */
+	public static net.minecraft.client.renderer.rendertype.RenderType knifeShaded() {
+		if (knifeShaded == null) {
+			com.mojang.blaze3d.pipeline.RenderPipeline pipeline = com.mojang.blaze3d.pipeline.RenderPipeline
+					.builder(net.minecraft.client.renderer.RenderPipelines.MATRICES_PROJECTION_SNIPPET)
+					.withLocation(Identifier.fromNamespaceAndPath("threevhy", "pipeline/knife"))
+					.withVertexShader(Identifier.fromNamespaceAndPath("threevhy", "core/knife"))
+					.withFragmentShader(Identifier.fromNamespaceAndPath("threevhy", "core/knife"))
+					.withSampler("Sampler2")
+					.withCull(false)
+					.withVertexFormat(com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY, com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS)
+					.build();
+			knifeShaded = net.minecraft.client.renderer.rendertype.RenderType.create("threevhy_knife",
+					net.minecraft.client.renderer.rendertype.RenderSetup.builder(pipeline).useLightmap().createRenderSetup());
+		}
+		return knifeShaded;
+	}
+
 	/** How a knife's parts are drawn: lit and two-sided, or glowing and see-through for energy blades. */
 	public static net.minecraft.client.renderer.rendertype.RenderType knifeRenderType(Identifier texture, boolean glow) {
 		return glow ? net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(texture)

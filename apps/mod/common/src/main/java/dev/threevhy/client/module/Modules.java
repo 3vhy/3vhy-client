@@ -302,8 +302,16 @@ public final class Modules {
 			"", 200).hide());
 	public static final Choice KNIVES_MODEL = KNIVES.add(new Choice("model", "Knife", "Your swords' knife, and the first pick for a slot you mark",
 			0, dev.threevhy.client.knife.KnifeModel.labels()));
-	public static final Choice KNIVES_FINISH = KNIVES.add(new Choice("finish", "Finish", "The blade's colour", 0,
-			"Steel", "Purple", "Crimson", "Ice", "Gold"));
+	public static final Choice KNIVES_FINISH = KNIVES.add(new Choice("finish", "Finish", "The pattern on the blade", 1,
+			dev.threevhy.client.knife.Finish.labels()));
+	public static final Slider KNIVES_WEAR = KNIVES.add(new Slider("wear", "Wear", "Factory New on the left, Battle-Scarred on the right",
+			0, 100, 1, 3, "%"));
+	public static final Slider KNIVES_SEED = KNIVES.add(new Slider("seed", "Pattern", "Which version of the pattern you get", 0, 1023, 1, 412, ""));
+	public static final Choice KNIVES_GLOVE = KNIVES.add(new Choice("glove", "Gloves", "What your hand wears", 2, dev.threevhy.client.knife.Gloves.DESIGNS));
+	public static final Slider KNIVES_GLOVE_COLOR = KNIVES.add(new Slider("glove_color", "Glove colour", "Each glove comes in eight colourways",
+			1, 8, 1, 1, ""));
+	public static final Slider KNIVES_LIGHT = KNIVES.add(new Slider("light", "Viewmodel light", "Keeps the knife lit in dark places; 0% follows the world's light exactly",
+			0, 100, 5, 60, "%"));
 	public static final Toggle KNIVES_AUTO = KNIVES.add(new Toggle("auto", "Auto knives",
 			"Every item of a kind is a knife too, not just the slots you mark", true));
 	public static final Choice KNIVES_AUTO_TYPE = KNIVES.add(new Choice("auto_type", "Which items", "What Auto knives turns into knives", 0,
@@ -312,7 +320,11 @@ public final class Modules {
 			"minecraft:stick", 48));
 	public static final Toggle KNIVES_ANIMATIONS = KNIVES.add(new Toggle("animations", "Custom animations",
 			"Off, knife slots show your usual held item again", true));
-	public static final Toggle KNIVES_ARM = KNIVES.add(new Toggle("arm", "Show arm", "Your arm holding the knife", true));
+	public static final Toggle KNIVES_ARM = KNIVES.add(new Toggle("arm", "Show hand", "Your gloved hand holding the knife", true));
+	public static final Slider KNIVES_FOV = KNIVES.add(new Slider("fov", "Viewmodel FOV", "68 is the classic; lower brings the knife in bigger",
+			54, 90, 1, 68, ""));
+	public static final Choice KNIVES_PRESET = KNIVES.add(new Choice("preset", "Viewmodel", "Where the knife sits: low on the right, nearer the middle, or in your left hand",
+			0, "Classic", "Center", "Left-handed"));
 	public static final Slider KNIVES_X = KNIVES.add(new Slider("x", "Left / right", "Moves the knife sideways", -100, 100, 1, 0, ""));
 	public static final Slider KNIVES_Y = KNIVES.add(new Slider("y", "Up / down", "Moves the knife up or down", -100, 100, 1, 0, ""));
 	public static final Slider KNIVES_Z = KNIVES.add(new Slider("z", "Near / far", "Moves the knife closer or further away", -100, 100, 1, 0, ""));
@@ -328,6 +340,9 @@ public final class Modules {
 			50, 200, 5, 100, "%"));
 	public static final Slider KNIVES_IDLE = KNIVES.add(new Slider("idle", "Idle sway", "How much the knife breathes and sways as you look around",
 			0, 200, 5, 100, "%"));
+	public static final Slider KNIVES_BOB = KNIVES.add(new Slider("bob", "Movement bob", "How much the knife bobs as you walk, dips as you sprint and lands with you",
+			0, 200, 5, 100, "%"));
+	public static final Toggle KNIVES_KICK = KNIVES.add(new Toggle("kick", "Camera kick", "A small kick of the view on each slash and stab", true));
 	public static final Module MENU_NAME = new Module("menu_name", "Menu Logo",
 			"The 3vhy logo in the corner of menus, chests and your inventory, or on your HUD", Category.COSMETICS, true)
 			.icon("badge").markNew();

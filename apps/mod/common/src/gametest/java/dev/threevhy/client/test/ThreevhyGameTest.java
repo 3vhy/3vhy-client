@@ -1275,7 +1275,7 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.runOnClient(client -> {
 			Modules.KNIVES.set(true);
 			Modules.KNIVES_SLOTS.reset();
-			for (KnifeModel model : KnifeModel.values()) Knives.setSlot(model.ordinal(), model);
+			for (int i = 0; i < KNIFE_SLOTS.length; i++) Knives.setSlot(i, KNIFE_SLOTS[i]);
 			client.getToastManager().clear();
 			client.gui.getChat().clearMessages(false);
 		});
@@ -1289,10 +1289,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			Knives.toggleSlot(8);
 			return marked && Knives.slot(8) == null;
 		}));
-		List<KnifeModel> shown = every ? List.of(KnifeModel.values()) : List.of(KnifeModel.KARAMBIT, KnifeModel.BUTTERFLY, KnifeModel.PHANTOM);
+		List<KnifeModel> shown = every ? List.of(KNIFE_SLOTS) : List.of(KnifeModel.KARAMBIT, KnifeModel.BUTTERFLY, KnifeModel.PHANTOM);
 		for (KnifeModel model : shown) {
 			String name = model.id();
-			context.getInput().pressKey(GLFW.GLFW_KEY_1 + model.ordinal());
+			context.getInput().pressKey(GLFW.GLFW_KEY_1 + List.of(KNIFE_SLOTS).indexOf(model));
 			if (every) {
 				context.waitTicks(6);
 				shot(context, "3vhy-knife-" + name + "-draw");
@@ -1362,6 +1362,10 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 		context.getInput().pressKey(GLFW.GLFW_KEY_1);
 		context.waitTicks(5);
 	}
+
+	/** The knives the test puts in hotbar slots 1 to 8. */
+	private static final KnifeModel[] KNIFE_SLOTS = {KnifeModel.KARAMBIT, KnifeModel.BUTTERFLY, KnifeModel.BAYONET, KnifeModel.M9_BAYONET,
+			KnifeModel.FLIP, KnifeModel.HUNTSMAN, KnifeModel.PHANTOM, KnifeModel.SCYTHE};
 
 	/**
 	 * The Knives settings: the slot picker shows the hotbar, clicking slot 9 marks it, and a marked slot's
@@ -1832,28 +1836,43 @@ public final class ThreevhyGameTest implements FabricClientGameTest {
 			}
 			Modules.KNIVES.set(true);
 			Modules.KNIVES_SLOTS.reset();
-			for (KnifeModel model : KnifeModel.values()) Knives.setSlot(model.ordinal(), model);
 			client.getToastManager().clear();
 			client.gui.getChat().clearMessages(false);
 		});
 		face(context, 0, -8);
 		String focus = System.getProperty("threevhy.testFocus", "");
-		String only = focus.contains(":") ? focus.substring(focus.indexOf(':') + 1) : "";
+		String spec = focus.contains(":") ? focus.substring(focus.indexOf(':') + 1) : "";
+		String only = spec.split(";")[0];
+		java.util.Map<String, String> options = new java.util.HashMap<>();
+		for (String part : spec.split(";")) {
+			int eq = part.indexOf('=');
+			if (eq > 0) options.put(part.substring(0, eq).trim(), part.substring(eq + 1).trim());
+		}
+		boolean every = options.containsKey("every");
+		context.runOnClient(client -> {
+			if (options.containsKey("finish")) Modules.KNIVES_FINISH.set(options.get("finish"));
+			if (options.containsKey("glove")) Modules.KNIVES_GLOVE.set(options.get("glove"));
+			if (options.containsKey("wear")) Modules.KNIVES_WEAR.set(Double.parseDouble(options.get("wear")));
+			if (options.containsKey("time")) client.getSingleplayerServer().getCommands().performPrefixedCommand(
+					client.getSingleplayerServer().createCommandSourceStack(), "time set " + options.get("time"));
+		});
+		context.getInput().pressKey(GLFW.GLFW_KEY_1);
 		for (KnifeModel model : KnifeModel.values()) {
-			if (!only.isEmpty() && !only.contains(model.id())) continue;
-			context.getInput().pressKey(GLFW.GLFW_KEY_1 + model.ordinal());
+			if (!only.isEmpty() && !java.util.Arrays.asList(only.split(",")).contains(model.id())) continue;
+			context.runOnClient(client -> Knives.setSlot(0, model));
 			context.waitTicks(30);
 			String name = model.id();
 			context.runOnClient(client -> KnifeRenderer.preview(model, "channel0", 0));
 			context.waitTicks(2);
 			shot(context, "lab-" + name + "-rest");
-			for (String which : List.of("slash0", "slash1", "use", "draw", "inspect")) {
-				float[] points = which.equals("inspect") ? new float[] {0.2f, 0.4f, 0.6f, 0.8f} : new float[] {0.15f, 0.35f, 0.55f, 0.8f};
-				for (float t : points) {
-					context.runOnClient(client -> KnifeRenderer.preview(model, which, t));
-					context.waitTicks(2);
-					shot(context, "lab-" + name + "-" + which + "-" + Math.round(t * 100));
-				}
+			List<String> frames = every ? List.of("slash0-15", "slash0-35", "slash0-55", "slash1-35", "use-35", "use-55", "draw-15", "draw-35", "draw-55",
+					"inspect-20", "inspect-40", "inspect-60", "inspect-80") : List.of("slash0-35", "use-35", "draw-35", "inspect-20", "inspect-60");
+			for (String frame : frames) {
+				String which = frame.substring(0, frame.indexOf('-'));
+				float t = Integer.parseInt(frame.substring(frame.indexOf('-') + 1)) / 100f;
+				context.runOnClient(client -> KnifeRenderer.preview(model, which, t));
+				context.waitTicks(2);
+				shot(context, "lab-" + name + "-" + frame);
 			}
 			context.runOnClient(client -> KnifeRenderer.preview(null, null, 0));
 		}

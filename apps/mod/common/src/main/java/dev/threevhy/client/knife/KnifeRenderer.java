@@ -9,59 +9,40 @@ import dev.threevhy.client.module.Modules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * Draws the knife in your hand, in place of the held item: your arm reaching in from the bottom right (left
- * for left-handed players) with the knife gripped in the fist, its handle across the palm and the blade
- * standing up towards the middle of the screen so it reads at a glance, moved by {@link KnifeAnimator} and
- * the Knives viewmodel settings. The hand is drawn after the world with the depth cleared, so it never sinks
- * into walls; the knife is also kept clear of the camera's near plane, so big flips never cut it off.
+ * Draws the knife in your hand, in place of the held item, framed like a classic shooter's viewmodel: a
+ * gloved fist low on the right (left for left-handed players, a mirror image) with the blade standing up and
+ * in towards the middle of the screen, moved by {@link KnifeAnimator} and the Knives viewmodel settings. The
+ * hand is drawn after the world with the depth cleared, so it never sinks into walls; the knife is also kept
+ * clear of the camera's near plane, so big flips never cut it off.
  */
 public final class KnifeRenderer {
-	/** Where the fist is, in blocks from the eye: right, down, forward. */
-	private static final float BASE_X = 0.32f;
-	private static final float BASE_Y = -0.27f;
-	private static final float BASE_Z = -0.84f;
-	/** How big a knife is: its pixels in blocks. */
-	private static final float KNIFE_SCALE = 1.07f / 16f;
-	/** Which way the forearm runs from the fist: to the right and down, a little towards you. */
-	private static final Vector3f FOREARM = new Vector3f(0.86f, -0.36f, 0.11f).normalize();
-	/** How far the arm is turned about its length, which decides which way the fist (and the blade) faces. */
-	private static final float ARM_TWIST = -131;
-	private static final float ARM_SCALE = 0.84f;
-	/** How far down the forearm the elbow is, where slashes swing from. */
-	private static final float ELBOW = 0.42f;
-	/** The middle of the fist on the arm model, two pixels in from the end. */
-	private static final Vector3f HAND = new Vector3f(-0.4246f, 0.616f, 0);
-	private static final Vector3f ARM_AXIS = new Vector3f(-0.0998f, 0.995f, 0).normalize();
-	/** The arm model's own lean (Minecraft draws a first-person arm turned 0.1 radians about its depth). */
-	private static final float ARM_LEAN = 0.1f;
-	/**
-	 * How the knife sits in the fist: the blade leaves the front of the fist, tipped this many degrees
-	 * towards the fingers and turned this many about the arm, with the edge towards the fingers, so the
-	 * handle crosses the palm and the pommel shows below the little finger.
-	 */
-	private static final float HOLD_TILT = 28;
-	private static final float HOLD_TURN = 75;
+	/** Where the middle of the grip sits, in blocks from the eye: right, down, forward. */
+	private static final float BASE_X = 0.345f;
+	private static final float BASE_Y = -0.401f;
+	private static final float BASE_Z = -0.960f;
+	/** How big the hand and knife are: one of their pixels, in blocks. */
+	private static final float UNIT = 0.0912f;
+	/** The knife's frame (handle +Y, edge +X, near flat +Z) as the camera sees it: blade up and leaning in, flat towards you. */
+	private static final Quaternionf HOLD = new Quaternionf().setFromNormalized(new Matrix3f(0.9151f, 0.4021f, -0.03f, -0.4008f, 0.9152f, 0.0419f,
+			0.0443f, -0.0263f, 0.9987f));
+	/** How far the elbow is up the forearm from the wrist, in the hand's pixels: slashes swing from it. */
+	private static final float ELBOW = 9;
+	/** The viewmodel field of view the framing above is made for. */
+	private static final float CLASSIC_FOV = 68;
 	/** How far the animations' moves (in blocks) carry at this distance. */
 	private static final float MOVE = 0.6f;
 	private static final float NEAR = 0.16f;
 	/** Points around a knife, in pixels, that must stay in front of the near plane. */
 	private static final float[][] REACH = {{0, 10.5f}, {0, -7.5f}, {5.5f, 3}, {-2.5f, 3}};
 
-	private static final Quaternionf ARM_RIGHT = armTurn();
-	private static final Quaternionf ARM_LEFT = mirror(ARM_RIGHT);
-	private static final Quaternionf HOLD_RIGHT = hold(ARM_RIGHT);
-	private static final Quaternionf HOLD_LEFT = mirror(HOLD_RIGHT);
 	private static final PoseStack PROBE = new PoseStack();
 	private static final Vector3f POINT = new Vector3f();
 
@@ -72,30 +53,15 @@ public final class KnifeRenderer {
 	private static int lastSlot = -1;
 	private static KnifeModel lastModel = null;
 	private static boolean shown = false;
+	/** When the glint after the last swing started running up the blade, or 0. */
+	private static long glintStarted = 0;
+	/** When the last swing's camera kick peaks, and how far it turns the view (degrees). */
+	private static long kickAt = 0;
+	private static float kickYaw = 0;
+	private static float kickPitch = 0;
+	private static boolean mirrored = false;
 
 	private KnifeRenderer() {
-	}
-
-	/** The arm's turn for the right hand: its length along the forearm, twisted so the fist faces the right way. */
-	private static Quaternionf armTurn() {
-		Vector3f wanted = new Vector3f(FOREARM).negate();
-		return new Quaternionf().rotationTo(ARM_AXIS, wanted).rotateAxis((float) Math.toRadians(ARM_TWIST), ARM_AXIS.x, ARM_AXIS.y, ARM_AXIS.z);
-	}
-
-	/** The knife's turn for the right hand: the arm's, then the knife's place in the fist. */
-	private static Quaternionf hold(Quaternionf arm) {
-		double tilt = Math.toRadians(HOLD_TILT);
-		Vector3f blade = new Vector3f(0, (float) Math.sin(tilt), (float) -Math.cos(tilt));
-		Vector3f edge = new Vector3f(0, (float) Math.cos(tilt), (float) Math.sin(tilt));
-		Vector3f flat = new Vector3f(edge).cross(blade);
-		Matrix3f axes = new Matrix3f(edge.x, edge.y, edge.z, blade.x, blade.y, blade.z, flat.x, flat.y, flat.z);
-		Quaternionf inFist = new Quaternionf().rotationY((float) Math.toRadians(HOLD_TURN)).mul(new Quaternionf().setFromNormalized(axes));
-		return new Quaternionf(arm).rotateZ(ARM_LEAN).mul(inFist);
-	}
-
-	/** The same turn seen in a mirror (across the screen's middle), for the left hand. */
-	private static Quaternionf mirror(Quaternionf q) {
-		return new Quaternionf(q.x, -q.y, -q.z, q.w);
 	}
 
 	private static float speed(dev.threevhy.client.module.Setting.Slider slider) {
@@ -108,20 +74,56 @@ public final class KnifeRenderer {
 	}
 
 	public static void use(KnifeModel model) {
-		ANIMATOR.play(model.use(), speed(Modules.KNIVES_SWING_SPEED), System.nanoTime());
+		float speed = speed(Modules.KNIVES_SWING_SPEED);
+		ANIMATOR.play(model.use(), speed, System.nanoTime());
+		glintStarted = System.nanoTime() + (long) (420_000_000L / speed);
+		kick(470 / speed, 0.4f, 1.1f);
 		Hooks.knifeSlashRan = true;
 	}
 
 	public static void slash(KnifeModel model) {
 		var gameMode = Minecraft.getInstance().gameMode;
 		boolean mining = gameMode != null && gameMode.isDestroying();
-		ANIMATOR.slash(model, speed(Modules.KNIVES_SWING_SPEED), System.nanoTime(), mining);
+		float speed = speed(Modules.KNIVES_SWING_SPEED);
+		int which = ANIMATOR.slash(model, speed, System.nanoTime(), mining);
+		if (which < 0) return;
+		glintStarted = System.nanoTime() + (long) (110_000_000L / speed);
+		kick(150 / speed, which == 0 ? -0.6f : 0.6f, 0.25f);
 		Hooks.knifeSlashRan = true;
 	}
 
+	/** A small turn of the view peaking {@code millis} from now, the way a hit punches a shooter's camera. */
+	private static void kick(float millis, float yaw, float pitch) {
+		kickAt = System.nanoTime() + (long) (millis * 1_000_000L);
+		kickYaw = mirrored ? -yaw : yaw;
+		kickPitch = pitch;
+	}
+
+	/** How far the camera kick turns the view right now (degrees, positive turns right). */
+	public static float kickYaw() {
+		return kickYaw * kickShape();
+	}
+
+	/** How far the camera kick tips the view right now (degrees, positive looks down). */
+	public static float kickPitch() {
+		return kickPitch * kickShape();
+	}
+
+	private static float kickShape() {
+		if (kickAt == 0 || !shown || !Modules.KNIVES_KICK.get()) return 0;
+		float t = (System.nanoTime() - kickAt) / 1e9f + 0.06f;
+		if (t <= 0) return 0;
+		if (t > 0.6f) {
+			kickAt = 0;
+			return 0;
+		}
+		float u = t / 0.06f;
+		return u * (float) Math.exp(1 - u);
+	}
+
 	/**
-	 * For the in-game test: holds the knife still at one point of an animation ("draw", "inspect", "use" or
-	 * "slash0".."slash2", {@code t} 0..1 through it), or at rest with one pose channel set ("channel3" with
+	 * For the in-game test: holds the knife still at one point of an animation ("draw", "inspect", "use",
+	 * "slash0" or "slash1", {@code t} 0..1 through it), or at rest with one pose channel set ("channel3" with
 	 * {@code t} as the value). Null lets the animation play again.
 	 */
 	public static void preview(KnifeModel model, String which, float t) {
@@ -151,7 +153,7 @@ public final class KnifeRenderer {
 	public static float restPush(KnifeModel model) {
 		float[] saved = POSE.clone();
 		System.arraycopy(Clip.rest(), 0, POSE, 0, Clip.CHANNELS);
-		float push = Math.max(Math.abs(nearPush(model, true)), Math.abs(nearPush(model, false)));
+		float push = Math.abs(nearPush(model));
 		System.arraycopy(saved, 0, POSE, 0, Clip.CHANNELS);
 		return push;
 	}
@@ -179,7 +181,7 @@ public final class KnifeRenderer {
 			if (ms == 1000 || ms == 1150 || ms == 1300 || ms == 2300) animator.slash(model, 1, now, false);
 			if (ms == 1600) animator.play(model.inspect(), 1, now);
 			if (ms == 2700) animator.play(model.use(), 1, now);
-			animator.pose(now, 0, 0, 0, current);
+			animator.pose(now, 0, 0, 0, 0, current);
 			if (i > 0) {
 				for (int c : angles) {
 					float step = (current[c] - previous[c]) % 360f;
@@ -224,17 +226,24 @@ public final class KnifeRenderer {
 		lastModel = model;
 		if (player.isScoping()) return true;
 		var camera = mc.gameRenderer.getMainCamera();
-		ANIMATOR.pose(now, camera.yRot(), camera.xRot(), speed(Modules.KNIVES_IDLE), POSE);
+		var motion = player.getDeltaMovement();
+		double yaw = Math.toRadians(player.getYRot());
+		double forward = -Math.sin(yaw) * motion.x + Math.cos(yaw) * motion.z;
+		double strafe = -Math.cos(yaw) * motion.x - Math.sin(yaw) * motion.z;
+		ANIMATOR.moving(forward, strafe, motion.y, player.onGround(), player.isSprinting());
+		ANIMATOR.pose(now, camera.yRot(), camera.xRot(), speed(Modules.KNIVES_IDLE), preview != null ? 0 : speed(Modules.KNIVES_BOB), POSE);
 		if (preview != null) System.arraycopy(preview, 0, POSE, 0, Clip.CHANNELS);
-		boolean right = arm == HumanoidArm.RIGHT;
-		float side = right ? 1 : -1;
-
-		float push = nearPush(model, right);
+		int preset = Modules.KNIVES_PRESET.index();
+		boolean right = preset == 2 ? false : arm == HumanoidArm.RIGHT;
+		mirrored = !right;
+		float push = nearPush(model);
 
 		poseStack.pushPose();
-		viewmodel(poseStack, side, push);
-		if (Modules.KNIVES_ARM.get() && !player.isInvisible()) drawArm(player, right, poseStack, collector, light);
-		knife(poseStack, model, right);
+		float fov = fovScale();
+		poseStack.scale(right ? fov : -fov, fov, 1);
+		viewmodel(poseStack, push);
+		if (Modules.KNIVES_ARM.get() && !player.isInvisible()) drawHand(model, poseStack, collector, light);
+		knife(poseStack, model);
 		drawParts(model, poseStack, collector, light);
 		poseStack.popPose();
 		Hooks.knifeRendered = true;
@@ -246,12 +255,12 @@ public final class KnifeRenderer {
 	 * camera's own space (the hand's pose stack arrives already turned to the world, so its depth can't be
 	 * read off it).
 	 */
-	private static float nearPush(KnifeModel model, boolean right) {
+	private static float nearPush(KnifeModel model) {
 		PROBE.last().pose().identity();
 		PROBE.last().normal().identity();
 		PROBE.pushPose();
-		viewmodel(PROBE, right ? 1 : -1, 0);
-		knife(PROBE, model, right);
+		viewmodel(PROBE, 0);
+		knife(PROBE, model);
 		float nearest = Float.NEGATIVE_INFINITY;
 		for (float[] p : REACH) {
 			nearest = Math.max(nearest, PROBE.last().pose().transformPosition(POINT.set(p[0], p[1], 0)).z);
@@ -261,32 +270,50 @@ public final class KnifeRenderer {
 	}
 
 	/**
-	 * Moves {@code pose} to the fist: the base spot, the viewmodel settings and the animation, mirrored by
-	 * {@code side}. Turns and tilts swing the arm about the elbow, as a real slash does; roll twists the
-	 * wrist about the forearm, which is how a knife is turned over to look at it.
+	 * How much bigger (or smaller) the viewmodel field of view setting makes everything, against the
+	 * classic 68 the framing is made for. Like a shooter's setting, it's measured across a 4:3 screen.
 	 */
-	private static void viewmodel(PoseStack pose, float side, float push) {
-		float x = Modules.KNIVES_X.getFloat() / 100f * 0.3f;
-		float y = Modules.KNIVES_Y.getFloat() / 100f * 0.3f;
-		float z = Modules.KNIVES_Z.getFloat() / 100f * 0.3f;
-		pose.translate(side * (BASE_X + x + POSE[Clip.X] * MOVE), BASE_Y + y + POSE[Clip.Y] * MOVE, BASE_Z + z + POSE[Clip.Z] * MOVE + push);
-		pose.mulPose(Axis.ZP.rotationDegrees(side * POSE[Clip.SWEEP]));
-		float ex = side * FOREARM.x * ELBOW;
-		float ey = FOREARM.y * ELBOW;
-		float ez = FOREARM.z * ELBOW;
-		pose.translate(ex, ey, ez);
-		pose.mulPose(Axis.YP.rotationDegrees(side * (Modules.KNIVES_YAW.getFloat() + POSE[Clip.YAW])));
-		pose.mulPose(Axis.XP.rotationDegrees(Modules.KNIVES_PITCH.getFloat() + POSE[Clip.PITCH]));
-		pose.translate(-ex, -ey, -ez);
-		float roll = (float) Math.toRadians(-side * (Modules.KNIVES_ROLL.getFloat() + POSE[Clip.ROLL]));
-		pose.mulPose(new Quaternionf().rotationAxis(roll, side * FOREARM.x, FOREARM.y, FOREARM.z));
+	private static float fovScale() {
+		double base = Math.atan(Math.tan(Math.toRadians(CLASSIC_FOV / 2)) * 0.75);
+		double now = Math.atan(Math.tan(Math.toRadians(Modules.KNIVES_FOV.get() / 2)) * 0.75);
+		return (float) (Math.tan(base) / Math.tan(now));
 	}
 
-	/** From the fist to the knife's own frame: its place in the hand, its size, then its turn in the fingers. */
-	private static void knife(PoseStack pose, KnifeModel model, boolean right) {
-		pose.mulPose(right ? HOLD_RIGHT : HOLD_LEFT);
-		float s = KNIFE_SCALE * model.scale * (float) (Modules.KNIVES_SCALE.get() / 100.0);
-		pose.scale(s, s, s);
+	/**
+	 * Moves {@code pose} into the hand's frame: the base spot, the viewmodel settings and the animation.
+	 * Turns and tilts swing the arm about the elbow, as a real slash does; roll twists the wrist about the
+	 * forearm, which is how a knife is turned over to look at it.
+	 */
+	private static void viewmodel(PoseStack pose, float push) {
+		boolean center = Modules.KNIVES_PRESET.index() == 1;
+		float x = Modules.KNIVES_X.getFloat() / 100f * 0.3f - (center ? 0.17f : 0);
+		float y = Modules.KNIVES_Y.getFloat() / 100f * 0.3f - (center ? 0.02f : 0);
+		float z = Modules.KNIVES_Z.getFloat() / 100f * 0.3f + (center ? 0.05f : 0);
+		float unit = UNIT * (float) (Modules.KNIVES_SCALE.get() / 100.0);
+		pose.translate(BASE_X + x + POSE[Clip.X] * MOVE, BASE_Y + y + POSE[Clip.Y] * MOVE, BASE_Z + z + POSE[Clip.Z] * MOVE + push);
+		pose.mulPose(Axis.ZP.rotationDegrees(POSE[Clip.SWEEP]));
+		Vector3f fore = HOLD.transform(new Vector3f(KnifeHand.FOREARM[0], KnifeHand.FOREARM[1], KnifeHand.FOREARM[2]));
+		Vector3f wrist = HOLD.transform(new Vector3f(KnifeHand.WRIST[0], KnifeHand.WRIST[1], KnifeHand.WRIST[2])).mul(unit);
+		Vector3f elbow = new Vector3f(fore).mul(ELBOW * unit).add(wrist);
+		pose.translate(elbow.x, elbow.y, elbow.z);
+		pose.mulPose(Axis.YP.rotationDegrees(Modules.KNIVES_YAW.getFloat() + POSE[Clip.YAW]));
+		pose.mulPose(Axis.XP.rotationDegrees(Modules.KNIVES_PITCH.getFloat() + POSE[Clip.PITCH]));
+		pose.translate(wrist.x - elbow.x, wrist.y - elbow.y, wrist.z - elbow.z);
+		float roll = (float) Math.toRadians(-(Modules.KNIVES_ROLL.getFloat() + POSE[Clip.ROLL]));
+		pose.mulPose(new Quaternionf().rotationAxis(roll, fore.x, fore.y, fore.z));
+		pose.translate(-wrist.x, -wrist.y, -wrist.z);
+		pose.mulPose(HOLD);
+		pose.scale(unit, unit, unit);
+	}
+
+	/**
+	 * From the hand to the knife's own frame: how it sits in the fist (a karambit or talon upside down with
+	 * its ring on the index finger, a push dagger across the palm), its size, then its turn in the fingers.
+	 */
+	private static void knife(PoseStack pose, KnifeModel model) {
+		if (model.family == KnifeModel.Family.CURVED) pose.mulPose(Axis.ZP.rotationDegrees(180));
+		if (model.family == KnifeModel.Family.PUSH) pose.mulPose(Axis.ZP.rotationDegrees(-90));
+		pose.scale(model.scale, model.scale, model.scale);
 		pose.translate(model.spinX, model.spinY - model.grip, 0);
 		pose.mulPose(Axis.YP.rotationDegrees(POSE[Clip.K_YAW]));
 		pose.mulPose(Axis.XP.rotationDegrees(POSE[Clip.K_PITCH]));
@@ -294,31 +321,35 @@ public final class KnifeRenderer {
 		pose.translate(-model.spinX, -model.spinY + POSE[Clip.SLIDE], 0);
 	}
 
-	/** Your arm, the middle of its fist on the knife's grip, the forearm running back to the corner of the screen. */
-	private static void drawArm(AbstractClientPlayer player, boolean right, PoseStack pose, SubmitNodeCollector collector, int light) {
-		AvatarRenderer<AbstractClientPlayer> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getPlayerRenderer(player);
-		Identifier skin = player.getSkin().body().texturePath();
-		pose.pushPose();
-		pose.mulPose(right ? ARM_RIGHT : ARM_LEFT);
-		pose.scale(ARM_SCALE, ARM_SCALE, ARM_SCALE);
-		pose.translate(right ? -HAND.x : HAND.x, -HAND.y, -HAND.z);
-		if (right) {
-			renderer.renderRightHand(pose, collector, light, skin, player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+	/** The gloved hand round the knife's grip, in the glove and colourway picked in the settings. */
+	private static void drawHand(KnifeModel model, PoseStack pose, SubmitNodeCollector collector, int light) {
+		int design = Math.max(0, java.util.Arrays.asList(Gloves.DESIGNS).indexOf(Modules.KNIVES_GLOVE.get()));
+		int variant = (int) Modules.KNIVES_GLOVE_COLOR.get() - 1;
+		Shape hand = KnifeHand.get(model.handleA * model.scale, model.handleB * model.scale, design);
+		boolean custom = KnifeShading.custom();
+		int frame = KnifeShading.frame(model.ordinal(), 0, 0, (float) (Modules.KNIVES_LIGHT.get() / 100.0));
+		if (custom) {
+			collector.submitCustomGeometry(pose, Compat.knifeShaded(), (last, out) -> hand.emit(last, out, light, design, variant, frame));
 		} else {
-			renderer.renderLeftHand(pose, collector, light, skin, player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+			collector.submitCustomGeometry(pose, Compat.knifeRenderType(KnifeAtlas.get(), false),
+					(last, out) -> hand.emitPlain(last, out, light, OverlayTexture.NO_OVERLAY, 0, design, variant));
 		}
-		pose.popPose();
 	}
 
-	/** The knife's parts, each moved for the pose: a butterfly knife's handles about their pins, an energy blade's length. */
+	/**
+	 * The knife's parts, each moved for the pose: a butterfly knife's handles about their pins, a folding
+	 * blade about its pivot, an energy blade's length. All of them go through 3vhy's knife shader (or plain
+	 * entity shading under a shader pack) in one batch.
+	 */
 	private static void drawParts(KnifeModel model, PoseStack pose, SubmitNodeCollector collector, int light) {
-		String finish = Modules.KNIVES_FINISH.get();
-		KnifeMesh.Palette palette = model.palette(finish);
-		Identifier atlas = KnifeAtlas.get();
+		Finish finish = finish();
+		int seed = (int) Modules.KNIVES_SEED.get();
+		boolean custom = KnifeShading.custom();
+		var type = custom ? Compat.knifeShaded() : Compat.knifeRenderType(KnifeAtlas.get(), false);
+		int frame = KnifeShading.frame(model.ordinal(), glint(), (float) (Modules.KNIVES_WEAR.get() / 100.0), (float) (Modules.KNIVES_LIGHT.get() / 100.0));
 		float open = Math.max(0, POSE[Clip.OPEN]);
 		for (KnifeModel.Part part : model.parts()) {
 			pose.pushPose();
-			float glowAlpha = 1;
 			switch (part.kind()) {
 				case HANDLE_A, HANDLE_B -> {
 					boolean a = part.kind() == KnifeModel.PartKind.HANDLE_A;
@@ -327,6 +358,11 @@ public final class KnifeRenderer {
 					pose.translate(part.pivotX(), part.pivotY(), 0);
 					pose.mulPose(Axis.ZP.rotationDegrees(angle));
 				}
+				case FOLD -> {
+					pose.translate(part.pivotX(), part.pivotY(), 0);
+					pose.mulPose(Axis.ZP.rotationDegrees(-180 * (1 - open)));
+					pose.translate(-part.pivotX(), -part.pivotY(), 0);
+				}
 				case ENERGY -> {
 					if (open < 0.01f) {
 						pose.popPose();
@@ -334,21 +370,36 @@ public final class KnifeRenderer {
 					}
 					pose.translate(part.pivotX(), part.pivotY(), 0);
 					pose.scale(1, open, 1);
-					long ms = System.currentTimeMillis();
-					glowAlpha = 0.86f + 0.1f * (float) Math.sin(ms * 0.031) + 0.04f * (float) Math.sin(ms * 0.17);
 				}
 				default -> {
 				}
 			}
-			KnifeMesh mesh = part.mesh();
-			float alpha = glowAlpha;
-			collector.submitCustomGeometry(pose, Compat.knifeRenderType(atlas, false),
-					(last, out) -> mesh.emit(last, out, light, OverlayTexture.NO_OVERLAY, palette, false, 1));
-			if (mesh.hasGlow()) {
-				collector.submitCustomGeometry(pose, Compat.knifeRenderType(atlas, true),
-						(last, out) -> mesh.emit(last, out, 0xF000F0, OverlayTexture.NO_OVERLAY, palette, true, alpha));
+			Shape mesh = part.mesh();
+			int finishId = finish.id;
+			if (custom) {
+				collector.submitCustomGeometry(pose, type, (last, out) -> mesh.emit(last, out, light, finishId, seed, frame));
+			} else {
+				collector.submitCustomGeometry(pose, type, (last, out) -> mesh.emitPlain(last, out, light, OverlayTexture.NO_OVERLAY, finishId, 0, 0));
 			}
 			pose.popPose();
 		}
+	}
+
+	/** The finish picked in the settings. */
+	static Finish finish() {
+		Finish finish = Finish.byLabel(Modules.KNIVES_FINISH.get());
+		return finish == null ? Finish.FADE : finish;
+	}
+
+	/** Where the glint after a swing is along the blade (0..1), or 0 when there isn't one. */
+	private static float glint() {
+		if (glintStarted == 0) return 0;
+		float t = (System.nanoTime() - glintStarted) / 220_000_000f;
+		if (t < 0) return 0;
+		if (t >= 1) {
+			glintStarted = 0;
+			return 0;
+		}
+		return Math.max(0.01f, t);
 	}
 }
