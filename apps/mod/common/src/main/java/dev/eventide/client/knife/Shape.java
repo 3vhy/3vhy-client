@@ -46,6 +46,26 @@ final class Shape {
 		quad(a, b, c, c);
 	}
 
+	/**
+	 * How far the knife's own parts (not a hand's) reach across X and Z between heights {@code y1} and
+	 * {@code y2}: {min x, max x, min z, max z}, or null when nothing is there.
+	 */
+	float[] extent(float y1, float y2) {
+		float[] out = {Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE};
+		boolean any = false;
+		for (int i = 0; i < quads * 4; i++) {
+			int at = i * STRIDE;
+			float y = data[at + 1];
+			if (y < y1 || y > y2 || data[at + 9] >= KnifeShading.GLOVE) continue;
+			any = true;
+			out[0] = Math.min(out[0], data[at]);
+			out[1] = Math.max(out[1], data[at]);
+			out[2] = Math.min(out[2], data[at + 2]);
+			out[3] = Math.max(out[3], data[at + 2]);
+		}
+		return any ? out : null;
+	}
+
 	/** Adds every quad of {@code other}, moved by {@code (dx, dy, dz)}. */
 	void add(Shape other, float dx, float dy, float dz) {
 		for (int q = 0; q < other.quads; q++) {

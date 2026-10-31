@@ -72,7 +72,17 @@ public enum KnifeModel {
 	final float handleA;
 	final float handleB;
 	final Family family;
+	/** For knives held by a ring (karambits, talons): where the ring's middle is along the knife, and its hole's radius, in pixels. */
+	float ringY;
+	float ringHole;
 	private List<Part> parts;
+
+	static {
+		KARAMBIT.ringY = -5.95f;
+		KARAMBIT.ringHole = 0.79f;
+		TALON.ringY = -5.9f;
+		TALON.ringHole = 0.51f;
+	}
 	private Clip draw;
 	private Clip inspect;
 	private Clip[] slashes;
@@ -697,6 +707,30 @@ public enum KnifeModel {
 				.key(1);
 		draw = KnifeClips.draw(this);
 		inspect = KnifeClips.inspect(this);
+	}
+
+	/**
+	 * How far this knife's parts reach across X and Z between heights {@code y1} and {@code y2} along it,
+	 * open and at rest: {min x, max x, min z, max z}, or null. For checking that the fist fits its grip.
+	 */
+	float[] reach(float y1, float y2) {
+		float[] out = null;
+		for (Part part : parts()) {
+			boolean pinned = part.kind() == PartKind.HANDLE_A || part.kind() == PartKind.HANDLE_B || part.kind() == PartKind.ENERGY;
+			float dx = pinned ? part.pivotX() : 0;
+			float dy = pinned ? part.pivotY() : 0;
+			float[] e = part.mesh().extent(y1 - dy, y2 - dy);
+			if (e == null) continue;
+			if (out == null) {
+				out = new float[] {e[0] + dx, e[1] + dx, e[2], e[3]};
+			} else {
+				out[0] = Math.min(out[0], e[0] + dx);
+				out[1] = Math.max(out[1], e[1] + dx);
+				out[2] = Math.min(out[2], e[2]);
+				out[3] = Math.max(out[3], e[3]);
+			}
+		}
+		return out;
 	}
 
 	/** The id used in saved settings: the name in lower case. */

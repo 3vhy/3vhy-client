@@ -241,7 +241,7 @@ public final class KnifeRenderer {
 		poseStack.pushPose();
 		float fov = fovScale();
 		poseStack.scale(right ? fov : -fov, fov, 1);
-		viewmodel(poseStack, push);
+		viewmodel(poseStack, model, push);
 		if (Modules.KNIVES_ARM.get() && !player.isInvisible()) drawHand(model, poseStack, collector, light);
 		knife(poseStack, model);
 		drawParts(model, poseStack, collector, light);
@@ -259,7 +259,7 @@ public final class KnifeRenderer {
 		PROBE.last().pose().identity();
 		PROBE.last().normal().identity();
 		PROBE.pushPose();
-		viewmodel(PROBE, 0);
+		viewmodel(PROBE, model, 0);
 		knife(PROBE, model);
 		float nearest = Float.NEGATIVE_INFINITY;
 		for (float[] p : REACH) {
@@ -284,7 +284,7 @@ public final class KnifeRenderer {
 	 * Turns and tilts swing the arm about the elbow, as a real slash does; roll twists the wrist about the
 	 * forearm, which is how a knife is turned over to look at it.
 	 */
-	private static void viewmodel(PoseStack pose, float push) {
+	private static void viewmodel(PoseStack pose, KnifeModel model, float push) {
 		boolean center = Modules.KNIVES_PRESET.index() == 1;
 		float x = Modules.KNIVES_X.getFloat() / 100f * 0.3f - (center ? 0.17f : 0);
 		float y = Modules.KNIVES_Y.getFloat() / 100f * 0.3f - (center ? 0.02f : 0);
@@ -292,8 +292,10 @@ public final class KnifeRenderer {
 		float unit = UNIT * (float) (Modules.KNIVES_SCALE.get() / 100.0);
 		pose.translate(BASE_X + x + POSE[Clip.X] * MOVE, BASE_Y + y + POSE[Clip.Y] * MOVE, BASE_Z + z + POSE[Clip.Z] * MOVE + push);
 		pose.mulPose(Axis.ZP.rotationDegrees(POSE[Clip.SWEEP]));
-		Vector3f fore = HOLD.transform(new Vector3f(KnifeHand.FOREARM[0], KnifeHand.FOREARM[1], KnifeHand.FOREARM[2]));
-		Vector3f wrist = HOLD.transform(new Vector3f(KnifeHand.WRIST[0], KnifeHand.WRIST[1], KnifeHand.WRIST[2])).mul(unit);
+		float[] forearm = KnifeHand.forearm();
+		float[] wristAt = KnifeHand.get(model, glove(), KnifeHand.CURL_STEPS - 1).wrist();
+		Vector3f fore = HOLD.transform(new Vector3f(forearm[0], forearm[1], forearm[2]));
+		Vector3f wrist = HOLD.transform(new Vector3f(wristAt[0], wristAt[1], wristAt[2])).mul(unit);
 		Vector3f elbow = new Vector3f(fore).mul(ELBOW * unit).add(wrist);
 		pose.translate(elbow.x, elbow.y, elbow.z);
 		pose.mulPose(Axis.YP.rotationDegrees(Modules.KNIVES_YAW.getFloat() + POSE[Clip.YAW]));
@@ -323,17 +325,24 @@ public final class KnifeRenderer {
 
 	/** The gloved hand round the knife's grip, in the glove and colourway picked in the settings. */
 	private static void drawHand(KnifeModel model, PoseStack pose, SubmitNodeCollector collector, int light) {
-		int design = Math.max(0, java.util.Arrays.asList(Gloves.DESIGNS).indexOf(Modules.KNIVES_GLOVE.get()));
+		int design = glove();
 		int variant = (int) Modules.KNIVES_GLOVE_COLOR.get() - 1;
-		Shape hand = KnifeHand.get(model.handleA * model.scale, model.handleB * model.scale, design);
+		KnifeHand.Built built = KnifeHand.get(model, design, KnifeHand.CURL_STEPS - 1);
 		boolean custom = KnifeShading.custom();
 		int frame = KnifeShading.frame(model.ordinal(), 0, 0, (float) (Modules.KNIVES_LIGHT.get() / 100.0));
-		if (custom) {
-			collector.submitCustomGeometry(pose, Compat.knifeShaded(), (last, out) -> hand.emit(last, out, light, design, variant, frame));
-		} else {
-			collector.submitCustomGeometry(pose, Compat.knifeRenderType(KnifeAtlas.get(), false),
-					(last, out) -> hand.emitPlain(last, out, light, OverlayTexture.NO_OVERLAY, 0, design, variant));
+		for (Shape hand : new Shape[] {built.arm(), built.fist()}) {
+			if (custom) {
+				collector.submitCustomGeometry(pose, Compat.knifeShaded(), (last, out) -> hand.emit(last, out, light, design, variant, frame));
+			} else {
+				collector.submitCustomGeometry(pose, Compat.knifeRenderType(KnifeAtlas.get(), false),
+						(last, out) -> hand.emitPlain(last, out, light, OverlayTexture.NO_OVERLAY, 0, design, variant));
+			}
 		}
+	}
+
+	/** The glove design picked in the settings, by its number. */
+	private static int glove() {
+		return Math.max(0, java.util.Arrays.asList(Gloves.DESIGNS).indexOf(Modules.KNIVES_GLOVE.get()));
 	}
 
 	/**
