@@ -1792,9 +1792,9 @@ public final class EventideGameTest implements FabricClientGameTest {
 		});
 		context.waitTicks(4);
 		shot(context, "eventide-nametag-closeup-no-icons");
-		String plain = context.computeOnClient(client -> Nametags.shown(net.minecraft.network.chat.Component.literal("a")
-				.withStyle(style -> style.withFont(new net.minecraft.network.chat.FontDescription.Resource(
-						net.minecraft.resources.Identifier.parse("minecraft:alt"))))
+		String plain = context.computeOnClient(client -> Nametags.shown(net.minecraft.network.chat.Component.empty()
+				.append(net.minecraft.network.chat.Component.literal("a").withStyle(style -> style.withFont(
+						new net.minecraft.network.chat.FontDescription.Resource(net.minecraft.resources.Identifier.parse("minecraft:alt")))))
 				.append(net.minecraft.network.chat.Component.literal(" + "))
 				.append(net.minecraft.network.chat.Component.literal("Pickzugng"))).getString());
 		check(failed, "hidden icons and their spaces leave the tag (got \"" + plain + "\")", plain.equals("Pickzugng"));
