@@ -1,6 +1,6 @@
-name: Build 3vhy mod
+name: Build Eventide mod
 
-# Builds the in-game 3vhy Client mod for Minecraft 1.21.11 and 26.1.x, and plays a short
+# Builds the in-game Eventide mod for Minecraft 1.21.11 and 26.1.x, and plays a short
 # scripted session in the real game for each version to check it works and take screenshots.
 # Also used by the Windows build, which bundles the jars into the launcher.
 on:
@@ -16,7 +16,7 @@ on:
       - mod-dev
     paths:
       - 'apps/mod/**'
-      - '.github/workflows/3vhy-mod.yml'
+      - '.github/workflows/eventide-mod.yml'
 
 permissions:
   contents: write
@@ -42,13 +42,13 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-3vhy-${{ hashFiles('apps/mod/**/*.gradle', 'apps/mod/gradle.properties', 'apps/mod/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-3vhy-
+          key: gradle-eventide-${{ hashFiles('apps/mod/**/*.gradle', 'apps/mod/gradle.properties', 'apps/mod/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-eventide-
 
       - name: Build
         working-directory: apps/mod
         env:
-          THREEVHY_DISCORD_APP_ID: ${{ vars.THREEVHY_DISCORD_APP_ID }}
+          EVENTIDE_DISCORD_APP_ID: ${{ vars.EVENTIDE_DISCORD_APP_ID || vars.THREEVHY_DISCORD_APP_ID }}
         run: |
           set -o pipefail
           ./gradlew build --no-daemon --continue --stacktrace 2>&1 | tee build.log
@@ -64,14 +64,14 @@ jobs:
       - name: Collect jars
         run: |
           mkdir -p mod-jars
-          cp apps/mod/mc1_21_11/build/libs/threevhy-client-*+1.21.11.jar mod-jars/threevhy-client-1.21.11.jar
-          cp apps/mod/mc26_1/build/libs/threevhy-client-*+26.1.jar mod-jars/threevhy-client-26.1.jar
+          cp apps/mod/mc1_21_11/build/libs/eventide-*+1.21.11.jar mod-jars/eventide-1.21.11.jar
+          cp apps/mod/mc26_1/build/libs/eventide-*+26.1.jar mod-jars/eventide-26.1.jar
           ls -la mod-jars
 
       - name: Upload jars
         uses: actions/upload-artifact@v4
         with:
-          name: 3vhy-mod
+          name: eventide-mod
           path: mod-jars/*.jar
           if-no-files-found: error
 
@@ -123,8 +123,8 @@ jobs:
           $controls.PlaybackStatus = 'Playing'
           $updater = $controls.DisplayUpdater
           $updater.Type = 'Music'
-          $updater.MusicProperties.Title = '3vhy CI Song'
-          $updater.MusicProperties.Artist = '3vhy CI'
+          $updater.MusicProperties.Title = 'Eventide CI Song'
+          $updater.MusicProperties.Artist = 'Eventide CI'
           $updater.Thumbnail = [Windows.Storage.Streams.RandomAccessStreamReference]::CreateFromFile($file)
           $updater.Update()
           Write-Output 'playing'
@@ -132,7 +132,7 @@ jobs:
           '@
           $fake = Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $player, '-Cover', $cover) -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'fake-out.txt') -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'fake-err.txt')
 
-          $script = 'apps/mod/common/src/main/resources/assets/threevhy/music/now-playing.ps1'
+          $script = 'apps/mod/common/src/main/resources/assets/eventide/music/now-playing.ps1'
           $found = $null
           $lines = @()
           for ($i = 0; $i -lt 20 -and -not $found; $i++) {
@@ -142,7 +142,7 @@ jobs:
             $lines += "try $($i): $($out.Trim())"
             if ($line) {
               $json = $line | ConvertFrom-Json
-              if ($json.title -eq '3vhy CI Song') { $found = $json }
+              if ($json.title -eq 'Eventide CI Song') { $found = $json }
             }
           }
           if (-not $fake.HasExited) { Stop-Process -Id $fake.Id -Force }
@@ -194,15 +194,15 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-3vhy-test-${{ matrix.project }}-${{ hashFiles('apps/mod/**/*.gradle', 'apps/mod/gradle.properties', 'apps/mod/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-3vhy-test-${{ matrix.project }}-
+          key: gradle-eventide-test-${{ matrix.project }}-${{ hashFiles('apps/mod/**/*.gradle', 'apps/mod/gradle.properties', 'apps/mod/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-eventide-test-${{ matrix.project }}-
 
       - name: Install virtual display
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q xvfb libgl1-mesa-dri
 
-      # Same mods the launcher adds to every 3vhy instance: Sodium, Lithium, FerriteCore,
+      # Same mods the launcher adds to every Eventide instance: Sodium, Lithium, FerriteCore,
       # Entity Culling and ImmediatelyFast, newest versions for this Minecraft version. Mod Menu
       # too: players often add it, and it puts its own buttons on Minecraft's screens
       - name: Get the performance pack
@@ -238,7 +238,7 @@ jobs:
         run: |
           log=${{ matrix.project }}/run/logs/latest.log
           if [ -f "$log" ]; then
-            grep "3vhy-check" "$log" | sed 's/.*3vhy-check: /::notice title=3vhy check::/' || true
+            grep "eventide-check" "$log" | sed 's/.*eventide-check: /::notice title=Eventide check::/' || true
             grep -E "ERROR|Exception|Caused by|InvalidInjection" "$log" | head -n 10 | sed 's/^/::warning title=Game log::/' || true
           fi
           python3 ../../.github/scripts/gradle-annotate.py gametest.log 0 || true

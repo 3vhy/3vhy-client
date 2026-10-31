@@ -30,6 +30,17 @@
 
 Var /GLOBAL OldInstallDir
 
+; 3vhy Client became Eventide. Tauri keys an install by its product name, so an Eventide install would sit
+; beside an old "3vhy Client" one. The old one is uninstalled quietly first: its uninstaller only deletes app
+; data when asked to, and the data lives under the app id, which didn't change, so instances, accounts and
+; settings carry straight over. Updates install without shortcuts, so Eventide's are made here in place of
+; the old ones.
+!define OLDBRAND "3vhy Client"
+!define OLDBRANDKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${OLDBRAND}"
+Var /GLOBAL OldBrandDir
+Var /GLOBAL OldBrandRemoved
+Var /GLOBAL OldBrandDesktop
+
 !macro NSIS_HOOK_PREINSTALL
     SetShellVarContext all
     ${If} ${FileExists} "$SMPROGRAMS\${PRODUCTNAME}.lnk"
@@ -55,9 +66,42 @@ Var /GLOBAL OldInstallDir
         ${EndIf}
     ${EndIf}
     SetShellVarContext current
+
+    StrCpy $OldBrandRemoved 0
+    StrCpy $OldBrandDesktop 0
+    ReadRegStr $R2 HKCU "${OLDBRANDKEY}" "UninstallString"
+    ${If} $R2 != ""
+        ReadRegStr $OldBrandDir HKCU "${OLDBRANDKEY}" "InstallLocation"
+        StrCpy $OldBrandDir $OldBrandDir "" 1
+        StrCpy $OldBrandDir $OldBrandDir -1 ""
+        ${If} ${FileExists} "$DESKTOP\${OLDBRAND}.lnk"
+            StrCpy $OldBrandDesktop 1
+        ${EndIf}
+        DetailPrint "Removing ${OLDBRAND}; your instances and settings stay"
+        ExecWait '$R2 /S _?=$OldBrandDir' $R3
+        ${If} $R3 = 0
+            Delete "$OldBrandDir\uninstall.exe"
+            RMDir "$OldBrandDir"
+            DeleteRegKey HKCU "${OLDBRANDKEY}"
+            StrCpy $OldBrandRemoved 1
+        ${Else}
+            DetailPrint "${OLDBRAND} could not be removed (code $R3); you can uninstall it from Settings"
+        ${EndIf}
+    ${EndIf}
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
+    ${If} $OldBrandRemoved = 1
+        ${IfNot} ${FileExists} "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+            CreateShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+            !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+        ${EndIf}
+        ${If} $OldBrandDesktop = 1
+        ${AndIfNot} ${FileExists} "$DESKTOP\${PRODUCTNAME}.lnk"
+            CreateShortcut "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+            !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
+        ${EndIf}
+    ${EndIf}
     !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$OldInstallDir\${MAINBINARYNAME}.exe"
     Pop $0
     ${If} $0 = 1

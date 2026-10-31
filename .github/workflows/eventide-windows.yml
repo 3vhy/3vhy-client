@@ -1,4 +1,4 @@
-name: Build 3vhy Client (Windows)
+name: Build Eventide (Windows)
 
 # Run it from the Actions tab ("Run workflow"), or push a tag like v0.1.0
 # to build and publish a GitHub Release with the installer attached.
@@ -19,10 +19,10 @@ env:
   TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
-  # The in-game 3vhy mod, bundled into the launcher below
+  # The in-game Eventide mod, bundled into the launcher below
   mod:
-    name: 3vhy mod
-    uses: ./.github/workflows/3vhy-mod.yml
+    name: Eventide mod
+    uses: ./.github/workflows/eventide-mod.yml
     with:
       skip_gametest: true
 
@@ -65,24 +65,25 @@ jobs:
           else
             VERSION="0.1.${GITHUB_RUN_NUMBER}"
           fi
-          echo "Building 3vhy Client $VERSION"
+          echo "Building Eventide $VERSION"
+          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
           sed -i "0,/^version = .*/s//version = \"$VERSION\"/" apps/app/Cargo.toml
           sed -i "0,/^version = .*/s//version = \"$VERSION\"/" packages/app-lib/Cargo.toml
           node -e "const f='apps/app-frontend/package.json';const p=require('./'+f);p.version='$VERSION';require('fs').writeFileSync(f,JSON.stringify(p,null,'\t')+'\n')"
           cp packages/app-lib/.env.prod packages/app-lib/.env
 
-      - name: Get the 3vhy mod
+      - name: Get the Eventide mod
         uses: actions/download-artifact@v4
         with:
-          name: 3vhy-mod
-          path: packages/app-lib/threevhy-mod
+          name: eventide-mod
+          path: packages/app-lib/eventide-mod
 
-      - name: Check the 3vhy mod is there
+      - name: Check the Eventide mod is there
         shell: bash
         run: |
-          ls -la packages/app-lib/threevhy-mod
-          test -s packages/app-lib/threevhy-mod/threevhy-client-1.21.11.jar
-          test -s packages/app-lib/threevhy-mod/threevhy-client-26.1.jar
+          ls -la packages/app-lib/eventide-mod
+          test -s packages/app-lib/eventide-mod/eventide-1.21.11.jar
+          test -s packages/app-lib/eventide-mod/eventide-26.1.jar
 
       - name: Install dependencies
         run: pnpm install
@@ -90,23 +91,25 @@ jobs:
       - name: Build installer
         env:
           # Optional: set a repository variable with your own Discord application ID
-          # to turn on Discord Rich Presence ("Playing 3vhy Client").
-          THREEVHY_DISCORD_APP_ID: ${{ vars.THREEVHY_DISCORD_APP_ID }}
+          # to turn on Discord Rich Presence ("Playing Eventide").
+          EVENTIDE_DISCORD_APP_ID: ${{ vars.EVENTIDE_DISCORD_APP_ID || vars.THREEVHY_DISCORD_APP_ID }}
         shell: bash
         run: |
           set -o pipefail
           pnpm --filter=@modrinth/app run tauri build --bundles nsis 2>&1 | tee "$RUNNER_TEMP/build.log"
 
-      # The interactive "3vhy Client Setup" wraps the installer built above
-      - name: Build 3vhy Client Setup
+      # The interactive "Eventide Setup" wraps the installer built above
+      - name: Build Eventide Setup
         shell: bash
         run: |
           mkdir -p dist
           INSTALLER="$(ls target/release/bundle/nsis/*-setup.exe | head -n 1)"
-          cp "$INSTALLER" apps/setup/payload/3vhy-client-installer.exe
+          cp "$INSTALLER" apps/setup/payload/eventide-installer.exe
+          cp "$INSTALLER" "dist/Eventide Classic Installer.exe"
+          # The same installer under its old name, so copies of 3vhy Client (which look for this name) can update to Eventide
           cp "$INSTALLER" "dist/3vhy Client Classic Installer.exe"
-          cargo build --release -p threevhy_setup
-          cp target/release/3vhy-client-setup.exe "dist/3vhy Client Setup.exe"
+          cargo build --release -p eventide_setup
+          cp target/release/eventide-setup.exe "dist/Eventide Setup.exe"
 
       # The in-game mod on its own too, for players who use another launcher (Prism, MultiMC, the
       # vanilla launcher with Fabric): one jar per Minecraft version
@@ -114,21 +117,21 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist-mod
-          cp packages/app-lib/threevhy-mod/threevhy-client-1.21.11.jar "dist-mod/3vhy-mod-fabric-1.21.11.jar"
-          cp packages/app-lib/threevhy-mod/threevhy-client-26.1.jar "dist-mod/3vhy-mod-fabric-26.1.jar"
+          cp packages/app-lib/eventide-mod/eventide-1.21.11.jar "dist-mod/eventide-1.21.11-${APP_VERSION}.jar"
+          cp packages/app-lib/eventide-mod/eventide-26.1.jar "dist-mod/eventide-26.1-${APP_VERSION}.jar"
           ls -la dist-mod
 
       - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
-          name: 3vhy-client-windows
+          name: eventide-windows
           path: dist/*.exe
           if-no-files-found: error
 
       - name: Upload standalone mod jars
         uses: actions/upload-artifact@v4
         with:
-          name: 3vhy-mod-standalone
+          name: eventide-mod-standalone
           path: dist-mod/*.jar
           if-no-files-found: error
 
@@ -146,7 +149,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          name: 3vhy Client ${{ github.ref_name }}
+          name: Eventide ${{ github.ref_name }}
           body_path: ${{ steps.notes.outputs.path }}
           files: |
             dist/*.exe

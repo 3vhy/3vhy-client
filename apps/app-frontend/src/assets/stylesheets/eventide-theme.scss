@@ -17,6 +17,12 @@
 @import './eventide-fonts.scss';
 
 :root {
+	/* Brand: the logo's tile, trident and riptide rings, and the wordmark (assets/brand). Tailwind's brand.* colours read these. */
+	--brand-tile: #120d1c;
+	--brand-trident: #f3ecff;
+	--brand-swirl: #a855f7;
+	--brand-wordmark: #f5efff;
+
 	--eventide-cyan: #5bc8e6;
 	--eventide-royal: #1a4fba;
 	--eventide-navy: #061d8c;
@@ -161,6 +167,7 @@ html.oled-mode {
 }
 
 html.light-mode {
+	--brand-wordmark: var(--brand-tile);
 	--eventide-ice: #061d8c;
 	--eventide-night: #e6f1fb;
 	--eventide-chip-bg: rgba(26, 79, 186, 0.1);

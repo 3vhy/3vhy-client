@@ -1,6 +1,6 @@
 <template>
 	<div class="eventide-logo" :class="`eventide-logo--${size}`" aria-label="Eventide">
-		<EventideGlyph class="eventide-logo__glyph" />
+		<EventideGlyph tile class="eventide-logo__glyph" />
 		<EventideWordmark class="eventide-logo__word" />
 	</div>
 </template>

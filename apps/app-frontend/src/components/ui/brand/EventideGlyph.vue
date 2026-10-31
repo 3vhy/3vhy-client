@@ -1,6 +1,7 @@
 <template>
 	<!-- The Eventide trident and riptide rings (assets/brand/eventide-glyph.svg), for marks on dark surfaces -->
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
+		<rect v-if="tile" x="0" y="0" width="100" height="100" rx="23" fill="var(--brand-tile)" />
 		<defs>
 			<mask :id="maskId" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
 				<rect x="-50" y="-50" width="200" height="200" fill="#FFFFFF"/>
@@ -40,6 +41,9 @@
 
 <script setup lang="ts">
 import { useId } from 'vue'
+
+// With tile, the glyph sits on its tile, as in the app icon (assets/brand/eventide-icon.svg).
+withDefaults(defineProps<{ tile?: boolean }>(), { tile: false })
 
 const maskId = `eventide-cuts-${useId()}`
 </script>

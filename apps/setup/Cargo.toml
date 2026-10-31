@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 publish = false
 
 [[bin]]
-name = "eventide-client-setup"
+name = "eventide-setup"
 path = "src/main.rs"
 
 [dependencies]

@@ -17,6 +17,13 @@ const config: Config = {
 	presets: [preset],
 	theme: {
 		extend: {
+			colors: {
+				brand: {
+					tile: 'var(--brand-tile)',
+					trident: 'var(--brand-trident)',
+					swirl: 'var(--brand-swirl)',
+				},
+			},
 			// Eventide: tighter, blockier corners than the Modrinth App
 			borderRadius: {
 				md: '0.3125rem',

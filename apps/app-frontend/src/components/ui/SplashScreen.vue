@@ -18,7 +18,7 @@
 			</div>
 			<div class="splash-content" data-tauri-drag-region>
 				<GhostSprite v-if="octoberActive" class="splash-ghost" :size="72" />
-				<EventideWordmarkLetters drop class="splash-wordmark" />
+				<EventideWordmarkLetters rise class="splash-wordmark" />
 				<span class="splash-client">CLIENT</span>
 				<div
 					class="splash-blocks"
