@@ -1,0 +1,10 @@
+ref: refs/tags/v0.8.0
+commit: 935be847ac6a38a437d70b55134ef5f67388fbbc
+status: success
+installers:
+total 82260
+drwxr-xr-x 1 runneradmin 197121        0 Oct 31 06:24 .
+drwxr-xr-x 1 runneradmin 197121        0 Oct 31 06:24 ..
+-rwxr-xr-x 1 runneradmin 197121 26929598 Oct 31 06:23 3vhy Client Classic Installer.exe
+-rwxr-xr-x 1 runneradmin 197121 26929598 Oct 31 06:23 Eventide Classic Installer.exe
+-rwxr-xr-x 1 runneradmin 197121 30361600 Oct 31 06:24 Eventide Setup.exe
