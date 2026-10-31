@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Nametags: a player's tag as Eventide's pill, with the scoreboard line above it kept as Minecraft draws it. */
+/** Nametags: a player's tag in Eventide's style (face, name and health), with the scoreboard line above it kept as Minecraft draws it. */
 @Mixin(EntityRenderer.class)
 public abstract class EntityNameTagMixin {
 	@Inject(method = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;"

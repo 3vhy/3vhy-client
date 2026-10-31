@@ -256,6 +256,25 @@ public final class EventideGameTest implements FabricClientGameTest {
 		context.waitTicks(10);
 		check(failed, "closing the scene panel hides its buttons", context.computeOnClient(client -> find(client, "Time of day: Dusk") == null));
 
+		// Mod Menu (CI adds it): Eventide's own entry in its list, with the new icon and name
+		boolean modMenuOpen = context.computeOnClient(client -> {
+			try {
+				Class<?> mods = Class.forName("com.terraformersmc.modmenu.gui.ModsScreen");
+				client.setScreen((net.minecraft.client.gui.screens.Screen) mods.getConstructor(net.minecraft.client.gui.screens.Screen.class)
+						.newInstance(client.screen));
+				return true;
+			} catch (ReflectiveOperationException | RuntimeException e) {
+				EventideClient.LOG.info("eventide-check: Mod Menu isn't loaded, so its list isn't pictured");
+				return false;
+			}
+		});
+		if (modMenuOpen) {
+			context.waitTicks(20);
+			shot(context, "eventide-modmenu");
+			context.getInput().pressKey(InputConstants.KEY_ESCAPE);
+			context.waitTicks(10);
+		}
+
 		click(context, menuScale, "Eventide");
 		context.waitTicks(10);
 		check(failed, "the Eventide button on the main menu opens the Orbit", context.computeOnClient(client -> client.screen instanceof OrbitScreen));
@@ -674,6 +693,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 				Modules.NAME_PROTECT.set(false);
 				Modules.SKIN_PROTECT.set(false);
 			});
+			nametagCloseup(context, singleplayer, failed);
 
 			// Tab list with ping numbers and the scoreboard objective
 			context.getInput().holdKey(options -> options.keyPlayerList);
@@ -946,7 +966,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 		check(failed, "item highlighter (AbstractContainerScreen slots)", Hooks.slotHighlightRan);
 		check(failed, "freelook camera (Camera.setRotation)", Hooks.freelookCameraRan);
 		check(failed, "own nametag in third person (shouldShowName)", Hooks.ownNametagRan);
-		check(failed, "nametags drawn as Eventide's pill (submitNameTag)", Hooks.styledNametagRan);
+		check(failed, "nametags drawn in Eventide's style (submitNameTag)", Hooks.styledNametagRan);
 		check(failed, "shiny pots (ItemStack.hasFoil)", Hooks.shinyPotRan);
 		check(failed, "TPS from server time (handleSetTime)", Hooks.timePacketRan);
 		check(failed, "custom crosshair replaces Minecraft's", Hooks.crosshairRan);
@@ -967,6 +987,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 			if (focus.contains("glass")) glassWorldScreens(context, singleplayer, failed);
 			if (focus.contains("skies")) skies(context, singleplayer, failed, true);
 			if (focus.contains("protect")) nameDetect(context, singleplayer, failed);
+			if (focus.contains("nametags")) nametagCloseup(context, singleplayer, failed);
 			if (focus.contains("perf")) performance(context, failed);
 			if (focus.contains("lyrics")) skyLyrics(context, singleplayer, failed);
 			if (focus.contains("knives")) knives(context, singleplayer, failed, true);
@@ -1724,6 +1745,36 @@ public final class EventideGameTest implements FabricClientGameTest {
 	 * name, like real servers do): it finds the stats, the address and the rank tag by itself, hides them
 	 * everywhere (the number may change), leaves your name to the name swap, and an excluded stat shows again.
 	 */
+	/**
+	 * A mannequin (drawn like a player) named like a player, close in front of the camera, so the Eventide name
+	 * tag (face, name, health and heart) is pictured big enough to compare with a reference.
+	 */
+	private static void nametagCloseup(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed) {
+		var server = singleplayer.getServer();
+		boolean waypoints = context.computeOnClient(client -> Modules.WAYPOINTS.enabled());
+		boolean nametags = context.computeOnClient(client -> Modules.NAMETAGS.enabled());
+		context.runOnClient(client -> {
+			Modules.NAMETAGS.set(true);
+			Modules.WAYPOINTS.set(false);
+			client.player.setYRot(0f);
+			client.player.setXRot(-16f);
+		});
+		server.runCommand("execute at @p rotated 0 0 run summon minecraft:mannequin ^ ^ ^2.2 {CustomName:\"Pickzugng\","
+				+ "CustomNameVisible:1b,hide_description:1b,immovable:1b,Rotation:[180f,0f]}");
+		context.waitTicks(20);
+		Hooks.styledNametagRan = false;
+		context.waitTicks(2);
+		shot(context, "eventide-nametag-closeup");
+		check(failed, "a mannequin's tag drawn in Eventide's style", Hooks.styledNametagRan);
+		server.runCommand("kill @e[type=minecraft:mannequin]");
+		context.runOnClient(client -> {
+			Modules.WAYPOINTS.set(waypoints);
+			Modules.NAMETAGS.set(nametags);
+			client.player.setXRot(0f);
+		});
+		context.waitTicks(2);
+	}
+
 	private static void nameDetect(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed) {
 		var server = singleplayer.getServer();
 		String own = context.computeOnClient(client -> client.getUser().getName());

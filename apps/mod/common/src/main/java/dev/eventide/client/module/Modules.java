@@ -113,7 +113,7 @@ public final class Modules {
 	public static final Module NAMETAGS = new Module("nametags", "Nametags",
 			"Tags with each player's face and health, and your own in third person", Category.RENDER, false).icon("tag").markNew();
 	public static final Toggle NAMETAGS_OWN = NAMETAGS.add(new Toggle("own", "Show your own", "See your nametag in third person", true));
-	public static final Choice NAMETAGS_STYLE = NAMETAGS.add(new Choice("style", "Style", "A dark pill with the player's face and health, or Minecraft's own tag",
+	public static final Choice NAMETAGS_STYLE = NAMETAGS.add(new Choice("style", "Style", "Each player's face and health beside their name, or Minecraft's own tag",
 			0, "Eventide", "Minecraft"));
 	public static final Module FOV_CHANGER = new Module("fov_changer", "FOV Changer",
 			"How much your view widens when you sprint or fly", Category.RENDER, false).icon("focus").markNew();
