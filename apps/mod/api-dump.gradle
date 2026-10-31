@@ -1,4 +1,4 @@
-// Prints the signatures of the Minecraft classes 3vhy Client touches (javap -p),
+// Prints the signatures of the Minecraft classes Eventide touches (javap -p),
 // so API differences between game versions are easy to check from CI.
 // A line like "some.Class#method" prints that method's bytecode instead (javap -c).
 tasks.register('dumpApi') {

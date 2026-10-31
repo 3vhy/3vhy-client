@@ -9,7 +9,7 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'threevhy-client-mod'
+rootProject.name = 'eventide-client-mod'
 
 // One build per Minecraft line; both compile the shared code in common/
 include 'mc1_21_11'

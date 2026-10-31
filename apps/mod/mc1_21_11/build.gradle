@@ -7,8 +7,8 @@ def fabricApiVersion = '0.141.6+1.21.11'
 ext.fabricApiVersion = fabricApiVersion
 
 version = "${mod_version}+${minecraftVersion}"
-group = 'dev.threevhy'
-base { archivesName = 'threevhy-client' }
+group = 'dev.eventide'
+base { archivesName = 'eventide-client' }
 
 sourceSets {
 	main {
@@ -22,7 +22,7 @@ sourceSets {
 
 loom {
 	mixin {
-		defaultRefmapName = 'threevhy-refmap.json'
+		defaultRefmapName = 'eventide-refmap.json'
 	}
 }
 
@@ -41,12 +41,12 @@ processResources {
 		version        : project.version,
 		minecraft_range: '~1.21.11',
 		java_version   : '21',
-		discord_app_id : (System.getenv('THREEVHY_DISCORD_APP_ID') ?: project.findProperty('discord_app_id') ?: ''),
+		discord_app_id : (System.getenv('EVENTIDE_DISCORD_APP_ID') ?: project.findProperty('discord_app_id') ?: ''),
 		gametest_entrypoint: providers.gradleProperty('gametest').isPresent()
-				? ',\n\t\t"fabric-client-gametest": ["dev.threevhy.client.test.ThreevhyGameTest"]' : ''
+				? ',\n\t\t"fabric-client-gametest": ["dev.eventide.client.test.EventideGameTest"]' : ''
 	]
 	inputs.properties props
-	filesMatching(['fabric.mod.json', 'threevhy-build.properties']) {
+	filesMatching(['fabric.mod.json', 'eventide-build.properties']) {
 		expand props
 	}
 }
@@ -73,6 +73,6 @@ tasks.register('runProductionClientGameTest', net.fabricmc.loom.task.prod.Client
 	jvmArgs.add('-Dfabric.client.gametest.disableNetworkSynchronizer=true')
 	// -PtestFocus=lyrics runs just that part of the in-game test, for quicker local checks
 	def focus = providers.gradleProperty('testFocus').getOrElse('')
-	if (!focus.isEmpty()) jvmArgs.add("-Dthreevhy.testFocus=${focus}")
+	if (!focus.isEmpty()) jvmArgs.add("-Deventide.testFocus=${focus}")
 	useXVFB = System.getenv('CI') != null
 }

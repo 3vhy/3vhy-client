@@ -1,7 +1,7 @@
 // CI-only extras shared by both Minecraft versions:
 // - `-Pgametest` builds the in-game test into the mod (see common/src/gametest)
 // - runProductionClientGameTest (in each build.gradle) starts the real game with it
-// - dumpApi prints the Minecraft signatures 3vhy relies on (api-dump.gradle)
+// - dumpApi prints the Minecraft signatures Eventide relies on (api-dump.gradle)
 
 ext.gametestEnabled = providers.gradleProperty('gametest').isPresent()
 

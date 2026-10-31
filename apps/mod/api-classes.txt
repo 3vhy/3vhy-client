@@ -149,7 +149,7 @@ net.minecraft.client.gui.components.SpriteIconButton
 net.minecraft.network.chat.FontDescription
 net.minecraft.network.chat.FontDescription$Resource
 net.minecraft.client.renderer.ItemInHandRenderer#tick
-# GUI render states, for 3vhy's own gradient and glow shapes (1.21.11 and 26.1 packages)
+# GUI render states, for Eventide's own gradient and glow shapes (1.21.11 and 26.1 packages)
 net.minecraft.client.gui.render.state.GuiRenderState
 net.minecraft.client.renderer.state.gui.GuiRenderState
 net.minecraft.client.gui.render.state.GuiElementRenderState

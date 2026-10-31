@@ -1,0 +1,156 @@
+package dev.eventide.client.hud;
+
+import dev.eventide.client.Draw;
+import dev.eventide.client.gui.Accent;
+import dev.eventide.client.module.Module;
+import dev.eventide.client.module.Modules;
+import dev.eventide.client.ui.Anim;
+import dev.eventide.client.ui.Ease;
+import dev.eventide.client.ui.Paint;
+import dev.eventide.client.ui.Tokens;
+import dev.eventide.client.ui.Type;
+import dev.eventide.client.ui.Type.Weight;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import net.minecraft.client.Minecraft;
+
+/**
+ * Active Modules: every mod you have on, longest name first, down the top right of the screen, each
+ * as a glass chip with the mod's icon in the theme colour and its name, like the website's module
+ * chips. A mod you turn on slides in from the edge, one you turn off slides back out, and the rest
+ * move up or down to make room.
+ */
+final class ModuleListWidget extends HudWidget {
+	private static final float CAP = Hud.CAP * 0.85f;
+	private static final float CHIP_H = 2.7f * CAP;
+	private static final float GAP = 2;
+	private static final float STEP = CHIP_H + GAP;
+	private static final float PAD = 0.95f * CAP;
+	private static final float ICON = 1.45f * CAP;
+	private static final float ICON_GAP = 0.75f * CAP;
+	private static final List<Module> SAMPLE = List.of(Modules.CROSSHAIR, Modules.KEYSTROKES, Modules.FREELOOK, Modules.ZOOM);
+	private static final Set<Module> OUT_OF_GAME = Set.of(Modules.MENU_NAME, Modules.MAIN_MENU, Modules.DISCORD, Modules.BORDERLESS,
+			Modules.PROFILES, Modules.THEME);
+
+	private final Map<String, RowState> states = new LinkedHashMap<>();
+	private boolean primed = false;
+
+	ModuleListWidget() {
+		super("module_list", Modules.MODULE_LIST, Anchor.TOP_RIGHT);
+	}
+
+	private static float chipWidth(String name) {
+		return PAD + ICON + ICON_GAP + Type.width(name, CAP, Weight.SEMIBOLD) + PAD * 1.15f;
+	}
+
+	/** Whether a mod that's on belongs in the list: not the menu and window ones, and HUD mods only if asked for. */
+	private static boolean listed(Module module) {
+		if (module == Modules.MODULE_LIST || !module.toggleable() || !module.enabled()) return false;
+		if (OUT_OF_GAME.contains(module)) return false;
+		return module.category != Module.Category.HUD || Modules.MODULE_LIST_HUD.get();
+	}
+
+	private static List<Module> modules(boolean preview) {
+		List<Module> list = new ArrayList<>();
+		for (Module module : Modules.ALL) {
+			if (listed(module)) list.add(module);
+		}
+		if (list.isEmpty() && preview) list.addAll(SAMPLE);
+		list.sort(Comparator.comparingDouble((Module module) -> chipWidth(module.name)).reversed());
+		return list;
+	}
+
+	@Override
+	public boolean visible(Minecraft mc) {
+		return !modules(false).isEmpty();
+	}
+
+	@Override
+	public int width(Minecraft mc) {
+		float widest = 30;
+		for (Module module : modules(true)) widest = Math.max(widest, chipWidth(module.name));
+		return (int) Math.ceil(widest);
+	}
+
+	@Override
+	public int height(Minecraft mc) {
+		return (int) Math.ceil(Math.max(1, modules(true).size()) * STEP - GAP);
+	}
+
+	/** Brings each chip up to date: which mods came on (to slide in), went off (to slide out), or moved. */
+	private void follow(List<Module> list, boolean quiet) {
+		Set<String> present = new HashSet<>();
+		for (int i = 0; i < list.size(); i++) {
+			Module module = list.get(i);
+			present.add(module.name);
+			RowState state = states.get(module.name);
+			if (state == null) {
+				state = new RowState(i);
+				states.put(module.name, state);
+				if (quiet) state.in.snap(1);
+			}
+			state.in.set(1);
+			state.slot.set(i);
+			state.module = module;
+		}
+		Iterator<RowState> it = states.values().iterator();
+		while (it.hasNext()) {
+			RowState state = it.next();
+			if (present.contains(state.module.name)) continue;
+			state.in.set(0);
+			if (state.in.get() < 0.01f) it.remove();
+		}
+	}
+
+	@Override
+	public void draw(Draw d, int x, int y, Minecraft mc, boolean preview) {
+		follow(modules(preview), !primed);
+		primed = true;
+		float right = x + width(mc);
+		boolean shadow = textShadow();
+		boolean glow = Modules.MODULE_LIST_GLOW.get();
+		float strength = glassStrength();
+		float hair = Hud.hairline(d);
+		for (RowState state : states.values()) {
+			float in = state.in.get();
+			if (in <= 0.01f) continue;
+			Module module = state.module;
+			float slot = state.slot.get();
+			float chipRight = right + (1 - in) * 12;
+			float left = chipRight - chipWidth(module.name);
+			float top = y + slot * STEP;
+			float r = radius(CHIP_H / 2f);
+			float old = Paint.opacity(Paint.opacity() * in);
+			if (strength > 0.01f) {
+				float glass = Paint.opacity(Paint.opacity() * Math.min(1, strength * 1.15f));
+				Paint.rect(d, left, top, chipRight, top + CHIP_H, r, Tokens.GLASS);
+				Paint.stroke(d, left, top, chipRight, top + CHIP_H, r, hair, 0x1FFFFFFF);
+				Paint.opacity(glass);
+			}
+			int accent = Accent.get(slot * 0.035f);
+			float ix = left + PAD;
+			float iy = top + (CHIP_H - ICON) / 2f;
+			if (glow) Paint.glow(d, ix + ICON / 2f, iy + ICON / 2f, ICON * 0.35f, ICON, Paint.fade(accent, 0.45f));
+			Paint.icon(d, module.icon() != null ? module.icon() : "list", ix, iy, ICON, accent);
+			Hud.text(d, module.name, ix + ICON + ICON_GAP, top + (CHIP_H - CAP) / 2f, CAP, Weight.SEMIBOLD, Tokens.TEXT, shadow);
+			Paint.opacity(old);
+		}
+	}
+
+	/** One chip's animation state. */
+	private static final class RowState {
+		final Anim in = new Anim(0, 380, Ease.OUT);
+		final Anim slot;
+		Module module;
+
+		RowState(int index) {
+			slot = new Anim(index, 340, Ease.OUT);
+		}
+	}
+}

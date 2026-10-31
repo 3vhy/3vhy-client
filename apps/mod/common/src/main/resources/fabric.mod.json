@@ -1,25 +1,29 @@
 {
 	"schemaVersion": 1,
-	"id": "threevhy",
+	"id": "eventide",
 	"version": "${version}",
-	"name": "3vhy Client",
-	"description": "The in-game side of 3vhy Client: HUD, crystal PvP tools, zoom, Discord presence and the 3vhy game window.",
-	"authors": ["3vhy"],
+	"name": "Eventide",
+	"description": "The in-game side of Eventide: HUD, crystal PvP tools, zoom, Discord presence and the Eventide game window.",
+	"authors": ["Eventide"],
 	"contact": {
-		"homepage": "https://github.com/xsaaacc-collab/3vhy-client",
-		"sources": "https://github.com/xsaaacc-collab/3vhy-client"
+		"homepage": "https://github.com/3vhy/3vhy-client",
+		"sources": "https://github.com/3vhy/3vhy-client",
+		"issues": "https://github.com/3vhy/3vhy-client/issues"
 	},
 	"license": "GPL-3.0-only",
-	"icon": "assets/threevhy/icon.png",
+	"icon": "assets/eventide/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"client": ["dev.threevhy.client.ThreevhyClient"]${gametest_entrypoint}
+		"client": ["dev.eventide.client.EventideClient"]${gametest_entrypoint}
 	},
-	"mixins": ["threevhy.mixins.json"],
+	"mixins": ["eventide.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.18.0",
 		"minecraft": "${minecraft_range}",
 		"java": ">=${java_version}",
 		"fabric-api": "*"
+	},
+	"breaks": {
+		"threevhy": "*"
 	}
 }
