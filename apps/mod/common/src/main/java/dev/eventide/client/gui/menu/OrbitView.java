@@ -19,9 +19,10 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * The Orbit (Right Shift): the menu's tabs as discs on a ring seen from slightly above. The tab at the
- * front is the big violet disc in the middle, named underneath with its tagline and how many of its mods
- * are on; the rest shrink and fade as they go round the back, the nearer ones labelled. Drag, scroll or use
+ * The Orbit (Right Shift): the menu's tabs as discs on a ring seen from slightly above, with the Eventide
+ * trident standing in the middle. The tab at the front is the big violet disc at the trident's foot, named
+ * underneath with its tagline and how many of its mods are on; the rest shrink and fade as they go round the
+ * back, the nearer ones labelled. Drag, scroll or use
  * the arrow keys to turn the ring, click a disc to bring it to the front, and click the front one (or
  * press Enter) to open that tab. It opens at once, since it's opened from the keyboard.
  */
@@ -43,6 +44,8 @@ public final class OrbitView {
 	private static final float FRONT_R = 52;
 	private static final float RING_X = 300;
 	private static final float RING_Y = 92;
+	/** How big the trident in the middle of the ring is, in design units. */
+	private static final float MARK = 210;
 	private static final int DISC = 0xFF1E1934;
 	private static final int DISC_HOVER = 0xFF2A2347;
 	private static final int PILL = 0xFF17132A;
@@ -106,13 +109,13 @@ public final class OrbitView {
 		Logo.lockup(d, w / 2f - lockup / 2f, 30, mark, cap, now);
 
 		cx = w / 2f;
-		cy = h * 0.5f - RING_Y - 20;
+		cy = h * 0.5f - RING_Y + 24;
 		int current = Math.floorMod((int) Math.round((FRONT - angle) / step), tabs.size());
 		if (current != front) {
 			front = current;
 			frontSince = now;
 		}
-		drawDiscs(d, angle);
+		drawDiscs(d, angle, now);
 		drawTitle(d, w, cy + RING_Y + FRONT_R + 34, now);
 		d.pop();
 	}
@@ -134,11 +137,20 @@ public final class OrbitView {
 		return FRONT_R * (0.3f + 0.7f * depth * depth);
 	}
 
-	private void drawDiscs(Draw d, double angle) {
+	/**
+	 * The discs from the back of the ring to the front, with the Eventide trident standing in the middle of
+	 * the ring: the far discs go behind it, the near ones (the front disc too) in front of its foot.
+	 */
+	private void drawDiscs(Draw d, double angle, long now) {
 		Arrays.sort(order, (a, b) -> Float.compare(depth(angle + a * step), depth(angle + b * step)));
+		boolean markDrawn = false;
 		for (int i : order) {
 			double a = angle + i * step;
 			float depth = depth(a);
+			if (!markDrawn && depth > 0.5f) {
+				drawMark(d, now);
+				markDrawn = true;
+			}
 			float r = radius(depth);
 			float x = px(a);
 			float y = py(a);
@@ -158,6 +170,12 @@ public final class OrbitView {
 			}
 			Paint.opacity(old);
 		}
+	}
+
+	/** The trident in the middle of the ring, its foot behind the front disc. */
+	private void drawMark(Draw d, long now) {
+		float size = MARK;
+		Logo.mark(d, cx - size / 2f, cy + RING_Y - FRONT_R * 0.55f - size, size, 1, now);
 	}
 
 	/** The front tab's name, tagline and how many of its mods are on. */

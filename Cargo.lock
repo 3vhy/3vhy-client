@@ -12631,7 +12631,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "threevhy_setup"
+name = "eventide_setup"
 version = "1.0.0-local"
 dependencies = [
  "dirs",
