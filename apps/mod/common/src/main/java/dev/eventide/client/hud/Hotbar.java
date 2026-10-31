@@ -57,7 +57,6 @@ public final class Hotbar {
 		float sx = x1 + 1 + SELECTED.get() * 20;
 		float sy = y1 + 1;
 		boolean white = Modules.HOTBAR_SELECTED.is("White");
-		Paint.shadow(d, sx, sy, sx + 20, sy + 20, 5, 0, 1, 5, 0, white ? 0x59000000 : Accent.glow(0.7f));
 		if (white) {
 			Paint.rect(d, sx, sy, sx + 20, sy + 20, 5, 0xF2F4F0FF);
 		} else {

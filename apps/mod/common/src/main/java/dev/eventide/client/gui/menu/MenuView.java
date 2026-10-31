@@ -2,6 +2,7 @@ package dev.eventide.client.gui.menu;
 
 import dev.eventide.client.Config;
 import dev.eventide.client.Draw;
+import dev.eventide.client.gui.Accent;
 import dev.eventide.client.module.Module;
 import dev.eventide.client.module.Module.Category;
 import dev.eventide.client.module.Modules;
@@ -25,9 +26,9 @@ import java.util.Map;
 /**
  * The Eventide mod menu, laid out like the Render menu on the website: the logo, a row of round tab buttons
  * with the active one as a sliding gradient pill, a search field ({@code /}), the tab's name and an
- * "N of M active" count, then a grid of module cards, each with a gradient icon tile, its name and
- * one line about it, a settings button and a switch. Click a card to switch it, right-click it (or its
- * settings button) for its settings, Esc for the Orbit.
+ * "N of M on" count, then a grid of module cards, each with its icon and name, one line about it, a
+ * settings button and a switch. Click a card to switch it, right-click it (or its settings button) for
+ * its settings, Esc for the Orbit.
  *
  * <p>Everything is laid out on the website mockup's 1600 x 900 canvas and scaled to fit the window, so
  * the menu is the same shape at any GUI scale, and drawn with {@link Paint}, so it's sharp at any size.
@@ -67,12 +68,12 @@ public final class MenuView {
 	private static final float TAB_GAP = 11;
 	private static final float GRID_TOP = 188;
 	private static final int COLUMNS = 4;
-	private static final float CARD_H = 138;
+	private static final float CARD_H = 104;
 	private static final float GAP_X = 21;
 	private static final float GAP_Y = 22;
 	private static final float CARD_R = 18;
 	private static final float PAD = 22;
-	private static final float TILE = 50;
+	private static final float ICON = 18;
 	private static final int REVEAL_STAGGER = 34;
 	private static final int REVEAL_TIME = 760;
 
@@ -204,7 +205,7 @@ public final class MenuView {
 		float hy = sheetBlocks ? -1 : my;
 		hits.clear();
 
-		float intro = Ease.OUT.apply((now - openedAt) / 420.0);
+		float intro = Ease.OUT.apply((now - openedAt) / (double) Tokens.T_COLOR);
 		float old = Paint.opacity(intro);
 		d.push();
 		d.scale(unit);
@@ -219,7 +220,6 @@ public final class MenuView {
 		} else {
 			drawModules(d, x0, hx, hy, now, (float) dt);
 		}
-		drawFooter(d);
 		sheet.draw(d, canvasW, canvasH, mx, my, now);
 		drawNotice(d, now);
 		d.pop();
@@ -269,7 +269,7 @@ public final class MenuView {
 		}
 		float px = pillX.get();
 		float pw = pillW.get();
-		Widgets.accentPill(d, px, top, px + pw, top + TAB_SIZE, 1);
+		Paint.rect(d, px, top, px + pw, top + TAB_SIZE, TAB_SIZE / 2f, 0x29FFFFFF);
 		Tab active = TABS.get(tab);
 		float iconSize = 18;
 		float ix = px + 18;
@@ -311,9 +311,8 @@ public final class MenuView {
 	private void drawTitle(Draw d, float x0, String title, String subtitle, long now) {
 		float t = Ease.OUT.apply((now - tabSince) / (double) Tokens.T_CAPTION);
 		float old = Paint.opacity(Paint.opacity() * t);
-		float rise = (1 - t) * 10;
-		Type.draw(d, title, x0, 112 + rise, 26, Weight.BOLD, Tokens.TEXT);
-		Type.draw(d, subtitle, x0, 151 + rise, 12.5f, Weight.MEDIUM, Tokens.TEXT_2);
+		Type.draw(d, title, x0, 112, 26, Weight.BOLD, Tokens.TEXT);
+		Type.draw(d, subtitle, x0, 151, 12.5f, Weight.MEDIUM, Tokens.TEXT_2);
 		Paint.opacity(old);
 	}
 
@@ -334,12 +333,11 @@ public final class MenuView {
 		}
 		float right = x0 + CONTENT_W;
 		if (toggleable > 0) {
-			String count = on + " of " + toggleable + " active";
+			String count = on + " of " + toggleable + " on";
 			float cap = 11.5f;
 			float tw = Type.width(count, cap, Weight.MEDIUM);
 			Type.draw(d, count, right - tw, 125, cap, Weight.MEDIUM, Tokens.TEXT_2);
-			Paint.glow(d, right - tw - 12, 125 + cap / 2f, 3.5f, 8, Paint.fade(Tokens.MAGENTA, 0.6f));
-			Paint.circle(d, right - tw - 12, 125 + cap / 2f, 3.5f, Tokens.MAGENTA);
+			Paint.circle(d, right - tw - 12, 125 + cap / 2f, 3, Accent.get());
 			right -= tw + 30;
 		}
 		if (category() == Category.HUD && !searching) {
@@ -352,7 +350,7 @@ public final class MenuView {
 			editHover.set(hover);
 			float e = editHover.get();
 			Widgets.control(d, bx, by, bx + w, by + 32, 16, e);
-			Paint.icon(d, "move", bx + 16, by + 9, 14, Widgets.mixColor(Tokens.LILAC, 0xFFFFFFFF, e));
+			Paint.icon(d, "move", bx + 16, by + 9, 14, Widgets.mixColor(Tokens.TEXT_2, Tokens.TEXT, e));
 			Type.draw(d, label, bx + 38, by + (32 - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 			hits.add(bx, by, bx + w, by + 32, host::openHudEditor);
 		}
@@ -385,7 +383,7 @@ public final class MenuView {
 			float ty = GRID_TOP + (barH - thumb) * (float) (shownScroll / maxScroll);
 			float bx = x0 + CONTENT_W + 14;
 			Paint.rect(d, bx, GRID_TOP, bx + 3, GRID_TOP + barH, 1.5f, 0x0FFFFFFF);
-			Paint.rect(d, bx, ty, bx + 3, ty + thumb, 1.5f, 0x40CDB6FF);
+			Paint.rect(d, bx, ty, bx + 3, ty + thumb, 1.5f, 0x33FFFFFF);
 		}
 		if (shown.isEmpty()) {
 			String hint = searching ? "Try another word, or Esc to clear the search" : "Nothing here yet";
@@ -410,72 +408,49 @@ public final class MenuView {
 		state.hover.set(hover);
 		float h = state.hover.get();
 		float old = Paint.opacity(Paint.opacity() * reveal);
-		float lift = -Tokens.HOVER_LIFT * h + (1 - reveal) * Tokens.REVEAL_RISE;
-		float top = y + lift;
+		float top = y + (1 - reveal) * Tokens.REVEAL_RISE;
 
 		Widgets.card(d, x, top, x + w, top + CARD_H, CARD_R, h);
 		float lit = module.toggleable() ? state.lit.get() : 1;
-		Widgets.iconTile(d, x + PAD, top + PAD, TILE, module.icon(), lit, h);
-		drawRipples(d, module, x, top, w, now);
+		Widgets.iconTile(d, x + PAD, top + 22, ICON, module.icon(), lit, h);
 
 		boolean hasSettings = module == Modules.PROFILES || SettingsSheet.hasPage(module, sheet.extras());
-		float toggleX = x + w - PAD - 50;
+		float toggleX = x + w - PAD - 46;
 		Runnable openSettings = module == Modules.PROFILES ? () -> switchTab(0) : () -> sheet.open(module);
 		if (module.toggleable()) {
-			Widgets.toggle(d, toggleX, top + 27, 50, 28, state.knob.get(), state.lit.get());
+			Widgets.toggle(d, toggleX, top + 18, 46, 26, state.knob.get(), state.lit.get());
 		}
+		float scx = module.toggleable() ? toggleX - 10 - 15 : x + w - PAD - 15;
+		float scy = top + 31;
 		if (hasSettings) {
-			float scx = module.toggleable() ? toggleX - 12 - 16 : x + w - PAD - 16;
-			float scy = top + 41;
-			boolean settingsHover = within(mx, my, scx - 16, scy - 16, scx + 16, scy + 16);
+			boolean settingsHover = within(mx, my, scx - 15, scy - 15, scx + 15, scy + 15);
 			state.settings.set(settingsHover);
 			float sh = state.settings.get();
-			Paint.circle(d, scx, scy, 16, Widgets.mixColor(0x0AFFFFFF, 0x1AFFFFFF, Math.max(sh, h * 0.4f)));
-			Paint.icon(d, "sliders-horizontal", scx - 7.5f, scy - 7.5f, 15, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT, sh));
+			Paint.circle(d, scx, scy, 15, Widgets.mixColor(0x0AFFFFFF, 0x1FFFFFFF, Math.max(sh, h * 0.4f)));
+			Paint.icon(d, "sliders-horizontal", scx - 7, scy - 7, 14, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT, sh));
 		}
 
+		float nameX = x + PAD + ICON + 10;
+		float nameRight = (hasSettings ? scx - 15 : module.toggleable() ? toggleX : x + w - PAD) - 10;
+		Type.draw(d, Type.fit(module.name, nameRight - nameX, 14, Weight.SEMIBOLD), nameX, top + 24.5f, 14, Weight.SEMIBOLD, Tokens.TEXT);
 		float textRight = x + w - PAD;
 		String key = host.keyFor(module);
 		if (key != null) {
-			float bw = Widgets.keyBadge(d, x + w - PAD, top + 95, 22, key);
+			float bw = Widgets.keyBadge(d, x + w - PAD, top + 58, 22, key);
 			textRight -= bw + 10;
 		}
-		Type.draw(d, Type.fit(module.name, w - 2 * PAD, 14, Weight.SEMIBOLD), x + PAD, top + 86, 14, Weight.SEMIBOLD, Tokens.TEXT);
-		Type.draw(d, Type.fit(module.description, textRight - x - PAD, 10.6f, Weight.MEDIUM), x + PAD, top + 110.5f, 10.6f, Weight.MEDIUM,
-				Tokens.TEXT_2);
+		Type.draw(d, Type.fit(module.description, textRight - x - PAD, 11, Weight.MEDIUM), x + PAD, top + 64, 11, Weight.MEDIUM, Tokens.TEXT_2);
 		Paint.opacity(old);
 
 		if (reveal < 0.5f) return;
 		Runnable primary = module.toggleable() ? () -> toggle(module) : openSettings;
 		hits.add(x, top, x + w, top + CARD_H, primary, hasSettings ? openSettings : null);
-		if (module.toggleable()) hits.add(toggleX - 4, top + 23, toggleX + 54, top + 59, () -> toggle(module), hasSettings ? openSettings : null);
-		if (hasSettings) {
-			float scx = module.toggleable() ? toggleX - 12 - 16 : x + w - PAD - 16;
-			hits.add(scx - 17, top + 24, scx + 17, top + 58, openSettings, openSettings);
-		}
+		if (module.toggleable()) hits.add(toggleX - 4, top + 14, toggleX + 50, top + 48, () -> toggle(module), hasSettings ? openSettings : null);
+		if (hasSettings) hits.add(scx - 16, scy - 16, scx + 16, scy + 16, openSettings, openSettings);
 	}
-
-	private Module rippleOwner = null;
-	private float rippleX;
-	private float rippleY;
-	private long rippleAt;
 
 	private void toggle(Module module) {
 		module.toggle();
-		rippleOwner = module;
-		rippleX = lastMouseX;
-		rippleY = lastMouseY;
-		rippleAt = System.currentTimeMillis();
-	}
-
-	private void drawRipples(Draw d, Module module, float x, float top, float w, long now) {
-		if (module != rippleOwner) return;
-		float t = (now - rippleAt) / (float) Tokens.T_RIPPLE;
-		if (t >= 1) return;
-		float e = Ease.OUT.apply(t);
-		d.enableScissor(Math.round(x), Math.round(top), Math.round(x + w), Math.round(top + CARD_H));
-		Paint.glow(d, rippleX, rippleY, 4 + e * 240, 60 + e * 80, Paint.fade(0x59CDB6FF, 1 - t));
-		d.disableScissor();
 	}
 
 	private void drawProfiles(Draw d, float x0, float mx, float my, long now) {
@@ -490,25 +465,23 @@ public final class MenuView {
 		float youW = cardW;
 		float youH = 2 * CARD_H + GAP_Y;
 		Widgets.card(d, x0, y, x0 + youW, y + youH, CARD_R, 0);
-		float face = 96;
+		float face = 72;
 		float fx = x0 + (youW - face) / 2f;
-		float fy = y + 40;
-		Paint.glow(d, fx + face / 2f, fy + face / 2f, face * 0.4f, 60, Paint.fade(Tokens.PURPLE, 0.45f));
-		Paint.rect(d, fx - 6, fy - 6, fx + face + 6, fy + face + 6, 22, 0x14FFFFFF);
-		host.drawFace(d, fx, fy, face, 18);
-		Type.center(d, Type.fit(host.playerName(), youW - 40, 16, Weight.BOLD), x0 + youW / 2f, fy + face + 26, 16, Weight.BOLD, Tokens.TEXT);
+		float fy = y + 26;
+		host.drawFace(d, fx, fy, face, 14);
+		Type.center(d, Type.fit(host.playerName(), youW - 40, 16, Weight.BOLD), x0 + youW / 2f, fy + face + 18, 16, Weight.BOLD, Tokens.TEXT);
 		String using = "Using " + config.profile;
-		Type.center(d, Type.fit(using, youW - 40, 11, Weight.MEDIUM), x0 + youW / 2f, fy + face + 52, 11, Weight.MEDIUM, Tokens.TEXT_2);
-		float ex = x0 + 24;
-		float ew = youW - 48;
-		float ey = y + youH - 24 - 40;
-		boolean editHovered = within(mx, my, ex, ey, ex + ew, ey + 40);
+		Type.center(d, Type.fit(using, youW - 40, 11, Weight.MEDIUM), x0 + youW / 2f, fy + face + 42, 11, Weight.MEDIUM, Tokens.TEXT_2);
+		float ex = x0 + 22;
+		float ew = youW - 44;
+		float ey = y + youH - 22 - 36;
+		boolean editHovered = within(mx, my, ex, ey, ex + ew, ey + 36);
 		editHover.set(editHovered);
-		Widgets.control(d, ex, ey, ex + ew, ey + 40, 20, editHover.get());
+		Widgets.control(d, ex, ey, ex + ew, ey + 36, 18, editHover.get());
 		float lw = 14 + 8 + Type.width("Edit HUD layout", 11.5f, Weight.SEMIBOLD);
-		Paint.icon(d, "move", ex + (ew - lw) / 2f, ey + 13, 14, Tokens.LILAC);
-		Type.draw(d, "Edit HUD layout", ex + (ew - lw) / 2f + 22, ey + (40 - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, Tokens.TEXT);
-		hits.add(ex, ey, ex + ew, ey + 40, host::openHudEditor);
+		Paint.icon(d, "move", ex + (ew - lw) / 2f, ey + 11, 14, Tokens.TEXT_2);
+		Type.draw(d, "Edit HUD layout", ex + (ew - lw) / 2f + 22, ey + (36 - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, Tokens.TEXT);
+		hits.add(ex, ey, ex + ew, ey + 36, host::openHudEditor);
 
 		List<String> names = config.profileNames();
 		int slot = 1;
@@ -529,16 +502,14 @@ public final class MenuView {
 		boolean active = name.equals(config.profile);
 		boolean hover = within(mx, my, x, y, x + w, y + CARD_H);
 		Widgets.card(d, x, y, x + w, y + CARD_H, CARD_R, hover ? 1 : 0);
-		Widgets.iconTile(d, x + PAD, y + PAD, TILE, "layers", active ? 1 : 0, hover ? 1 : 0);
-		Type.draw(d, Type.fit(name, w - 2 * PAD, 14, Weight.SEMIBOLD), x + PAD, y + 86, 14, Weight.SEMIBOLD, Tokens.TEXT);
-		Type.draw(d, active ? "In use now" : "Click to switch to it", x + PAD, y + 110.5f, 10.6f, Weight.MEDIUM, Tokens.TEXT_2);
+		Widgets.iconTile(d, x + PAD, y + 22, ICON, "layers", active ? 1 : 0, hover ? 1 : 0);
+		Type.draw(d, Type.fit(name, w - 2 * PAD - ICON - 10 - 70, 14, Weight.SEMIBOLD), x + PAD + ICON + 10, y + 24.5f, 14, Weight.SEMIBOLD, Tokens.TEXT);
+		Type.draw(d, active ? "In use now" : "Click to switch to it", x + PAD, y + 64, 11, Weight.MEDIUM, Tokens.TEXT_2);
 		if (active) {
-			float pw = 16 + Type.width("Active", 10, Weight.SEMIBOLD) + 14;
+			float pw = 12 + Type.width("In use", 10.5f, Weight.SEMIBOLD) + 12;
 			float px = x + w - PAD - pw;
-			Paint.rect(d, px, y + 28, px + pw, y + 54, 13, 0x29880FF9);
-			Paint.stroke(d, px, y + 28, px + pw, y + 54, 13, 1, 0x40CDB6FF);
-			Paint.circle(d, px + 11, y + 41, 3, Tokens.MAGENTA);
-			Type.draw(d, "Active", px + 19, y + 41 - 5, 10, Weight.SEMIBOLD, Tokens.LILAC);
+			Paint.rect(d, px, y + 19, px + pw, y + 43, 12, Paint.fade(Accent.get(), 0.22f));
+			Type.draw(d, "In use", px + 12, y + 31 - 5.25f, 10.5f, Weight.SEMIBOLD, Accent.text());
 			return;
 		}
 		hits.add(x, y, x + w, y + CARD_H, () -> {
@@ -546,8 +517,8 @@ public final class MenuView {
 			notice("Switched to " + name);
 		});
 		if (!name.equals(Config.DEFAULT_PROFILE)) {
-			float bx = x + w - PAD - 16;
-			float by = y + 41;
+			float bx = x + w - PAD - 15;
+			float by = y + 31;
 			boolean delHover = within(mx, my, bx - 16, by - 16, bx + 16, by + 16);
 			Paint.circle(d, bx, by, 16, delHover ? 0x33FF5C84 : 0x0AFFFFFF);
 			Paint.icon(d, "trash-2", bx - 7.5f, by - 7.5f, 15, delHover ? Tokens.LOW : Tokens.TEXT_3);
@@ -559,16 +530,15 @@ public final class MenuView {
 
 	private void drawNewProfile(Draw d, float x, float y, float w, float mx, float my, long now) {
 		Paint.rect(d, x, y, x + w, y + CARD_H, CARD_R, 0x08FFFFFF);
-		Paint.stroke(d, x, y, x + w, y + CARD_H, CARD_R, 1, 0x1FCDB6FF);
-		Type.draw(d, "New profile", x + PAD, y + PAD + 2, 14, Weight.SEMIBOLD, Tokens.TEXT);
-		Type.draw(d, "A copy of your setup, under a new name", x + PAD, y + PAD + 24, 10.6f, Weight.MEDIUM, Tokens.TEXT_2);
-		float fy = y + CARD_H - PAD - 36;
+		Paint.stroke(d, x, y, x + w, y + CARD_H, CARD_R, 1, 0x14FFFFFF);
+		Type.draw(d, "New profile from your setup", x + PAD, y + 24.5f, 14, Weight.SEMIBOLD, Tokens.TEXT);
+		float fy = y + CARD_H - 20 - 36;
 		float bw = 86;
 		float fx2 = x + w - PAD - bw - 8;
 		Widgets.field(d, x + PAD, fy, fx2, fy + 36, "pencil", newProfile, "Name it", null, typingProfile, 0, now);
 		hits.add(x + PAD, fy, fx2, fy + 36, () -> typingProfile = true);
 		float bx = x + w - PAD - bw;
-		Widgets.accentPill(d, bx, fy, bx + bw, fy + 36, 0.8f);
+		Widgets.accentPill(d, bx, fy, bx + bw, fy + 36, 0);
 		Type.center(d, "Create", bx + bw / 2f, fy + (36 - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, 0xFFFFFFFF);
 		hits.add(bx, fy, bx + bw, fy + 36, this::createProfile);
 	}
@@ -588,12 +558,6 @@ public final class MenuView {
 		}
 	}
 
-	private void drawFooter(Draw d) {
-		String hint = TABS.get(tab).category() == null && search.isEmpty() ? "Click a profile to switch to it  ·  Esc for the orbit"
-				: "Click to toggle  ·  Right-click for settings  ·  Esc for the orbit";
-		Type.center(d, hint, canvasW / 2f, canvasH - 34, 10.5f, Weight.MEDIUM, Paint.fade(Tokens.TEXT_3, 0.85f));
-	}
-
 	/** A short message in a glass pill at the bottom for a moment, like "Added Steve". */
 	public void notice(String text) {
 		notice = text;
@@ -604,16 +568,16 @@ public final class MenuView {
 		if (notice == null) return;
 		long age = now - noticeAt;
 		if (age > 2600) return;
-		float in = Ease.OUT.apply(age / 400.0);
-		float out = age > 2200 ? 1 - (age - 2200) / 400f : 1;
+		float in = Ease.OUT.apply(age / (double) Tokens.T_COLOR);
+		float out = age > 2400 ? 1 - (age - 2400) / 200f : 1;
 		float a = Math.min(in, out);
 		float cap = 11.5f;
 		float w = Type.width(notice, cap, Weight.SEMIBOLD) + 18 + 16 + 22;
 		float x = (canvasW - w) / 2f;
-		float y = canvasH - 92 + (1 - in) * 16;
+		float y = canvasH - 92 + (1 - in) * 8;
 		float old = Paint.opacity(Paint.opacity() * a);
 		Widgets.glass(d, x, y, x + w, y + 40, 20);
-		Paint.icon(d, "info", x + 18, y + 12, 16, Tokens.LILAC);
+		Paint.icon(d, "info", x + 18, y + 12, 16, Tokens.TEXT_2);
 		Type.draw(d, notice, x + 18 + 16 + 10, y + (40 - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 		Paint.opacity(old);
 	}
@@ -766,7 +730,7 @@ public final class MenuView {
 		float cy;
 
 		CardState(boolean on) {
-			knob = new Anim(on ? 1 : 0, Tokens.T_SWITCH_KNOB, Ease.SPRING);
+			knob = new Anim(on ? 1 : 0, Tokens.T_SWITCH_KNOB, Ease.OUT);
 			lit = new Anim(on ? 1 : 0, Tokens.T_SWITCH_FILL, Ease.OUT);
 		}
 	}

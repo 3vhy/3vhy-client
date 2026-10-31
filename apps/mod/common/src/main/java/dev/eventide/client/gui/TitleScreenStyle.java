@@ -332,7 +332,7 @@ public final class TitleScreenStyle {
 		}
 		float y = y1 + PANEL_PAD;
 		for (Row row : ROWS) {
-			Type.spaced(d, row.label().toUpperCase(Locale.ROOT), x1 + PANEL_PAD, y + 2, 4.2f, 0.18f, Weight.SEMIBOLD, Tokens.TEXT_3);
+			Type.draw(d, row.label(), x1 + PANEL_PAD, y + 1.6f, 5, Weight.SEMIBOLD, Tokens.TEXT_2);
 			String value = row.choice() == Modules.MAIN_MENU_TIME && row.choice().is("Live") ? "Live · " + timeOfDay() : row.choice().get();
 			Type.right(d, value, x2 - PANEL_PAD, y + 1.6f, 5, Weight.SEMIBOLD, Tokens.TEXT);
 			y += ROW_LABEL;

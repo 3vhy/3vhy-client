@@ -220,12 +220,12 @@ final class PlayerListWidget extends HudWidget {
 		float tagLeft = tagRight - Math.max(ListCard.tagWidth("ONLINE"), ListCard.tagWidth("OFFLINE"));
 		if (on > 0.01f) {
 			float tagOld = Paint.opacity(Paint.opacity() * on);
-			ListCard.tag(d, "ONLINE", tagRight, cy, Tokens.MINT);
+			ListCard.tag(d, "Online", tagRight, cy, Tokens.MINT);
 			Paint.opacity(tagOld);
 		}
 		if (on < 0.99f) {
 			float tagOld = Paint.opacity(Paint.opacity() * (1 - on));
-			ListCard.tag(d, "OFFLINE", tagRight, cy, Tokens.TEXT_3);
+			ListCard.tag(d, "Offline", tagRight, cy, Tokens.TEXT_3);
 			Paint.opacity(tagOld);
 		}
 		ListCard.name(d, row.name(), ListCard.nameX(left) + shift, tagLeft, cy, Draw.mix(Tokens.TEXT_3, Tokens.TEXT, on), shadow);

@@ -104,8 +104,6 @@ final class LyricsWidget extends HudWidget {
 			float w = Type.width(row, cap, Weight.BOLD);
 			float x = cx - w / 2f;
 			Paint.shadow(d, x - cap * 0.2f, y, x + w + cap * 0.2f, y + cap, cap * 0.5f, 0, 0, cap * 1.6f, cap * 0.2f, 0x590E0820);
-			Paint.shadow(d, x - cap * 0.3f, y - cap * 0.1f, x + w + cap * 0.3f, y + cap * 1.1f, cap * 0.6f, 0, 0, cap * 2.4f * glow, 0,
-					Accent.glow(0.5f));
 			Type.draw(d, row, x + cap * 0.07f, y + cap * 0.09f, cap, Weight.BOLD, 0xB3140A30);
 			float here = Math.max(0, Math.min(w, lit));
 			if (here < w) Type.draw(d, row, x, y, cap, Weight.BOLD, 0xB8D9CCFF);

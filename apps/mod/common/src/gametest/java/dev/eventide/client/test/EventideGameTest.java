@@ -946,6 +946,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 		check(failed, "item highlighter (AbstractContainerScreen slots)", Hooks.slotHighlightRan);
 		check(failed, "freelook camera (Camera.setRotation)", Hooks.freelookCameraRan);
 		check(failed, "own nametag in third person (shouldShowName)", Hooks.ownNametagRan);
+		check(failed, "nametags drawn as Eventide's pill (submitNameTag)", Hooks.styledNametagRan);
 		check(failed, "shiny pots (ItemStack.hasFoil)", Hooks.shinyPotRan);
 		check(failed, "TPS from server time (handleSetTime)", Hooks.timePacketRan);
 		check(failed, "custom crosshair replaces Minecraft's", Hooks.crosshairRan);

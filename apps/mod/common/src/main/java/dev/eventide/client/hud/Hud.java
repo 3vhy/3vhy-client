@@ -32,10 +32,8 @@ public final class Hud {
 		if (strength <= 0.01f) return;
 		float old = Paint.opacity(Paint.opacity() * Math.min(1, strength * 1.15f));
 		float hair = hairline(d);
-		Paint.shadow(d, x1, y1, x2, y2, r, 0, 6, 14, -5, 0xB3000000);
 		Paint.rect(d, x1, y1, x2, y2, r, Tokens.GLASS);
 		Paint.stroke(d, x1, y1, x2, y2, r, hair, 0x1FFFFFFF);
-		Paint.stroke(d, x1 + hair, y1 + hair, x2 - hair, y2 - hair, Math.max(0, r - hair), hair, Grad.down(0x1AFFFFFF, 0x00FFFFFF));
 		Paint.opacity(old);
 	}
 

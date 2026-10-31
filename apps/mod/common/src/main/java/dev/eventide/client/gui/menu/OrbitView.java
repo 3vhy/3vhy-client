@@ -2,10 +2,10 @@ package dev.eventide.client.gui.menu;
 
 import dev.eventide.client.Draw;
 import dev.eventide.client.gui.Accent;
+import dev.eventide.client.module.Module;
 import dev.eventide.client.module.Modules;
 import dev.eventide.client.ui.Anim;
 import dev.eventide.client.ui.Ease;
-import dev.eventide.client.ui.Grad;
 import dev.eventide.client.ui.Keys;
 import dev.eventide.client.ui.Logo;
 import dev.eventide.client.ui.Paint;
@@ -15,13 +15,15 @@ import dev.eventide.client.ui.Tokens;
 import dev.eventide.client.ui.Type;
 import dev.eventide.client.ui.Type.Weight;
 import dev.eventide.client.ui.Widgets;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * The Orbit (Right Shift): the menu's tabs as planets on a tilted ring around the Eventide logo, like the
- * website's renderer section. The ring spins on a spring; the planet at the front is lit and named
- * underneath. Drag, scroll or use the arrow keys to spin it, click a planet to bring it round, and click
- * the front one (or press Enter) to open that tab.
+ * The Orbit (Right Shift): the menu's tabs as discs on a ring seen from slightly above. The tab at the
+ * front is the big violet disc in the middle, named underneath with its tagline and how many of its mods
+ * are on; the rest shrink and fade as they go round the back, the nearer ones labelled. Drag, scroll or use
+ * the arrow keys to turn the ring, click a disc to bring it to the front, and click the front one (or
+ * press Enter) to open that tab. It opens at once, since it's opened from the keyboard.
  */
 public final class OrbitView {
 	/** What the Orbit needs from the game. */
@@ -35,21 +37,23 @@ public final class OrbitView {
 		boolean inWorld();
 	}
 
-	private static final float TILT = (float) Math.toRadians(-11);
+	/** The angle on the ring that is the front: the bottom of the ellipse, nearest you. */
 	private static final double FRONT = Math.PI / 2;
-	private static final int RING_POINTS = 96;
-	private static final Grad RING = new Grad(0xFF6A2CFF, 0xFFE05CF0, 90);
+	/** The front disc's radius and the ring's radii, in design units. */
+	private static final float FRONT_R = 52;
+	private static final float RING_X = 300;
+	private static final float RING_Y = 92;
+	private static final int DISC = 0xFF1E1934;
+	private static final int DISC_HOVER = 0xFF2A2347;
+	private static final int PILL = 0xFF17132A;
 
 	private final Host host;
 	private final List<MenuView.Tab> tabs = MenuView.TABS;
 	private final double step;
 	private final Spring spin;
 	private final Anim[] hover;
-	private final long openedAt = System.currentTimeMillis();
-	private final float[] ringXY = new float[(RING_POINTS + 1) * 2];
-	private final int[] ringColors = new int[RING_POINTS + 1];
-	private final float[] dashXY = new float[14 * 2];
-	private final int[] dashColors = new int[14];
+	private final Anim[] lit;
+	private final Integer[] order;
 	private int front = -1;
 	private long frontSince = 0;
 	private boolean dragging = false;
@@ -61,19 +65,21 @@ public final class OrbitView {
 	private float unit = 1;
 	private float cx;
 	private float cy;
-	private float rx;
-	private float ry;
 	private float mouseX;
 	private float mouseY;
 
 	public OrbitView(Host host, int startTab) {
 		this.host = host;
 		this.step = Math.PI * 2 / tabs.size();
-		double target = FRONT - startTab * step;
-		this.spin = new Spring(target - 0.9, 55, 11.5);
-		spin.target(target);
+		this.spin = new Spring(FRONT - startTab * step, 260, 30);
 		this.hover = new Anim[tabs.size()];
-		for (int i = 0; i < tabs.size(); i++) hover[i] = new Anim(0, Tokens.T_COLOR, Ease.OUT);
+		this.lit = new Anim[tabs.size()];
+		this.order = new Integer[tabs.size()];
+		for (int i = 0; i < tabs.size(); i++) {
+			hover[i] = new Anim(0, Tokens.T_HOVER, Ease.OUT);
+			lit[i] = new Anim(i == startTab ? 1 : 0, Tokens.T_COLOR, Ease.OUT);
+			order[i] = i;
+		}
 	}
 
 	/** The tab at the front right now. */
@@ -89,142 +95,103 @@ public final class OrbitView {
 		mouseX = (float) (mx / unit);
 		mouseY = (float) (my / unit);
 		double angle = spin.update();
-		float intro = Ease.OUT.apply((now - openedAt) / 700.0);
-		float old = Paint.opacity(Ease.OUT.apply((now - openedAt) / 380.0));
 		d.push();
 		d.scale(unit);
 		Sky.backdrop(d, w, h, host.inWorld(), 1);
 		if (Modules.THEME_SNOW.get()) Sky.stars(d, w, h, (float) (Modules.THEME_SNOW_AMOUNT.get() / 100.0), 1, now);
 
-		float size = Math.min(w * 0.58f, 980);
-		cx = w / 2f;
-		cy = h / 2f - 46;
-		rx = size * 0.44f * (0.9f + 0.1f * intro);
-		ry = size * 0.15f * (0.9f + 0.1f * intro);
+		float mark = 26;
+		float cap = 12;
+		float lockup = mark * 1.24f + Logo.wordmarkWidth(cap);
+		Logo.lockup(d, w / 2f - lockup / 2f, 30, mark, cap, now);
 
+		cx = w / 2f;
+		cy = h * 0.5f - RING_Y - 20;
 		int current = Math.floorMod((int) Math.round((FRONT - angle) / step), tabs.size());
 		if (current != front) {
 			front = current;
 			frontSince = now;
 		}
-
-		drawRing(d, false, now);
-		drawPlanets(d, angle, false, now);
-		drawCore(d, size, now);
-		drawRing(d, true, now);
-		drawPlanets(d, angle, true, now);
-		drawLabel(d, w, cy + ry + size * 0.16f, now);
+		drawDiscs(d, angle);
+		drawTitle(d, w, cy + RING_Y + FRONT_R + 34, now);
 		d.pop();
-		Paint.opacity(old);
 	}
 
 	private float px(double a) {
-		float x = (float) Math.cos(a) * rx;
-		float y = (float) Math.sin(a) * ry;
-		return cx + x * (float) Math.cos(TILT) - y * (float) Math.sin(TILT);
+		return cx + (float) Math.cos(a) * RING_X;
 	}
 
 	private float py(double a) {
-		float x = (float) Math.cos(a) * rx;
-		float y = (float) Math.sin(a) * ry;
-		return cy + x * (float) Math.sin(TILT) + y * (float) Math.cos(TILT);
+		return cy + (float) Math.sin(a) * RING_Y;
 	}
 
-	/** One half of the ring, as on the website: the back half faint and thin, the front half bright. */
-	private void drawRing(Draw d, boolean frontHalf, long now) {
-		double start = frontHalf ? 0 : Math.PI;
-		int n = RING_POINTS / 2;
-		float alpha = frontHalf ? 0.95f : 0.55f;
-		float glowAlpha = frontHalf ? 0.16f : 0.08f;
-		for (int pass = 0; pass < 2; pass++) {
-			for (int i = 0; i <= n; i++) {
-				double a = start + Math.PI * i / n;
-				float x = px(a);
-				float y = py(a);
-				ringXY[2 * i] = x;
-				ringXY[2 * i + 1] = y;
-				int c = RING.at(x, y, cx - rx, cy - ry, cx + rx, cy + ry);
-				ringColors[i] = Paint.fade(c, pass == 0 ? glowAlpha : alpha);
-			}
-			Paint.line(d, ringXY, ringColors, n + 1, false, pass == 0 ? 7 : frontHalf ? 2 : 1.4f);
-		}
-		double run = (now % 9000) / 9000.0 * Math.PI * 2;
-		double length = Math.PI * 2 * 0.04;
-		boolean runFront = Math.sin(run + length / 2) > 0;
-		if (runFront != frontHalf) return;
-		for (int i = 0; i < 14; i++) {
-			double a = run + length * i / 13;
-			dashXY[2 * i] = px(a);
-			dashXY[2 * i + 1] = py(a);
-			float edge = 1 - Math.abs(i - 6.5f) / 6.5f;
-			dashColors[i] = Paint.fade(0xFFFFFFFF, 0.25f + 0.75f * edge);
-		}
-		Paint.glow(d, dashXY[14], dashXY[15], 3, 14, 0x99EBC8FF);
-		Paint.line(d, dashXY, dashColors, 14, false, 2);
+	/** How near the front a disc at angle {@code a} is, 0 at the back to 1 at the front. */
+	private static float depth(double a) {
+		return ((float) Math.sin(a) + 1) / 2f;
 	}
 
-	private void drawCore(Draw d, float size, long now) {
-		float mark = size * 0.33f;
-		float breathe = 1 + 0.025f * (float) Math.sin(now / 2600.0 * Math.PI * 2);
-		float m = mark * breathe;
-		float x = cx - m / 2f;
-		float y = cy - m * 0.6f;
-		Paint.glow(d, cx, cy - m * 0.1f, m * 0.55f, m * 0.9f, Paint.fade(0xFF9628FA, 0.3f + 0.06f * (breathe - 1) * 40));
-		Logo.mark(d, x, y, m, 1, now);
+	private static float radius(float depth) {
+		return FRONT_R * (0.3f + 0.7f * depth * depth);
 	}
 
-	private void drawPlanets(Draw d, double angle, boolean frontHalf, long now) {
-		for (int i = 0; i < tabs.size(); i++) {
+	private void drawDiscs(Draw d, double angle) {
+		Arrays.sort(order, (a, b) -> Float.compare(depth(angle + a * step), depth(angle + b * step)));
+		for (int i : order) {
 			double a = angle + i * step;
-			float sin = (float) Math.sin(a);
-			if ((sin > 0) != frontHalf) continue;
-			float depth = (sin + 1) / 2f;
-			float scale = 0.6f + 0.4f * depth;
-			float alpha = 0.3f + 0.7f * depth;
-			float r = 33 * scale;
+			float depth = depth(a);
+			float r = radius(depth);
 			float x = px(a);
 			float y = py(a);
 			boolean isFront = i == front;
-			boolean over = Math.hypot(mouseX - x, mouseY - y) <= r;
-			hover[i].set(over);
+			hover[i].set(!isFront && Math.hypot(mouseX - x, mouseY - y) <= r);
+			lit[i].set(isFront);
 			float hv = hover[i].get();
-			float old = Paint.opacity(Paint.opacity() * alpha);
-			Paint.shadow(d, x - r, y - r, x + r, y + r, r, 0, r * 0.35f, r * 0.8f, -r * 0.35f, 0xE6000000);
-			if (isFront) {
-				float lit = Ease.OUT.apply((System.currentTimeMillis() - frontSince) / 400.0);
-				Paint.glow(d, x, y, r, 34 * lit, Accent.glow(0.9f * lit));
-				Paint.circle(d, x, y, r, Accent.primary());
-				Paint.glow(d, x - r * 0.32f, y - r * 0.44f, r * 0.3f, r * 0.7f, 0x59FFFFFF);
-				Paint.ring(d, x, y, r, 1, 0x59FFFFFF);
-			} else {
-				Paint.circle(d, x, y, r, Widgets.mixColor(0xD1221C3C, 0xE02A2350, hv));
-				Paint.glow(d, x - r * 0.32f, y - r * 0.44f, r * 0.25f, r * 0.6f, 0x29FFFFFF);
-				Paint.ring(d, x, y, r, 1, Widgets.mixColor(0x21FFFFFF, 0x4DCDB6FF, hv));
-			}
-			float icon = 24 * scale;
-			int color = isFront ? 0xFFFFFFFF : Widgets.mixColor(Tokens.TEXT_2, Tokens.TEXT, hv);
+			float on = lit[i].get();
+			float old = Paint.opacity(Paint.opacity() * (0.22f + 0.78f * (float) Math.pow(depth, 1.5)));
+			int fill = Widgets.mixColor(Widgets.mixColor(DISC, DISC_HOVER, hv), Accent.get(), on);
+			Paint.circle(d, x, y, r, fill);
+			float icon = r * (isFront ? 0.6f : 0.66f);
+			int color = Widgets.mixColor(Widgets.mixColor(Tokens.TEXT_2, Tokens.TEXT, hv), 0xFFFFFFFF, on);
 			Paint.icon(d, tabs.get(i).icon(), x - icon / 2f, y - icon / 2f, icon, color);
+			if (!isFront && depth > 0.42f) {
+				Type.center(d, tabs.get(i).name(), x, y + r + 9, 11.5f, Weight.MEDIUM, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT_2, hv));
+			}
 			Paint.opacity(old);
 		}
 	}
 
-	private void drawLabel(Draw d, float w, float top, long now) {
-		float cap = 10.5f;
-		String hint = "opens the Orbit";
-		float kw = Widgets.kbdWidth("Right Shift", cap);
-		float total = kw + 8 + Type.width(hint, cap, Weight.MEDIUM);
-		float kx = w / 2f - total / 2f;
-		Widgets.kbd(d, kx, top, "Right Shift", cap);
-		Type.draw(d, hint, kx + kw + 8, top + (cap * 2.4f - cap) / 2f, cap, Weight.MEDIUM, Tokens.TEXT_3);
+	/** The front tab's name, tagline and how many of its mods are on. */
+	private void drawTitle(Draw d, float w, float top, long now) {
 		MenuView.Tab tab = tabs.get(Math.max(0, front));
-		float t = Ease.OUT.apply((now - frontSince) / 600.0);
-		float rise = (1 - t) * 10;
-		float old = Paint.opacity(Paint.opacity() * t);
-		Type.center(d, tab.name(), w / 2f, top + 46 + rise, 22, Weight.BOLD, Tokens.TEXT);
-		Type.center(d, tab.tagline(), w / 2f, top + 80 + rise, 12.5f, Weight.MEDIUM, Tokens.TEXT_2);
+		float old = Paint.opacity(Paint.opacity() * Ease.OUT.apply((now - frontSince) / (double) Tokens.T_COLOR));
+		Type.center(d, tab.name(), w / 2f, top, 26, Weight.BOLD, Tokens.TEXT);
+		Type.center(d, tab.tagline(), w / 2f, top + 40, 13, Weight.MEDIUM, Tokens.TEXT_2);
+		String count = count(tab);
+		if (count != null) {
+			float pillCap = 11.5f;
+			float textW = Type.width(count, pillCap, Weight.MEDIUM);
+			float pw = textW + 34;
+			float ph = 26;
+			float x = w / 2f - pw / 2f;
+			float y = top + 66;
+			Paint.rect(d, x, y, x + pw, y + ph, ph / 2f, PILL);
+			Paint.circle(d, x + 14, y + ph / 2f, 3, Accent.get());
+			Type.draw(d, count, x + 24, y + (ph - pillCap) / 2f, pillCap, Weight.MEDIUM, Tokens.TEXT_2);
+		}
 		Paint.opacity(old);
-		String help = "Drag or scroll to spin  ·  Click or Enter to open  ·  Esc to close";
-		Type.center(d, help, w / 2f, top + 122, 10.5f, Weight.MEDIUM, Paint.fade(Tokens.TEXT_3, 0.85f));
+	}
+
+	/** "9 mods · 2 on" for a category tab, or null for Profile. */
+	private static String count(MenuView.Tab tab) {
+		if (tab.category() == null) return null;
+		int all = 0;
+		int on = 0;
+		for (Module module : Modules.ALL) {
+			if (module.category != tab.category() || !module.toggleable()) continue;
+			all++;
+			if (module.enabled()) on++;
+		}
+		return all + (all == 1 ? " mod" : " mods") + " · " + on + " on";
 	}
 
 	private void spinTo(int tab) {
@@ -239,29 +206,26 @@ public final class OrbitView {
 		spinTo(Math.floorMod(front() + steps, tabs.size()));
 	}
 
-	/** The planet under the mouse, nearest first, or -1. */
-	private int planetAt(float x, float y) {
+	/** The disc under the mouse, nearest first, or -1. */
+	private int discAt(float x, float y) {
 		int best = -1;
-		float bestDepth = -2;
+		float bestDepth = -1;
 		double angle = spin.value();
 		for (int i = 0; i < tabs.size(); i++) {
 			double a = angle + i * step;
-			float sin = (float) Math.sin(a);
-			float r = 33 * (0.6f + 0.4f * (sin + 1) / 2f);
-			if (Math.hypot(x - px(a), y - py(a)) <= r && sin > bestDepth) {
+			float depth = depth(a);
+			if (Math.hypot(x - px(a), y - py(a)) <= radius(depth) && depth > bestDepth) {
 				best = i;
-				bestDepth = sin;
+				bestDepth = depth;
 			}
 		}
 		return best;
 	}
 
 	public boolean mouseClicked(double x, double y, int button) {
-		float mx = (float) (x / unit);
-		float my = (float) (y / unit);
 		dragging = true;
 		dragged = false;
-		dragLastX = mx;
+		dragLastX = x / unit;
 		dragLastAt = System.nanoTime();
 		velocity = 0;
 		return true;
@@ -269,12 +233,12 @@ public final class OrbitView {
 
 	public boolean mouseDragged(double x, double y) {
 		if (!dragging) return false;
-		float mx = (float) (x / unit);
+		double mx = x / unit;
 		double dx = mx - dragLastX;
 		if (Math.abs(dx) > 2) dragged = true;
 		if (!dragged) return true;
 		long now = System.nanoTime();
-		double delta = -dx / Math.max(1, rx) * 1.1;
+		double delta = -dx / RING_X;
 		spin.push(delta);
 		velocity = delta / Math.max(1e-3, (now - dragLastAt) / 1e9);
 		dragLastX = mx;
@@ -287,21 +251,14 @@ public final class OrbitView {
 		dragging = false;
 		if (dragged) {
 			double fling = spin.value() + velocity * 0.12;
-			int nearest = Math.floorMod((int) Math.round((FRONT - fling) / step), tabs.size());
-			spinTo(nearest);
+			spinTo(Math.floorMod((int) Math.round((FRONT - fling) / step), tabs.size()));
 			return true;
 		}
-		float mx = (float) (x / unit);
-		float my = (float) (y / unit);
-		int planet = planetAt(mx, my);
-		boolean onCore = Math.hypot(mx - cx, my - cy) < rx * 0.3f;
-		if (planet >= 0 && planet != front()) {
-			host.clickSound();
-			spinTo(planet);
-		} else if (planet == front() || onCore) {
-			host.clickSound();
-			host.open(front());
-		}
+		int disc = discAt((float) (x / unit), (float) (y / unit));
+		if (disc < 0) return true;
+		host.clickSound();
+		if (disc != front()) spinTo(disc);
+		else host.open(front());
 		return true;
 	}
 

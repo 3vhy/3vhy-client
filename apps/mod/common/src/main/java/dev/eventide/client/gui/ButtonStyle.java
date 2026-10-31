@@ -25,10 +25,11 @@ import net.minecraft.network.chat.contents.TranslatableContents;
  */
 public final class ButtonStyle {
 	private static final Map<AbstractWidget, Anim> HOVER = new WeakHashMap<>();
-	private static final Grad FILL = Grad.down(0xB8615790, 0xB8433C6C);
-	private static final Grad FILL_HOVER = Grad.down(0xD8796CB0, 0xD8564C8C);
-	private static final Grad EDGE = Grad.down(0x8CFFFFFF, 0x14FFFFFF);
-	private static final Grad EDGE_HOVER = Grad.down(0xB3FFFFFF, 0x26FFFFFF);
+	private static final int FILL = 0xCC2B2546;
+	private static final int FILL_HOVER = 0xE03A335C;
+	private static final int EDGE = 0x24FFFFFF;
+	private static final int EDGE_HOVER = 0x47FFFFFF;
+	private static final int TRACK = 0xCC1F1A35;
 
 	private ButtonStyle() {
 	}
@@ -93,19 +94,12 @@ public final class ButtonStyle {
 		return true;
 	}
 
-	/** The glass pill itself, also used by Eventide's own title screen buttons. */
+	/** The pill itself, also used by Eventide's own title screen buttons: one flat tone with a 1px edge, a step lighter on hover. */
 	public static void pill(Draw d, float x1, float y1, float x2, float y2, float hover, boolean focused) {
 		float r = (y2 - y1) / 2f;
 		float hair = 1f / Math.max(1, Paint.density(d));
-		Paint.shadow(d, x1, y1, x2, y2, r, 0, (y2 - y1) * 0.12f, (y2 - y1) * 0.45f, -(y2 - y1) * 0.1f, 0x59000000);
-		if (hover > 0.01f) Paint.shadow(d, x1, y1, x2, y2, r, 0, 0, (y2 - y1) * 0.7f, -(y2 - y1) * 0.18f, Paint.fade(Accent.glow(0.75f), hover));
-		Paint.rect(d, x1, y1, x2, y2, r, FILL);
-		if (hover > 0.01f) {
-			float old = Paint.opacity(Paint.opacity() * hover);
-			Paint.rect(d, x1, y1, x2, y2, r, FILL_HOVER);
-			Paint.opacity(old);
-		}
-		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(hair, 0.5f), hover > 0.5f ? EDGE_HOVER : EDGE);
+		Paint.rect(d, x1, y1, x2, y2, r, Widgets.mixColor(FILL, FILL_HOVER, hover));
+		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(hair, 0.5f), Widgets.mixColor(EDGE, EDGE_HOVER, hover));
 		if (focused) Paint.stroke(d, x1 - 1, y1 - 1, x2 + 1, y2 + 1, r + 1, Math.max(hair, 0.5f), Paint.fade(Accent.lighten(Accent.get(), 0.3f), 0.9f));
 	}
 
@@ -121,17 +115,15 @@ public final class ButtonStyle {
 		float r = h / 2f;
 		double value = ((AbstractSliderButtonAccessor) slider).eventide$value();
 		float hair = 1f / Math.max(1, Paint.density(d));
-		Paint.shadow(d, x1, y1, x2, y2, r, 0, h * 0.12f, h * 0.45f, -h * 0.1f, 0x59000000);
-		Paint.rect(d, x1, y1, x2, y2, r, Grad.down(0xA0332C55, 0xA0241F40));
+		Paint.rect(d, x1, y1, x2, y2, r, TRACK);
 		float inset = h * 0.16f;
 		float fx = x1 + inset + (float) Math.max(0, Math.min(1, value)) * (x2 - x1 - 2 * inset - (h - 2 * inset)) + (h - 2 * inset);
 		float old = Paint.opacity(Paint.opacity() * (0.55f + 0.45f * hover));
 		Paint.rect(d, x1 + inset, y1 + inset, fx, y2 - inset, r - inset, Accent.bar());
 		Paint.opacity(old);
-		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(hair, 0.5f), hover > 0.5f ? EDGE_HOVER : EDGE);
+		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(hair, 0.5f), Widgets.mixColor(EDGE, EDGE_HOVER, hover));
 		float handleW = Math.max(1.5f, h * 0.12f);
 		float hx = Math.max(x1 + inset + handleW / 2f, fx - handleW / 2f - inset * 0.5f);
-		Paint.shadow(d, hx - handleW / 2f, y1 + inset, hx + handleW / 2f, y2 - inset, handleW / 2f, 0, 0, h * 0.25f, 0, Accent.glow(0.6f));
 		Paint.rect(d, hx - handleW / 2f, y1 + inset * 0.6f, hx + handleW / 2f, y2 - inset * 0.6f, handleW / 2f, 0xF2FFFFFF);
 		label(d, slider.getMessage().getString(), x1, y1, x2, y2);
 	}

@@ -56,7 +56,7 @@ public final class SettingsSheet {
 	private final Anim open = new Anim(0, Tokens.T_SHEET, Ease.OUT);
 	private final Map<Setting, Anim[]> toggles = new HashMap<>();
 	private final Map<Setting, Anim> segments = new HashMap<>();
-	private final Anim headKnob = new Anim(0, Tokens.T_SWITCH_KNOB, Ease.SPRING);
+	private final Anim headKnob = new Anim(0, Tokens.T_SWITCH_KNOB, Ease.OUT);
 	private final Anim headLit = new Anim(0, Tokens.T_SWITCH_FILL, Ease.OUT);
 	private Module module;
 	private Module closing;
@@ -251,7 +251,7 @@ public final class SettingsSheet {
 		float right = x + w;
 		if (setting instanceof Setting.Toggle toggle) {
 			Anim[] anims = toggles.computeIfAbsent(setting, s -> new Anim[] {
-					new Anim(toggle.get() ? 1 : 0, Tokens.T_SWITCH_KNOB, Ease.SPRING), new Anim(toggle.get() ? 1 : 0, Tokens.T_SWITCH_FILL, Ease.OUT)});
+					new Anim(toggle.get() ? 1 : 0, Tokens.T_SWITCH_KNOB, Ease.OUT), new Anim(toggle.get() ? 1 : 0, Tokens.T_SWITCH_FILL, Ease.OUT)});
 			anims[0].set(toggle.get());
 			anims[1].set(toggle.get());
 			Widgets.toggle(d, right - 40, y + 19, 40, 24, anims[0].get(), anims[1].get());
@@ -313,7 +313,6 @@ public final class SettingsSheet {
 				boolean selected = (color.get() | 0xFF000000) == swatch;
 				boolean hover = within(mx, my, sx, sy, sx + size, sy + size);
 				if (selected) {
-					Paint.glow(d, sx + size / 2f, sy + size / 2f, size / 2f, 12, Paint.fade(swatch, 0.55f));
 					Paint.ring(d, sx + size / 2f, sy + size / 2f, size / 2f + 3.5f, 1.6f, 0xE6FFFFFF);
 				}
 				Paint.circle(d, sx + size / 2f, sy + size / 2f, size / 2f - (hover && !selected ? 0 : 1), swatch);

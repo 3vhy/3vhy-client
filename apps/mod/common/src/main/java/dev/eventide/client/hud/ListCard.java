@@ -51,11 +51,8 @@ final class ListCard {
 		float tx = left + PAD;
 		float cy = y + HEADER / 2f;
 		float r = 12 * K;
-		Paint.shadow(d, tx, cy - TILE / 2f, tx + TILE, cy + TILE / 2f, r, 0, 0, 10 * K, 0, Accent.glow(0.55f));
-		Paint.rect(d, tx, cy - TILE / 2f, tx + TILE, cy + TILE / 2f, r, Accent.tile());
-		Paint.stroke(d, tx, cy - TILE / 2f, tx + TILE, cy + TILE / 2f, r, Hud.hairline(d), Grad.down(0x4DFFFFFF, 0x00FFFFFF));
-		float size = TILE * 0.56f;
-		Paint.icon(d, icon, tx + (TILE - size) / 2f, cy - size / 2f, size, 0xFFFFFFFF);
+		float size = TILE * 0.62f;
+		Paint.icon(d, icon, tx + (TILE - size) / 2f, cy - size / 2f, size, Accent.text());
 		float x = tx + TILE + 21 * K;
 		String fitted = Type.fit(title, maxRight - x - 4, TITLE_CAP, Weight.SEMIBOLD);
 		Hud.text(d, fitted, x, cy - TITLE_CAP / 2f, TITLE_CAP, Weight.SEMIBOLD, Tokens.TEXT, shadow);
@@ -146,7 +143,7 @@ final class ListCard {
 	}
 
 	static float tagWidth(String text) {
-		return Type.spacedWidth(text, TAG_CAP, 0.08f, Weight.BOLD) + 24 * K;
+		return Type.width(text, TAG_CAP, Weight.BOLD) + 24 * K;
 	}
 
 	/** A small spaced-out uppercase tag in {@code color}, its right end at {@code right}; returns its left edge. */
@@ -154,7 +151,7 @@ final class ListCard {
 		float x1 = right - tagWidth(text);
 		Paint.rect(d, x1, cy - TAG_H / 2f, right, cy + TAG_H / 2f, TAG_H / 2f, Paint.fade(color, 0.14f));
 		Paint.stroke(d, x1, cy - TAG_H / 2f, right, cy + TAG_H / 2f, TAG_H / 2f, Math.max(Hud.hairline(d), 0.5f), Paint.fade(color, 0.6f));
-		Type.spaced(d, text, x1 + 12 * K, cy - TAG_CAP / 2f, TAG_CAP, 0.08f, Weight.BOLD, color);
+		Type.draw(d, text, x1 + 12 * K, cy - TAG_CAP / 2f, TAG_CAP, Weight.BOLD, color);
 		return x1;
 	}
 

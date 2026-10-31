@@ -88,21 +88,20 @@ public final class Tokens {
 	public static final float R_PANEL = 24;
 	public static final float R_PILL = 999;
 
-	// Motion, in milliseconds
-	public static final int T_SWITCH_KNOB = 500;
-	public static final int T_SWITCH_FILL = 350;
-	public static final int T_HOVER = 500;
-	public static final int T_COLOR = 300;
-	public static final int T_INDICATOR = 550;
-	public static final int T_PRESS = 140;
-	public static final int T_CAPTION = 800;
-	public static final int T_REVEAL = 1000;
-	public static final int T_REVEAL_MOVE = 1150;
-	public static final int T_STAGGER = 80;
-	public static final int T_SHEET = 450;
+	// Motion, in milliseconds. UI moves stay under 300ms and ease out (hover and press faster still), so
+	// the menus answer at once; nothing that a key opens animates on the way in.
+	public static final int T_SWITCH_KNOB = 180;
+	public static final int T_SWITCH_FILL = 160;
+	public static final int T_HOVER = 150;
+	public static final int T_COLOR = 160;
+	public static final int T_INDICATOR = 240;
+	public static final int T_PRESS = 120;
+	public static final int T_CAPTION = 200;
+	public static final int T_REVEAL = 240;
+	public static final int T_REVEAL_MOVE = 280;
+	public static final int T_STAGGER = 40;
+	public static final int T_SHEET = 260;
 	public static final int T_CROSSFADE = 1200;
-	public static final int T_RIPPLE = 900;
-	/** How far things rise as they appear, and how far a hovered card lifts. */
-	public static final float REVEAL_RISE = 22;
-	public static final float HOVER_LIFT = 3;
+	/** How far things rise as they appear. */
+	public static final float REVEAL_RISE = 8;
 }

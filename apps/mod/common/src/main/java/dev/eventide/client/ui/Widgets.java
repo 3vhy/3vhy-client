@@ -5,106 +5,73 @@ import dev.eventide.client.gui.Accent;
 import dev.eventide.client.ui.Type.Weight;
 
 /**
- * Eventide's controls, drawn the way the website draws them: switches, icon tiles, round icon buttons, the
- * gradient pill, search field, key caps, segmented pickers, sliders and glass panels. Sizes are in
- * layout units (one CSS pixel on the site); callers scale the whole screen. Animation state (hover,
- * on/off) comes in as 0..1 values from {@link Anim}s the caller keeps, so nothing here allocates state.
+ * Eventide's controls: switches, module icons, round icon buttons, the accent pill, search field, key caps,
+ * segmented pickers, sliders, panels and cards. They're flat: each surface is one tone step off the one
+ * under it, edges are a single 1px line, and the accent colour goes only on what's on or chosen. Nothing
+ * at rest has a glow, a sheen or a gradient. Sizes are in layout units; callers scale the whole screen.
+ * Animation state (hover, on/off) comes in as 0..1 values from {@link Anim}s the caller keeps, so nothing
+ * here allocates state.
  */
 public final class Widgets {
-	private static final Grad CONTROL_FILL = Grad.down(0x17FFFFFF, 0x08FFFFFF);
-	private static final Grad CONTROL_FILL_HOVER = Grad.down(0x29FFFFFF, 0x12FFFFFF);
-	private static final Grad CONTROL_EDGE = Grad.down(0x3DFFFFFF, 0x0DFFFFFF);
-	private static final Grad CONTROL_EDGE_HOVER = Grad.down(0x85E2D4FF, 0x2ECDB6FF);
-	private static final Grad FIELD_FILL = Grad.down(0x12FFFFFF, 0x06FFFFFF);
-	private static final Grad FIELD_FILL_HOVER = Grad.down(0x1CFFFFFF, 0x0BFFFFFF);
-	private static final Grad SWITCH_FILL = Grad.down(0x2EFFFFFF, 0x14FFFFFF);
-	private static final Grad SHEEN = Grad.down(0x2EFFFFFF, 0x00FFFFFF);
-	private static final Grad SHEEN_EDGE = Grad.down(0x80FFFFFF, 0x14FFFFFF);
+	/** Surfaces, one tone step apart: a control on a card on the sky. */
+	private static final int CONTROL_FILL = 0x14FFFFFF;
+	private static final int CONTROL_FILL_HOVER = 0x24FFFFFF;
+	private static final int CONTROL_EDGE = 0x1FFFFFFF;
+	private static final int CONTROL_EDGE_HOVER = 0x38FFFFFF;
+	private static final int SWITCH_OFF = 0xFF2E2846;
+	private static final int PANEL = 0xF0120E22;
+	private static final int PANEL_EDGE = 0x1AFFFFFF;
+	private static final int CARD = 0xE6171329;
+	private static final int CARD_HOVER = 0xEB201B38;
+	private static final int CARD_EDGE = 0x14FFFFFF;
 
 	private Widgets() {
 	}
 
-	/**
-	 * A switch, {@code w} x {@code h} (the site's is 40 x 24): {@code knob} is how far the knob has slid
-	 * (it overshoots a little on its spring) and {@code lit} how far the track has turned to the accent.
-	 */
+	/** A switch, {@code w} x {@code h}: {@code knob} is how far the knob has slid and {@code lit} how far the track has turned to the accent. */
 	public static void toggle(Draw d, float x, float y, float w, float h, float knob, float lit) {
 		float r = h / 2f;
-		if (lit > 0.01f) Paint.shadow(d, x, y, x + w, y + h, r, 0, 0, 16, -4, Accent.glow(0.9f * lit));
-		Paint.rect(d, x, y, x + w, y + h, r, SWITCH_FILL);
-		Paint.stroke(d, x, y, x + w, y + h, r, 1, CONTROL_EDGE);
-		if (lit > 0.01f) {
-			float old = Paint.opacity(Paint.opacity() * lit);
-			Paint.rect(d, x, y, x + w, y + h, r, Accent.toggle());
-			Paint.stroke(d, x, y, x + w, y + h, r, 1, SHEEN_EDGE);
-			Paint.opacity(old);
-		}
+		Paint.rect(d, x, y, x + w, y + h, r, mixColor(SWITCH_OFF, Accent.get(), lit));
 		float inset = h * 0.125f;
 		float size = h - 2 * inset;
-		float kx = x + inset + knob * (w - h);
-		Paint.shadow(d, kx, y + inset, kx + size, y + inset + size, size / 2f, 0, size * 0.11f, size / 3f, 0, 0x73000000);
+		float kx = x + inset + Math.max(0, Math.min(1, knob)) * (w - h);
 		Paint.circle(d, kx + size / 2f, y + h / 2f, size / 2f, 0xFFFFFFFF);
 	}
 
-	/** A module's icon tile: the accent gradient with a glow when it's on, quiet glass when it's off. */
+	/** A module's icon in a {@code size} box: grey when it's off, white when it's on, no tile behind it. */
 	public static void iconTile(Draw d, float x, float y, float size, String icon, float on, float hover) {
-		float r = size * Tokens.R_TILE / 42f;
-		if (on > 0.01f) Paint.shadow(d, x, y, x + size, y + size, r, 0, size * 0.24f, size * 0.52f, -size * 0.24f, Accent.glow(0.9f * on));
-		if (on < 0.99f) {
-			float old = Paint.opacity(Paint.opacity() * (1 - on));
-			Paint.rect(d, x, y, x + size, y + size, r, hover > 0 ? mixAlpha(Tokens.TILE_OFF, 0x1AFFFFFF, hover) : Tokens.TILE_OFF);
-			Paint.stroke(d, x, y, x + size, y + size, r, 1, Tokens.TILE_OFF);
-			Paint.opacity(old);
-		}
-		if (on > 0.01f) {
-			float old = Paint.opacity(Paint.opacity() * on);
-			Paint.rect(d, x, y, x + size, y + size, r, Accent.tile());
-			Paint.stroke(d, x, y, x + size, y + size, r, 1, Grad.down(0x4DFFFFFF, 0x00FFFFFF));
-			Paint.opacity(old);
-		}
-		float iconSize = size * 0.476f;
-		int color = mixColor(mixColor(Tokens.TEXT_2, Tokens.TEXT, hover * 0.6f), 0xFFFFFFFF, on);
-		Paint.icon(d, icon, x + (size - iconSize) / 2f, y + (size - iconSize) / 2f, iconSize, color);
+		int color = mixColor(mixColor(Tokens.TEXT_3, Tokens.TEXT_2, hover), Tokens.TEXT, on);
+		Paint.icon(d, icon, x, y, size, color);
 	}
 
-	/** A round icon button (the tab bar, a card's settings button): glass with a hairline edge. */
+	/** A round icon button (the tab bar, a card's settings button): one tone step, lighter on hover. */
 	public static void roundButton(Draw d, float cx, float cy, float radius, String icon, float hover, float iconScale) {
-		Paint.circle(d, cx, cy, radius, hover > 0.5f ? CONTROL_FILL_HOVER : CONTROL_FILL);
-		Paint.ring(d, cx, cy, radius, 1, hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
+		Paint.circle(d, cx, cy, radius, mixColor(CONTROL_FILL, CONTROL_FILL_HOVER, hover));
 		float size = radius * iconScale;
 		Paint.icon(d, icon, cx - size / 2f, cy - size / 2f, size, mixColor(Tokens.TEXT_2, Tokens.TEXT, hover));
 	}
 
-	/** The accent pill: the active tab, a primary button. A soft glow underneath, a sheen on top. */
-	public static void accentPill(Draw d, float x1, float y1, float x2, float y2, float glow) {
-		float h = y2 - y1;
-		float r = h / 2f;
-		if (glow > 0.01f) Paint.shadow(d, x1, y1, x2, y2, r, 0, h * 0.26f, h * 0.7f, -h * 0.26f, Accent.glow(0.95f * glow));
-		float old = Paint.opacity(Paint.opacity() * 0.92f);
-		Paint.rect(d, x1, y1, x2, y2, r, Accent.primary());
-		Paint.opacity(old);
-		Paint.rect(d, x1 + 1, y1 + 1, x2 - 1, y1 + h * 0.55f, Math.min(r - 1, h * 0.27f), SHEEN);
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, SHEEN_EDGE);
+	/** The accent pill: a primary button or a chosen option, flat. {@code hover} lightens it a step. */
+	public static void accentPill(Draw d, float x1, float y1, float x2, float y2, float hover) {
+		float r = (y2 - y1) / 2f;
+		int c = Accent.get();
+		Paint.rect(d, x1, y1, x2, y2, r, hover > 0.75f ? Accent.lighten(c, 0.12f) : c);
 	}
 
-	/**
-	 * Quiet glass for a control (a button, a picker, a slot): a faint frosted fill lit along its top edge,
-	 * brighter with a lilac edge on hover. The same glass as Minecraft's buttons under Theme > Glass buttons.
-	 */
+	/** A control (a button, a picker, a slot): a tone step with a 1px edge, both a step lighter on hover. */
 	public static void control(Draw d, float x1, float y1, float x2, float y2, float r, float hover) {
-		Paint.rect(d, x1, y1, x2, y2, r, hover > 0.5f ? CONTROL_FILL_HOVER : CONTROL_FILL);
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
+		Paint.rect(d, x1, y1, x2, y2, r, mixColor(CONTROL_FILL, CONTROL_FILL_HOVER, hover));
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, mixColor(CONTROL_EDGE, CONTROL_EDGE_HOVER, hover));
 	}
 
-	/** A key cap like the site's {@code kbd}: label centred, a thicker edge along the bottom. */
+	/** A key cap: the label on a tone step with a 1px edge. */
 	public static float kbd(Draw d, float x, float y, String label, float cap) {
 		float padX = cap * 1.0f;
 		float h = cap * 2.4f;
 		float w = Type.width(label, cap, Weight.SEMIBOLD) + 2 * padX;
-		float r = cap * 0.85f;
-		Paint.rect(d, x, y, x + w, y + h, r, 0x24FFFFFF);
-		Paint.rect(d, x, y, x + w, y + h - Math.max(1, cap * 0.12f), r, 0x14FFFFFF);
-		Paint.stroke(d, x, y, x + w, y + h, r, 1, 0x24FFFFFF);
+		float r = cap * 0.6f;
+		Paint.rect(d, x, y, x + w, y + h, r, CONTROL_FILL);
+		Paint.stroke(d, x, y, x + w, y + h, r, 1, CONTROL_EDGE);
 		Type.draw(d, label, x + padX, y + (h - cap) / 2f - cap * 0.04f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 		return w;
 	}
@@ -125,20 +92,19 @@ public final class Widgets {
 		return w;
 	}
 
-	/** The search field: a glass pill with a magnifier, the text (or placeholder) and a key hint at the end. */
+	/** The search field: a magnifier, the text (or placeholder) and a key hint at the end. */
 	public static void search(Draw d, float x1, float y1, float x2, float y2, String text, String placeholder, String keyHint,
 			boolean focused, float hover, long nowMs) {
 		field(d, x1, y1, x2, y2, "search", text, placeholder, keyHint, focused, hover, nowMs);
 	}
 
-	/** A text field like the search field, with any icon at the start. */
+	/** A text field like the search field, with any icon at the start; focused, its edge takes the accent. */
 	public static void field(Draw d, float x1, float y1, float x2, float y2, String icon, String text, String placeholder, String keyHint,
 			boolean focused, float hover, long nowMs) {
 		float h = y2 - y1;
 		float r = h / 2f;
-		if (focused) Paint.shadow(d, x1, y1, x2, y2, r, 0, 0, h * 0.45f, -h * 0.15f, Accent.glow(0.35f));
-		Paint.rect(d, x1, y1, x2, y2, r, focused || hover > 0.5f ? FIELD_FILL_HOVER : FIELD_FILL);
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, focused ? Grad.down(0x8CCDB6FF, 0x40CDB6FF) : hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
+		Paint.rect(d, x1, y1, x2, y2, r, focused || hover > 0.5f ? CONTROL_FILL_HOVER : CONTROL_FILL);
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, focused ? Accent.get() : hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
 		float iconSize = h * 0.4f;
 		float ix = x1 + h * 0.43f;
 		Paint.icon(d, icon, ix, y1 + (h - iconSize) / 2f, iconSize, focused ? Tokens.TEXT : Tokens.TEXT_2);
@@ -153,25 +119,25 @@ public final class Widgets {
 		Type.draw(d, Type.fit(shown, maxW, cap, Weight.SEMIBOLD), tx, y1 + (h - cap) / 2f, cap, Weight.SEMIBOLD, empty ? Tokens.TEXT_2 : Tokens.TEXT);
 		if (focused && (nowMs / 530) % 2 == 0) {
 			float cx = tx + (empty ? 0 : Type.width(shown, cap, Weight.SEMIBOLD) + cap * 0.15f);
-			Paint.rect(d, cx, y1 + h * 0.3f, cx + Math.max(0.8f, cap * 0.1f), y2 - h * 0.3f, 0, Tokens.LILAC);
+			Paint.rect(d, cx, y1 + h * 0.3f, cx + Math.max(0.8f, cap * 0.1f), y2 - h * 0.3f, 0, Tokens.TEXT);
 		}
 		if (keyHint != null && (empty || !focused)) keyBadge(d, badgeX, y1 + (h - badge) / 2f, badge, keyHint);
 	}
 
 	/**
-	 * A segmented picker like the main menu's panel: options as icons (or labels), the chosen one on a
-	 * sliding accent pill. {@code at} is the pill's animated position (an option index, fractional
-	 * mid-slide) and {@code hover} the option under the mouse or -1.
+	 * A segmented picker: options as icons (or labels), the chosen one on a sliding accent pill. {@code at}
+	 * is the pill's animated position (an option index, fractional mid-slide) and {@code hover} the option
+	 * under the mouse or -1.
 	 */
 	public static void segmented(Draw d, float x1, float y1, float x2, float y2, String[] icons, String[] labels, float at, int hover) {
 		int n = icons != null ? icons.length : labels.length;
 		float h = y2 - y1;
 		float r = h / 2f;
-		Paint.rect(d, x1, y1, x2, y2, r, 0x14FFFFFF);
+		Paint.rect(d, x1, y1, x2, y2, r, CONTROL_FILL);
 		float pad = h * 0.1f;
 		float segment = (x2 - x1 - 2 * pad) / n;
 		float px = x1 + pad + at * segment;
-		accentPill(d, px, y1 + pad, px + segment, y2 - pad, 1);
+		accentPill(d, px, y1 + pad, px + segment, y2 - pad, 0);
 		int nearest = Math.round(at);
 		for (int i = 0; i < n; i++) {
 			float cx = x1 + pad + segment * (i + 0.5f);
@@ -187,59 +153,31 @@ public final class Widgets {
 		}
 	}
 
-	/** A slider: a thin track filled with the accent gradient up to {@code fraction}, and a white knob. */
+	/** A slider: a thin track filled with the accent up to {@code fraction}, and a white knob. */
 	public static void slider(Draw d, float x1, float cy, float x2, float fraction, float hover) {
 		float t = 2f;
 		Paint.rect(d, x1, cy - t, x2, cy + t, t, 0x1FFFFFFF);
 		float fx = x1 + (x2 - x1) * Math.max(0, Math.min(1, fraction));
-		if (fx > x1 + 0.5f) {
-			Paint.shadow(d, x1, cy - t, fx, cy + t, t, 0, 0, 10, 0, Accent.glow(0.5f));
-			Paint.rect(d, x1, cy - t, fx, cy + t, t, Accent.bar());
-		}
+		if (fx > x1 + 0.5f) Paint.rect(d, x1, cy - t, fx, cy + t, t, Accent.get());
 		float knob = 7f + hover;
-		Paint.shadow(d, fx - knob, cy - knob, fx + knob, cy + knob, knob, 0, 1.5f, 5, 0, 0x73000000);
 		Paint.circle(d, fx, cy, knob, 0xFFFFFFFF);
-		Paint.ring(d, fx, cy, knob, 1.6f, Accent.get());
 	}
 
-	/** A floating glass panel: deep violet glass, a lilac hairline and a long soft shadow. */
+	/** A floating panel (a settings sheet, a toolbar): opaque, a 1px edge, and the one shadow it earns by floating. */
 	public static void glass(Draw d, float x1, float y1, float x2, float y2, float r) {
-		Paint.shadow(d, x1, y1, x2, y2, r, 0, 26, 60, -24, 0xF2000000);
-		Paint.rect(d, x1, y1, x2, y2, r, 0xD6141026);
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, 0x29CDB6FF);
-		Paint.stroke(d, x1 + 1, y1 + 1, x2 - 1, y2 - 1, r - 1, 1, Grad.down(0x0FFFFFFF, 0x00FFFFFF));
+		Paint.shadow(d, x1, y1, x2, y2, r, 0, 12, 32, -12, 0x8C000000);
+		Paint.rect(d, x1, y1, x2, y2, r, PANEL);
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, PANEL_EDGE);
 	}
 
-	/** A module card's body: a soft violet shade with a lit top edge; {@code hover} brightens the edge. */
+	/** A module card's body: one tone step off the sky with a 1px edge; {@code hover} lightens it a step. */
 	public static void card(Draw d, float x1, float y1, float x2, float y2, float r, float hover) {
-		if (hover > 0.01f) Paint.shadow(d, x1, y1, x2, y2, r, 0, 18, 40, -20, Paint.fade(0xCC000000, hover));
-		Paint.rect(d, x1, y1, x2, y2, r, Grad.down(Tokens.CARD_TOP, Tokens.CARD_BOTTOM));
-		Paint.stroke(d, x1, y1, x2, y2, r, 1, Grad.down(mixColor(0x33D6BEFF, 0x66D6BEFF, hover), mixColor(Tokens.CARD_EDGE, 0x1FFFFFFF, hover)));
+		Paint.rect(d, x1, y1, x2, y2, r, mixColor(CARD, CARD_HOVER, hover));
+		Paint.stroke(d, x1, y1, x2, y2, r, 1, CARD_EDGE);
 	}
 
-	/** A small rounded label like the site's eyebrow ("Combat"): lilac text on a faint violet pill. */
-	public static float eyebrow(Draw d, float x, float y, String icon, String label, float cap) {
-		float h = cap * 3.1f;
-		float iconSize = cap * 1.6f;
-		float textW = Type.width(label, cap, Weight.SEMIBOLD);
-		float w = cap * 1.2f + (icon != null ? iconSize + cap * 0.85f : 0) + textW + cap * 1.5f;
-		Paint.rect(d, x, y, x + w, y + h, h / 2f, 0x1A880FF9);
-		Paint.stroke(d, x, y, x + w, y + h, h / 2f, 1, 0x29CDB6FF);
-		float cx = x + cap * 1.2f;
-		if (icon != null) {
-			Paint.icon(d, icon, cx, y + (h - iconSize) / 2f, iconSize, Tokens.LILAC);
-			cx += iconSize + cap * 0.85f;
-		}
-		Type.draw(d, label, cx, y + (h - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.LILAC);
-		return w;
-	}
-
-	/** A soft dot that pulses, like the site's status dot. */
+	/** A small status dot (a connection that's up). */
 	public static void pulseDot(Draw d, float cx, float cy, float r, int color, long nowMs) {
-		float t = (nowMs % 2600) / 2600f;
-		float ring = t < 0.6f ? t / 0.6f : 1;
-		Paint.ring(d, cx, cy, r + ring * r * 1.7f, r * 0.5f, Paint.fade(color, 0.5f * (1 - ring)));
-		Paint.glow(d, cx, cy, r, r * 2.5f, Paint.fade(color, 0.6f));
 		Paint.circle(d, cx, cy, r, color);
 	}
 

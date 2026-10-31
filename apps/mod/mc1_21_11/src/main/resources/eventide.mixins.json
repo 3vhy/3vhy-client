@@ -5,6 +5,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"refmap": "eventide-refmap.json",
 	"client": [
+		"AvatarNameTagMixin",
 		"AbstractButtonMixin",
 		"AbstractContainerScreenMixin",
 		"AbstractSelectionListMixin",

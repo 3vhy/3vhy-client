@@ -15,6 +15,7 @@ public final class Hooks {
 	public static volatile boolean slotHighlightRan = false;
 	public static volatile boolean freelookCameraRan = false;
 	public static volatile boolean ownNametagRan = false;
+	public static volatile boolean styledNametagRan = false;
 	public static volatile boolean shinyPotRan = false;
 	public static volatile boolean timePacketRan = false;
 	public static volatile boolean crosshairRan = false;

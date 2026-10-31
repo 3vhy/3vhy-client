@@ -136,7 +136,6 @@ final class ModuleListWidget extends HudWidget {
 			int accent = Accent.get(slot * 0.035f);
 			float ix = left + PAD;
 			float iy = top + (CHIP_H - ICON) / 2f;
-			if (glow) Paint.glow(d, ix + ICON / 2f, iy + ICON / 2f, ICON * 0.35f, ICON, Paint.fade(accent, 0.45f));
 			Paint.icon(d, module.icon() != null ? module.icon() : "list", ix, iy, ICON, accent);
 			Hud.text(d, module.name, ix + ICON + ICON_GAP, top + (CHIP_H - CAP) / 2f, CAP, Weight.SEMIBOLD, Tokens.TEXT, shadow);
 			Paint.opacity(old);

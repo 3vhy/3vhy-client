@@ -56,27 +56,25 @@ public final class Accent {
 		return isDefault(c) ? Tokens.PRIMARY_TO : turn(c, 9);
 	}
 
-	/** Buttons and the active tab: 135 degrees, like the website's primary button. */
+	/** Buttons and the active tab: the accent, flat. */
 	public static Grad primary() {
-		return new Grad(from(), to(), 135);
+		int c = get();
+		return new Grad(c, c, 0);
 	}
 
-	/** An icon tile that's on. */
+	/** An icon or swatch that's on: the accent, flat. */
 	public static Grad tile() {
-		int c = get();
-		return isDefault(c) ? new Grad(Tokens.TILE_FROM, Tokens.TILE_TO, 135) : new Grad(turn(c, -16), turn(c, 6), 135);
+		return primary();
 	}
 
-	/** A switch that's on: left to right. */
+	/** A switch that's on: the accent, flat. */
 	public static Grad toggle() {
-		int c = get();
-		return isDefault(c) ? Grad.across(Tokens.SWITCH_FROM, Tokens.SWITCH_TO) : Grad.across(turn(c, -12), turn(c, 6));
+		return primary();
 	}
 
-	/** Progress bars and sliders: from the accent to its pale tint. */
+	/** Progress bars and sliders: the accent, flat. */
 	public static Grad bar() {
-		int c = get();
-		return isDefault(c) ? Grad.across(Tokens.BAR_FROM, Tokens.BAR_TO) : Grad.across(turn(c, -12), lighten(c, 0.45f));
+		return primary();
 	}
 
 	/** The soft glow under lit things. */

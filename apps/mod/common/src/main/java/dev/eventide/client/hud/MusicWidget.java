@@ -42,8 +42,7 @@ final class MusicWidget extends HudWidget {
 	private static final float LINE_CAP = 20 * 0.727f * S;
 	private static final float NEXT_CAP = 14 * 0.727f * S;
 	private static final long CHANGE_MS = 520;
-	private static final Grad BAR = new Grad(0xFF8B3DFF, 0xFFEBA2FF, 90);
-	private static final Grad ART_FILL = new Grad(0xFF2A1052, 0xFFD12CF0, 140);
+	private static final Grad ART_FILL = new Grad(0xFF2A2142, 0xFF2A2142, 0);
 
 	private final Anim appear = new Anim(0, 480, Ease.OUT);
 	private final Anim playing = new Anim(0, 260, Ease.OUT);
@@ -71,11 +70,11 @@ final class MusicWidget extends HudWidget {
 		return Modules.MUSIC_VOLUME.get() && song != null && song.hasVolume();
 	}
 
-	/** The bar's colours: the website's violet to lilac, or a gradient around the colour picked. */
+	/** The bar's colour: the accent, or the colour picked, flat. */
 	private static Grad fill() {
 		int c = Modules.MUSIC_COLOR.get() | 0xFF000000;
-		if (c == (Tokens.PRIMARY_MID | 0xFF000000)) return BAR;
-		return new Grad(Accent.turn(c, -14), Accent.lighten(c, 0.35f), 90);
+		if (c == (Tokens.PRIMARY_MID | 0xFF000000)) c = Accent.get();
+		return new Grad(c, c, 0);
 	}
 
 	/** A sample for the layout editor, so the widget can be placed with no music playing. */
@@ -205,11 +204,8 @@ final class MusicWidget extends HudWidget {
 		float strength = glassStrength();
 		if (strength > 0.01f) {
 			float old = Paint.opacity(Paint.opacity() * Math.min(1, strength * 1.15f));
-			Paint.shadow(d, x, top, x + W, top + h, r, 0, 24 * S, 50 * S, -24 * S, 0xE6000000);
 			Paint.rect(d, x, top, x + W, top + h, r, Tokens.GLASS);
 			Paint.stroke(d, x, top, x + W, top + h, r, Hud.hairline(d), 0x1AFFFFFF);
-			Paint.stroke(d, x + Hud.hairline(d), top + Hud.hairline(d), x + W - Hud.hairline(d), top + h - Hud.hairline(d), r, Hud.hairline(d),
-					Grad.down(0x12FFFFFF, 0x00FFFFFF));
 			Paint.opacity(old);
 		}
 		float change = Ease.OUT.apply((now - changedAt) / (double) CHANGE_MS);
@@ -288,7 +284,7 @@ final class MusicWidget extends HudWidget {
 		boolean hasArt = song.art() != null;
 		if (!hasArt || change < 1) {
 			Paint.rect(d, x, y, x + ART, y + ART, r, ART_FILL);
-			Paint.stroke(d, x, y, x + ART, y + ART, r, Hud.hairline(d), Grad.down(0x33FFFFFF, 0x00FFFFFF));
+			Paint.stroke(d, x, y, x + ART, y + ART, r, Hud.hairline(d), 0x1FFFFFFF);
 			float mark = 30 * S;
 			Logo.mark(d, x + (ART - mark) / 2f, y + (ART - mark) / 2f, mark, 1, System.currentTimeMillis());
 		}

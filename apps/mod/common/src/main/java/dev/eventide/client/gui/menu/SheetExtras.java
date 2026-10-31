@@ -176,10 +176,10 @@ final class SheetExtras implements SettingsSheet.Extras {
 	}
 
 	private static void section(Draw d, float x, float y, String label) {
-		Type.spaced(d, label.toUpperCase(Locale.ROOT), x, y + 6, 8, 0.16f, Weight.SEMIBOLD, Tokens.TEXT_3);
+		Type.draw(d, label, x, y + 5, 9.5f, Weight.SEMIBOLD, Tokens.TEXT_2);
 	}
 
-	/** A pill button: the accent gradient when {@code primary}, quiet glass otherwise. */
+	/** A pill button: the accent when {@code primary}, a quiet control otherwise. */
 	private void button(Draw d, Hits hits, float x1, float y1, float x2, float y2, String icon, String label, boolean primary,
 			Runnable action) {
 		float h = y2 - y1;
@@ -535,7 +535,6 @@ final class SheetExtras implements SettingsSheet.Extras {
 			float dot = 9;
 			float dcx = x + 22;
 			float dcy = y + h / 2f;
-			Paint.glow(d, dcx, dcy, dot * 0.6f, 10, Paint.fade(color, 0.5f));
 			Paint.circle(d, dcx, dcy, dot, color);
 			Paint.ring(d, dcx, dcy, dot, 1, 0x40FFFFFF);
 			hits.add(dcx - dot - 2, dcy - dot - 2, dcx + dot + 2, dcy + dot + 2, () -> {
