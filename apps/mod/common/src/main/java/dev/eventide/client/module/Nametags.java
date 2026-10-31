@@ -18,7 +18,8 @@ import org.joml.Quaternionf;
  * Nametags: your own tag in third person, and players' tags drawn as a dark rounded pill with their face,
  * their name and their health in hearts. The tag is built where Minecraft would submit its own, in the same
  * place and facing the camera the same way; seen through walls like Minecraft's when the player isn't
- * sneaking, and only in plain sight when they are.
+ * sneaking, and only in plain sight when they are. The pill and the face go in earlier submit orders than
+ * the text, so they're drawn underneath it.
  */
 public final class Nametags {
 	/** Minecraft's own name tag sizes: a text pixel is 0.025 blocks. */
@@ -67,12 +68,12 @@ public final class Nametags {
 		pose.translate(state.nameTagAttachment.x, state.nameTagAttachment.y + 0.5, state.nameTagAttachment.z);
 		pose.mulPose(orientation);
 		pose.scale(SCALE, -SCALE, SCALE);
-		collector.submitCustomGeometry(pose, seeThrough ? RenderTypes.textBackgroundSeeThrough() : RenderTypes.textBackground(),
+		collector.order(-2).submitCustomGeometry(pose, seeThrough ? RenderTypes.textBackgroundSeeThrough() : RenderTypes.textBackground(),
 				(last, out) -> pill(last, out, x0, y0, x0 + w, y0 + HEIGHT, light));
 		Identifier skin = state.skin.body().texturePath();
 		float hx = x0 + PAD;
 		float hy = y0 + (HEIGHT - HEAD) / 2f;
-		collector.submitCustomGeometry(pose, seeThrough ? RenderTypes.textSeeThrough(skin) : RenderTypes.text(skin), (last, out) -> {
+		collector.order(-1).submitCustomGeometry(pose, seeThrough ? RenderTypes.textSeeThrough(skin) : RenderTypes.text(skin), (last, out) -> {
 			face(last, out, hx, hy, HEAD, 8, 8, light, 0);
 			face(last, out, hx - 0.4f, hy - 0.4f, HEAD + 0.8f, 40, 8, light, 0.01f);
 		});
