@@ -1773,7 +1773,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 			client.player.setYRot(0f);
 			client.player.setXRot(-16f);
 		});
-		server.runCommand("execute at @p rotated 0 0 run summon minecraft:mannequin ^ ^ ^2.2 {CustomName:[{text:\"a\",font:\"minecraft:alt\","
+		server.runCommand("execute at @p rotated 0 0 run summon minecraft:mannequin ^ ^ ^2.2 {CustomName:[\"\",{text:\"a\",font:\"minecraft:alt\","
 				+ "color:\"light_purple\"},{text:\"+\",color:\"aqua\"},{text:\"Pickzugng\",color:\"white\"}],"
 				+ "CustomNameVisible:1b,hide_description:1b,immovable:1b,Rotation:[180f,0f]}");
 		context.waitTicks(20);

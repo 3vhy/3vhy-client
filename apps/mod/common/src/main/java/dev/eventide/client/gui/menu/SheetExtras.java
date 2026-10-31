@@ -774,8 +774,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 			item(d, x, y, w);
 			float badge = 28;
 			float by = y + (ITEM - badge) / 2f;
-			Paint.rect(d, x + 10, by, x + 10 + badge, by + badge, 9, Paint.fade(accent, 0.22f));
-			Paint.stroke(d, x + 10, by, x + 10 + badge, by + badge, 9, 1, Paint.fade(Accent.lighten(accent, 0.25f), 0.7f));
+			Paint.rect(d, x + 10, by, x + 10 + badge, by + badge, 6, 0x0FFFFFFF);
 			ItemStack stack = hotbarItem(i);
 			if (!stack.isEmpty()) itemIcon(d, stack, x + 10 + (badge - 20) / 2f, by + (badge - 20) / 2f, 20);
 			else Type.center(d, String.valueOf(i + 1), x + 10 + badge / 2f, by + (badge - 10) / 2f, 10, Weight.SEMIBOLD, 0xFFFFFFFF);

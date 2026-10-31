@@ -25,7 +25,7 @@ public final class Widgets {
 	private static final int CARD = 0xF2161618;
 	private static final int CARD_HOVER = 0xF21E1E21;
 	private static final int CARD_EDGE = 0x0FFFFFFF;
-	private static final int SEGMENT_CHOSEN = 0xFF2E2E33;
+	private static final int SEGMENT_CHOSEN = 0xFF38383E;
 
 	private Widgets() {
 	}

@@ -45,7 +45,7 @@ public final class Modules {
 	}
 
 	private static Module background(Module module, int percent) {
-		module.add(new Slider("background", "Background", "0% makes the glass fully transparent", 0, 100, 5, percent, "%"));
+		module.add(new Slider("background", "Background", "How dark the panel behind it is; 0% removes it", 0, 100, 5, percent, "%"));
 		return module;
 	}
 
@@ -257,7 +257,7 @@ public final class Modules {
 	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
 			"A darker strip behind the title, like Minecraft's", true));
 	public static final Module HOTBAR = new Module("hotbar", "Hotbar",
-			"Your hotbar as one glass bar, with your server's address beside it if you like", Category.HUD, false).icon("boxes").markNew();
+			"Your hotbar as one dark bar, with your server's address beside it if you like", Category.HUD, false).icon("boxes").markNew();
 	public static final Choice HOTBAR_SELECTED = HOTBAR.add(new Choice("selected", "Selected slot",
 			"The square behind the item in your hand", 0, "White", "Accent"));
 	public static final Toggle HOTBAR_SERVER = HOTBAR.add(new Toggle("server", "Server address",
@@ -355,7 +355,7 @@ public final class Modules {
 	public static final Toggle MENU_NAME_HUD = MENU_NAME.add(new Toggle("hud", "Show in game",
 			"Keep it on your HUD while you play too, above the Music Player; move it in Edit HUD", false));
 	public static final Module MAIN_MENU = new Module("main_menu", "Main Menu",
-			"Eventide's title screen: glass buttons, the Eventide logo and a scene you pick", Category.COSMETICS, true).icon("house");
+			"Eventide's title screen: flat buttons, the Eventide logo and a scene you pick", Category.COSMETICS, true).icon("house");
 	public static final Choice MAIN_MENU_SCENE = MAIN_MENU.add(new Choice("scene", "Scene", "What's behind the main menu", 0,
 			"Panorama", "Night sky", "October"));
 	public static final Choice MAIN_MENU_TIME = MAIN_MENU.add(new Choice("time", "Time of day", "The light over the scene; Live follows your clock",

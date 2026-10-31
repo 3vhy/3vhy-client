@@ -23,7 +23,7 @@ public final class Tokens {
 	public static final int SURFACE = 0xFF19191C;
 	public static final int RAISED = 0xFF232327;
 	/** Over the blurred game behind a menu: dark enough that the menu's surfaces read on it. */
-	public static final int SCRIM = 0xD90A0A0B;
+	public static final int SCRIM = 0xE30A0A0B;
 
 	// Text: white, then two greys far enough apart to read as two
 	public static final int TEXT = 0xFFF5F5F6;
