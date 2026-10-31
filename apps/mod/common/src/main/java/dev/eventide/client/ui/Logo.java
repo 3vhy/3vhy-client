@@ -36,6 +36,18 @@ public final class Logo {
 		Paint.opacity(old);
 	}
 
+	/**
+	 * The mark standing upright (the same shapes without the 45 degree turn) in a {@code size} square, with
+	 * a soft violet aura behind it, for the middle of the Orbit.
+	 */
+	public static void upright(Draw d, float x, float y, float size, long nowMs) {
+		float breath = 0.85f + 0.15f * (float) Math.sin(nowMs % 4000 / 4000.0 * Math.PI * 2);
+		Paint.glow(d, x + size * 0.5f, y + size * 0.42f, size * 0.22f, size * 0.6f, Paint.fade(Tokens.BRAND_SWIRL, 0.32f * breath));
+		Paint.icon(d, "eventide-upright-back", x, y, size, 1f, false, Paint.fade(Tokens.BRAND_SWIRL, 0.45f), null);
+		Paint.icon(d, "eventide-upright-trident", x, y, size, 1f, false, Tokens.BRAND_TRIDENT, null);
+		Paint.icon(d, "eventide-upright-front", x, y, size, 1f, false, Tokens.BRAND_SWIRL, null);
+	}
+
 	private static Component letter(int i) {
 		if (LETTERS[i] == null) LETTERS[i] = UiFont.brand(String.valueOf(WORD.charAt(i)));
 		return LETTERS[i];

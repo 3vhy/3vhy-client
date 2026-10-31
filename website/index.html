@@ -498,7 +498,7 @@
 		position: relative;
 		width: 100%;
 		max-width: 100%;
-		aspect-ratio: 1000 / 640;
+		aspect-ratio: 1000 / 520;
 		touch-action: pan-y;
 		user-select: none;
 		-webkit-user-select: none;
@@ -508,15 +508,26 @@
 	.hub-mark {
 		position: absolute;
 		left: 50%;
-		bottom: 50%;
+		bottom: 20.6%;
 		z-index: 5;
-		width: 36%;
+		width: 33.6%;
 		aspect-ratio: 1;
 		transform: translateX(-50%);
 		pointer-events: none;
 	}
 
+	.hub-mark::before {
+		content: "";
+		position: absolute;
+		inset: 8% 14% 20%;
+		border-radius: 50%;
+		background: radial-gradient(closest-side, rgba(168, 85, 247, 0.32), transparent);
+	}
+
+	/* The trident stands upright: the logo turned back by its 45 degrees */
 	.hub-mark .mark {
+		position: relative;
+		transform: rotate(-45deg);
 		width: 100%;
 		height: 100%;
 	}
@@ -533,7 +544,7 @@
 		border: 0;
 		border-radius: 50%;
 		color: var(--text-2);
-		background: #1e1934;
+		background: rgba(30, 25, 52, 0.94);
 		transform: translate(-50%, -50%) scale(var(--s, 1));
 		opacity: var(--o, 1);
 		cursor: pointer;
@@ -594,7 +605,7 @@
 	}
 
 	.orbit-label strong {
-		font-size: var(--t-lg);
+		font-size: clamp(1.6rem, 2.6vw, 2.15rem);
 		font-weight: 700;
 		letter-spacing: -0.02em;
 		line-height: 1.2;
@@ -608,11 +619,31 @@
 	.orbit-label a {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.35rem;
-		margin-top: 0.45rem;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+		padding: 0.4rem 0.9rem;
+		border-radius: 999px;
 		font-size: var(--t-xs);
-		font-weight: 600;
+		font-weight: 500;
+		color: var(--text-2);
 		text-decoration: none;
+		background: rgba(27, 21, 48, 0.85);
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+		transition: color 160ms ease, background-color 160ms ease;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.orbit-label a:hover {
+			color: var(--text);
+			background: rgba(42, 35, 71, 0.9);
+		}
+	}
+
+	.orbit-label a .dot {
+		width: 0.4rem;
+		height: 0.4rem;
+		border-radius: 50%;
+		background: var(--brand-swirl);
 	}
 
 	.orbit-label a .ic {
@@ -2240,12 +2271,15 @@
 		const tagEl = document.getElementById('orbit-tag');
 		const openEl = document.getElementById('orbit-open');
 		const W = 1000;
-		const H = 640;
+		const H = 520;
+		/* Measured off purxiy's hub as shares of the front disc (about 88 units across here): the ring is 4.2
+		   radii wide and 1.4 deep, tilted a little, and the front disc sits at 400 with the trident on it */
 		const CX = 500;
-		const CY = 250;
-		const RX = 360;
-		const RY = 118;
-		const TILT = 0;
+		const CY = 277;
+		const RX = 370;
+		const RY = 123;
+		const TILT = (-9 * Math.PI) / 180;
+		const SX = RY * Math.sin(TILT);
 		const step = (Math.PI * 2) / planets.length;
 		let offset = Math.PI / 2 - step;
 		let target = null;
@@ -2257,7 +2291,7 @@
 			const x = RX * Math.cos(angle);
 			const y = RY * Math.sin(angle);
 			return {
-				x: CX + x * Math.cos(TILT) - y * Math.sin(TILT),
+				x: CX + SX + x * Math.cos(TILT) - y * Math.sin(TILT),
 				y: CY + x * Math.sin(TILT) + y * Math.cos(TILT),
 			};
 		}
@@ -2272,10 +2306,10 @@
 				planet.style.left = `${(p.x / W) * 100}%`;
 				planet.style.top = `${(p.y / H) * 100}%`;
 				const near = (depth + 1) / 2;
-				planet.style.setProperty('--s', (0.36 + 0.64 * near * near).toFixed(3));
-				planet.style.setProperty('--o', (0.25 + 0.75 * Math.pow(near, 1.5)).toFixed(3));
+				planet.style.setProperty('--s', (0.42 + 0.58 * near * near).toFixed(3));
+				planet.style.setProperty('--o', (0.3 + 0.7 * Math.pow(near, 1.3)).toFixed(3));
 				planet.style.zIndex = Math.round(near * 10);
-				planet.classList.toggle('is-near', near > 0.42);
+				planet.classList.toggle('is-near', near > 0.3);
 				if (!planet.dataset.name) planet.dataset.name = TABS[planet.dataset.cat].label;
 				if (depth > best) {
 					best = depth;
@@ -2288,8 +2322,10 @@
 				const tab = TABS[planets[front].dataset.cat];
 				nameEl.textContent = tab.label;
 				tagEl.textContent = tab.tagline;
-				openEl.textContent = `See ${tab.label} mods`;
-				openEl.insertAdjacentHTML('beforeend', '<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg>');
+				const mods = [...document.querySelectorAll(`li[data-cat="${planets[front].dataset.cat}"] .mod`)];
+				const on = mods.filter((mod) => mod.getAttribute('aria-pressed') === 'true').length;
+				openEl.innerHTML = `<span class="dot" aria-hidden="true"></span>${mods.length} mods · ${on} on`;
+				openEl.setAttribute('aria-label', `See the ${mods.length} ${tab.label} mods`);
 			}
 		}
 

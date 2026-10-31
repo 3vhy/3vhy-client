@@ -40,15 +40,21 @@ public final class OrbitView {
 
 	/** The angle on the ring that is the front: the bottom of the ellipse, nearest you. */
 	private static final double FRONT = Math.PI / 2;
-	/** The front disc's radius and the ring's radii, in design units. */
-	private static final float FRONT_R = 52;
-	private static final float RING_X = 300;
-	private static final float RING_Y = 92;
-	/** How big the trident in the middle of the ring is, in design units. */
-	private static final float MARK = 210;
-	private static final int DISC = 0xFF1E1934;
-	private static final int DISC_HOVER = 0xFF2A2347;
-	private static final int PILL = 0xFF17132A;
+	/**
+	 * Sizes in design units, measured off purxiy's hub as shares of the front disc: the ring is 4.2 front
+	 * radii across each way and 1.4 deep, tilted a little; the trident stands 1.75 discs tall on the front
+	 * disc; the title's capitals are 0.3 of a disc and sit a disc below its middle.
+	 */
+	private static final float FRONT_R = 55;
+	private static final float RING_X = FRONT_R * 4.2f;
+	private static final float RING_Y = FRONT_R * 1.4f;
+	private static final float TILT = (float) Math.toRadians(-9);
+	private static final float MARK = FRONT_R * 2 * 1.9f;
+	private static final int RING_POINTS = 72;
+	private static final int DISC = 0xF01E1934;
+	private static final int DISC_HOVER = 0xF02A2347;
+	private static final int PILL = 0xD91B1530;
+	private static final int PILL_EDGE = 0x1AFFFFFF;
 
 	private final Host host;
 	private final List<MenuView.Tab> tabs = MenuView.TABS;
@@ -65,9 +71,13 @@ public final class OrbitView {
 	private long dragLastAt;
 	private double velocity;
 
+	private final float[] ringXY = new float[(RING_POINTS + 1) * 2];
+	private final int[] ringColors = new int[RING_POINTS + 1];
 	private float unit = 1;
 	private float cx;
 	private float cy;
+	private float shiftX;
+	private float shiftY;
 	private float mouseX;
 	private float mouseY;
 
@@ -108,24 +118,45 @@ public final class OrbitView {
 		float lockup = mark * 1.24f + Logo.wordmarkWidth(cap);
 		Logo.lockup(d, w / 2f - lockup / 2f, 30, mark, cap, now);
 
+		float discY = h * 0.485f;
 		cx = w / 2f;
-		cy = h * 0.5f - RING_Y + 24;
+		cy = discY - RING_Y;
+		shiftX = 0;
+		shiftY = 0;
+		shiftX = cx - px(FRONT);
+		shiftY = discY - py(FRONT);
 		int current = Math.floorMod((int) Math.round((FRONT - angle) / step), tabs.size());
 		if (current != front) {
 			front = current;
 			frontSince = now;
 		}
+		drawRing(d);
 		drawDiscs(d, angle, now);
-		drawTitle(d, w, cy + RING_Y + FRONT_R + 34, now);
+		drawTitle(d, w, discY + FRONT_R * 2 * 1.01f, now);
 		d.pop();
 	}
 
 	private float px(double a) {
-		return cx + (float) Math.cos(a) * RING_X;
+		float x = (float) Math.cos(a) * RING_X;
+		float y = (float) Math.sin(a) * RING_Y;
+		return cx + shiftX + x * (float) Math.cos(TILT) - y * (float) Math.sin(TILT);
 	}
 
 	private float py(double a) {
-		return cy + (float) Math.sin(a) * RING_Y;
+		float x = (float) Math.cos(a) * RING_X;
+		float y = (float) Math.sin(a) * RING_Y;
+		return cy + shiftY + x * (float) Math.sin(TILT) + y * (float) Math.cos(TILT);
+	}
+
+	/** The ring the discs ride on: a faint line, as on purxiy's hub. */
+	private void drawRing(Draw d) {
+		for (int i = 0; i <= RING_POINTS; i++) {
+			double a = Math.PI * 2 * i / RING_POINTS;
+			ringXY[2 * i] = px(a);
+			ringXY[2 * i + 1] = py(a);
+			ringColors[i] = Paint.fade(Accent.get(), 0.08f + 0.14f * depth(a));
+		}
+		Paint.line(d, ringXY, ringColors, RING_POINTS + 1, false, 1.4f);
 	}
 
 	/** How near the front a disc at angle {@code a} is, 0 at the back to 1 at the front. */
@@ -134,7 +165,7 @@ public final class OrbitView {
 	}
 
 	private static float radius(float depth) {
-		return FRONT_R * (0.3f + 0.7f * depth * depth);
+		return FRONT_R * (0.42f + 0.58f * depth * depth);
 	}
 
 	/**
@@ -159,42 +190,45 @@ public final class OrbitView {
 			lit[i].set(isFront);
 			float hv = hover[i].get();
 			float on = lit[i].get();
-			float old = Paint.opacity(Paint.opacity() * (0.22f + 0.78f * (float) Math.pow(depth, 1.5)));
+			float old = Paint.opacity(Paint.opacity() * (0.3f + 0.7f * (float) Math.pow(depth, 1.3)));
 			int fill = Widgets.mixColor(Widgets.mixColor(DISC, DISC_HOVER, hv), Accent.get(), on);
 			Paint.circle(d, x, y, r, fill);
 			float icon = r * (isFront ? 0.6f : 0.66f);
 			int color = Widgets.mixColor(Widgets.mixColor(Tokens.TEXT_2, Tokens.TEXT, hv), 0xFFFFFFFF, on);
 			Paint.icon(d, tabs.get(i).icon(), x - icon / 2f, y - icon / 2f, icon, color);
-			if (!isFront && depth > 0.42f) {
-				Type.center(d, tabs.get(i).name(), x, y + r + 9, 11.5f, Weight.MEDIUM, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT_2, hv));
+			if (!isFront && depth > 0.3f) {
+				Type.center(d, tabs.get(i).name(), x, y + r + 12, 13, Weight.MEDIUM, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT_2, hv));
 			}
 			Paint.opacity(old);
 		}
 	}
 
-	/** The trident in the middle of the ring, its foot behind the front disc. */
+	/** The trident standing upright on the front disc, its foot behind it, like the mascot on purxiy's hub. */
 	private void drawMark(Draw d, long now) {
-		float size = MARK;
-		Logo.mark(d, cx - size / 2f, cy + RING_Y - FRONT_R * 0.55f - size, size, 1, now);
+		float x = px(FRONT);
+		float discY = py(FRONT);
+		Logo.upright(d, x - MARK / 2f, discY + MARK * 0.04f - MARK, MARK, now);
 	}
 
 	/** The front tab's name, tagline and how many of its mods are on. */
 	private void drawTitle(Draw d, float w, float top, long now) {
 		MenuView.Tab tab = tabs.get(Math.max(0, front));
 		float old = Paint.opacity(Paint.opacity() * Ease.OUT.apply((now - frontSince) / (double) Tokens.T_COLOR));
-		Type.center(d, tab.name(), w / 2f, top, 26, Weight.BOLD, Tokens.TEXT);
-		Type.center(d, tab.tagline(), w / 2f, top + 40, 13, Weight.MEDIUM, Tokens.TEXT_2);
+		float disc = FRONT_R * 2;
+		Type.center(d, tab.name(), w / 2f, top, disc * 0.3f, Weight.BOLD, Tokens.TEXT);
+		Type.center(d, tab.tagline(), w / 2f, top + disc * 0.55f, disc * 0.137f, Weight.MEDIUM, Tokens.TEXT_2);
 		String count = count(tab);
 		if (count != null) {
-			float pillCap = 11.5f;
+			float pillCap = disc * 0.125f;
+			float ph = disc * 0.36f;
 			float textW = Type.width(count, pillCap, Weight.MEDIUM);
-			float pw = textW + 34;
-			float ph = 26;
+			float pw = textW + ph * 1.35f;
 			float x = w / 2f - pw / 2f;
-			float y = top + 66;
+			float y = top + disc * 0.94f;
 			Paint.rect(d, x, y, x + pw, y + ph, ph / 2f, PILL);
-			Paint.circle(d, x + 14, y + ph / 2f, 3, Accent.get());
-			Type.draw(d, count, x + 24, y + (ph - pillCap) / 2f, pillCap, Weight.MEDIUM, Tokens.TEXT_2);
+			Paint.stroke(d, x, y, x + pw, y + ph, ph / 2f, 1, PILL_EDGE);
+			Paint.circle(d, x + ph * 0.45f, y + ph / 2f, ph * 0.09f, Accent.get());
+			Type.draw(d, count, x + ph * 0.75f, y + (ph - pillCap) / 2f, pillCap, Weight.MEDIUM, Tokens.TEXT_2);
 		}
 		Paint.opacity(old);
 	}
