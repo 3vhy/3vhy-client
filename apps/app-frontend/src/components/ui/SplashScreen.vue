@@ -1,7 +1,7 @@
 <template>
 	<Transition name="splash-fade" @after-leave="onAfterLeave">
 		<div v-if="!doneLoading" class="splash-screen" data-tauri-drag-region>
-			<!-- 3vhy Client: the loading screen is the 3vhy banner sky -->
+			<!-- Eventide: the loading screen is the Eventide banner sky -->
 			<div class="splash-sky" aria-hidden="true" data-tauri-drag-region>
 				<span class="splash-cloud c1" />
 				<span class="splash-cloud c2" />
@@ -18,7 +18,7 @@
 			</div>
 			<div class="splash-content" data-tauri-drag-region>
 				<GhostSprite v-if="octoberActive" class="splash-ghost" :size="72" />
-				<ThreevhyWordmarkLetters drop class="splash-wordmark" />
+				<EventideWordmarkLetters drop class="splash-wordmark" />
 				<span class="splash-client">CLIENT</span>
 				<div
 					class="splash-blocks"
@@ -45,7 +45,7 @@ import { injectLoadingState } from '@modrinth/ui'
 import { computed, onMounted, ref, watch } from 'vue'
 
 import GhostSprite from '@/components/ui/brand/GhostSprite.vue'
-import ThreevhyWordmarkLetters from '@/components/ui/brand/ThreevhyWordmarkLetters.vue'
+import EventideWordmarkLetters from '@/components/ui/brand/EventideWordmarkLetters.vue'
 import { useAppEvent } from '@/composables/use-app-event'
 import { octoberActive } from '@/composables/use-october'
 import { debugStartup } from '@/helpers/startup-debug'
@@ -252,7 +252,7 @@ useAppEvent('loading', (e) => {
 	margin-top: 40px;
 	padding: 5px;
 	background: rgba(2, 10, 45, 0.55);
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	animation: splash-fade-in 0.5s 0.65s ease-out both;
 }
 
@@ -308,7 +308,7 @@ useAppEvent('loading', (e) => {
 
 <style lang="scss">
 // October: the loading screen in white and ink, with a ghost peeking over the name
-html.threevhy-october {
+html.eventide-october {
 	.splash-screen {
 		background: #f6f5fa;
 	}

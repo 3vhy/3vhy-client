@@ -1590,7 +1590,7 @@
     "message": "Сначала старые"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Переменные среды при запуске игры."
@@ -3264,7 +3264,7 @@
     "message": "Показать"
   },
   "app.survey.body": {
-    "message": "Не хотите ответить на несколько вопросов о вашем опыте с 3vhy Client?"
+    "message": "Не хотите ответить на несколько вопросов о вашем опыте с Eventide?"
   },
   "app.survey.footer": {
     "message": "Этот отзыв будет доставлен напрямую команде Modrinth и поможет разрабатывать будущие обновления!"

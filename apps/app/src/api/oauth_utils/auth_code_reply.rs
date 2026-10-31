@@ -137,7 +137,7 @@ pub fn submit_deeplink(code: String, nonce: &str) -> bool {
 
 pub fn parse_auth_deeplink(command: &str) -> Option<(String, String)> {
     let url = Url::parse(command.trim()).ok()?;
-    if !matches!(url.scheme(), "threevhy" | "modrinth")
+    if !matches!(url.scheme(), "eventide" | "modrinth")
         || url.host_str() != Some("auth")
     {
         return None;

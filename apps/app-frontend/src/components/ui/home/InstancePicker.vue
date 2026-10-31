@@ -8,9 +8,9 @@ import { getInstanceIconUrl } from '@/helpers/instance'
 import type { GameInstance } from '@/helpers/types'
 
 import { loaderLabel } from './format'
-import { hasThreevhyFeatures, THREEVHY_VERSIONS } from './threevhy'
+import { hasEventideFeatures, EVENTIDE_VERSIONS } from './eventide'
 
-// 3vhy Client: the "VERSION" box next to Play. Each entry is an instance
+// Eventide: the "VERSION" box next to Play. Each entry is an instance
 // (a Minecraft version + loader + its mods), most recently played first.
 const props = defineProps<{
 	instances: GameInstance[]
@@ -20,12 +20,12 @@ const props = defineProps<{
 const emit = defineEmits<{
 	select: [id: string]
 	create: []
-	createThreevhy: [gameVersion: string]
+	createEventide: [gameVersion: string]
 }>()
 
-/** 3vhy Client versions the player doesn't have an instance for yet. */
-const missingThreevhyVersions = computed(() =>
-	THREEVHY_VERSIONS.filter(
+/** Eventide versions the player doesn't have an instance for yet. */
+const missingEventideVersions = computed(() =>
+	EVENTIDE_VERSIONS.filter(
 		(version) =>
 			!props.instances.some(
 				(instance) => instance.loader === 'fabric' && instance.game_version === version,
@@ -37,21 +37,21 @@ const { formatMessage } = useVIntl()
 const router = useRouter()
 
 const messages = defineMessages({
-	label: { id: 'app.3vhy.picker.label', defaultMessage: 'Instance' },
-	none: { id: 'app.3vhy.picker.none', defaultMessage: 'No instances yet' },
-	newInstance: { id: 'app.3vhy.picker.new', defaultMessage: 'New instance' },
+	label: { id: 'app.Eventide.picker.label', defaultMessage: 'Instance' },
+	none: { id: 'app.Eventide.picker.none', defaultMessage: 'No instances yet' },
+	newInstance: { id: 'app.Eventide.picker.new', defaultMessage: 'New instance' },
 	browseModpacks: {
-		id: 'app.3vhy.picker.browse-modpacks',
+		id: 'app.Eventide.picker.browse-modpacks',
 		defaultMessage: 'Get a modpack from Modrinth',
 	},
-	setUpThreevhy: {
-		id: 'app.3vhy.picker.set-up',
-		defaultMessage: 'Set up 3vhy Client {version}',
+	setUpEventide: {
+		id: 'app.Eventide.picker.set-up',
+		defaultMessage: 'Set up Eventide {version}',
 	},
-	threevhyBadge: { id: 'app.3vhy.picker.badge', defaultMessage: '3vhy' },
-	threevhyBadgeTooltip: {
-		id: 'app.3vhy.picker.badge.tooltip',
-		defaultMessage: 'Launches with the 3vhy HUD, PvP tools and Discord presence',
+	eventideBadge: { id: 'app.Eventide.picker.badge', defaultMessage: 'Eventide' },
+	eventideBadgeTooltip: {
+		id: 'app.Eventide.picker.badge.tooltip',
+		defaultMessage: 'Launches with the Eventide HUD, PvP tools and Discord presence',
 	},
 })
 
@@ -87,9 +87,9 @@ function create() {
 	emit('create')
 }
 
-function createThreevhy(version: string) {
+function createEventide(version: string) {
 	open.value = false
-	emit('createThreevhy', version)
+	emit('createEventide', version)
 }
 
 function browseModpacks() {
@@ -143,11 +143,11 @@ function subtitle(instance: GameInstance) {
 							<span class="tvh-picker__option-name">
 								{{ instance.name }}
 								<span
-									v-if="hasThreevhyFeatures(instance)"
-									v-tooltip="formatMessage(messages.threevhyBadgeTooltip)"
+									v-if="hasEventideFeatures(instance)"
+									v-tooltip="formatMessage(messages.eventideBadgeTooltip)"
 									class="tvh-picker__badge"
 								>
-									{{ formatMessage(messages.threevhyBadge) }}
+									{{ formatMessage(messages.eventideBadge) }}
 								</span>
 							</span>
 							<span class="tvh-picker__option-sub">{{ subtitle(instance) }}</span>
@@ -157,13 +157,13 @@ function subtitle(instance: GameInstance) {
 				</div>
 				<div class="tvh-picker__actions">
 					<button
-						v-for="version in missingThreevhyVersions"
+						v-for="version in missingEventideVersions"
 						:key="version"
 						type="button"
-						class="tvh-picker__action tvh-picker__action--threevhy"
-						@click="createThreevhy(version)"
+						class="tvh-picker__action tvh-picker__action--eventide"
+						@click="createEventide(version)"
 					>
-						<PlusIcon /> {{ formatMessage(messages.setUpThreevhy, { version }) }}
+						<PlusIcon /> {{ formatMessage(messages.setUpEventide, { version }) }}
 					</button>
 					<button type="button" class="tvh-picker__action" @click="create">
 						<PlusIcon /> {{ formatMessage(messages.newInstance) }}
@@ -193,7 +193,7 @@ function subtitle(instance: GameInstance) {
 	padding: 0.6rem 1rem 0.6rem 1.15rem;
 	border: none;
 	background: rgba(4, 18, 63, 0.6);
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	box-shadow:
 		inset 0 0 0 2px rgba(140, 196, 234, 0.2),
 		inset 0 -4px 0 rgba(0, 0, 0, 0.3);
@@ -259,7 +259,7 @@ function subtitle(instance: GameInstance) {
 	flex-direction: column;
 	padding: 0.4rem;
 	border-radius: 0.5rem;
-	border: 1px solid var(--threevhy-card-border);
+	border: 1px solid var(--eventide-card-border);
 	background: var(--color-raised-bg);
 	box-shadow: 0 18px 40px rgba(2, 8, 40, 0.5);
 	min-width: 18rem;
@@ -320,11 +320,11 @@ function subtitle(instance: GameInstance) {
 	line-height: 1.1rem;
 	vertical-align: 0.1rem;
 	color: #04123f;
-	background: var(--threevhy-cyan);
-	clip-path: var(--threevhy-pixel-corners);
+	background: var(--eventide-cyan);
+	clip-path: var(--eventide-pixel-corners);
 }
 
-.tvh-picker__action--threevhy {
+.tvh-picker__action--eventide {
 	color: var(--color-brand);
 	font-weight: 700;
 }

@@ -7,9 +7,10 @@
 		<array>
 			<dict>
 				<key>CFBundleURLName</key>
-				<string>3vhyClient</string>
+				<string>EventideClient</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
+					<string>eventide</string>
 					<string>threevhy</string>
 					<string>threevhyscheme</string>
 				</array>

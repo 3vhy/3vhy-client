@@ -29,7 +29,7 @@ import { getVersion } from '@tauri-apps/api/app'
 import { platform as getOsPlatform, version as getOsVersion } from '@tauri-apps/plugin-os'
 import { computed, provide, ref } from 'vue'
 
-import ThreevhyGlyph from '@/components/ui/brand/ThreevhyGlyph.vue'
+import EventideGlyph from '@/components/ui/brand/EventideGlyph.vue'
 import PrivacySettings from '@/components/ui/settings/account/PrivacySettings.vue'
 import ProfileSettings from '@/components/ui/settings/account/ProfileSettings.vue'
 import SocialSettings from '@/components/ui/settings/account/SocialSettings.vue'
@@ -78,8 +78,8 @@ const tabCategories = defineMessages({
 		defaultMessage: 'Instances',
 	},
 	client: {
-		id: 'app.3vhy.settings.sidebar.label.client',
-		defaultMessage: '3vhy Client',
+		id: 'app.Eventide.settings.sidebar.label.client',
+		defaultMessage: 'Eventide',
 	},
 })
 
@@ -87,7 +87,7 @@ const { availableUpdate, downloading: downloadingUpdate, progress: updateProgres
 
 const updatesTab = {
 	name: defineMessage({
-		id: 'app.3vhy.settings.tabs.updates',
+		id: 'app.Eventide.settings.tabs.updates',
 		defaultMessage: 'Updates',
 	}),
 	category: tabCategories.client,
@@ -194,7 +194,7 @@ const tabs = [
 const updatesTabWithBadge = {
 	...updatesTab,
 	badge: defineMessage({
-		id: 'app.3vhy.settings.tabs.updates.new',
+		id: 'app.Eventide.settings.tabs.updates.new',
 		defaultMessage: 'New',
 	}),
 }
@@ -339,7 +339,7 @@ const messages = defineMessages({
 	},
 	appVersion: {
 		id: 'app.settings.app-version',
-		defaultMessage: '3vhy Client {version}',
+		defaultMessage: 'Eventide {version}',
 	},
 	macos: {
 		id: 'app.settings.operating-system.macos',
@@ -400,7 +400,7 @@ const messages = defineMessages({
 						}"
 						@click="devModeCount"
 					>
-						<ThreevhyGlyph class="w-6 h-6" />
+						<EventideGlyph class="w-6 h-6" />
 					</button>
 					<div v-if="appInfo" class="max-w-[200px]">
 						<p class="m-0">

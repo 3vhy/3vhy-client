@@ -162,7 +162,7 @@
     "message": "Приховати ім'я"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Згортати 3vhy Client під час запуску Minecraft."
+    "message": "Згортати Eventide під час запуску Minecraft."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "Згортати застосунок"
@@ -204,7 +204,7 @@
     "message": "Головна й уміст"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Виводити 3vhy Client на передній план, коли Minecraft закривається."
+    "message": "Виводити Eventide на передній план, коли Minecraft закривається."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Повернути фокус при закритті Minecraft"
@@ -1602,7 +1602,7 @@
     "message": "Найстаріші"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Змінні середовища встановлюються, коли примірник запускається."
@@ -2715,7 +2715,7 @@
     "message": "Реклама підтримує існування Modrinth і фінансує виплати творцям. Наші партнери можуть зберігати й отримувати доступ до cookie в застосунку, щоб персоналізувати рекламу та збирати метрики. Ви можете відмовитися від них або керувати налаштуваннями нижче."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Показувати 3vhy Client як вашу поточну активність у Discord. Це не впливає на активність, додану модами. Потребує перезапуску застосунку."
+    "message": "Показувати Eventide як вашу поточну активність у Discord. Це не впливає на активність, додану модами. Потребує перезапуску застосунку."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Discord Rich Presence"
@@ -2760,7 +2760,7 @@
     "message": "Оглянути каталог застосунку"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Де 3vhy Client зберігає примірники й інші файли. Зміни набудуть чинності після перезапуску застосунку."
+    "message": "Де Eventide зберігає примірники й інші файли. Зміни набудуть чинності після перезапуску застосунку."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Вибрати новий каталог застосунку"
@@ -3276,7 +3276,7 @@
     "message": "Увімкнути"
   },
   "app.survey.body": {
-    "message": "Не бажаєте відповісти на кілька запитань про ваш досвід користування 3vhy Client?"
+    "message": "Не бажаєте відповісти на кілька запитань про ваш досвід користування Eventide?"
   },
   "app.survey.footer": {
     "message": "Цей відгук надійде безпосередньо команді Modrinth і допоможе у створенні майбутніх оновлень!"
@@ -3597,7 +3597,7 @@
     "message": "Відв'язати спільний примірник"
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-body": {
-    "message": "Це видалить спільний примірник із серверів Modrinth. Користувачі 3vhy Client припинять отримувати оновлення, але ваш локальний примірник і його вміст залишаться на цьому пристрої."
+    "message": "Це видалить спільний примірник із серверів Modrinth. Користувачі Eventide припинять отримувати оновлення, але ваш локальний примірник і його вміст залишаться на цьому пристрої."
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-header": {
     "message": "Скасування публікації спільного примірника"

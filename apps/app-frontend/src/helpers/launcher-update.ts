@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 
-/** A 3vhy Client release on GitHub that's newer than the running app. */
+/** A Eventide release on GitHub that's newer than the running app. */
 export interface LauncherUpdate {
 	version: string
 	name: string | null
@@ -16,13 +16,13 @@ export interface LauncherUpdate {
 }
 
 export async function checkForLauncherUpdate(): Promise<LauncherUpdate | null> {
-	return await invoke('plugin:launcher-update|check_for_3vhy_update')
+	return await invoke('plugin:launcher-update|check_for_eventide_update')
 }
 
 /**
- * Downloads the newest release and starts its installer. 3vhy Client closes while the
+ * Downloads the newest release and starts its installer. Eventide closes while the
  * installer runs and opens again afterwards, so this rarely resolves.
  */
 export async function installLauncherUpdate(): Promise<void> {
-	return await invoke('plugin:launcher-update|install_3vhy_update')
+	return await invoke('plugin:launcher-update|install_eventide_update')
 }

@@ -23,9 +23,9 @@ const { formatMessage } = useVIntl()
 const { active: octoberOn, setEnabled: setOctober } = useOctober()
 
 const messages = defineMessages({
-	octoberTitle: { id: 'app.3vhy.settings.october.title', defaultMessage: 'October look' },
+	octoberTitle: { id: 'app.Eventide.settings.october.title', defaultMessage: 'October look' },
 	octoberDescription: {
-		id: 'app.3vhy.settings.october.description',
+		id: 'app.Eventide.settings.october.description',
 		defaultMessage:
 			'White, with ghosts. It turns itself on in October and off in November. While it is on, it is used instead of the colour theme below.',
 	},
@@ -175,18 +175,18 @@ provideAppearanceSettings({
 <template>
 	<section class="mb-6 flex items-center justify-between gap-4">
 		<div>
-			<h2 id="threevhy-october-label" class="m-0 text-lg font-semibold text-contrast">
+			<h2 id="eventide-october-label" class="m-0 text-lg font-semibold text-contrast">
 				{{ formatMessage(messages.octoberTitle) }}
 			</h2>
-			<p id="threevhy-october-description" class="m-0 mt-1">
+			<p id="eventide-october-description" class="m-0 mt-1">
 				{{ formatMessage(messages.octoberDescription) }}
 			</p>
 		</div>
 		<Toggle
-			id="threevhy-october"
+			id="eventide-october"
 			:model-value="octoberOn"
-			aria-labelledby="threevhy-october-label"
-			aria-describedby="threevhy-october-description"
+			aria-labelledby="eventide-october-label"
+			aria-describedby="eventide-october-description"
 			@update:model-value="setOctober($event)"
 		/>
 	</section>

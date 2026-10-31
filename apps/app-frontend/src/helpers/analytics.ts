@@ -49,7 +49,7 @@ let activated = false
 let debug = false
 let explicitlyOptedIn = false
 const events: Array<{ name: AnalyticsEvent; properties: Record<string, unknown> | undefined }> = []
-// 3vhy Client: analytics are disabled (Modrinth's PostHog project is not ours to report to)
+// Eventide: analytics are disabled (Modrinth's PostHog project is not ours to report to)
 const allowed = false
 
 function removeActivationListeners() {

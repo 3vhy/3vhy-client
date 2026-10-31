@@ -10,9 +10,9 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 	{
 		errorMatchers: ['Failed to deserialize response to JSON during step RefreshOAuthToken:'],
 		whatHappened:
-			'Your saved Microsoft sign-in token has expired or was revoked, so 3vhy Client cannot refresh your Minecraft session.',
+			'Your saved Microsoft sign-in token has expired or was revoked, so Eventide cannot refresh your Minecraft session.',
 		stepsToFix: [
-			'Sign out of the affected Minecraft account in 3vhy Client',
+			'Sign out of the affected Minecraft account in Eventide',
 			'Sign in to the account again',
 			'Once the new sign-in finishes, try launching Minecraft again',
 		],
@@ -25,7 +25,7 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 			'Open your system date and time settings',
 			'Turn on automatic time zone and automatic time, if available',
 			'Use the sync option in your system settings to synchronize the clock',
-			'Restart 3vhy Client',
+			'Restart Eventide',
 			'Try signing in again',
 		],
 	},
@@ -37,7 +37,7 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 			'Microsoft or Minecraft temporarily blocked the sign-in request because there were too many recent attempts.',
 		stepsToFix: [
 			'Wait about an hour before trying again',
-			'Restart 3vhy Client after waiting',
+			'Restart Eventide after waiting',
 			'Try signing in once more',
 			'If the same message appears, wait longer before retrying so the temporary limit can clear',
 		],
@@ -47,7 +47,7 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 			message.includes('Failed to deserialize response to JSON during step MinecraftToken:') &&
 			/Status Code: 5\d\d/.test(message),
 		whatHappened:
-			"Minecraft's authentication service is returning a server error, so 3vhy Client cannot finish signing you in right now.",
+			"Minecraft's authentication service is returning a server error, so Eventide cannot finish signing you in right now.",
 		stepsToFix: [
 			'Wait a few minutes and try signing in again',
 			'Check <a href="https://support.xbox.com/xbox-live-status">Xbox Status</a> for current service issues',
@@ -64,7 +64,7 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 			'Launch Minecraft: Java Edition once from the official launcher',
 			'Wait up to an hour if the purchase or profile setup was recent',
 			'Make sure you are using the Microsoft account that owns Minecraft. See <a href="https://support.modrinth.com/en/articles/9409136-finding-the-right-xbox-account">Finding the right Xbox account</a> for help',
-			'Try signing in to 3vhy Client again',
+			'Try signing in to Eventide again',
 		],
 	},
 	{
@@ -79,11 +79,11 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 				'live.com',
 			].some((domain) => message.includes(domain)),
 		whatHappened:
-			'3vhy Client could not connect to a Microsoft, Xbox, or Minecraft service needed for sign-in. This is usually caused by a local network, DNS, proxy, firewall, hosts file, VPN, or antivirus issue.',
+			'Eventide could not connect to a Microsoft, Xbox, or Minecraft service needed for sign-in. This is usually caused by a local network, DNS, proxy, firewall, hosts file, VPN, or antivirus issue.',
 		stepsToFix: [
-			'Restart 3vhy Client and try signing in again',
+			'Restart Eventide and try signing in again',
 			'Check that your internet connection is working',
-			'Allow 3vhy Client through your firewall, antivirus, proxy, VPN, and hosts file rules',
+			'Allow Eventide through your firewall, antivirus, proxy, VPN, and hosts file rules',
 			'Try a different network or temporarily disable VPN/proxy software if you use one',
 			'If routing or DNS is the issue, a service like Cloudflare WARP can sometimes help',
 		],
@@ -173,11 +173,11 @@ export const minecraftAuthErrors: MinecraftAuthError[] = [
 	{
 		errorMatchers: ['Failed to deserialize response to JSON during step XstsAuthorize:'],
 		whatHappened:
-			'Xbox services rejected the request to authorize this account for Minecraft services, but did not return a specific account restriction that 3vhy Client recognizes.',
+			'Xbox services rejected the request to authorize this account for Minecraft services, but did not return a specific account restriction that Eventide recognizes.',
 		stepsToFix: [
 			'Sign in with the <a href="https://www.minecraft.net/en-us/download">official Minecraft Launcher</a>',
 			'Complete any prompts shown by Microsoft, Xbox, or Minecraft',
-			'Try signing in to 3vhy Client again',
+			'Try signing in to Eventide again',
 			'If the official launcher also fails, follow the error shown there or contact Xbox Support',
 		],
 	},

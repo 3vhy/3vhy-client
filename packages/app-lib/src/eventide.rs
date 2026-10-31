@@ -1,4 +1,4 @@
-//! 3vhy Client: before a supported Fabric instance launches, put the in-game 3vhy mod in its
+//! Eventide: before a supported Fabric instance launches, put the in-game Eventide mod in its
 //! mods folder and make sure Fabric API (which the mod needs) is installed. The first time an
 //! instance launches it also gets a small performance pack from Modrinth.
 
@@ -16,20 +16,24 @@ use std::path::Path;
 use std::time::Duration;
 use tracing::{info, warn};
 
-const MOD_FILE_NAME: &str = "3vhy-client.jar";
+const MOD_FILE_NAME: &str = "eventide.jar";
+/// What the mod's jar was called before 3vhy Client became Eventide; old copies are cleared out.
+const OLD_MOD_FILE_PREFIXES: &[&str] = &["eventide-client", "3vhy-client", "threevhy-client"];
 const FABRIC_API: &str = "P7dR8mSH";
 /// Sodium, Lithium, FerriteCore, Entity Culling, ImmediatelyFast
 const PERFORMANCE_PACK: &[&str] =
     &["AANobbMI", "gvQqBUqZ", "uXXizFIs", "NNAgCjsB", "5ZwdcRci"];
-const PERFORMANCE_PACK_MARKER: &str = ".3vhy-performance-pack";
+const PERFORMANCE_PACK_MARKER: &str = ".eventide-performance-pack";
+/// The same marker from before the rename, so instances that already have the pack aren't given it again.
+const OLD_PERFORMANCE_PACK_MARKER: &str = ".3vhy-performance-pack";
 const INSTALL_TIMEOUT: Duration = Duration::from_secs(90);
 
 static MOD_1_21_11: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/threevhy-client-1.21.11.jar"));
+    include_bytes!(concat!(env!("OUT_DIR"), "/eventide-1.21.11.jar"));
 static MOD_26_1: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/threevhy-client-26.1.jar"));
+    include_bytes!(concat!(env!("OUT_DIR"), "/eventide-26.1.jar"));
 
-/// The 3vhy mod jar built for this Minecraft version, if 3vhy supports it.
+/// The Eventide mod jar built for this Minecraft version, if Eventide supports it.
 pub fn mod_jar_for(game_version: &str) -> Option<&'static [u8]> {
     let jar = match game_version {
         "1.21.11" => MOD_1_21_11,
@@ -44,7 +48,7 @@ pub fn is_supported(loader: ModLoader, game_version: &str) -> bool {
 }
 
 /// Never fails the launch: anything that goes wrong is logged and the game starts without
-/// 3vhy's extras.
+/// Eventide's extras.
 pub(crate) async fn prepare_launch(
     instance_id: &str,
     context: &InstanceLaunchContext,
@@ -73,7 +77,8 @@ pub(crate) async fn prepare_launch(
 
     let gets_performance_pack =
         !matches!(context.link, InstanceLink::SharedInstance { .. })
-            && !instance_dir.join(PERFORMANCE_PACK_MARKER).exists();
+            && !instance_dir.join(PERFORMANCE_PACK_MARKER).exists()
+            && !instance_dir.join(OLD_PERFORMANCE_PACK_MARKER).exists();
     if gets_performance_pack {
         for project_id in PERFORMANCE_PACK {
             if !installed.iter().any(|id| id == project_id) {
@@ -83,7 +88,7 @@ pub(crate) async fn prepare_launch(
         if let Err(error) =
             io::write(instance_dir.join(PERFORMANCE_PACK_MARKER), b"").await
         {
-            warn!("3vhy: couldn't record the performance pack: {error}");
+            warn!("Eventide: couldn't record the performance pack: {error}");
         }
     }
 
@@ -91,14 +96,14 @@ pub(crate) async fn prepare_launch(
     let has_fabric_api = installed.iter().any(|id| id == FABRIC_API);
     match place_mod(&mods_dir, jar, has_fabric_api).await {
         Ok(placed) => changed |= placed,
-        Err(error) => warn!("3vhy: couldn't add the 3vhy mod: {error}"),
+        Err(error) => warn!("Eventide: couldn't add the Eventide mod: {error}"),
     }
 
     if changed
         && let Err(error) =
             emit_instance(instance_id, InstancePayloadType::Edited).await
     {
-        warn!("3vhy: couldn't refresh the instance view: {error}");
+        warn!("Eventide: couldn't refresh the instance view: {error}");
     }
 }
 
@@ -106,7 +111,7 @@ async fn installed_projects(instance_id: &str, state: &State) -> Vec<String> {
     get_installed_project_ids_for_instance(instance_id, None, state)
         .await
         .unwrap_or_else(|error| {
-            warn!("3vhy: couldn't list installed content: {error}");
+            warn!("Eventide: couldn't list installed content: {error}");
             Vec::new()
         })
 }
@@ -129,15 +134,15 @@ async fn install(instance_id: &str, project_id: &str, state: &State) -> bool {
     };
     match tokio::time::timeout(INSTALL_TIMEOUT, work).await {
         Ok(Ok(_)) => {
-            info!("3vhy: installed {project_id} for {instance_id}");
+            info!("Eventide: installed {project_id} for {instance_id}");
             true
         }
         Ok(Err(error)) => {
-            warn!("3vhy: couldn't install {project_id}: {error}");
+            warn!("Eventide: couldn't install {project_id}: {error}");
             false
         }
         Err(_) => {
-            warn!("3vhy: installing {project_id} took too long, skipping");
+            warn!("Eventide: installing {project_id} took too long, skipping");
             false
         }
     }
@@ -157,8 +162,10 @@ async fn place_mod(
     if let Ok(entries) = std::fs::read_dir(mods_dir) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().to_lowercase();
-            let is_ours = name.starts_with("3vhy-client")
-                || name.starts_with("threevhy-client");
+            let is_ours = name == MOD_FILE_NAME
+                || OLD_MOD_FILE_PREFIXES
+                    .iter()
+                    .any(|prefix| name.starts_with(prefix));
             if is_ours && entry.path() != target {
                 io::remove_file(entry.path()).await?;
                 changed = true;

@@ -17,7 +17,7 @@ const config: Config = {
 	presets: [preset],
 	theme: {
 		extend: {
-			// 3vhy Client: tighter, blockier corners than the Modrinth App
+			// Eventide: tighter, blockier corners than the Modrinth App
 			borderRadius: {
 				md: '0.3125rem',
 				lg: '0.375rem',

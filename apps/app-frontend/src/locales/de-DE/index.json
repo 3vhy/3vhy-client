@@ -162,7 +162,7 @@
     "message": "Namensschild ausblenden"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Minimiere die 3vhy Client, wenn Minecraft startet."
+    "message": "Minimiere die Eventide, wenn Minecraft startet."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "App minimieren"
@@ -204,7 +204,7 @@
     "message": "Startseite & Inhalte"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Bringe die 3vhy Client in den Vordergrund, wenn Minecraft beendet wird."
+    "message": "Bringe die Eventide in den Vordergrund, wenn Minecraft beendet wird."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "App neu fokussieren, wenn Minecraft geschlossen wird"
@@ -1611,7 +1611,7 @@
     "message": "Älteste"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Umgebungsvariablen, die beim Starten einer Instanz gesetzt werden."
@@ -2724,7 +2724,7 @@
     "message": "Werbung ermöglicht Modrinth und finanziert die Auszahlungen an die Ersteller. Unsere Partner speichern möglicherweise Cookies in der App oder greifen auf diese zu, um Werbung zu personalisieren und die Leistung zu messen. Du kannst dies unten deaktivieren oder deine Einstellungen verwalten."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Zeige 3vhy Client als deine aktuelle Aktivität auf Discord. Dies betrifft nicht Rich Presence die von Mods zu Instanzen hinzugefügt wird. Benötigt einen Neustart der App."
+    "message": "Zeige Eventide als deine aktuelle Aktivität auf Discord. Dies betrifft nicht Rich Presence die von Mods zu Instanzen hinzugefügt wird. Benötigt einen Neustart der App."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Discord Rich Presence"
@@ -2769,7 +2769,7 @@
     "message": "Nach einem App-Verzeichnis suchen"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Wo 3vhy Client Instanzen und andere Dateien speichert. Änderungen werden nach dem Neustarten der App angewendet."
+    "message": "Wo Eventide Instanzen und andere Dateien speichert. Änderungen werden nach dem Neustarten der App angewendet."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Neues App-Verzeichnis auswählen"
@@ -3285,7 +3285,7 @@
     "message": "Aktivieren"
   },
   "app.survey.body": {
-    "message": "Könntest du ein paar Fragen über deine Erfahrung mit 3vhy Client beantworten?"
+    "message": "Könntest du ein paar Fragen über deine Erfahrung mit Eventide beantworten?"
   },
   "app.survey.footer": {
     "message": "Das Feedback geht direkt an das Modrinth-Team und wird helfen, zukünftige Updates zu gestalten!"

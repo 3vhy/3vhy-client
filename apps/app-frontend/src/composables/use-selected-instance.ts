@@ -5,9 +5,9 @@ import { computed, ref, watch } from 'vue'
 import type { GameInstance } from '@/helpers/types'
 import { instanceListQueryOptions } from '@/pages/instance/query-options'
 
-// 3vhy Client: the instance picked in the Home "version" picker. The sidebar's
+// Eventide: the instance picked in the Home "version" picker. The sidebar's
 // Logs and Folder buttons act on this same instance.
-const STORAGE_KEY = '3vhy-selected-instance'
+const STORAGE_KEY = 'eventide-selected-instance'
 
 function readStored(): string | null {
 	try {

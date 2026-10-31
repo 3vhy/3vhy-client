@@ -17,12 +17,12 @@ import { useRouter } from 'vue-router'
 
 import GhostSprite from '@/components/ui/brand/GhostSprite.vue'
 import PixelSnow from '@/components/ui/brand/PixelSnow.vue'
-import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
+import EventideLogo from '@/components/ui/brand/EventideLogo.vue'
 import InGamePanel from '@/components/ui/home/InGamePanel.vue'
 import InstancePicker from '@/components/ui/home/InstancePicker.vue'
 import QuickModsPanel from '@/components/ui/home/QuickModsPanel.vue'
 import ServersPanel from '@/components/ui/home/ServersPanel.vue'
-import { THREEVHY_VERSIONS } from '@/components/ui/home/threevhy'
+import { EVENTIDE_VERSIONS } from '@/components/ui/home/eventide'
 import RecentWorldsList from '@/components/ui/world/RecentWorldsList.vue'
 import { useAppEvent } from '@/composables/use-app-event'
 import { useAppSettings } from '@/composables/use-app-settings.ts'
@@ -40,7 +40,7 @@ import { traceStartupStep } from '@/helpers/startup-debug'
 import { useRootBreadcrumb } from '@/providers/breadcrumbs'
 import { injectOnboardingChecklist } from '@/providers/onboarding-checklist'
 
-// 3vhy Client home: a greeting with your stats, the banner sky with Play front and
+// Eventide home: a greeting with your stats, the banner sky with Play front and
 // centre, and a hotbar of shortcuts underneath — press 1 to 5 to jump to one, like in
 // Minecraft. In October the sky turns to a pale moonlit graveyard with ghosts.
 defineOptions({
@@ -57,31 +57,31 @@ const router = useRouter()
 
 const messages = defineMessages({
 	home: { id: 'app.navigation.home', defaultMessage: 'Home' },
-	welcome: { id: 'app.3vhy.home.welcome', defaultMessage: 'Welcome to 3vhy Client' },
-	welcomeBack: { id: 'app.3vhy.home.welcome-back', defaultMessage: 'Welcome back,' },
-	october: { id: 'app.3vhy.home.october', defaultMessage: 'Happy October' },
-	modsOn: { id: 'app.3vhy.home.stat.mods', defaultMessage: 'mods on' },
+	welcome: { id: 'app.Eventide.home.welcome', defaultMessage: 'Welcome to Eventide' },
+	welcomeBack: { id: 'app.Eventide.home.welcome-back', defaultMessage: 'Welcome back,' },
+	october: { id: 'app.Eventide.home.october', defaultMessage: 'Happy October' },
+	modsOn: { id: 'app.Eventide.home.stat.mods', defaultMessage: 'mods on' },
 	instances: {
-		id: 'app.3vhy.home.stat.instances',
+		id: 'app.Eventide.home.stat.instances',
 		defaultMessage: '{count, plural, one {instance} other {instances}}',
 	},
-	ram: { id: 'app.3vhy.home.stat.ram', defaultMessage: 'GB RAM' },
+	ram: { id: 'app.Eventide.home.stat.ram', defaultMessage: 'GB RAM' },
 	ramTooltip: {
-		id: 'app.3vhy.home.stat.ram.tooltip',
+		id: 'app.Eventide.home.stat.ram.tooltip',
 		defaultMessage:
 			'Your PC has {total} GB. Minecraft can use {allocated} GB (change it in Settings).',
 	},
-	play: { id: 'app.3vhy.home.play', defaultMessage: 'Play' },
-	stop: { id: 'app.3vhy.home.stop', defaultMessage: 'Stop' },
-	installing: { id: 'app.3vhy.home.installing', defaultMessage: 'Installing' },
-	createFirst: { id: 'app.3vhy.home.create-first', defaultMessage: 'Set up' },
-	hotbarLabel: { id: 'app.3vhy.home.hotbar', defaultMessage: 'Find content on Modrinth' },
-	hotbarKey: { id: 'app.3vhy.home.hotbar.key', defaultMessage: 'Press {key}' },
-	modpacks: { id: 'app.3vhy.home.hotbar.modpacks', defaultMessage: 'Modpacks' },
-	mods: { id: 'app.3vhy.home.hotbar.mods', defaultMessage: 'Mods' },
-	shaders: { id: 'app.3vhy.home.hotbar.shaders', defaultMessage: 'Shaders' },
-	resourcePacks: { id: 'app.3vhy.home.hotbar.resource-packs', defaultMessage: 'Packs' },
-	servers: { id: 'app.3vhy.home.hotbar.servers', defaultMessage: 'Servers' },
+	play: { id: 'app.Eventide.home.play', defaultMessage: 'Play' },
+	stop: { id: 'app.Eventide.home.stop', defaultMessage: 'Stop' },
+	installing: { id: 'app.Eventide.home.installing', defaultMessage: 'Installing' },
+	createFirst: { id: 'app.Eventide.home.create-first', defaultMessage: 'Set up' },
+	hotbarLabel: { id: 'app.Eventide.home.hotbar', defaultMessage: 'Find content on Modrinth' },
+	hotbarKey: { id: 'app.Eventide.home.hotbar.key', defaultMessage: 'Press {key}' },
+	modpacks: { id: 'app.Eventide.home.hotbar.modpacks', defaultMessage: 'Modpacks' },
+	mods: { id: 'app.Eventide.home.hotbar.mods', defaultMessage: 'Mods' },
+	shaders: { id: 'app.Eventide.home.hotbar.shaders', defaultMessage: 'Shaders' },
+	resourcePacks: { id: 'app.Eventide.home.hotbar.resource-packs', defaultMessage: 'Packs' },
+	servers: { id: 'app.Eventide.home.hotbar.servers', defaultMessage: 'Servers' },
 })
 
 useRootBreadcrumb({
@@ -100,7 +100,7 @@ if (hasCreatedInstance.value) {
 type MinecraftAccount = { profile?: { id: string; name: string } }
 /** The signed-in Minecraft account's name, for the greeting. */
 const playerQuery = useQuery({
-	queryKey: ['threevhy', 'player-name'],
+	queryKey: ['eventide', 'player-name'],
 	queryFn: async (): Promise<string | null> => {
 		const id = await get_default_user()
 		if (!id) return null
@@ -156,10 +156,10 @@ const playLabel = computed(() => {
 	return formatMessage(messages.play)
 })
 
-/** Makes a Fabric instance for a 3vhy-supported version; the 3vhy mod is added on launch. */
-async function createThreevhyInstance(gameVersion: string) {
+/** Makes a Fabric instance for a eventide-supported version; the Eventide mod is added on launch. */
+async function createEventideInstance(gameVersion: string) {
 	const job = await install_create_instance({
-		name: `3vhy Client ${gameVersion}`,
+		name: `Eventide ${gameVersion}`,
 		gameVersion,
 		loader: 'fabric',
 		loaderVersion: 'stable',
@@ -172,7 +172,7 @@ async function createThreevhyInstance(gameVersion: string) {
 async function onPlay() {
 	const instance = selected.value
 	if (!instance) {
-		await createThreevhyInstance(THREEVHY_VERSIONS[0])
+		await createEventideInstance(EVENTIDE_VERSIONS[0])
 		return
 	}
 	if (isRunning.value) {
@@ -400,7 +400,7 @@ const clouds: [number, number, number][] = [
 			</div>
 
 			<div class="tvh-hero__content">
-				<ThreevhyLogo size="lg" />
+				<EventideLogo size="lg" />
 
 				<div class="tvh-playbar">
 					<button
@@ -420,7 +420,7 @@ const clouds: [number, number, number][] = [
 						:selected="selected"
 						@select="select"
 						@create="showCreationModal?.()"
-						@create-threevhy="createThreevhyInstance"
+						@create-eventide="createEventideInstance"
 					/>
 				</div>
 			</div>
@@ -480,7 +480,7 @@ const clouds: [number, number, number][] = [
 	color: var(--color-base);
 
 	b {
-		font-family: var(--threevhy-font-pixel);
+		font-family: var(--eventide-font-pixel);
 		font-weight: 600;
 		color: var(--color-contrast);
 	}
@@ -496,7 +496,7 @@ const clouds: [number, number, number][] = [
 	font-weight: 600;
 	color: #b4561a;
 	background: rgba(255, 138, 43, 0.12);
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 
 	.ghost-sprite {
 		filter: none;
@@ -505,9 +505,9 @@ const clouds: [number, number, number][] = [
 
 .tvh-hero {
 	// The hero is always the dark banner sky, even in light mode
-	--threevhy-ice: #e3f3fc;
-	--threevhy-card-bg: rgba(10, 26, 84, 0.62);
-	--threevhy-card-border: rgba(140, 196, 234, 0.16);
+	--eventide-ice: #e3f3fc;
+	--eventide-card-bg: rgba(10, 26, 84, 0.62);
+	--eventide-card-border: rgba(140, 196, 234, 0.16);
 	--color-contrast: #e3f3fc;
 	--color-base: #b4cdea;
 	--color-secondary: #9fb9de;
@@ -527,8 +527,8 @@ const clouds: [number, number, number][] = [
 	inset: 0;
 	overflow: hidden;
 	pointer-events: none;
-	clip-path: var(--threevhy-pixel-corners-lg);
-	background: var(--threevhy-stars), var(--threevhy-sky-panel);
+	clip-path: var(--eventide-pixel-corners-lg);
+	background: var(--eventide-stars), var(--eventide-sky-panel);
 	box-shadow: inset 0 2px 0 rgba(91, 200, 230, 0.55);
 }
 
@@ -602,8 +602,8 @@ const clouds: [number, number, number][] = [
 	padding: 0.32rem 0.8rem 0.38rem;
 	font-size: 0.85rem;
 	color: var(--color-secondary);
-	background: var(--threevhy-chip-bg);
-	clip-path: var(--threevhy-pixel-corners);
+	background: var(--eventide-chip-bg);
+	clip-path: var(--eventide-pixel-corners);
 
 	b {
 		color: var(--color-contrast);
@@ -628,12 +628,12 @@ const clouds: [number, number, number][] = [
 	min-width: 15rem;
 	padding: 0 2.2rem 4px;
 	border: none;
-	font-family: var(--threevhy-font-pixel);
+	font-family: var(--eventide-font-pixel);
 	font-size: 1.75rem;
 	font-weight: 600;
 	color: #04123f;
-	background: var(--threevhy-play-bg);
-	clip-path: var(--threevhy-pixel-corners);
+	background: var(--eventide-play-bg);
+	clip-path: var(--eventide-pixel-corners);
 	box-shadow:
 		inset 0 -6px 0 rgba(4, 18, 63, 0.4),
 		inset 0 3px 0 rgba(255, 255, 255, 0.45);
@@ -687,7 +687,7 @@ const clouds: [number, number, number][] = [
 	padding: 6px;
 	translate: -50% 0;
 	background: #050c2a;
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	box-shadow:
 		inset 0 0 0 2px rgba(140, 196, 234, 0.22),
 		inset 0 -4px 0 rgba(0, 0, 0, 0.35);
@@ -702,7 +702,7 @@ const clouds: [number, number, number][] = [
 	gap: 0.3rem;
 	width: 5.25rem;
 	height: 4.25rem;
-	color: var(--threevhy-pale);
+	color: var(--eventide-pale);
 	text-decoration: none;
 	background: #0b1a4f;
 	box-shadow:
@@ -731,7 +731,7 @@ const clouds: [number, number, number][] = [
 	position: absolute;
 	top: 4px;
 	left: 6px;
-	font-family: var(--threevhy-font-pixel);
+	font-family: var(--eventide-font-pixel);
 	font-size: 0.72rem;
 	color: rgba(207, 232, 247, 0.45);
 }
@@ -739,7 +739,7 @@ const clouds: [number, number, number][] = [
 .tvh-slot__icon {
 	width: 1.45rem;
 	height: 1.45rem;
-	color: var(--threevhy-cyan);
+	color: var(--eventide-cyan);
 }
 
 .tvh-slot__label {
@@ -974,11 +974,11 @@ const clouds: [number, number, number][] = [
 
 <style lang="scss">
 // October: a pale moonlit graveyard with ghosts, everything else in white and ink. Not scoped,
-// because it hangs off the `threevhy-october` class on <html>; every class here is tvh- prefixed.
-html.threevhy-october .tvh-hero {
-	--threevhy-ice: #221c30;
-	--threevhy-card-bg: rgba(255, 255, 255, 0.86);
-	--threevhy-card-border: rgba(34, 28, 48, 0.1);
+// because it hangs off the `eventide-october` class on <html>; every class here is tvh- prefixed.
+html.eventide-october .tvh-hero {
+	--eventide-ice: #221c30;
+	--eventide-card-bg: rgba(255, 255, 255, 0.86);
+	--eventide-card-border: rgba(34, 28, 48, 0.1);
 	--color-contrast: #221c30;
 	--color-base: #3d3650;
 	--color-secondary: #6f6886;
@@ -989,35 +989,35 @@ html.threevhy-october .tvh-hero {
 	--color-brand-highlight: rgba(45, 36, 64, 0.08);
 }
 
-html.threevhy-october .tvh-hero__sky {
+html.eventide-october .tvh-hero__sky {
 	background:
 		radial-gradient(38% 46% at 88% 14%, rgba(143, 132, 173, 0.22), transparent 70%),
-		var(--threevhy-sky-panel);
+		var(--eventide-sky-panel);
 	box-shadow:
 		inset 0 0 0 2px rgba(34, 28, 48, 0.06),
 		inset 0 2px 0 rgba(255, 255, 255, 0.9);
 }
 
-html.threevhy-october .tvh-cloud {
+html.eventide-october .tvh-cloud {
 	fill: rgba(143, 132, 173, 0.14);
 }
 
-html.threevhy-october .tvh-hill--back {
+html.eventide-october .tvh-hill--back {
 	fill: #ddd7ea;
 }
 
-html.threevhy-october .tvh-hill--front {
+html.eventide-october .tvh-hill--front {
 	fill: #c9c0db;
 }
 
-html.threevhy-october .tvh-play:not(.tvh-play--stop) {
+html.eventide-october .tvh-play:not(.tvh-play--stop) {
 	color: #ffffff;
 	box-shadow:
 		inset 0 -6px 0 rgba(10, 6, 20, 0.45),
 		inset 0 3px 0 rgba(255, 255, 255, 0.16);
 }
 
-html.threevhy-october .tvh-hotbar {
+html.eventide-october .tvh-hotbar {
 	background: #ffffff;
 	box-shadow:
 		inset 0 0 0 2px rgba(34, 28, 48, 0.1),
@@ -1025,7 +1025,7 @@ html.threevhy-october .tvh-hotbar {
 		0 10px 24px rgba(60, 48, 92, 0.12);
 }
 
-html.threevhy-october .tvh-slot {
+html.eventide-october .tvh-slot {
 	color: #3d3650;
 	background: #f6f5fa;
 	box-shadow:
@@ -1042,11 +1042,11 @@ html.threevhy-october .tvh-slot {
 	}
 }
 
-html.threevhy-october .tvh-slot__key {
+html.eventide-october .tvh-slot__key {
 	color: rgba(111, 104, 134, 0.6);
 }
 
-html.threevhy-october .tvh-slot__icon {
+html.eventide-october .tvh-slot__icon {
 	color: #6d5fa0;
 }
 </style>

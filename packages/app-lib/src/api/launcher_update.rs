@@ -1,5 +1,5 @@
-//! Updates for 3vhy Client itself, published as GitHub releases. The in-game 3vhy mod is
-//! bundled in the launcher (see `threevhy.rs`) and copied into instances before every
+//! Updates for Eventide itself, published as GitHub releases. The in-game Eventide mod is
+//! bundled in the launcher (see `eventide.rs`) and copied into instances before every
 //! launch, so installing a launcher update also updates the mod.
 
 use crate::ErrorKind;
@@ -22,9 +22,13 @@ use tracing::{info, warn};
 const LATEST_RELEASE_URL: &str =
     "https://api.github.com/repos/3vhy/3vhy-client/releases/latest";
 
-/// The plain Tauri NSIS installer. `3vhy.Client.Setup.exe` wraps it in an interactive
+/// The plain Tauri NSIS installer. `Eventide.Setup.exe` wraps it in an interactive
 /// setup and can't run unattended, so updates never use it.
-const INSTALLER_ASSET: &str = "3vhy.Client.Classic.Installer.exe";
+const INSTALLER_ASSET: &str = "Eventide.Classic.Installer.exe";
+
+/// The same installer under the name it had before 3vhy Client became Eventide. Releases attach it
+/// under both names for a while, so copies of 3vhy Client can still update to Eventide.
+const LEGACY_INSTALLER_ASSET: &str = "3vhy.Client.Classic.Installer.exe";
 
 /// Flags understood by Tauri's NSIS installer template, as `tauri-plugin-updater` passes
 /// them: `/P` installs passively (progress only, no questions, closes a running copy of
@@ -32,11 +36,11 @@ const INSTALLER_ASSET: &str = "3vhy.Client.Classic.Installer.exe";
 /// leaves shortcuts alone, and `/R` with `/ARGS` starts the app again once it's done.
 const NSIS_UPDATE_ARGS: [&str; 4] = ["/P", "/UPDATE", "/R", "/ARGS"];
 
-const DOWNLOAD_DIR_NAME: &str = "3vhy-client-update";
+const DOWNLOAD_DIR_NAME: &str = "eventide-update";
 
 static INSTALLING: Mutex<()> = Mutex::const_new(());
 
-/// A 3vhy Client release that's newer than the running app.
+/// A Eventide release that's newer than the running app.
 #[derive(Serialize, Clone, Debug)]
 pub struct LauncherUpdate {
     pub version: String,
@@ -73,7 +77,7 @@ struct ReleaseAsset {
     digest: Option<String>,
 }
 
-/// Looks up the latest 3vhy Client release on GitHub and returns it when it's newer than
+/// Looks up the latest Eventide release on GitHub and returns it when it's newer than
 /// `current_version`. Local builds are `1.0.0-local`, which is newer than any 0.x release,
 /// so they're never offered one.
 #[tracing::instrument]
@@ -95,7 +99,7 @@ pub async fn check(
         StatusCode::NOT_FOUND => return Ok(None),
         status if !status.is_success() => {
             return Err(ErrorKind::OtherError(format!(
-                "GitHub couldn't be asked for 3vhy Client updates right now ({status}). Try again later."
+                "GitHub couldn't be asked for Eventide updates right now ({status}). Try again later."
             ))
             .into());
         }
@@ -108,13 +112,14 @@ pub async fn check(
         return Ok(None);
     }
 
-    let Some(installer) = release
-        .assets
-        .into_iter()
-        .find(|asset| asset.name == INSTALLER_ASSET)
+    let mut assets = release.assets;
+    let named = |name: &str| assets.iter().position(|asset| asset.name == name);
+    let Some(installer) = named(INSTALLER_ASSET)
+        .or_else(|| named(LEGACY_INSTALLER_ASSET))
+        .map(|index| assets.swap_remove(index))
     else {
         warn!(
-            "3vhy Client {latest} is released but has no {INSTALLER_ASSET} yet"
+            "Eventide {latest} is released but has no {INSTALLER_ASSET} yet"
         );
         return Ok(None);
     };
@@ -136,14 +141,14 @@ pub async fn check(
 }
 
 /// Downloads the newest release's installer and starts it. On success the caller has to
-/// exit the app straight away: the installer replaces the app's files and then opens 3vhy
+/// exit the app straight away: the installer replaces the app's files and then opens Eventide
 /// Client again. Returns the update that's being installed.
 pub async fn download_and_launch(
     current_version: &str,
 ) -> crate::Result<LauncherUpdate> {
     if !cfg!(windows) {
         return Err(ErrorKind::OtherError(
-            "3vhy Client can only update itself on Windows. Download the new version from GitHub instead.".to_string(),
+            "Eventide can only update itself on Windows. Download the new version from GitHub instead.".to_string(),
         )
         .into());
     }
@@ -157,14 +162,14 @@ pub async fn download_and_launch(
 
     let Some(update) = check(current_version).await? else {
         return Err(ErrorKind::OtherError(
-            "You're already on the latest version of 3vhy Client.".to_string(),
+            "You're already on the latest version of Eventide.".to_string(),
         )
         .into());
     };
 
     let installer = download(&update, current_version).await?;
     info!(
-        "Starting the 3vhy Client {} installer at {}",
+        "Starting the Eventide {} installer at {}",
         update.version,
         installer.display()
     );
@@ -192,7 +197,7 @@ async fn download(
     let dir = download_dir();
     io::create_dir_all(&dir).await?;
     let installer =
-        dir.join(format!("3vhy-client-{}-installer.exe", update.version));
+        dir.join(format!("eventide-client-{}-installer.exe", update.version));
     let partial = installer.with_extension("part");
 
     let loading_bar = init_loading(
@@ -241,7 +246,7 @@ async fn download(
     if downloaded != update.size {
         discard(&partial).await;
         return Err(ErrorKind::OtherError(format!(
-            "The 3vhy Client {} download has the wrong size ({downloaded} bytes, expected {}). Try again.",
+            "The Eventide {} download has the wrong size ({downloaded} bytes, expected {}). Try again.",
             update.version, update.size
         ))
         .into());
@@ -252,7 +257,7 @@ async fn download(
         if actual != *expected {
             discard(&partial).await;
             return Err(ErrorKind::OtherError(format!(
-                "The 3vhy Client {} download is damaged (SHA-256 {actual}, expected {expected}). Try again.",
+                "The Eventide {} download is damaged (SHA-256 {actual}, expected {expected}). Try again.",
                 update.version
             ))
             .into());
@@ -269,13 +274,13 @@ fn download_dir() -> PathBuf {
     std::env::temp_dir().join(DOWNLOAD_DIR_NAME)
 }
 
-/// Installers from earlier updates aren't needed once 3vhy Client is running again.
+/// Installers from earlier updates aren't needed once Eventide is running again.
 async fn remove_old_installers() {
     let dir = download_dir();
     if dir.exists()
         && let Err(error) = io::remove_dir_all(&dir).await
     {
-        warn!("Couldn't clear out old 3vhy Client installers: {error}");
+        warn!("Couldn't clear out old Eventide installers: {error}");
     }
 }
 
@@ -295,7 +300,7 @@ fn check_download_url(url: &str) -> crate::Result<()> {
         Ok(())
     } else {
         Err(ErrorKind::OtherError(format!(
-            "Refusing to download a 3vhy Client update from {url}"
+            "Refusing to download a Eventide update from {url}"
         ))
         .into())
     }
@@ -306,7 +311,7 @@ fn parse_version(version: &str) -> crate::Result<semver::Version> {
     let trimmed = trimmed.strip_prefix(['v', 'V']).unwrap_or(trimmed);
     semver::Version::parse(trimmed).map_err(|error| {
         ErrorKind::OtherError(format!(
-            "'{version}' isn't a version 3vhy Client understands: {error}"
+            "'{version}' isn't a version Eventide understands: {error}"
         ))
         .into()
     })
@@ -330,7 +335,7 @@ mod tests {
     fn only_release_downloads_are_allowed() {
         assert!(
             check_download_url(
-                "https://github.com/3vhy/3vhy-client/releases/download/v0.3.1/3vhy.Client.Classic.Installer.exe"
+                "https://github.com/3vhy/3vhy-client/releases/download/v0.3.1/Eventide.Classic.Installer.exe"
             )
             .is_ok()
         );

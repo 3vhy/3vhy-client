@@ -17,7 +17,7 @@ pub mod install;
 mod launcher;
 mod logger;
 mod state;
-mod threevhy;
+mod eventide;
 
 pub use api::*;
 pub use error::*;
@@ -33,7 +33,7 @@ pub use util::fetch::DownloadReason;
 
 pub fn launcher_user_agent() -> String {
     const LAUNCHER_BASE_USER_AGENT: &str =
-        concat!("3vhy/3vhy-client/", env!("CARGO_PKG_VERSION"));
+        concat!("Eventide/eventide-client/", env!("CARGO_PKG_VERSION"));
 
     format!(
         "{} ({}; fork of modrinth/theseus)",

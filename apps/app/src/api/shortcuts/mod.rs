@@ -60,7 +60,7 @@ fn instance_launch_url(
     server: Option<String>,
     singleplayer_world: Option<String>,
 ) -> Url {
-    let mut launch_url = Url::parse("threevhy://launch/instance")
+    let mut launch_url = Url::parse("eventide://launch/instance")
         .expect("static launch URL should parse");
 
     launch_url

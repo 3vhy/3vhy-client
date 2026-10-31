@@ -162,7 +162,7 @@
     "message": "Ukryj nazwę"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Minimalizuje 3vhy Client po uruchomieniu Minecraft."
+    "message": "Minimalizuje Eventide po uruchomieniu Minecraft."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "Minimalizuj aplikację"
@@ -204,7 +204,7 @@
     "message": "Strona główna i zawartość"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Przynieś okno 3vhy Client na wierzch po wyjściu z gry."
+    "message": "Przynieś okno Eventide na wierzch po wyjściu z gry."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Pokaż aplikację po wyjściu z gry"
@@ -1599,7 +1599,7 @@
     "message": "Najstarsze"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Zmienne środowiskowe ustawione podczas uruchamiania instancji."
@@ -2712,7 +2712,7 @@
     "message": "Reklamy pozwalają na dalsze działanie Modrinth i finansują dochody dla twórców. Nasi partnerzy mogą gromadzić albo uzyskiwać dostęp do plików cookies w celu personalizacji reklam i mierzenia skuteczności."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Pokazuj 3vhy Client jako aktywność na Discord. Nie wpływa to na Rich Presence dodane do instancji przez mody. Wymaga ponownego uruchomienia aplikacji."
+    "message": "Pokazuj Eventide jako aktywność na Discord. Nie wpływa to na Rich Presence dodane do instancji przez mody. Wymaga ponownego uruchomienia aplikacji."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Discord Rich Presence"
@@ -3594,7 +3594,7 @@
     "message": "Odłącz wspólną instancję"
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-body": {
-    "message": "Spowoduje to usunięcie tej udostępnionej instancji z serwerów Modrinth. Użytkownicy korzystający z niej w 3vhy Client przestaną otrzymywać aktualizacje, ale twoja lokalna instalacja i jej zawartość pozostanie na tym urządzeniu."
+    "message": "Spowoduje to usunięcie tej udostępnionej instancji z serwerów Modrinth. Użytkownicy korzystający z niej w Eventide przestaną otrzymywać aktualizacje, ale twoja lokalna instalacja i jej zawartość pozostanie na tym urządzeniu."
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-header": {
     "message": "Wycofywanie udostępnionej instancji"

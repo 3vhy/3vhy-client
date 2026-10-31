@@ -1611,7 +1611,7 @@
     "message": "Antiguo"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Variables de entorno definidas al ejecutar una instancia."
@@ -2724,7 +2724,7 @@
     "message": "Los anuncios hacen Modrinth posible y financian los pagos a los creadores. Nuestros socios pueden almacenar o acceder a cookies en la aplicación para personalizar los anuncios y medir el rendimiento. Puedes desactivar esta opción o modificar tus preferencias a continuación."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Mostrar 3vhy Client como tu actividad actual en Discord.\nEsto no afecta tu Presencia Enriquecida añadida a instancias por mods. Requiere reiniciar la aplicación."
+    "message": "Mostrar Eventide como tu actividad actual en Discord.\nEsto no afecta tu Presencia Enriquecida añadida a instancias por mods. Requiere reiniciar la aplicación."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Estado de la actividad en Discord"
@@ -2769,7 +2769,7 @@
     "message": "Buscar un directorio de aplicaciones"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Donde 3vhy Client almacena instancias y otros archivos. Los cambios entran en vigor tras reiniciar la aplicación."
+    "message": "Donde Eventide almacena instancias y otros archivos. Los cambios entran en vigor tras reiniciar la aplicación."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Seleccionar un nuevo directorio de aplicaciones"
@@ -3276,7 +3276,7 @@
     "message": "Activar"
   },
   "app.survey.body": {
-    "message": "¿Te importaría responder a algunas preguntas sobre tu experiencia con 3vhy Client?"
+    "message": "¿Te importaría responder a algunas preguntas sobre tu experiencia con Eventide?"
   },
   "app.survey.footer": {
     "message": "¡Estos comentarios irán directamente al equipo de Modrinth y ayudarán a guiar futuras actualizaciones!"

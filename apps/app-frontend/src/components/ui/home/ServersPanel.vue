@@ -15,7 +15,7 @@ import { get_all } from '@/helpers/process'
 import type { GameInstance } from '@/helpers/types'
 import { type ServerData, type ServerWorld, start_join_server } from '@/helpers/worlds'
 
-// 3vhy Client: Modrinth's "Jump in" for servers, in the S.A.M sidebar format —
+// Eventide: Modrinth's "Jump in" for servers, in the S.A.M sidebar format —
 // every server you've played recently, one click to join straight back in.
 const props = defineProps<{
 	instances: GameInstance[]
@@ -29,13 +29,13 @@ const { handleError } = injectNotificationManager()
 const queryClient = useQueryClient()
 
 const messages = defineMessages({
-	title: { id: 'app.3vhy.servers.title', defaultMessage: 'Servers' },
-	add: { id: 'app.3vhy.servers.add', defaultMessage: 'Add' },
-	join: { id: 'app.3vhy.servers.join', defaultMessage: 'Join' },
-	stop: { id: 'app.3vhy.servers.stop', defaultMessage: 'Stop' },
-	online: { id: 'app.3vhy.servers.online', defaultMessage: '{count} online' },
+	title: { id: 'app.Eventide.servers.title', defaultMessage: 'Servers' },
+	add: { id: 'app.Eventide.servers.add', defaultMessage: 'Add' },
+	join: { id: 'app.Eventide.servers.join', defaultMessage: 'Join' },
+	stop: { id: 'app.Eventide.servers.stop', defaultMessage: 'Stop' },
+	online: { id: 'app.Eventide.servers.online', defaultMessage: '{count} online' },
 	empty: {
-		id: 'app.3vhy.servers.empty',
+		id: 'app.Eventide.servers.empty',
 		defaultMessage: 'Servers you join show up here so you can hop back in with one click.',
 	},
 })

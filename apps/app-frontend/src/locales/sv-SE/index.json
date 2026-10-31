@@ -162,7 +162,7 @@
     "message": "Dölj namnskylt"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Minimera 3vhy Client när Minecraft startar."
+    "message": "Minimera Eventide när Minecraft startar."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "Minimera app"
@@ -1605,7 +1605,7 @@
     "message": "Äldst"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Miljövariabler som anges när en instans startas."
@@ -2427,7 +2427,7 @@
     "message": "Annonser gör Modrinth möjligt och finansierar utbetalningar till skapare. Våra partner kan lagra eller komma åt kakor i appen för att rikta annonser och mäta statistik. Du kan välja bort eller hantera dina inställningar nedan."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Visa 3vhy Client som din nuvarande aktivitet på Discord. Detta påverkar inte Rich Presence som lagts till i instanser av moddar. Kräver en app omstart."
+    "message": "Visa Eventide som din nuvarande aktivitet på Discord. Detta påverkar inte Rich Presence som lagts till i instanser av moddar. Kräver en app omstart."
   },
   "app.settings.privacy.telemetry.description": {
     "message": "Modrinth samlar in anonymiserad statistik och användningsdata för att förbättra vår användarupplevelse och anpassa din upplevelse. Genom att inaktivera det här alternativet avanmäler du dig och din data kommer inte längre samlas in."
@@ -2466,7 +2466,7 @@
     "message": "Bläddra efter en appmapp"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Var 3vhy Client lagrar instanser och andra filer. Ändringar träder i kraft efter appen startas om."
+    "message": "Var Eventide lagrar instanser och andra filer. Ändringar träder i kraft efter appen startas om."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Välj en ny appmapp"
@@ -2877,7 +2877,7 @@
     "message": "Växla på"
   },
   "app.survey.body": {
-    "message": "Skulle du kunna svara på några frågor angående din upplevelse med 3vhy Client?"
+    "message": "Skulle du kunna svara på några frågor angående din upplevelse med Eventide?"
   },
   "app.survey.footer": {
     "message": "Den här återkopplingen kommer gå direkt till Modrinth-teamet och hjälper till att vägleda framtida uppdateringar!"
@@ -3153,7 +3153,7 @@
     "message": "Avlänka delad instans"
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-body": {
-    "message": "Det här raderar den delade instansen från Modrinths servrar. De som använder den i 3vhy Client kommer inte längre få uppdateringar, men din lokala instans och dess innehåll är kvar på den här enheten."
+    "message": "Det här raderar den delade instansen från Modrinths servrar. De som använder den i Eventide kommer inte längre få uppdateringar, men din lokala instans och dess innehåll är kvar på den här enheten."
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-header": {
     "message": "Avpublicerar delad instans"

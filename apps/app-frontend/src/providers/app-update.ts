@@ -12,7 +12,7 @@ export type { LauncherUpdate }
 /** How long "Later" keeps the update toast away for the same version */
 export const APP_UPDATE_SNOOZE_MS = 24 * 60 * 60 * 1000
 
-const SNOOZE_STORAGE_KEY = '3vhy-app-update-snooze'
+const SNOOZE_STORAGE_KEY = 'eventide-app-update-snooze'
 
 interface UpdateSnooze {
 	version: string
@@ -42,7 +42,7 @@ export const appUpdateState = {
 
 let runningCheck: Promise<LauncherUpdate | null> | null = null
 
-/** Asks GitHub whether a newer 3vhy Client is out. Calls made while one is running share it. */
+/** Asks GitHub whether a newer Eventide is out. Calls made while one is running share it. */
 export function checkForAppUpdate(): Promise<LauncherUpdate | null> {
 	runningCheck ??= (async () => {
 		checking.value = true
@@ -66,7 +66,7 @@ export function checkForAppUpdate(): Promise<LauncherUpdate | null> {
 }
 
 /**
- * Downloads the newest release and runs its installer, which closes 3vhy Client and opens it
+ * Downloads the newest release and runs its installer, which closes Eventide and opens it
  * again on the new version. The in-game mod is bundled, so it's updated along with it.
  */
 export async function installAvailableAppUpdate(): Promise<void> {

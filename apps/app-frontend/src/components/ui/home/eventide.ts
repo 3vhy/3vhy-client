@@ -1,10 +1,10 @@
 import type { GameInstance } from '@/helpers/types'
 
-/** Minecraft versions the in-game 3vhy mod is built for, newest first. */
-export const THREEVHY_VERSIONS = ['26.1.2', '1.21.11'] as const
+/** Minecraft versions the in-game Eventide mod is built for, newest first. */
+export const EVENTIDE_VERSIONS = ['26.1.2', '1.21.11'] as const
 
-/** Fabric instances on these versions get the 3vhy mod (HUD, PvP tools, Discord) on launch. */
-export function hasThreevhyFeatures(
+/** Fabric instances on these versions get the Eventide mod (HUD, PvP tools, Discord) on launch. */
+export function hasEventideFeatures(
 	instance: Pick<GameInstance, 'loader' | 'game_version'>,
 ): boolean {
 	if (instance.loader !== 'fabric') return false

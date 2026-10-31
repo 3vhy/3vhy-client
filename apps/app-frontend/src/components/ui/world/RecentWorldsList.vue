@@ -417,7 +417,7 @@ onUnmounted(() => {
 	>
 		<template #title>
 			<span
-				class="threevhy-pixel flex items-center gap-1 text-2xl font-semibold leading-none text-contrast mr-1"
+				class="eventide-pixel flex items-center gap-1 text-2xl font-semibold leading-none text-contrast mr-1"
 			>
 				{{ formatMessage(messages.jumpIn) }}
 			</span>

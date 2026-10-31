@@ -115,10 +115,10 @@ pub async fn parse_command(
 ) -> crate::Result<CommandPayload> {
     tracing::debug!("Parsing external command");
 
-    // threevhy://some-command (3vhy Client) or modrinth://some-command
+    // eventide://some-command (Eventide) or modrinth://some-command
     // This occurs when following a web redirect link
     if let Some(sublink) = command_string
-        .strip_prefix("threevhy://")
+        .strip_prefix("eventide://")
         .or_else(|| command_string.strip_prefix("modrinth://"))
     {
         Ok(handle_url(sublink).await?)

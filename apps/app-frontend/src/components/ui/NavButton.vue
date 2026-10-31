@@ -40,7 +40,7 @@ const props = withDefaults(
 		isSubpage?: RouteFunction
 		highlightOverride?: boolean
 		disabled?: boolean
-		/** 3vhy Client: shows a text label under the icon (S.A.M-style nav tile) */
+		/** Eventide: shows a text label under the icon (S.A.M-style nav tile) */
 		label?: string | undefined
 	}>(),
 	{
@@ -80,7 +80,7 @@ defineOptions({
 	}
 }
 
-// 3vhy Client: labeled nav tiles. The active one is a pixel block with a
+// Eventide: labeled nav tiles. The active one is a pixel block with a
 // cyan marker on the window edge.
 .nav-tile {
 	flex-direction: column;
@@ -93,7 +93,7 @@ defineOptions({
 
 	&::before {
 		border-radius: 0;
-		clip-path: var(--threevhy-pixel-corners);
+		clip-path: var(--eventide-pixel-corners);
 	}
 
 	&:hover {
@@ -129,7 +129,7 @@ defineOptions({
 
 	&::before {
 		background: linear-gradient(180deg, #4fbdea 0%, #2b8fdb 45%, #1a4fba 100%);
-		box-shadow: var(--threevhy-block-edge);
+		box-shadow: var(--eventide-block-edge);
 	}
 
 	&::after {

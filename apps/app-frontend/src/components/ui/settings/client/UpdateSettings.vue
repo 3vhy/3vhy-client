@@ -19,7 +19,7 @@ import { renderString } from '@modrinth/utils/parse'
 import { getVersion } from '@tauri-apps/api/app'
 import { computed, onMounted, ref } from 'vue'
 
-import ThreevhyGlyph from '@/components/ui/brand/ThreevhyGlyph.vue'
+import EventideGlyph from '@/components/ui/brand/EventideGlyph.vue'
 import { launcherUpdateMessages } from '@/components/ui/launcher-update/messages'
 import PixelProgressBar from '@/components/ui/launcher-update/PixelProgressBar.vue'
 import {
@@ -47,49 +47,49 @@ const {
 
 const messages = defineMessages({
 	title: {
-		id: 'app.3vhy.settings.updates.title',
-		defaultMessage: '3vhy Client',
+		id: 'app.Eventide.settings.updates.title',
+		defaultMessage: 'Eventide',
 	},
 	version: {
-		id: 'app.3vhy.settings.updates.version',
+		id: 'app.Eventide.settings.updates.version',
 		defaultMessage: 'Version {version}',
 	},
 	check: {
-		id: 'app.3vhy.settings.updates.check',
+		id: 'app.Eventide.settings.updates.check',
 		defaultMessage: 'Check for updates',
 	},
 	checking: {
-		id: 'app.3vhy.settings.updates.checking',
+		id: 'app.Eventide.settings.updates.checking',
 		defaultMessage: 'Checking for updates…',
 	},
 	upToDate: {
-		id: 'app.3vhy.settings.updates.up-to-date',
+		id: 'app.Eventide.settings.updates.up-to-date',
 		defaultMessage: "You're on the latest version",
 	},
 	checked: {
-		id: 'app.3vhy.settings.updates.checked',
+		id: 'app.Eventide.settings.updates.checked',
 		defaultMessage: 'Checked {time}',
 	},
 	checkFailed: {
-		id: 'app.3vhy.settings.updates.check-failed',
+		id: 'app.Eventide.settings.updates.check-failed',
 		defaultMessage: "Couldn't check for updates",
 	},
 	released: {
-		id: 'app.3vhy.settings.updates.released',
+		id: 'app.Eventide.settings.updates.released',
 		defaultMessage: 'Released {date}',
 	},
 	whatsNew: {
-		id: 'app.3vhy.settings.updates.whats-new',
+		id: 'app.Eventide.settings.updates.whats-new',
 		defaultMessage: "What's new",
 	},
 	viewOnGitHub: {
-		id: 'app.3vhy.settings.updates.view-on-github',
+		id: 'app.Eventide.settings.updates.view-on-github',
 		defaultMessage: 'View on GitHub',
 	},
 	automatic: {
-		id: 'app.3vhy.settings.updates.automatic',
+		id: 'app.Eventide.settings.updates.automatic',
 		defaultMessage:
-			'3vhy Client looks for updates when it starts and every few hours. Updating also brings the latest in-game 3vhy mod to your instances.',
+			'Eventide looks for updates when it starts and every few hours. Updating also brings the latest in-game Eventide mod to your instances.',
 	},
 })
 
@@ -133,7 +133,7 @@ onMounted(async () => {
 	<div class="flex flex-col gap-5">
 		<section class="tvh-about">
 			<div class="tvh-about__mark" aria-hidden="true">
-				<ThreevhyGlyph class="tvh-about__glyph" />
+				<EventideGlyph class="tvh-about__glyph" />
 			</div>
 			<div class="tvh-about__text">
 				<h2>{{ formatMessage(messages.title) }}</h2>
@@ -232,8 +232,8 @@ onMounted(async () => {
 	align-items: center;
 	gap: 1rem;
 	padding: 1rem 1.1rem;
-	clip-path: var(--threevhy-pixel-corners-lg);
-	background: var(--threevhy-sky-panel);
+	clip-path: var(--eventide-pixel-corners-lg);
+	background: var(--eventide-sky-panel);
 	color: #f2faff;
 }
 
@@ -244,7 +244,7 @@ onMounted(async () => {
 	flex-shrink: 0;
 	width: 3.25rem;
 	height: 3.25rem;
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	background: rgba(4, 18, 63, 0.45);
 	box-shadow: inset 0 -3px 0 rgba(2, 8, 40, 0.4);
 }
@@ -252,7 +252,7 @@ onMounted(async () => {
 .tvh-about__glyph {
 	width: 1.6rem;
 	height: 1.8rem;
-	color: var(--threevhy-ice);
+	color: var(--eventide-ice);
 }
 
 .tvh-about__text {
@@ -269,7 +269,7 @@ onMounted(async () => {
 	p {
 		margin: 0.2rem 0 0;
 		font-weight: 600;
-		color: var(--threevhy-pale);
+		color: var(--eventide-pale);
 	}
 }
 
@@ -278,16 +278,16 @@ onMounted(async () => {
 	flex-direction: column;
 	gap: 0.75rem;
 	padding: 1rem 1.1rem 1.1rem;
-	clip-path: var(--threevhy-pixel-corners-lg);
+	clip-path: var(--eventide-pixel-corners-lg);
 	background:
 		linear-gradient(180deg, rgba(91, 200, 230, 0.14) 0%, rgba(91, 200, 230, 0) 4rem),
-		var(--threevhy-card-bg);
-	border-top: 3px solid var(--threevhy-cyan);
+		var(--eventide-card-bg);
+	border-top: 3px solid var(--eventide-cyan);
 }
 
 .tvh-release__head h3 {
 	margin: 0;
-	font-family: var(--threevhy-font-pixel);
+	font-family: var(--eventide-font-pixel);
 	font-size: 1.2rem;
 	font-weight: 600;
 	color: var(--color-contrast);
@@ -377,8 +377,8 @@ onMounted(async () => {
 	gap: 0.7rem;
 	padding: 0.85rem 1rem;
 	border-radius: 0.375rem;
-	background: var(--threevhy-card-bg);
-	border: 1px solid var(--threevhy-card-border);
+	background: var(--eventide-card-bg);
+	border: 1px solid var(--eventide-card-border);
 
 	p {
 		margin: 0;
@@ -390,7 +390,7 @@ onMounted(async () => {
 	width: 1.25rem;
 	height: 1.25rem;
 	margin-top: 0.05rem;
-	color: var(--threevhy-sky);
+	color: var(--eventide-sky);
 }
 
 .tvh-status__title {

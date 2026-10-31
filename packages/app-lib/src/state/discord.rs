@@ -8,15 +8,15 @@ use tokio::sync::RwLock;
 
 use crate::State;
 
-/// 3vhy Client: the "3vhy Client" Discord application, so profiles show
-/// "Playing 3vhy Client" (Modrinth's would show "Modrinth App"). Setting
-/// `THREEVHY_DISCORD_APP_ID` when building uses a different application.
-const THREEVHY_DISCORD_APP_ID: &str = "1558249416144457829";
+/// Eventide: the "Eventide" Discord application, so profiles show
+/// "Playing Eventide" (Modrinth's would show "Modrinth App"). Setting
+/// `EVENTIDE_DISCORD_APP_ID` when building uses a different application.
+const EVENTIDE_DISCORD_APP_ID: &str = "1558249416144457829";
 
 fn discord_app_id() -> &'static str {
-    option_env!("THREEVHY_DISCORD_APP_ID")
+    option_env!("EVENTIDE_DISCORD_APP_ID")
         .filter(|id| !id.trim().is_empty())
-        .unwrap_or(THREEVHY_DISCORD_APP_ID)
+        .unwrap_or(EVENTIDE_DISCORD_APP_ID)
 }
 
 pub struct DiscordGuard {
@@ -82,7 +82,7 @@ impl DiscordGuard {
         }
 
         let activity = Activity::new().state(msg).assets(
-            Assets::new().large_image("3vhy").large_text("3vhy Client"),
+            Assets::new().large_image("eventide").large_text("Eventide"),
         );
 
         // Attempt to set the activity

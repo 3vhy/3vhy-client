@@ -49,7 +49,7 @@ const messages = defineMessages({
 	discordRichPresenceDescription: {
 		id: 'app.settings.privacy.discord-rich-presence.description',
 		defaultMessage:
-			'Show 3vhy Client as your current activity on Discord. This does not affect Rich Presence added to instances by mods. Requires an app restart.',
+			'Show Eventide as your current activity on Discord. This does not affect Rich Presence added to instances by mods. Requires an app restart.',
 	},
 })
 

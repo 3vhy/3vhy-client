@@ -1,245 +1,245 @@
 {
-  "app.3vhy.home.create-first": {
+  "app.Eventide.home.create-first": {
     "message": "Set up"
   },
-  "app.3vhy.home.hotbar": {
+  "app.Eventide.home.hotbar": {
     "message": "Find content on Modrinth"
   },
-  "app.3vhy.home.hotbar.key": {
+  "app.Eventide.home.hotbar.key": {
     "message": "Press {key}"
   },
-  "app.3vhy.home.hotbar.modpacks": {
+  "app.Eventide.home.hotbar.modpacks": {
     "message": "Modpacks"
   },
-  "app.3vhy.home.hotbar.mods": {
+  "app.Eventide.home.hotbar.mods": {
     "message": "Mods"
   },
-  "app.3vhy.home.hotbar.resource-packs": {
+  "app.Eventide.home.hotbar.resource-packs": {
     "message": "Packs"
   },
-  "app.3vhy.home.hotbar.servers": {
+  "app.Eventide.home.hotbar.servers": {
     "message": "Servers"
   },
-  "app.3vhy.home.hotbar.shaders": {
+  "app.Eventide.home.hotbar.shaders": {
     "message": "Shaders"
   },
-  "app.3vhy.home.installing": {
+  "app.Eventide.home.installing": {
     "message": "Installing"
   },
-  "app.3vhy.home.october": {
+  "app.Eventide.home.october": {
     "message": "Happy October"
   },
-  "app.3vhy.home.play": {
+  "app.Eventide.home.play": {
     "message": "Play"
   },
-  "app.3vhy.home.stat.instances": {
+  "app.Eventide.home.stat.instances": {
     "message": "{count, plural, one {instance} other {instances}}"
   },
-  "app.3vhy.home.stat.mods": {
+  "app.Eventide.home.stat.mods": {
     "message": "mods on"
   },
-  "app.3vhy.home.stat.ram": {
+  "app.Eventide.home.stat.ram": {
     "message": "GB RAM"
   },
-  "app.3vhy.home.stat.ram.tooltip": {
+  "app.Eventide.home.stat.ram.tooltip": {
     "message": "Your PC has {total} GB. Minecraft can use {allocated} GB (change it in Settings)."
   },
-  "app.3vhy.home.stop": {
+  "app.Eventide.home.stop": {
     "message": "Stop"
   },
-  "app.3vhy.home.welcome": {
-    "message": "Welcome to 3vhy Client"
+  "app.Eventide.home.welcome": {
+    "message": "Welcome to Eventide"
   },
-  "app.3vhy.home.welcome-back": {
+  "app.Eventide.home.welcome-back": {
     "message": "Welcome back,"
   },
-  "app.3vhy.ingame.built-in": {
+  "app.Eventide.ingame.built-in": {
     "message": "30+ mods built in: HUD, PvP tools, crosshair, waypoints, profiles and more."
   },
-  "app.3vhy.ingame.freelook": {
+  "app.Eventide.ingame.freelook": {
     "message": "Freelook"
   },
-  "app.3vhy.ingame.hub": {
+  "app.Eventide.ingame.hub": {
     "message": "Hub, HUD editor and mod menu"
   },
-  "app.3vhy.ingame.key.left-alt": {
+  "app.Eventide.ingame.key.left-alt": {
     "message": "Left Alt"
   },
-  "app.3vhy.ingame.key.right-shift": {
+  "app.Eventide.ingame.key.right-shift": {
     "message": "Right Shift"
   },
-  "app.3vhy.ingame.title": {
+  "app.Eventide.ingame.title": {
     "message": "In game"
   },
-  "app.3vhy.ingame.unsupported": {
-    "message": "This instance doesn't get the 3vhy in-game client. Pick a Fabric 1.21.11 or 26.1 instance, or set one up from the instance picker."
+  "app.Eventide.ingame.unsupported": {
+    "message": "This instance doesn't get the Eventide in-game client. Pick a Fabric 1.21.11 or 26.1 instance, or set one up from the instance picker."
   },
-  "app.3vhy.ingame.zoom": {
+  "app.Eventide.ingame.zoom": {
     "message": "Zoom (scroll to adjust)"
   },
-  "app.3vhy.library.title": {
+  "app.Eventide.library.title": {
     "message": "Library"
   },
-  "app.3vhy.nav.folder": {
+  "app.Eventide.nav.folder": {
     "message": "Folder"
   },
-  "app.3vhy.nav.folder.tooltip": {
+  "app.Eventide.nav.folder.tooltip": {
     "message": "Open the folder of the instance picked on Home"
   },
-  "app.3vhy.nav.library": {
+  "app.Eventide.nav.library": {
     "message": "Library"
   },
-  "app.3vhy.nav.logs": {
+  "app.Eventide.nav.logs": {
     "message": "Logs"
   },
-  "app.3vhy.nav.logs.tooltip": {
+  "app.Eventide.nav.logs.tooltip": {
     "message": "Game logs for the instance picked on Home"
   },
-  "app.3vhy.nav.modpacks": {
+  "app.Eventide.nav.modpacks": {
     "message": "Modpacks"
   },
-  "app.3vhy.nav.mods": {
+  "app.Eventide.nav.mods": {
     "message": "Mods"
   },
-  "app.3vhy.nav.screenshots": {
+  "app.Eventide.nav.screenshots": {
     "message": "Shots"
   },
-  "app.3vhy.nav.settings": {
+  "app.Eventide.nav.settings": {
     "message": "Settings"
   },
-  "app.3vhy.nav.skins": {
+  "app.Eventide.nav.skins": {
     "message": "Skins"
   },
-  "app.3vhy.picker.badge": {
-    "message": "3vhy"
+  "app.Eventide.picker.badge": {
+    "message": "Eventide"
   },
-  "app.3vhy.picker.badge.tooltip": {
-    "message": "Launches with the 3vhy HUD, PvP tools and Discord presence"
+  "app.Eventide.picker.badge.tooltip": {
+    "message": "Launches with the Eventide HUD, PvP tools and Discord presence"
   },
-  "app.3vhy.picker.browse-modpacks": {
+  "app.Eventide.picker.browse-modpacks": {
     "message": "Get a modpack from Modrinth"
   },
-  "app.3vhy.picker.label": {
+  "app.Eventide.picker.label": {
     "message": "Instance"
   },
-  "app.3vhy.picker.new": {
+  "app.Eventide.picker.new": {
     "message": "New instance"
   },
-  "app.3vhy.picker.none": {
+  "app.Eventide.picker.none": {
     "message": "No instances yet"
   },
-  "app.3vhy.picker.set-up": {
-    "message": "Set up 3vhy Client {version}"
+  "app.Eventide.picker.set-up": {
+    "message": "Set up Eventide {version}"
   },
-  "app.3vhy.quick-mods.all": {
+  "app.Eventide.quick-mods.all": {
     "message": "All mods"
   },
-  "app.3vhy.quick-mods.browse": {
+  "app.Eventide.quick-mods.browse": {
     "message": "Browse mods"
   },
-  "app.3vhy.quick-mods.empty": {
+  "app.Eventide.quick-mods.empty": {
     "message": "No mods in this instance yet."
   },
-  "app.3vhy.quick-mods.no-instance": {
+  "app.Eventide.quick-mods.no-instance": {
     "message": "Pick an instance to see its mods."
   },
-  "app.3vhy.quick-mods.title": {
+  "app.Eventide.quick-mods.title": {
     "message": "Quick mods"
   },
-  "app.3vhy.quick-mods.toggle": {
+  "app.Eventide.quick-mods.toggle": {
     "message": "Enable {name}"
   },
-  "app.3vhy.servers.add": {
+  "app.Eventide.servers.add": {
     "message": "Add"
   },
-  "app.3vhy.servers.empty": {
+  "app.Eventide.servers.empty": {
     "message": "Servers you join show up here so you can hop back in with one click."
   },
-  "app.3vhy.servers.join": {
+  "app.Eventide.servers.join": {
     "message": "Join"
   },
-  "app.3vhy.servers.online": {
+  "app.Eventide.servers.online": {
     "message": "{count} online"
   },
-  "app.3vhy.servers.stop": {
+  "app.Eventide.servers.stop": {
     "message": "Stop"
   },
-  "app.3vhy.servers.title": {
+  "app.Eventide.servers.title": {
     "message": "Servers"
   },
-  "app.3vhy.settings.october.description": {
+  "app.Eventide.settings.october.description": {
     "message": "White, with ghosts. It turns itself on in October and off in November. While it is on, it is used instead of the colour theme below."
   },
-  "app.3vhy.settings.october.title": {
+  "app.Eventide.settings.october.title": {
     "message": "October look"
   },
-  "app.3vhy.settings.sidebar.label.client": {
-    "message": "3vhy Client"
+  "app.Eventide.settings.sidebar.label.client": {
+    "message": "Eventide"
   },
-  "app.3vhy.settings.tabs.updates": {
+  "app.Eventide.settings.tabs.updates": {
     "message": "Updates"
   },
-  "app.3vhy.settings.tabs.updates.new": {
+  "app.Eventide.settings.tabs.updates.new": {
     "message": "New"
   },
-  "app.3vhy.settings.updates.automatic": {
-    "message": "3vhy Client looks for updates when it starts and every few hours. Updating also brings the latest in-game 3vhy mod to your instances."
+  "app.Eventide.settings.updates.automatic": {
+    "message": "Eventide looks for updates when it starts and every few hours. Updating also brings the latest in-game Eventide mod to your instances."
   },
-  "app.3vhy.settings.updates.check": {
+  "app.Eventide.settings.updates.check": {
     "message": "Check for updates"
   },
-  "app.3vhy.settings.updates.check-failed": {
+  "app.Eventide.settings.updates.check-failed": {
     "message": "Couldn't check for updates"
   },
-  "app.3vhy.settings.updates.checked": {
+  "app.Eventide.settings.updates.checked": {
     "message": "Checked {time}"
   },
-  "app.3vhy.settings.updates.checking": {
+  "app.Eventide.settings.updates.checking": {
     "message": "Checking for updates…"
   },
-  "app.3vhy.settings.updates.released": {
+  "app.Eventide.settings.updates.released": {
     "message": "Released {date}"
   },
-  "app.3vhy.settings.updates.title": {
-    "message": "3vhy Client"
+  "app.Eventide.settings.updates.title": {
+    "message": "Eventide"
   },
-  "app.3vhy.settings.updates.up-to-date": {
+  "app.Eventide.settings.updates.up-to-date": {
     "message": "You're on the latest version"
   },
-  "app.3vhy.settings.updates.version": {
+  "app.Eventide.settings.updates.version": {
     "message": "Version {version}"
   },
-  "app.3vhy.settings.updates.view-on-github": {
+  "app.Eventide.settings.updates.view-on-github": {
     "message": "View on GitHub"
   },
-  "app.3vhy.settings.updates.whats-new": {
+  "app.Eventide.settings.updates.whats-new": {
     "message": "What's new"
   },
-  "app.3vhy.update.available": {
-    "message": "3vhy Client {version} is available"
+  "app.Eventide.update.available": {
+    "message": "Eventide {version} is available"
   },
-  "app.3vhy.update.download-progress": {
+  "app.Eventide.update.download-progress": {
     "message": "{downloaded} of {total}"
   },
-  "app.3vhy.update.download-size": {
+  "app.Eventide.update.download-size": {
     "message": "{size} download"
   },
-  "app.3vhy.update.downloading": {
-    "message": "Downloading 3vhy Client {version}"
+  "app.Eventide.update.downloading": {
+    "message": "Downloading Eventide {version}"
   },
-  "app.3vhy.update.includes-mod": {
-    "message": "Includes the latest in-game 3vhy mod, so your instances get it too."
+  "app.Eventide.update.includes-mod": {
+    "message": "Includes the latest in-game Eventide mod, so your instances get it too."
   },
-  "app.3vhy.update.later": {
+  "app.Eventide.update.later": {
     "message": "Later"
   },
-  "app.3vhy.update.restarting": {
+  "app.Eventide.update.restarting": {
     "message": "Restarting…"
   },
-  "app.3vhy.update.restarting-hint": {
-    "message": "3vhy Client closes to install the update and opens again when it's done."
+  "app.Eventide.update.restarting-hint": {
+    "message": "Eventide closes to install the update and opens again when it's done."
   },
-  "app.3vhy.update.update-now": {
+  "app.Eventide.update.update-now": {
     "message": "Update now"
   },
   "app.action-bar.downloading-java": {
@@ -405,7 +405,7 @@
     "message": "Hide nametag"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Minimize 3vhy Client when Minecraft starts."
+    "message": "Minimize Eventide when Minecraft starts."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "Minimize app"
@@ -447,7 +447,7 @@
     "message": "Home and content"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Bring 3vhy Client to the foreground when Minecraft exits."
+    "message": "Bring Eventide to the foreground when Minecraft exits."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Refocus app when Minecraft closes"
@@ -1866,7 +1866,7 @@
     "message": "Oldest"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Environment variables set when launching an instance."
@@ -2979,7 +2979,7 @@
     "message": "Ads make Modrinth possible and fund creator payouts. Our partners may store or access cookies in the app to personalize ads and measure performance. You can opt out or manage your preferences below."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Show 3vhy Client as your current activity on Discord. This does not affect Rich Presence added to instances by mods. Requires an app restart."
+    "message": "Show Eventide as your current activity on Discord. This does not affect Rich Presence added to instances by mods. Requires an app restart."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Discord Rich Presence"
@@ -3024,7 +3024,7 @@
     "message": "Browse for an app directory"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Where 3vhy Client stores instances and other files. Changes take effect after restarting the app."
+    "message": "Where Eventide stores instances and other files. Changes take effect after restarting the app."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Select a new app directory"
@@ -3549,7 +3549,7 @@
     "message": "Toggle on"
   },
   "app.survey.body": {
-    "message": "Would you mind answering a few questions about your experience with 3vhy Client?"
+    "message": "Would you mind answering a few questions about your experience with Eventide?"
   },
   "app.survey.footer": {
     "message": "This feedback will go directly to the Modrinth team and help guide future updates!"
@@ -3717,7 +3717,7 @@
     "message": "Press <shortcut>N</shortcut> to quick create an instance"
   },
   "app.welcome-screen.title": {
-    "message": "Welcome to 3vhy Client"
+    "message": "Welcome to Eventide"
   },
   "app.world.server-modal.placeholder-address": {
     "message": "example.modrinth.gg"

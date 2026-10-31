@@ -12,7 +12,7 @@ import { instanceListQueryOptions } from '@/pages/instance/query-options'
 import { useRootBreadcrumb } from '@/providers/breadcrumbs'
 import { injectOnboardingChecklist } from '@/providers/onboarding-checklist'
 
-// 3vhy Client: the instance library lives on its own page (the S.A.M "Versions" tab),
+// Eventide: the instance library lives on its own page (the S.A.M "Versions" tab),
 // so Home can stay focused on playing.
 defineOptions({
 	name: 'LibraryPage',
@@ -29,7 +29,7 @@ onBeforeRouteLeave(() => {
 })
 
 const messages = defineMessages({
-	library: { id: 'app.3vhy.library.title', defaultMessage: 'Library' },
+	library: { id: 'app.Eventide.library.title', defaultMessage: 'Library' },
 	newInstance: {
 		id: 'app.library.context-menu.create-instance',
 		defaultMessage: 'New instance',

@@ -204,7 +204,7 @@
     "message": "Domovská stránka a kontent"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Zobrazit 3vhy Client na popředí po opuštění Minecraftu."
+    "message": "Zobrazit Eventide na popředí po opuštění Minecraftu."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Přenést aplikaci na popředí po opuštění Minecraftu"
@@ -1488,7 +1488,7 @@
     "message": "Nejstarší"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "Nastavení proměnného prostředí při spuštění instance."
@@ -1797,7 +1797,7 @@
     "message": "Výběr skinu"
   },
   "app.survey.body": {
-    "message": "Mohli byste prosím odpovědět na pár otázek ohledně vašich zkušeností s 3vhy Client?"
+    "message": "Mohli byste prosím odpovědět na pár otázek ohledně vašich zkušeností s Eventide?"
   },
   "app.survey.footer": {
     "message": "Tato zpětná vazba půjde přímo k týmu Modrinthu a pomůže při budoucích aktualizacích!"

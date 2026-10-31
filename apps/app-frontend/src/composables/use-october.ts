@@ -1,12 +1,12 @@
 import { computed, ref, watch } from 'vue'
 
 /**
- * 3vhy Client's October look: white, with ghosts. It switches itself on in October and off again
+ * Eventide's October look: white, with ghosts. It switches itself on in October and off again
  * in November. Turning it off in October keeps it off until next October; turning it on in
  * another month keeps it on until it's turned off. While it's on, `html` gets the
- * `threevhy-october` class and the light colours underneath it.
+ * `eventide-october` class and the light colours underneath it.
  */
-const STORAGE_KEY = 'threevhy-october'
+const STORAGE_KEY = 'eventide-october'
 const today = new Date()
 const isOctober = today.getMonth() === 9
 const offThisOctober = `off-${today.getFullYear()}`
@@ -27,7 +27,7 @@ const active = computed(
 watch(
 	active,
 	(on) => {
-		document.documentElement.classList.toggle('threevhy-october', on)
+		document.documentElement.classList.toggle('eventide-october', on)
 	},
 	{ immediate: true },
 )

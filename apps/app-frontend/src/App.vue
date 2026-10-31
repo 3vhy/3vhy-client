@@ -79,7 +79,7 @@ import AccountsCard from '@/components/ui/AccountsCard.vue'
 import AppActionBar from '@/components/ui/AppActionBar.vue'
 import PixelGhosts from '@/components/ui/brand/PixelGhosts.vue'
 import PixelSnow from '@/components/ui/brand/PixelSnow.vue'
-import ThreevhyLogo from '@/components/ui/brand/ThreevhyLogo.vue'
+import EventideLogo from '@/components/ui/brand/EventideLogo.vue'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
 import ErrorModal from '@/components/ui/ErrorModal.vue'
 import FriendsList from '@/components/ui/friends/FriendsList.vue'
@@ -339,7 +339,7 @@ const hasPlus = computed(
 		(hasMidasBadge(credentials.value.user) ||
 			hasActivePride26Midas(authenticatedModrinthUser.value?.campaigns?.pride_26)),
 )
-// 3vhy Client: no ads and no ad-consent prompts
+// Eventide: no ads and no ad-consent prompts
 const showAd = computed(() => false)
 const adConsentAvailable = computed(() => false)
 providePageContext({
@@ -518,7 +518,7 @@ onMounted(async () => {
 
 	await useCheckDisableMouseover()
 	try {
-		// 3vhy Client: ads are disabled, so there is never an ads consent prompt
+		// Eventide: ads are disabled, so there is never an ads consent prompt
 		handleAdsConsentRequired(false)
 	} catch (error) {
 		handleError(error)
@@ -548,22 +548,22 @@ onUnmounted(async () => {
 
 const { formatMessage } = useVIntl()
 
-// 3vhy Client: labeled S.A.M-style navigation
+// Eventide: labeled S.A.M-style navigation
 const navMessages = defineMessages({
-	modpacks: { id: 'app.3vhy.nav.modpacks', defaultMessage: 'Modpacks' },
-	mods: { id: 'app.3vhy.nav.mods', defaultMessage: 'Mods' },
-	library: { id: 'app.3vhy.nav.library', defaultMessage: 'Library' },
-	skins: { id: 'app.3vhy.nav.skins', defaultMessage: 'Skins' },
-	screenshots: { id: 'app.3vhy.nav.screenshots', defaultMessage: 'Shots' },
-	settings: { id: 'app.3vhy.nav.settings', defaultMessage: 'Settings' },
-	logs: { id: 'app.3vhy.nav.logs', defaultMessage: 'Logs' },
-	folder: { id: 'app.3vhy.nav.folder', defaultMessage: 'Folder' },
+	modpacks: { id: 'app.Eventide.nav.modpacks', defaultMessage: 'Modpacks' },
+	mods: { id: 'app.Eventide.nav.mods', defaultMessage: 'Mods' },
+	library: { id: 'app.Eventide.nav.library', defaultMessage: 'Library' },
+	skins: { id: 'app.Eventide.nav.skins', defaultMessage: 'Skins' },
+	screenshots: { id: 'app.Eventide.nav.screenshots', defaultMessage: 'Shots' },
+	settings: { id: 'app.Eventide.nav.settings', defaultMessage: 'Settings' },
+	logs: { id: 'app.Eventide.nav.logs', defaultMessage: 'Logs' },
+	folder: { id: 'app.Eventide.nav.folder', defaultMessage: 'Folder' },
 	logsTooltip: {
-		id: 'app.3vhy.nav.logs.tooltip',
+		id: 'app.Eventide.nav.logs.tooltip',
 		defaultMessage: 'Game logs for the instance picked on Home',
 	},
 	folderTooltip: {
-		id: 'app.3vhy.nav.folder.tooltip',
+		id: 'app.Eventide.nav.folder.tooltip',
 		defaultMessage: 'Open the folder of the instance picked on Home',
 	},
 })
@@ -861,7 +861,7 @@ async function setupApp() {
 		document.getElementsByTagName('html')[0].classList.add('windows')
 	}
 
-	// 3vhy Client: Modrinth App announcements and Modrinth news are not fetched in this fork
+	// Eventide: Modrinth App announcements and Modrinth news are not fetched in this fork
 
 	traceStartupStep('Read opening command', get_opening_command).then(handleCommand)
 	traceStartupStep('Refresh startup credentials', fetchCredentials)
@@ -1735,7 +1735,7 @@ async function checkForAppUpdateInBackground() {
 			showAppUpdateToast()
 		}
 	} catch (error) {
-		console.warn('Failed to check for 3vhy Client updates:', error)
+		console.warn('Failed to check for Eventide updates:', error)
 	}
 }
 
@@ -1858,7 +1858,7 @@ function handleContextMenu(event) {
 		class="app-grid-layout relative"
 		:class="{ 'disable-advanced-rendering': !appTheme.advancedRendering }"
 	>
-		<!-- 3vhy Client: pixel snow falls on the night sky behind everything (ghosts float up in October) -->
+		<!-- Eventide: pixel snow falls on the night sky behind everything (ghosts float up in October) -->
 		<PixelGhosts v-if="appTheme.advancedRendering && octoberActive" class="app-snow" />
 		<PixelSnow v-else-if="appTheme.advancedRendering" class="app-snow" />
 		<Transition name="fade">
@@ -2048,7 +2048,7 @@ function handleContextMenu(event) {
 		</div>
 		<div data-tauri-drag-region class="app-grid-statusbar h-[--top-bar-height] flex">
 			<div data-tauri-drag-region class="flex min-w-0 flex-1 items-center overflow-hidden p-2">
-				<ThreevhyLogo class="ml-1 shrink-0 pointer-events-none" />
+				<EventideLogo class="ml-1 shrink-0 pointer-events-none" />
 				<div data-tauri-drag-region class="ml-2 flex shrink-0 items-center gap-2">
 					<IconButton
 						type="outlined"
@@ -2106,7 +2106,7 @@ function handleContextMenu(event) {
 		}"
 	>
 		<div class="app-viewport flex-grow router-view">
-			<!-- 3vhy Client: Modrinth's in-app surveys are removed -->
+			<!-- Eventide: Modrinth's in-app surveys are removed -->
 			<div
 				class="loading-indicator-container h-8 fixed z-50 pointer-events-none"
 				:style="{
@@ -2309,12 +2309,12 @@ function handleContextMenu(event) {
 	grid-template-rows: auto minmax(0, 1fr);
 	position: relative;
 	//z-index: 0;
-	// 3vhy Client: the shell sits on the night sky from the banner; isolation keeps the snow
+	// Eventide: the shell sits on the night sky from the banner; isolation keeps the snow
 	// canvas above this background but behind everything in the shell
 	isolation: isolate;
 	background:
 		radial-gradient(120% 60% at 0% 0%, rgba(26, 79, 186, 0.35), transparent 60%),
-		var(--threevhy-stars), var(--threevhy-night);
+		var(--eventide-stars), var(--eventide-night);
 	height: 100vh;
 }
 
@@ -2352,8 +2352,8 @@ function handleContextMenu(event) {
 	right: 0;
 	bottom: 0;
 	height: calc(100vh - var(--top-bar-height));
-	// 3vhy Client: content is a slab on the night sky with one stepped pixel corner
-	background-color: var(--threevhy-slab);
+	// Eventide: content is a slab on the night sky with one stepped pixel corner
+	background-color: var(--eventide-slab);
 	clip-path: polygon(
 		0 12px,
 		4px 12px,
@@ -2385,7 +2385,7 @@ function handleContextMenu(event) {
 	width: 300px;
 	position: relative;
 	height: calc(100vh - var(--top-bar-height));
-	background: var(--threevhy-sidebar);
+	background: var(--eventide-sidebar);
 
 	--color-button-bg: var(--brand-gradient-button);
 	--surface-4: var(--brand-gradient-button);

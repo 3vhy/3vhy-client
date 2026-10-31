@@ -1,13 +1,13 @@
 [package]
-name = "threevhy_setup"
+name = "eventide_setup"
 version = "1.0.0-local"
 edition.workspace = true
-description = "Interactive installer for 3vhy Client"
+description = "Interactive installer for Eventide"
 license = "GPL-3.0-only"
 publish = false
 
 [[bin]]
-name = "3vhy-client-setup"
+name = "eventide-client-setup"
 path = "src/main.rs"
 
 [dependencies]

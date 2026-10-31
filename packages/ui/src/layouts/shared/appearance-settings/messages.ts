@@ -7,7 +7,7 @@ export const appearanceSettingsMessages = defineMessages({
 	},
 	colorThemeDescription: {
 		id: 'settings.display.theme.description',
-		defaultMessage: 'Pick a color theme for 3vhy Client.',
+		defaultMessage: 'Pick a color theme for Eventide.',
 	},
 	syncAcrossDevicesTitle: {
 		id: 'settings.display.theme.sync-across-devices',

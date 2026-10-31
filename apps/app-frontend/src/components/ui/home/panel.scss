@@ -1,4 +1,4 @@
-// Shared styles for the 3vhy Home side panels (Quick mods, Servers)
+// Shared styles for the Eventide Home side panels (Quick mods, Servers)
 
 .tvh-panel {
 	display: flex;
@@ -14,7 +14,7 @@
 
 	h3 {
 		margin: 0;
-		font-family: var(--threevhy-font-pixel);
+		font-family: var(--eventide-font-pixel);
 		font-size: 1.15rem;
 		font-weight: 600;
 		color: var(--color-contrast);
@@ -69,8 +69,8 @@
 	min-height: 3.1rem;
 	padding: 0.55rem 0.7rem;
 	border-radius: 0.375rem;
-	background: var(--threevhy-card-bg);
-	border: 1px solid var(--threevhy-card-border);
+	background: var(--eventide-card-bg);
+	border: 1px solid var(--eventide-card-border);
 }
 
 .tvh-row--skeleton {
@@ -90,8 +90,8 @@
 	width: 2rem;
 	height: 2rem;
 	border-radius: 0.25rem;
-	color: var(--threevhy-sky);
-	background: var(--threevhy-chip-bg);
+	color: var(--eventide-sky);
+	background: var(--eventide-chip-bg);
 	overflow: hidden;
 
 	svg {
@@ -155,7 +155,7 @@
 	padding: 0.4rem 0.9rem;
 	border: none;
 	border-radius: 0;
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	font-weight: 700;
 	font-size: 0.85rem;
 	color: #04123f;

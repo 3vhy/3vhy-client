@@ -4,7 +4,7 @@ import type { Router } from 'vue-router'
 const SENTRY_DISABLED_IN_FORK: boolean = true
 
 export function setupErrorReporting(app: App, router: Router): void {
-	// 3vhy Client: crash reports to Modrinth's Sentry are disabled in this fork
+	// Eventide: crash reports to Modrinth's Sentry are disabled in this fork
 	if (!import.meta.env.PROD || SENTRY_DISABLED_IN_FORK) return
 
 	const previousHandler = app.config.errorHandler

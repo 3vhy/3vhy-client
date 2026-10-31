@@ -4,9 +4,9 @@ import { computed } from 'vue'
 
 import type { GameInstance } from '@/helpers/types'
 
-import { hasThreevhyFeatures } from './threevhy'
+import { hasEventideFeatures } from './eventide'
 
-// 3vhy Client: the keys for the in-game client, so players find the hub and mod menu
+// Eventide: the keys for the in-game client, so players find the hub and mod menu
 const props = defineProps<{
 	instance: GameInstance | null
 }>()
@@ -14,24 +14,24 @@ const props = defineProps<{
 const { formatMessage } = useVIntl()
 
 const messages = defineMessages({
-	title: { id: 'app.3vhy.ingame.title', defaultMessage: 'In game' },
-	hub: { id: 'app.3vhy.ingame.hub', defaultMessage: 'Hub, HUD editor and mod menu' },
-	zoom: { id: 'app.3vhy.ingame.zoom', defaultMessage: 'Zoom (scroll to adjust)' },
-	freelook: { id: 'app.3vhy.ingame.freelook', defaultMessage: 'Freelook' },
+	title: { id: 'app.Eventide.ingame.title', defaultMessage: 'In game' },
+	hub: { id: 'app.Eventide.ingame.hub', defaultMessage: 'Hub, HUD editor and mod menu' },
+	zoom: { id: 'app.Eventide.ingame.zoom', defaultMessage: 'Zoom (scroll to adjust)' },
+	freelook: { id: 'app.Eventide.ingame.freelook', defaultMessage: 'Freelook' },
 	built: {
-		id: 'app.3vhy.ingame.built-in',
+		id: 'app.Eventide.ingame.built-in',
 		defaultMessage: '30+ mods built in: HUD, PvP tools, crosshair, waypoints, profiles and more.',
 	},
 	unsupported: {
-		id: 'app.3vhy.ingame.unsupported',
+		id: 'app.Eventide.ingame.unsupported',
 		defaultMessage:
-			"This instance doesn't get the 3vhy in-game client. Pick a Fabric 1.21.11 or 26.1 instance, or set one up from the instance picker.",
+			"This instance doesn't get the Eventide in-game client. Pick a Fabric 1.21.11 or 26.1 instance, or set one up from the instance picker.",
 	},
-	rightShift: { id: 'app.3vhy.ingame.key.right-shift', defaultMessage: 'Right Shift' },
-	leftAlt: { id: 'app.3vhy.ingame.key.left-alt', defaultMessage: 'Left Alt' },
+	rightShift: { id: 'app.Eventide.ingame.key.right-shift', defaultMessage: 'Right Shift' },
+	leftAlt: { id: 'app.Eventide.ingame.key.left-alt', defaultMessage: 'Left Alt' },
 })
 
-const supported = computed(() => props.instance !== null && hasThreevhyFeatures(props.instance))
+const supported = computed(() => props.instance !== null && hasEventideFeatures(props.instance))
 
 const keys = computed(() => [
 	{ key: formatMessage(messages.rightShift), label: formatMessage(messages.hub) },
@@ -85,8 +85,8 @@ const keys = computed(() => [
 	font-weight: 700;
 	text-align: center;
 	color: var(--color-contrast);
-	background: var(--threevhy-card-bg);
-	border: 1px solid var(--threevhy-card-border);
+	background: var(--eventide-card-bg);
+	border: 1px solid var(--eventide-card-border);
 	border-bottom-width: 3px;
 	border-radius: 0.3rem;
 }

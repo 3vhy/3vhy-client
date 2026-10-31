@@ -204,7 +204,7 @@
     "message": "Startpagina en inhoud"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Breng de 3vhy Client naar de voorgrond als Minecraft sluit."
+    "message": "Breng de Eventide naar de voorgrond als Minecraft sluit."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Opnieuw focussen bij sluiten van Minecraft"

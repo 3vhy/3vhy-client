@@ -204,7 +204,7 @@
     "message": "Ana sayfa ve içerik"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Minecraft'tan çıkıldığında 3vhy Client'i ön plana getirir."
+    "message": "Minecraft'tan çıkıldığında Eventide'i ön plana getirir."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Minecraft kapandığında uygulamaya yeniden odaklan"
@@ -2433,7 +2433,7 @@
     "message": "Reklamlar, Modrinth'i mümkün kılıyor ve içerik üreticilerine yapılan ödemeleri finanse ediyor. Partnerlerimiz, reklamları kişiselleştirmek ve performansı ölçmek amacıyla uygulama içinde çerez depolayabilir veya bunlara erişebilir. Aşağıdan tercihinizi yönetebilir veya vazgeçebilirsiniz."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Şu anki Discord aktiviteniz olarak, 3vhy Client'i gösterin. Bu, örneğe modlar tarafından eklenen Rich Presence'ı etkilemez. Uygulamayı yeniden başlatmayı gerektirir."
+    "message": "Şu anki Discord aktiviteniz olarak, Eventide'i gösterin. Bu, örneğe modlar tarafından eklenen Rich Presence'ı etkilemez. Uygulamayı yeniden başlatmayı gerektirir."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Discord Rich Presence"
@@ -2478,7 +2478,7 @@
     "message": "Bir uygulama dizinine göz atın"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "3vhy Client'in örnekleri ve diğer dosyaları depoladığı yer. Değişiklikler uygulamayı yeniden başlattıktan sonra etki eder."
+    "message": "Eventide'in örnekleri ve diğer dosyaları depoladığı yer. Değişiklikler uygulamayı yeniden başlattıktan sonra etki eder."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Yeni bir uygulama dizini seçin"
@@ -2730,7 +2730,7 @@
     "message": "Aç"
   },
   "app.survey.body": {
-    "message": "3vhy Client deneyiminiz hakkında birkaç soruyu cevaplamak ister misiniz?"
+    "message": "Eventide deneyiminiz hakkında birkaç soruyu cevaplamak ister misiniz?"
   },
   "app.survey.footer": {
     "message": "Bu geri bildirim doğrudan Modrinth ekibine gidecek ve gelecek güncellemeleri şekillendirecek!"
@@ -2925,7 +2925,7 @@
     "message": "Paylaşımlı örneğin bağlantısını kaldır"
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-body": {
-    "message": "Bu paylaşımlı örneği Modrinth'in sunucularından kaldırır. 3vhy Client'i kullanan kişiler güncelleme almayı bırakır fakat yerel örneğiniz ve içeriği bu cihazda kalacak."
+    "message": "Bu paylaşımlı örneği Modrinth'in sunucularından kaldırır. Eventide'i kullanan kişiler güncelleme almayı bırakır fakat yerel örneğiniz ve içeriği bu cihazda kalacak."
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-header": {
     "message": "Paylaşımlı örnek yayından kaldırılıyor"

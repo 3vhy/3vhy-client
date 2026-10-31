@@ -1,6 +1,6 @@
-// 3vhy Client design system
+// Eventide design system
 //
-// Everything comes from the 3vhy banner: a cyan rim fading into royal blue, a
+// Everything comes from the Eventide banner: a cyan rim fading into royal blue, a
 // deep night band, pale sky at the bottom, and blocky ice-white pixel letters.
 //
 //   night  #060e2b  the ground everything sits on
@@ -14,23 +14,23 @@
 // depth edge you press into, like the letters in the wordmark. Everything else
 // stays quiet.
 
-@import './3vhy-fonts.scss';
+@import './eventide-fonts.scss';
 
 :root {
-	--threevhy-cyan: #5bc8e6;
-	--threevhy-royal: #1a4fba;
-	--threevhy-navy: #061d8c;
-	--threevhy-mid: #2a6fc4;
-	--threevhy-sky: #8cc4ea;
-	--threevhy-pale: #cfe8f7;
-	--threevhy-ice: #e3f3fc;
-	--threevhy-night: #060e2b;
+	--eventide-cyan: #5bc8e6;
+	--eventide-royal: #1a4fba;
+	--eventide-navy: #061d8c;
+	--eventide-mid: #2a6fc4;
+	--eventide-sky: #8cc4ea;
+	--eventide-pale: #cfe8f7;
+	--eventide-ice: #e3f3fc;
+	--eventide-night: #060e2b;
 
-	--threevhy-font-ui: 'Rubik 3vhy', 'Segoe UI', system-ui, sans-serif;
-	--threevhy-font-pixel: 'Pixelify Sans', 'Rubik 3vhy', monospace;
+	--eventide-font-ui: 'Rubik Eventide', 'Segoe UI', system-ui, sans-serif;
+	--eventide-font-pixel: 'Pixelify Sans', 'Rubik Eventide', monospace;
 
 	// The banner itself, top to bottom
-	--threevhy-banner: linear-gradient(
+	--eventide-banner: linear-gradient(
 		180deg,
 		#5bc8e6 0%,
 		#1a4fba 9%,
@@ -41,14 +41,14 @@
 		#cfe8f7 100%
 	);
 	// A darker cut of the banner for large surfaces, so text stays readable
-	--threevhy-sky-panel: linear-gradient(180deg, #0b2a9a 0%, #061d8c 35%, #123c9f 70%, #2a6fc4 100%);
-	--threevhy-chip-bg: rgba(140, 196, 234, 0.14);
-	--threevhy-card-bg: rgba(10, 26, 84, 0.62);
-	--threevhy-card-border: rgba(140, 196, 234, 0.16);
-	--threevhy-play-bg: linear-gradient(180deg, #8ae0f5 0%, #4fbdea 48%, #2b8fdb 100%);
+	--eventide-sky-panel: linear-gradient(180deg, #0b2a9a 0%, #061d8c 35%, #123c9f 70%, #2a6fc4 100%);
+	--eventide-chip-bg: rgba(140, 196, 234, 0.14);
+	--eventide-card-bg: rgba(10, 26, 84, 0.62);
+	--eventide-card-border: rgba(140, 196, 234, 0.16);
+	--eventide-play-bg: linear-gradient(180deg, #8ae0f5 0%, #4fbdea 48%, #2b8fdb 100%);
 
-	// Stepped pixel corners (3px steps). Use as `clip-path: var(--threevhy-pixel-corners)`.
-	--threevhy-pixel-corners: polygon(
+	// Stepped pixel corners (3px steps). Use as `clip-path: var(--eventide-pixel-corners)`.
+	--eventide-pixel-corners: polygon(
 		0 6px,
 		3px 6px,
 		3px 3px,
@@ -71,7 +71,7 @@
 		0 calc(100% - 6px)
 	);
 	// Bigger steps for large panels
-	--threevhy-pixel-corners-lg: polygon(
+	--eventide-pixel-corners-lg: polygon(
 		0 12px,
 		6px 12px,
 		6px 6px,
@@ -94,13 +94,13 @@
 		0 calc(100% - 12px)
 	);
 	// A hard edge underneath a raised block, and the same edge when pressed in
-	--threevhy-block-edge:
+	--eventide-block-edge:
 		inset 0 -4px 0 rgba(4, 18, 63, 0.38), inset 0 2px 0 rgba(255, 255, 255, 0.32);
-	--threevhy-block-edge-pressed:
+	--eventide-block-edge-pressed:
 		inset 0 -1px 0 rgba(4, 18, 63, 0.38), inset 0 2px 0 rgba(4, 18, 63, 0.18);
 
 	// A few pixel stars for the night backdrop
-	--threevhy-stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' shape-rendering='crispEdges'%3E%3Cg fill='%23e3f3fc'%3E%3Crect x='12' y='18' width='2' height='2' opacity='.35'/%3E%3Crect x='71' y='9' width='2' height='2' opacity='.18'/%3E%3Crect x='118' y='42' width='2' height='2' opacity='.3'/%3E%3Crect x='38' y='77' width='2' height='2' opacity='.14'/%3E%3Crect x='96' y='101' width='2' height='2' opacity='.25'/%3E%3Crect x='143' y='131' width='2' height='2' opacity='.16'/%3E%3Crect x='22' y='139' width='2' height='2' opacity='.22'/%3E%3Crect x='63' y='121' width='1' height='1' opacity='.4'/%3E%3Crect x='131' y='73' width='1' height='1' opacity='.4'/%3E%3C/g%3E%3C/svg%3E");
+	--eventide-stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' shape-rendering='crispEdges'%3E%3Cg fill='%23e3f3fc'%3E%3Crect x='12' y='18' width='2' height='2' opacity='.35'/%3E%3Crect x='71' y='9' width='2' height='2' opacity='.18'/%3E%3Crect x='118' y='42' width='2' height='2' opacity='.3'/%3E%3Crect x='38' y='77' width='2' height='2' opacity='.14'/%3E%3Crect x='96' y='101' width='2' height='2' opacity='.25'/%3E%3Crect x='143' y='131' width='2' height='2' opacity='.16'/%3E%3Crect x='22' y='139' width='2' height='2' opacity='.22'/%3E%3Crect x='63' y='121' width='1' height='1' opacity='.4'/%3E%3Crect x='131' y='73' width='1' height='1' opacity='.4'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 html.dark-mode,
@@ -157,16 +157,16 @@ html.oled-mode {
 	--surface-3: #08112f;
 	--surface-4: #10204f;
 	--surface-5: #182d63;
-	--threevhy-night: #020617;
+	--eventide-night: #020617;
 }
 
 html.light-mode {
-	--threevhy-ice: #061d8c;
-	--threevhy-night: #e6f1fb;
-	--threevhy-chip-bg: rgba(26, 79, 186, 0.1);
-	--threevhy-card-bg: rgba(255, 255, 255, 0.72);
-	--threevhy-card-border: rgba(26, 79, 186, 0.14);
-	--threevhy-stars: none;
+	--eventide-ice: #061d8c;
+	--eventide-night: #e6f1fb;
+	--eventide-chip-bg: rgba(26, 79, 186, 0.1);
+	--eventide-card-bg: rgba(255, 255, 255, 0.72);
+	--eventide-card-border: rgba(26, 79, 186, 0.14);
+	--eventide-stars: none;
 
 	--surface-1: #e6f1fb;
 	--surface-2: #eef6fd;
@@ -195,19 +195,19 @@ html.light-mode {
 // ---------- Type ----------
 
 html body {
-	--font-standard: var(--threevhy-font-ui);
-	font-family: var(--threevhy-font-ui);
+	--font-standard: var(--eventide-font-ui);
+	font-family: var(--eventide-font-ui);
 }
 
 // Page and section titles use the pixel face, like the wordmark
 html body :is(h1, h2) {
-	font-family: var(--threevhy-font-pixel);
+	font-family: var(--eventide-font-pixel);
 	font-weight: 600;
 	letter-spacing: 0.01em;
 }
 
-.threevhy-pixel {
-	font-family: var(--threevhy-font-pixel);
+.eventide-pixel {
+	font-family: var(--eventide-font-pixel);
 	font-weight: 600;
 }
 
@@ -221,13 +221,13 @@ html body :is(h1, h2) {
 // Primary actions (filled buttons) become pixel blocks you press into
 html body .button-frame--colored.button-frame--colored {
 	border-radius: 0 !important;
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	background-image: linear-gradient(
 		180deg,
 		rgba(255, 255, 255, 0.26) 0%,
 		rgba(255, 255, 255, 0) 60%
 	);
-	box-shadow: var(--threevhy-block-edge);
+	box-shadow: var(--eventide-block-edge);
 	padding-bottom: 3px;
 
 	&::before {
@@ -236,13 +236,13 @@ html body .button-frame--colored.button-frame--colored {
 
 	&:not(:disabled):not([aria-disabled='true']):active {
 		transform: translateY(2px);
-		box-shadow: var(--threevhy-block-edge-pressed);
+		box-shadow: var(--eventide-block-edge-pressed);
 	}
 
 	&:not(:disabled):not([aria-disabled='true']):focus-visible {
 		box-shadow:
 			inset 0 0 0 2px #fff,
-			var(--threevhy-block-edge);
+			var(--eventide-block-edge);
 	}
 }
 
@@ -270,7 +270,7 @@ html.light-mode body .button-frame--base.button-frame--base {
 // ---------- Inputs ----------
 
 html body :is(input, textarea) {
-	caret-color: var(--threevhy-cyan);
+	caret-color: var(--eventide-cyan);
 }
 
 // ---------- Scrollbars ----------
@@ -301,7 +301,7 @@ html body ::-webkit-scrollbar-track {
 // ---------- Focus ----------
 
 html body :focus-visible {
-	outline-color: var(--threevhy-cyan);
+	outline-color: var(--eventide-cyan);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -320,13 +320,13 @@ html {
 
 // Shell surfaces
 :root {
-	--threevhy-slab: rgba(7, 18, 56, 0.78);
-	--threevhy-sidebar: rgba(4, 12, 40, 0.35);
+	--eventide-slab: rgba(7, 18, 56, 0.78);
+	--eventide-sidebar: rgba(4, 12, 40, 0.35);
 }
 
 html.light-mode {
-	--threevhy-slab: rgba(255, 255, 255, 0.7);
-	--threevhy-sidebar: rgba(255, 255, 255, 0.35);
+	--eventide-slab: rgba(255, 255, 255, 0.7);
+	--eventide-sidebar: rgba(255, 255, 255, 0.35);
 }
 
 // Shared components use a few fixed, very round corner sizes; square them up
@@ -350,4 +350,4 @@ html.oled-mode body .clickable-card:hover {
 	border-color: rgba(91, 200, 230, 0.45) !important;
 }
 
-@import './3vhy-october.scss';
+@import './eventide-october.scss';

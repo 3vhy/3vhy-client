@@ -1,6 +1,6 @@
-// 3vhy Client in October: white, with ghosts.
+// Eventide in October: white, with ghosts.
 //
-// The same blocky shapes as the rest of 3vhy, repainted for the season. It sits on top of the
+// The same blocky shapes as the rest of Eventide, repainted for the season. It sits on top of the
 // light colours (see use-october.ts), so anything made for light mode still reads well.
 //
 //   paper    #f6f5fa  the ground everything sits on
@@ -10,26 +10,26 @@
 //   ink      #221c30  text and primary actions
 //   pumpkin  #ff8a2b  a hint of the season, used sparingly
 
-html.threevhy-october,
-html.threevhy-october.light-mode {
-	--threevhy-cyan: #6d5fa0;
-	--threevhy-royal: #4a3f6b;
-	--threevhy-sky: #8f84ad;
-	--threevhy-pale: #5d5574;
-	--threevhy-ice: #221c30;
-	--threevhy-night: #f6f5fa;
-	--threevhy-pumpkin: #ff8a2b;
-	--threevhy-chip-bg: rgba(34, 28, 48, 0.06);
-	--threevhy-card-bg: rgba(255, 255, 255, 0.82);
-	--threevhy-card-border: rgba(34, 28, 48, 0.1);
-	--threevhy-play-bg: linear-gradient(180deg, #3d3452 0%, #2a2338 55%, #1c1726 100%);
-	--threevhy-stars: none;
-	--threevhy-sky-panel: linear-gradient(180deg, #ffffff 0%, #f4f1fa 46%, #e3ddef 100%);
-	--threevhy-slab: rgba(255, 255, 255, 0.8);
-	--threevhy-sidebar: rgba(255, 255, 255, 0.55);
-	--threevhy-block-edge:
+html.eventide-october,
+html.eventide-october.light-mode {
+	--eventide-cyan: #6d5fa0;
+	--eventide-royal: #4a3f6b;
+	--eventide-sky: #8f84ad;
+	--eventide-pale: #5d5574;
+	--eventide-ice: #221c30;
+	--eventide-night: #f6f5fa;
+	--eventide-pumpkin: #ff8a2b;
+	--eventide-chip-bg: rgba(34, 28, 48, 0.06);
+	--eventide-card-bg: rgba(255, 255, 255, 0.82);
+	--eventide-card-border: rgba(34, 28, 48, 0.1);
+	--eventide-play-bg: linear-gradient(180deg, #3d3452 0%, #2a2338 55%, #1c1726 100%);
+	--eventide-stars: none;
+	--eventide-sky-panel: linear-gradient(180deg, #ffffff 0%, #f4f1fa 46%, #e3ddef 100%);
+	--eventide-slab: rgba(255, 255, 255, 0.8);
+	--eventide-sidebar: rgba(255, 255, 255, 0.55);
+	--eventide-block-edge:
 		inset 0 -4px 0 rgba(20, 14, 34, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.22);
-	--threevhy-block-edge-pressed:
+	--eventide-block-edge-pressed:
 		inset 0 -1px 0 rgba(20, 14, 34, 0.35), inset 0 2px 0 rgba(20, 14, 34, 0.18);
 
 	--surface-1: #f6f5fa;
@@ -77,95 +77,95 @@ html.threevhy-october.light-mode {
 }
 
 // The shell: paper with a soft lilac glow up in the corner, where the moon would be
-html.threevhy-october .app-grid-layout {
+html.eventide-october .app-grid-layout {
 	background:
 		radial-gradient(70% 50% at 100% 0%, rgba(143, 132, 173, 0.16), transparent 70%),
 		radial-gradient(60% 40% at 0% 100%, rgba(255, 138, 43, 0.05), transparent 70%), #f6f5fa;
 }
 
-html.threevhy-october body {
+html.eventide-october body {
 	scrollbar-color: #d5d0e1 transparent;
 }
 
-html.threevhy-october body ::-webkit-scrollbar-thumb {
+html.eventide-october body ::-webkit-scrollbar-thumb {
 	background-color: #d5d0e1;
 }
 
-html.threevhy-october body ::-webkit-scrollbar-thumb:hover {
+html.eventide-october body ::-webkit-scrollbar-thumb:hover {
 	background-color: #b9b2ca;
 }
 
-html.threevhy-october ::selection {
+html.eventide-october ::selection {
 	background: rgba(143, 132, 173, 0.3);
 }
 
-html.threevhy-october body .button-frame--base.button-frame--base {
+html.eventide-october body .button-frame--base.button-frame--base {
 	box-shadow:
 		inset 0 0 0 1px rgba(34, 28, 48, 0.1),
 		inset 0 -3px 0 rgba(34, 28, 48, 0.08);
 }
 
-html.threevhy-october body .clickable-card:hover {
+html.eventide-october body .clickable-card:hover {
 	border-color: rgba(45, 36, 64, 0.35) !important;
 }
 
-html.threevhy-october.light-mode .threevhy-logo__client {
+html.eventide-october.light-mode .eventide-logo__client {
 	color: #6f6886;
 }
 
-html.threevhy-october .threevhy-logo__mark {
+html.eventide-october .eventide-logo__mark {
 	filter: drop-shadow(0 1px 0 rgba(143, 132, 173, 0.45));
 }
 
-html.threevhy-october .threevhy-logo--lg .threevhy-logo__mark {
+html.eventide-october .eventide-logo--lg .eventide-logo__mark {
 	filter: drop-shadow(0 4px 0 rgba(143, 132, 173, 0.4));
 }
 
 // Home pieces that hard-code the night colours
-html.threevhy-october .tvh-picker__button {
+html.eventide-october .tvh-picker__button {
 	background: rgba(255, 255, 255, 0.92);
 	box-shadow:
 		inset 0 0 0 2px rgba(34, 28, 48, 0.1),
 		inset 0 -4px 0 rgba(34, 28, 48, 0.08);
 }
 
-html.threevhy-october .tvh-picker__badge {
+html.eventide-october .tvh-picker__badge {
 	color: #ffffff;
 }
 
-html.threevhy-october .tvh-join:not(.tvh-join--stop) {
+html.eventide-october .tvh-join:not(.tvh-join--stop) {
 	color: #ffffff;
-	background: var(--threevhy-play-bg);
+	background: var(--eventide-play-bg);
 }
 
 // Navigation: the active tile is an ink block, with a pumpkin-orange marker on the edge
-html.threevhy-october .nav-tile:hover::before {
+html.eventide-october .nav-tile:hover::before {
 	background: rgba(34, 28, 48, 0.06);
 }
 
-html.threevhy-october .nav-tile.router-link-active {
+html.eventide-october .nav-tile.router-link-active {
 	color: #ffffff;
 }
 
-html.threevhy-october .nav-tile.router-link-active::before {
-	background: var(--threevhy-play-bg);
+html.eventide-october .nav-tile.router-link-active::before {
+	background: var(--eventide-play-bg);
 }
 
-html.threevhy-october .nav-tile.router-link-active::after {
+html.eventide-october .nav-tile.router-link-active::after {
 	background: #ff8a2b;
 	box-shadow: 0 0 10px rgba(255, 138, 43, 0.6);
 }
 
-html.threevhy-october .nav-tile.subpage-active::before {
+html.eventide-october .nav-tile.subpage-active::before {
 	background: rgba(45, 36, 64, 0.08);
 	box-shadow: inset 0 0 0 1px rgba(45, 36, 64, 0.2);
 }
 
-html.threevhy-october :is(.router-link-active, .subpage-active) svg {
+html.eventide-october :is(.router-link-active, .subpage-active) svg {
 	filter: none;
 }
 
 // Switches: the knob is black on the brand colour, which is ink here, so make it white
-html.threevhy-october button[role='switch'][aria-checked='true'] > span {
+html.eventide-october button[role='switch'][aria-checked='true'] > span {
 	background-color: #ffffff;
 }

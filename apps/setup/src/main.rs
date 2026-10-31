@@ -1,4 +1,4 @@
-//! 3vhy Client Setup: a small, good-looking front end for the real installer.
+//! Eventide Setup: a small, good-looking front end for the real installer.
 //!
 //! The actual install is done by the NSIS installer that `tauri build` produces
 //! for the launcher (it handles files, the uninstaller, Add/Remove Programs and
@@ -17,8 +17,8 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
 
-const PRODUCT_NAME: &str = "3vhy Client";
-const MAIN_BINARY: &str = "3vhy Client.exe";
+const PRODUCT_NAME: &str = "Eventide";
+const MAIN_BINARY: &str = "Eventide.exe";
 
 #[allow(clippy::large_include_file)]
 static PAYLOAD: &[u8] =
@@ -68,7 +68,7 @@ fn setup_info(app: AppHandle) -> SetupInfo {
 }
 
 /// Opens a folder picker. A generic folder (like "D:\Games") gets a
-/// "3vhy Client" subfolder so the install doesn't spill into it.
+/// "Eventide" subfolder so the install doesn't spill into it.
 #[tauri::command]
 async fn pick_folder(app: AppHandle, current: String) -> Option<String> {
     let start = PathBuf::from(&current);
@@ -76,7 +76,7 @@ async fn pick_folder(app: AppHandle, current: String) -> Option<String> {
     let picked = tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
-            .set_title("Choose where to install 3vhy Client")
+            .set_title("Choose where to install Eventide")
             .set_directory(start)
             .blocking_pick_folder()
     })
@@ -147,18 +147,18 @@ fn run_install(
     start_menu: bool,
 ) -> Result<String, String> {
     if !cfg!(windows) {
-        return Err("3vhy Client Setup only runs on Windows.".into());
+        return Err("Eventide Setup only runs on Windows.".into());
     }
     if PAYLOAD.is_empty() {
-        return Err("This copy of the setup was built without the 3vhy Client installer inside it.".into());
+        return Err("This copy of the setup was built without the Eventide installer inside it.".into());
     }
 
     emit(app, "Unpacking", 3.0);
     let temp =
-        std::env::temp_dir().join(format!("3vhy-setup-{}", std::process::id()));
+        std::env::temp_dir().join(format!("eventide-setup-{}", std::process::id()));
     fs::create_dir_all(&temp)
         .map_err(|e| format!("Couldn't create a temporary folder: {e}"))?;
-    let installer = temp.join("3vhy-client-installer.exe");
+    let installer = temp.join("eventide-installer.exe");
     fs::write(&installer, PAYLOAD)
         .map_err(|e| format!("Couldn't unpack the installer: {e}"))?;
     emit(app, "Installing files", 8.0);
@@ -204,7 +204,7 @@ fn run_install(
         return Err(match status.code() {
             Some(2) => "The installation was cancelled.".into(),
             Some(code) => format!(
-                "The installer stopped with error code {code}. If 3vhy Client is open, close it and try again."
+                "The installer stopped with error code {code}. If Eventide is open, close it and try again."
             ),
             None => "The installer stopped unexpectedly.".into(),
         });
@@ -222,7 +222,7 @@ fn run_install(
 
     let exe = dir.join(MAIN_BINARY);
     if !exe.is_file() {
-        return Err("The installer finished, but 3vhy Client wasn't found in the chosen folder.".into());
+        return Err("The installer finished, but Eventide wasn't found in the chosen folder.".into());
     }
     emit(app, "Done", 100.0);
     Ok(exe.to_string_lossy().into_owned())
@@ -259,7 +259,7 @@ fn launch(exe: String) -> Result<(), String> {
     command
         .spawn()
         .map(|_| ())
-        .map_err(|e| format!("Couldn't start 3vhy Client: {e}"))
+        .map_err(|e| format!("Couldn't start Eventide: {e}"))
 }
 
 #[tauri::command]
@@ -306,5 +306,5 @@ fn main() {
             close
         ])
         .run(tauri::generate_context!())
-        .expect("error while running 3vhy Client Setup");
+        .expect("error while running Eventide Setup");
 }

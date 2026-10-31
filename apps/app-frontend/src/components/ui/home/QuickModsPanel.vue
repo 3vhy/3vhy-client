@@ -14,7 +14,7 @@ import { modDisplayName, useInstanceMods } from '@/composables/use-instance-mods
 import { toggle_disable_project } from '@/helpers/instance'
 import type { GameInstance } from '@/helpers/types'
 
-// 3vhy Client: S.A.M-style "Quick mods" — flip mods in the selected instance on/off
+// Eventide: S.A.M-style "Quick mods" — flip mods in the selected instance on/off
 // without opening the full content page.
 const props = defineProps<{
 	instance: GameInstance | null
@@ -26,18 +26,18 @@ const { formatMessage } = useVIntl()
 const { handleError } = injectNotificationManager()
 
 const messages = defineMessages({
-	title: { id: 'app.3vhy.quick-mods.title', defaultMessage: 'Quick mods' },
-	allMods: { id: 'app.3vhy.quick-mods.all', defaultMessage: 'All mods' },
+	title: { id: 'app.Eventide.quick-mods.title', defaultMessage: 'Quick mods' },
+	allMods: { id: 'app.Eventide.quick-mods.all', defaultMessage: 'All mods' },
 	empty: {
-		id: 'app.3vhy.quick-mods.empty',
+		id: 'app.Eventide.quick-mods.empty',
 		defaultMessage: 'No mods in this instance yet.',
 	},
-	browse: { id: 'app.3vhy.quick-mods.browse', defaultMessage: 'Browse mods' },
+	browse: { id: 'app.Eventide.quick-mods.browse', defaultMessage: 'Browse mods' },
 	noInstance: {
-		id: 'app.3vhy.quick-mods.no-instance',
+		id: 'app.Eventide.quick-mods.no-instance',
 		defaultMessage: 'Pick an instance to see its mods.',
 	},
-	toggleLabel: { id: 'app.3vhy.quick-mods.toggle', defaultMessage: 'Enable {name}' },
+	toggleLabel: { id: 'app.Eventide.quick-mods.toggle', defaultMessage: 'Enable {name}' },
 })
 
 const instanceId = computed(() => props.instance?.id ?? null)

@@ -1,4 +1,4 @@
-// 3vhy Client Setup — screen flow and calls into the Rust side
+// Eventide Setup — screen flow and calls into the Rust side
 ;(() => {
 	const tauri = window.__TAURI__
 	const invoke = (cmd, args) => tauri.core.invoke(cmd, args)
@@ -184,15 +184,15 @@
 		$('install-label').textContent = verb
 		$('options-install-label').textContent = verb
 		$('installing-title').textContent = info.existing
-			? 'Updating 3vhy Client'
-			: 'Installing 3vhy Client'
+			? 'Updating Eventide'
+			: 'Installing Eventide'
 
 		const notice = $('welcome-notice')
 		if (!info.supported || !info.has_payload) {
 			notice.hidden = false
 			notice.textContent = !info.supported
-				? '3vhy Client Setup only runs on Windows.'
-				: 'This copy of the setup is missing the 3vhy Client installer. Download it again.'
+				? 'Eventide Setup only runs on Windows.'
+				: 'This copy of the setup is missing the Eventide installer. Download it again.'
 			$('btn-install').disabled = true
 			$('btn-options-install').disabled = true
 		}
@@ -307,8 +307,8 @@
 	function finish() {
 		const updated = state.info?.existing
 		$('done-subtitle').textContent = updated
-			? '3vhy Client is up to date and ready to play.'
-			: '3vhy Client is installed and ready to play.'
+			? 'Eventide is up to date and ready to play.'
+			: 'Eventide is installed and ready to play.'
 		show('done')
 		setTimeout(burst, 150)
 

@@ -3,7 +3,7 @@ import { DownloadIcon, RefreshCwIcon } from '@modrinth/assets'
 import { Button, injectNotificationManager, useFormatBytes, useVIntl } from '@modrinth/ui'
 import { watch } from 'vue'
 
-import ThreevhyGlyph from '@/components/ui/brand/ThreevhyGlyph.vue'
+import EventideGlyph from '@/components/ui/brand/EventideGlyph.vue'
 import { appUpdateState, installAvailableAppUpdate, snoozeAppUpdate } from '@/providers/app-update'
 
 import { launcherUpdateMessages as messages } from './messages'
@@ -48,7 +48,7 @@ watch(update, (current) => {
 			<div class="tvh-update__head">
 				<div class="tvh-update__mark" aria-hidden="true">
 					<RefreshCwIcon v-if="restarting" class="tvh-update__spin" />
-					<ThreevhyGlyph v-else class="tvh-update__glyph" />
+					<EventideGlyph v-else class="tvh-update__glyph" />
 				</div>
 				<div class="tvh-update__text">
 					<template v-if="restarting">
@@ -107,11 +107,11 @@ watch(update, (current) => {
 	flex-direction: column;
 	gap: 0.9rem;
 	padding: 1rem 1.1rem 1.1rem;
-	clip-path: var(--threevhy-pixel-corners-lg);
+	clip-path: var(--eventide-pixel-corners-lg);
 	background:
 		linear-gradient(180deg, rgba(91, 200, 230, 0.14) 0%, rgba(91, 200, 230, 0) 3.5rem),
 		var(--surface-3);
-	border-top: 3px solid var(--threevhy-cyan);
+	border-top: 3px solid var(--eventide-cyan);
 }
 
 .tvh-update__head {
@@ -127,10 +127,10 @@ watch(update, (current) => {
 	flex-shrink: 0;
 	width: 2.6rem;
 	height: 2.6rem;
-	clip-path: var(--threevhy-pixel-corners);
+	clip-path: var(--eventide-pixel-corners);
 	color: #f2faff;
 	background: linear-gradient(160deg, #3fb6e8 0%, #1a4fba 100%);
-	box-shadow: var(--threevhy-block-edge);
+	box-shadow: var(--eventide-block-edge);
 }
 
 .tvh-update__glyph {
@@ -152,7 +152,7 @@ watch(update, (current) => {
 
 	h3 {
 		margin: 0;
-		font-family: var(--threevhy-font-pixel);
+		font-family: var(--eventide-font-pixel);
 		font-size: 1.1rem;
 		font-weight: 600;
 		line-height: 1.25;

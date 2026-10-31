@@ -162,7 +162,7 @@
     "message": "Ocultar nametag"
   },
   "app.appearance-settings.minimize-launcher.description": {
-    "message": "Minimiza o 3vhy Client ao iniciar o Minecraft."
+    "message": "Minimiza o Eventide ao iniciar o Minecraft."
   },
   "app.appearance-settings.minimize-launcher.title": {
     "message": "Minimizar aplicativo"
@@ -204,7 +204,7 @@
     "message": "Página Inicial e conteúdo"
   },
   "app.behavior-settings.refocus-on-game-close.description": {
-    "message": "Traga o 3vhy Client para o primeiro plano quando o Minecraft for fechado."
+    "message": "Traga o Eventide para o primeiro plano quando o Minecraft for fechado."
   },
   "app.behavior-settings.refocus-on-game-close.title": {
     "message": "Retornar ao aplicativo quando o Minecraft fechar"
@@ -1611,7 +1611,7 @@
     "message": "Mais antigo"
   },
   "app.settings.app-version": {
-    "message": "3vhy Client {version}"
+    "message": "Eventide {version}"
   },
   "app.settings.default-instance-options.environment-variables.description": {
     "message": "As variáveis do ambiente definidas ao iniciar uma instância."
@@ -2724,7 +2724,7 @@
     "message": "Anúncios tornam o Modrinth possível e financiam os pagamentos dos criadores. Nossos parceiros talvez armazenem ou acessem os cookies no aplicativo para personalizar anúncios e medir o desempenho. Você pode recusar ou gerenciar suas preferências abaixo."
   },
   "app.settings.privacy.discord-rich-presence.description": {
-    "message": "Exibe o 3vhy Client como sua atividade atual no Discord. Isso não afeta a Presença Rica adicionada às instâncias por mods. Exige a reinicialização do aplicativo."
+    "message": "Exibe o Eventide como sua atividade atual no Discord. Isso não afeta a Presença Rica adicionada às instâncias por mods. Exige a reinicialização do aplicativo."
   },
   "app.settings.privacy.discord-rich-presence.title": {
     "message": "Presença Rica do Discord"
@@ -2769,7 +2769,7 @@
     "message": "Buscar por um diretório de aplicativo"
   },
   "app.settings.resource-management.app-directory.description": {
-    "message": "Onde o 3vhy Client armazena as instâncias e outros arquivos. As mudanças serão aplicadas após reiniciar o aplicativo."
+    "message": "Onde o Eventide armazena as instâncias e outros arquivos. As mudanças serão aplicadas após reiniciar o aplicativo."
   },
   "app.settings.resource-management.app-directory.select": {
     "message": "Selecione um novo diretório de aplicativo"
@@ -3285,7 +3285,7 @@
     "message": "Ativar"
   },
   "app.survey.body": {
-    "message": "Você se importaria de responder algumas perguntas sobre sua experiência com o 3vhy Client?"
+    "message": "Você se importaria de responder algumas perguntas sobre sua experiência com o Eventide?"
   },
   "app.survey.footer": {
     "message": "Este comentário vai diretamente para a equipe Modrinth e ajudará a guiar futuras atualizações!"
@@ -3606,7 +3606,7 @@
     "message": "Desvincular instância compartilhada"
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-body": {
-    "message": "Isso excluirá a instância compartilhada dos servidores do Modrinth. As pessoas usando-o no 3vhy Client não receberá mais atualizações, mas sua instância local e seu conteúdo ainda permanecerá no dispositivo."
+    "message": "Isso excluirá a instância compartilhada dos servidores do Modrinth. As pessoas usando-o no Eventide não receberá mais atualizações, mas sua instância local e seu conteúdo ainda permanecerá no dispositivo."
   },
   "installation-settings.unpublish-shared-instance.modal.admonition-header": {
     "message": "Removendo instância compartilhada"

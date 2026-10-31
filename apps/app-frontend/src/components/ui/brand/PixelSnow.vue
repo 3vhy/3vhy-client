@@ -6,7 +6,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
- * Pixel snow: the square flakes of the 3vhy night sky, falling slowly with a gentle sway.
+ * Pixel snow: the square flakes of the Eventide night sky, falling slowly with a gentle sway.
  * Fills its parent, never takes clicks, pauses while the window is hidden and stays still
  * when the system asks for reduced motion.
  */

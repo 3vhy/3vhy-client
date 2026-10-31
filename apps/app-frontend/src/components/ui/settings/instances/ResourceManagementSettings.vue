@@ -58,7 +58,7 @@ const messages = defineMessages({
 	appDirectoryDescription: {
 		id: 'app.settings.resource-management.app-directory.description',
 		defaultMessage:
-			'Where 3vhy Client stores instances and other files. Changes take effect after restarting the app.',
+			'Where Eventide stores instances and other files. Changes take effect after restarting the app.',
 	},
 	selectAppDirectory: {
 		id: 'app.settings.resource-management.app-directory.select',
