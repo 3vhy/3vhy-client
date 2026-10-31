@@ -16,6 +16,6 @@ Upload `assets/brand/eventide-social-preview.png` (1280 × 640, the lockup on #0
 
 ## Repository name
 
-Rename the repository (Settings → General → Repository name), for example to `eventide`. GitHub
-redirects the old URL. After that, the hard-coded `github.com/3vhy/3vhy-client` URLs in the code,
-README, website and mod metadata are updated to the new name.
+Renamed to `3vhy/Eventide` (from `3vhy/3vhy-client`). GitHub redirects the old address, including
+the API address copies of 3vhy Client check for updates, so never create a new repository named
+`3vhy-client` under the same account: it would take over the old address and break those updates.

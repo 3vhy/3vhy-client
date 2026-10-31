@@ -163,7 +163,7 @@ public final class Lyrics {
 			if (debug) log("Lyrics for \"" + song.title() + "\" from the saved copy (" + saved.provider() + ")");
 			return;
 		}
-		if (search == null) search = new LyricsSearch("Eventide " + EventideClient.version() + " (https://github.com/3vhy/3vhy-client)");
+		if (search == null) search = new LyricsSearch("Eventide " + EventideClient.version() + " (https://github.com/3vhy/Eventide)");
 		LyricsSearch.Outcome outcome = search.find(song.title(), song.artist(), song.duration(), debug ? Lyrics::log : line -> {
 		});
 		if (outcome.found() != null) {

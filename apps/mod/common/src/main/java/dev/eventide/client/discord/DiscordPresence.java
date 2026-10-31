@@ -20,7 +20,7 @@ import net.minecraft.client.multiplayer.ServerData;
  * of your own; its ID comes from the build (EVENTIDE_DISCORD_APP_ID) or eventide.json.
  */
 public final class DiscordPresence {
-	private static final String DOWNLOAD_URL = "https://github.com/3vhy/3vhy-client/releases/latest";
+	private static final String DOWNLOAD_URL = "https://github.com/3vhy/Eventide/releases/latest";
 
 	private static final ExecutorService IO = Executors.newSingleThreadExecutor(r -> {
 		Thread thread = new Thread(r, "Eventide Discord");

@@ -6,9 +6,9 @@
 	"description": "The in-game side of Eventide: HUD, crystal PvP tools, zoom, Discord presence and the Eventide game window.",
 	"authors": ["Eventide"],
 	"contact": {
-		"homepage": "https://github.com/3vhy/3vhy-client",
-		"sources": "https://github.com/3vhy/3vhy-client",
-		"issues": "https://github.com/3vhy/3vhy-client/issues"
+		"homepage": "https://github.com/3vhy/Eventide",
+		"sources": "https://github.com/3vhy/Eventide",
+		"issues": "https://github.com/3vhy/Eventide/issues"
 	},
 	"license": "GPL-3.0-only",
 	"icon": "assets/eventide/icon.png",

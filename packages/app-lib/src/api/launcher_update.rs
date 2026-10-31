@@ -20,7 +20,7 @@ use tokio::sync::Mutex;
 use tracing::{info, warn};
 
 const LATEST_RELEASE_URL: &str =
-    "https://api.github.com/repos/3vhy/3vhy-client/releases/latest";
+    "https://api.github.com/repos/3vhy/Eventide/releases/latest";
 
 /// The plain Tauri NSIS installer. `Eventide.Setup.exe` wraps it in an interactive
 /// setup and can't run unattended, so updates never use it.
@@ -300,7 +300,7 @@ fn check_download_url(url: &str) -> crate::Result<()> {
         Ok(())
     } else {
         Err(ErrorKind::OtherError(format!(
-            "Refusing to download a Eventide update from {url}"
+            "Refusing to download an Eventide update from {url}"
         ))
         .into())
     }
@@ -335,7 +335,7 @@ mod tests {
     fn only_release_downloads_are_allowed() {
         assert!(
             check_download_url(
-                "https://github.com/3vhy/3vhy-client/releases/download/v0.3.1/Eventide.Classic.Installer.exe"
+                "https://github.com/3vhy/Eventide/releases/download/v0.3.1/Eventide.Classic.Installer.exe"
             )
             .is_ok()
         );
@@ -345,7 +345,7 @@ mod tests {
         );
         assert!(
             check_download_url(
-                "http://github.com/3vhy/3vhy-client/releases/download/v0.3.1/a.exe"
+                "http://github.com/3vhy/Eventide/releases/download/v0.3.1/a.exe"
             )
             .is_err()
         );

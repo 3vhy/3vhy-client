@@ -2,7 +2,7 @@
 
 # Eventide
 
-Eventide (formerly 3vhy Client) is a Windows Minecraft launcher forked from the Modrinth App, with its own built-in Fabric mod. The repo is github.com/3vhy/3vhy-client (to be renamed). Brand files (logo master `assets/brand/eventide-icon.svg`, icons, wordmark, banners) are in `assets/brand`; render rasters from the SVG, never redraw it. The launcher keeps the app id `com.threevhy.client` and the `threevhy://` scheme on purpose, so old installs keep their data; the mod migrates old configs in `Migration.java`. The Modrinth instructions above still apply (TABs, no heading comments, prepr commands only when asked).
+Eventide (formerly 3vhy Client) is a Windows Minecraft launcher forked from the Modrinth App, with its own built-in Fabric mod. The repo is github.com/3vhy/Eventide (renamed from 3vhy/3vhy-client; GitHub redirects the old address, which is how copies of 3vhy Client still find updates). Brand files (logo master `assets/brand/eventide-icon.svg`, icons, wordmark, banners) are in `assets/brand`; render rasters from the SVG, never redraw it. The launcher keeps the app id `com.threevhy.client` and the `threevhy://` scheme on purpose, so old installs keep their data; the mod migrates old configs in `Migration.java`. The Modrinth instructions above still apply (TABs, no heading comments, prepr commands only when asked).
 
 ## Where things are
 
@@ -21,7 +21,7 @@ Eventide (formerly 3vhy Client) is a Windows Minecraft launcher forked from the 
 ## Checking mod changes
 
 - There's no need to run Minecraft locally: push, start the workflow and read the CI report. Each run overwrites the branches `ci-report/mc1_21_11` and `ci-report/mc26_1`. Unpack one with `git fetch origin ci-report/mc1_21_11 && git archive origin/ci-report/mc1_21_11 | tar -x -C <dir>`, check that every `eventide-check` line in the log ends `-> OK`, and look at `screenshots/`. Its commit message names the commit it tested.
-- If the build fails, the compiler errors are in the job's annotations: `gh api repos/3vhy/3vhy-client/check-runs/<job id>/annotations`.
+- If the build fails, the compiler errors are in the job's annotations: `gh api repos/3vhy/Eventide/check-runs/<job id>/annotations`.
 - 26.1 skips in-world screenshots (Sodium), so look at the 1.21.11 ones. CI also adds Mod Menu, so its buttons are tested.
 - Locally (JDK 25, `CI=1`): `./gradlew :mc1_21_11:runProductionClientGameTest -Pgametest`, or one part with `-PtestFocus=` `knives`, `glass`, `skies`, `protect`, `nametags` (a close-up of a name tag), `perf`, `lyrics`, `bench` (frame times and allocation) or `calibrate` (the knife lab: every knife at rest and frozen through its animations on a sky platform with the HUD off; `calibrate:karambit` for one). Add `--rerun` when nothing changed. Delete `run/config/eventide.json` before a full run.
 - Tests live in `apps/mod/common/src/gametest/java/dev/eventide/client/test/EventideGameTest.java`. Add a `check(...)` for new behaviour and a `shot(...)` for new UI. HUD close-ups use `MusicShowcase` (1.5x, on grey; the Music Player on the Eventide sky). Test-only entries: `Lyrics.simulate`, `StaffList.simulate`/`leave`/`stopSimulating`, `KnifeRenderer.preview`.
