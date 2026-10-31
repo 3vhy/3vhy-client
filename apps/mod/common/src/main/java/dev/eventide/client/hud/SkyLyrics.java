@@ -217,9 +217,9 @@ public final class SkyLyrics {
 		for (String row : rows) {
 			float w = width(row, Weight.BOLD);
 			float x = -w / 2f;
-			glow(x - cap * 0.1f, y + cap * 0.1f, x + w + cap * 0.1f, y + cap * 0.9f, cap * 0.4f, cap * 1.8f, 0x400E0820, opacity);
+			glow(x - cap * 0.1f, y + cap * 0.1f, x + w + cap * 0.1f, y + cap * 0.9f, cap * 0.4f, cap * 1.8f, 0x40000000, opacity);
 			glow(x, y + cap * 0.15f, x + w, y + cap * 0.85f, cap * 0.35f, cap * 2.8f, Accent.glow(0.32f), opacity);
-			text(row, Weight.BOLD, x, y, 1, 0xFFFFFFFF, 0xB8D9CCFF, Math.max(-1, lit), opacity, false);
+			text(row, Weight.BOLD, x, y, 1, 0xFFFFFFFF, 0xB8FFFFFF, Math.max(-1, lit), opacity, false);
 			lit -= w;
 			y += cap * LINE;
 		}
@@ -241,7 +241,7 @@ public final class SkyLyrics {
 			text(text, Weight.BOLD, -width(text, Weight.BOLD) * 0.95f, y1, 1.9f, 0xFFFFFFFF, 0xFFFFFFFF, Float.MAX_VALUE, opacity, false);
 			return cap * 1.4f;
 		}
-		int shadow = argb(0x80, 0x140A30, opacity);
+		int shadow = argb(0x80, 0x000000, opacity);
 		int white = argb(0xFF, 0xFFFFFF, opacity);
 		float off = cap * 0.08f;
 		MAPPER.quadTexture(builder, -size / 2f + off, y1 + off, size, shadow);
@@ -266,7 +266,7 @@ public final class SkyLyrics {
 			boolean faintShadow) {
 		Row row = row(text, weight);
 		float shadow = fontCap * 0.08f;
-		MAPPER.glyphs(x + shadow * scale, y + shadow * scale, scale, 0xB3140A30, 0xB3140A30, Float.MAX_VALUE, opacity * (faintShadow ? 0.6f : 1));
+		MAPPER.glyphs(x + shadow * scale, y + shadow * scale, scale, 0xB3000000, 0xB3000000, Float.MAX_VALUE, opacity * (faintShadow ? 0.6f : 1));
 		row.glyphs().visit(MAPPER);
 		MAPPER.glyphs(x, y, scale, lit, dim, litWidth, opacity);
 		row.glyphs().visit(MAPPER);

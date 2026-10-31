@@ -60,6 +60,8 @@ public final class KnifeRenderer {
 	private static float kickYaw = 0;
 	private static float kickPitch = 0;
 	private static boolean mirrored = false;
+	/** How often the inspect key plays the trick instead. */
+	private static float trickChance = 0.25f;
 
 	private KnifeRenderer() {
 	}
@@ -68,8 +70,14 @@ public final class KnifeRenderer {
 		return (float) (slider.get() / 100.0);
 	}
 
+	/**
+	 * The inspect key: the knife's inspect, or now and then (a quarter of the time, or straight away when
+	 * you press it again while one is playing) its trick.
+	 */
 	public static void inspect(KnifeModel model) {
-		ANIMATOR.play(model.inspect(), speed(Modules.KNIVES_INSPECT_SPEED), System.nanoTime());
+		boolean again = ANIMATOR.playing(model.inspect());
+		boolean trick = again || java.util.concurrent.ThreadLocalRandom.current().nextFloat() < trickChance;
+		ANIMATOR.play(trick ? model.trick() : model.inspect(), speed(Modules.KNIVES_INSPECT_SPEED), System.nanoTime());
 		Hooks.knifeInspectRan = true;
 	}
 
@@ -121,9 +129,14 @@ public final class KnifeRenderer {
 		return u * (float) Math.exp(1 - u);
 	}
 
+	/** For the in-game test: whether a first press of the inspect key may play the trick, so pictures repeat. */
+	public static void tricks(boolean on) {
+		trickChance = on ? 0.25f : 0;
+	}
+
 	/**
-	 * For the in-game test: holds the knife still at one point of an animation ("draw", "inspect", "use",
-	 * "slash0" or "slash1", {@code t} 0..1 through it), or at rest with one pose channel set ("channel3" with
+	 * For the in-game test: holds the knife still at one point of an animation ("draw", "inspect", "trick",
+	 * "use", "slash0" or "slash1", {@code t} 0..1 through it), or at rest with one pose channel set ("channel3" with
 	 * {@code t} as the value). Null lets the animation play again.
 	 */
 	public static void preview(KnifeModel model, String which, float t) {
@@ -138,6 +151,7 @@ public final class KnifeRenderer {
 			Clip clip = switch (which) {
 				case "draw" -> model.draw();
 				case "inspect" -> model.inspect();
+				case "trick" -> model.trick();
 				case "use" -> model.use();
 				default -> model.slash(which.startsWith("slash") ? Integer.parseInt(which.substring(5)) : 0);
 			};
@@ -159,8 +173,8 @@ public final class KnifeRenderer {
 	}
 
 	/**
-	 * For the in-game test: plays a draw, quick slashes, an inspect cut short by a slash and a stab on a
-	 * made-up clock at 240 frames a second, and returns the biggest change in turning speed between two
+	 * For the in-game test: plays a draw, quick slashes, an inspect cut short by a slash, a stab and a trick
+	 * on a made-up clock at 240 frames a second, and returns the biggest change in turning speed between two
 	 * frames (degrees a second) over every turning channel, taking each turn the short way round (a whole
 	 * turn looks the same as none). Smooth motion keeps it small; a knife that stops dead or starts at full
 	 * speed shows up as a spike.
@@ -174,13 +188,14 @@ public final class KnifeRenderer {
 		float[] current = Clip.rest();
 		float[] lastSpeed = new float[Clip.CHANNELS];
 		float worst = 0;
-		for (int i = 0; i <= 240 * 4; i++) {
+		for (int i = 0; i <= 240 * 7; i++) {
 			long now = start + i * frame;
 			int ms = Math.round(i * 1000f / 240);
 			if (ms == 0) animator.play(model.draw(), 1, now);
 			if (ms == 1000 || ms == 1150 || ms == 1300 || ms == 2300) animator.slash(model, 1, now, false);
 			if (ms == 1600) animator.play(model.inspect(), 1, now);
 			if (ms == 2700) animator.play(model.use(), 1, now);
+			if (ms == 3300) animator.play(model.trick(), 1, now);
 			animator.pose(now, 0, 0, 0, 0, current);
 			if (i > 0) {
 				for (int c : angles) {
@@ -200,7 +215,7 @@ public final class KnifeRenderer {
 	/** Whether an inspect is playing, for the in-game test. */
 	public static boolean inspecting() {
 		KnifeModel model = lastModel;
-		return model != null && ANIMATOR.playing(model.inspect());
+		return model != null && (ANIMATOR.playing(model.inspect()) || ANIMATOR.playing(model.trick()));
 	}
 
 	/**
@@ -307,10 +322,12 @@ public final class KnifeRenderer {
 	}
 
 	/**
-	 * From the hand to the knife's own frame: how it sits in the fist (a karambit or talon upside down with
-	 * its ring on the index finger, a push dagger across the palm), its size, then its turn in the fingers.
+	 * From the hand to the knife's own frame: how far a toss has thrown it, how it sits in the fist (a
+	 * karambit or talon upside down with its ring on the index finger, a push dagger across the palm), its
+	 * size, then its turn in the fingers.
 	 */
 	private static void knife(PoseStack pose, KnifeModel model) {
+		pose.translate(POSE[Clip.TOSS_X], POSE[Clip.TOSS_Y], 0);
 		if (model.family == KnifeModel.Family.CURVED) pose.mulPose(Axis.ZP.rotationDegrees(180));
 		if (model.family == KnifeModel.Family.PUSH) pose.mulPose(Axis.ZP.rotationDegrees(-90));
 		pose.scale(model.scale, model.scale, model.scale);

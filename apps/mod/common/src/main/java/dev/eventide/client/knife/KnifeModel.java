@@ -6,9 +6,9 @@ import java.util.Locale;
 
 /**
  * The knives, each its own shape built from {@link Shape} pieces (ground blades, lofted grips, plates,
- * pins and rings) after the real knife it's named for, with its own draw, inspect and slash animations
- * ({@link Clip}). Shapes are made the first time a knife is drawn and kept. The order is the order the
- * shader numbers them in (knife_surface.glsl's BLADE_RANGE and HOLE), so new knives go at the end.
+ * pins and rings) after the real knife it's named for, with its own draw, inspect, trick and slash
+ * animations ({@link Clip}). Shapes are made the first time a knife is drawn and kept. The order is the
+ * order the shader numbers them in (knife_surface.glsl's BLADE_RANGE and HOLE), so new knives go at the end.
  */
 public enum KnifeModel {
 	KARAMBIT("Karambit", 1.0f, 0, -5.9f, -4.71f, 0.95f, 0.48f, Family.CURVED),
@@ -77,6 +77,7 @@ public enum KnifeModel {
 	private Clip inspect;
 	private Clip[] slashes;
 	private Clip use;
+	private Clip trick;
 
 	KnifeModel(String label, float scale, float spinX, float spinY, float grip, float handleA, float handleB, Family family) {
 		this.label = label;
@@ -133,6 +134,12 @@ public enum KnifeModel {
 	Clip use() {
 		clips();
 		return use;
+	}
+
+	/** The rarer inspect, with the knife's showiest move. */
+	Clip trick() {
+		clips();
+		return trick;
 	}
 
 	private List<Part> build() {
@@ -688,15 +695,10 @@ public enum KnifeModel {
 						.key(0.34f, Clip.X, -0.02f, Clip.Y, 0.5f, Clip.Z, -0.04f, Clip.SWEEP, -45 * reach, Clip.YAW, -4, Clip.K_YAW, 28)
 						.key(0.46f, Clip.X, 0.18f * reach, Clip.Y, 0.3f, Clip.Z, -0.04f, Clip.SWEEP, -62 * reach, Clip.YAW, -6, Clip.PITCH, -3, Clip.K_YAW, 32)
 						.key(1)};
-		use = Clip.of("heavy stab", 1000)
-				.key(0)
-				.key(0.3f, Clip.Y, 0.08f, Clip.Z, 0.1f, Clip.PITCH, 14, Clip.SWEEP, 12, Clip.K_PITCH, 10)
-				.key(0.36f, Clip.Y, 0.09f, Clip.Z, 0.11f, Clip.PITCH, 16, Clip.SWEEP, 14, Clip.K_PITCH, 12)
-				.key(0.47f, Clip.X, -0.12f, Clip.Y, 0.08f, Clip.Z, -0.3f * reach, Clip.PITCH, -6, Clip.SWEEP, 8, Clip.K_PITCH, -62)
-				.key(0.6f, Clip.X, -0.11f, Clip.Y, 0.07f, Clip.Z, -0.27f * reach, Clip.PITCH, -5, Clip.SWEEP, 7, Clip.K_PITCH, -58)
-				.key(1);
+		use = KnifeClips.heavy(this, reach);
 		draw = KnifeClips.draw(this);
 		inspect = KnifeClips.inspect(this);
+		trick = KnifeClips.trick(this);
 	}
 
 	/** The id used in saved settings: the name in lower case. */

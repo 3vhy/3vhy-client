@@ -192,7 +192,6 @@ final class PlayerListWidget extends HudWidget {
 		float x1 = ListCard.pill(d, right, cy, w, Paint.fade(color, 0.12f), Paint.fade(color, 0.45f));
 		ListCard.clipPill(d, right, cy, w);
 		float cx = x1 + 12 * k;
-		if (on > 0.01f) Paint.glow(d, cx + 1.5f, cy, 1.5f, 4, Paint.fade(Tokens.MINT, 0.5f * on));
 		Paint.circle(d, cx + 1.5f, cy, 1.5f, color);
 		float nx = cx + 3 + 4;
 		ListCard.number(d, count, oldCount, countAt, now, nx, cy, Draw.mix(Tokens.TEXT_2, Tokens.TEXT, on));

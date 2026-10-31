@@ -5,7 +5,6 @@ import dev.eventide.client.Hooks;
 import dev.eventide.client.compat.Compat;
 import dev.eventide.client.gui.menu.MenuScreen;
 import dev.eventide.client.module.Modules;
-import dev.eventide.client.ui.Grad;
 import dev.eventide.client.ui.Logo;
 import dev.eventide.client.ui.Paint;
 import dev.eventide.client.ui.Tokens;
@@ -103,7 +102,6 @@ public final class MenuNameTag {
 		Paint.shadow(d, x, y, x2, y + h, h / 2f, 0, cap * 0.5f, cap * 1.6f, -cap * 0.3f, 0x8C000000);
 		Paint.rect(d, x, y, x2, y + h, h / 2f, Tokens.GLASS_SOLID);
 		Paint.stroke(d, x, y, x2, y + h, h / 2f, 1, Tokens.GLASS_EDGE);
-		Paint.stroke(d, x + 1, y + 1, x2 - 1, y + h - 1, h / 2f - 1, 1, Grad.down(0x1AFFFFFF, 0x00FFFFFF));
 		float capTop = y + (h - cap) / 2f;
 		float cx = x + l.pad();
 		if (l.logo()) {

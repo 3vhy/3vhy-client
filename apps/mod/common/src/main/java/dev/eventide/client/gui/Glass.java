@@ -3,7 +3,6 @@ package dev.eventide.client.gui;
 import dev.eventide.client.Draw;
 import dev.eventide.client.Hooks;
 import dev.eventide.client.module.Modules;
-import dev.eventide.client.ui.Grad;
 import dev.eventide.client.ui.Paint;
 import dev.eventide.client.ui.Tokens;
 import java.util.Collections;
@@ -19,19 +18,19 @@ import net.minecraft.client.gui.components.PlainTextButton;
 import net.minecraft.resources.Identifier;
 
 /**
- * Eventide's glass for everything Minecraft draws with its own widget art, and so for every mod that uses that
+ * Eventide's flat style for everything Minecraft draws with its own widget art, and so for every mod that uses that
  * art too: buttons, text fields, checkboxes, tabs, scrollbars, tooltips, list selections, the lines under a
  * screen's header and over its footer, list and screen backgrounds, and the chat bar. Minecraft's widgets
  * draw through a few sprites and textures; each is swapped for its glass shape here, sized to the same box,
- * so layouts don't move. Theme > Glass buttons turns all of it off.
+ * so layouts don't move. Theme > Eventide buttons turns all of it off.
  */
 public final class Glass {
-	private static final int FIELD = 0xB0151127;
-	private static final int FIELD_EDGE = 0x24FFFFFF;
-	private static final int FIELD_EDGE_HOVER = 0x47FFFFFF;
-	private static final int TRACK = 0xCC1F1A35;
+	private static final int FIELD = 0xB8121214;
+	private static final int FIELD_EDGE = 0x1FFFFFFF;
+	private static final int FIELD_EDGE_HOVER = 0x3DFFFFFF;
+	private static final int TRACK = 0xCC18181B;
 	private static final int THUMB = 0x80FFFFFF;
-	private static final int SURFACE = 0xF2161228;
+	private static final int SURFACE = 0xF2161618;
 	private static final Map<AbstractWidget, Long> GLAZED = new WeakHashMap<>();
 	private static final int CONTAINER_GRAY = 0xFFC6C6C6;
 	private static final Set<String> UNGLAZED = Collections.synchronizedSet(new LinkedHashSet<>());
@@ -145,16 +144,16 @@ public final class Glass {
 		switch (texture.getPath()) {
 			case "textures/gui/header_separator.png", "textures/gui/inworld_header_separator.png" -> {
 				float hair = hair(d);
-				Paint.rect(d, x, y + h - hair, x + w, y + h, 0, 0x29CDB6FF);
+				Paint.rect(d, x, y + h - hair, x + w, y + h, 0, 0x1FFFFFFF);
 			}
 			case "textures/gui/footer_separator.png", "textures/gui/inworld_footer_separator.png" -> {
 				float hair = hair(d);
-				Paint.rect(d, x, y, x + w, y + hair, 0, 0x29CDB6FF);
+				Paint.rect(d, x, y, x + w, y + hair, 0, 0x1FFFFFFF);
 			}
 			case "textures/gui/menu_list_background.png", "textures/gui/inworld_menu_list_background.png" ->
-					Paint.rect(d, x, y, x + w, y + h, 0, 0x4D06040E);
-			case "textures/gui/menu_background.png" -> Paint.rect(d, x, y, x + w, y + h, 0, 0xAB09060F);
-			case "textures/gui/inworld_menu_background.png" -> Paint.rect(d, x, y, x + w, y + h, 0, 0x7C09060F);
+					Paint.rect(d, x, y, x + w, y + h, 0, 0x4D000000);
+			case "textures/gui/menu_background.png" -> Paint.rect(d, x, y, x + w, y + h, 0, 0xAB0A0A0B);
+			case "textures/gui/inworld_menu_background.png" -> Paint.rect(d, x, y, x + w, y + h, 0, 0x7C0A0A0B);
 			default -> {
 				return false;
 			}
@@ -260,7 +259,7 @@ public final class Glass {
 	/** The bar you type chat in: a dark bar along the bottom of the screen. */
 	public static void chatBar(Draw d, float x1, float y1, float x2, float y2) {
 		float r = Math.min(5, (y2 - y1) / 2f);
-		Paint.rect(d, x1, y1, x2, y2, r, 0xC0151127);
+		Paint.rect(d, x1, y1, x2, y2, r, 0xC0121214);
 		Paint.stroke(d, x1, y1, x2, y2, r, hair(d), FIELD_EDGE);
 	}
 }

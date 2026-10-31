@@ -134,7 +134,7 @@ public final class Hotbar {
 		float h = 14;
 		float y = cy - h / 2f;
 		Hud.glass(d, x, y, x + w, y + h, Modules.THEME_ROUNDED_HUD.get() ? h / 2f : 1.5f, Math.max(0.05f, strength));
-		Paint.icon(d, icon, x + 6, cy - 3.5f, 7, Accent.text());
+		Paint.icon(d, icon, x + 6, cy - 3.5f, 7, Tokens.TEXT_2);
 		Hud.text(d, address, x + 17, cy - cap / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT, strength < 0.35f);
 		Hooks.serverAddressDrawn = true;
 	}

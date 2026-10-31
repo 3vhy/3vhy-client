@@ -1,7 +1,6 @@
 package dev.eventide.client.hud;
 
 import dev.eventide.client.Draw;
-import dev.eventide.client.gui.Accent;
 import dev.eventide.client.module.Modules;
 import dev.eventide.client.music.MusicBridge;
 import dev.eventide.client.ui.Paint;
@@ -14,7 +13,7 @@ import net.minecraft.client.Minecraft;
 
 /**
  * Sky Lyrics on screen: the words of the song playing at the top of the screen like a HUD widget, line by
- * line as they're sung, glowing violet, with the next line faint under it. Set to Sky, {@link SkyLyrics}
+ * line as they're sung, with the next line faint under it. Set to Sky, {@link SkyLyrics}
  * writes them in the sky instead, except where there is none (the Nether), which falls back to this.
  */
 final class LyricsWidget extends HudWidget {
@@ -90,7 +89,7 @@ final class LyricsWidget extends HudWidget {
 	}
 
 	/**
-	 * One sung line, wrapped to two rows at most, with a violet glow: white as far as it's been sung
+	 * One sung line, wrapped to two rows at most, white as far as it's been sung
 	 * ({@code sung}, 0..1, like karaoke) and faint after that. Returns its height.
 	 */
 	private static float block(Draw d, float cx, float top, String text, float cap, float glow, float sung) {
@@ -103,10 +102,9 @@ final class LyricsWidget extends HudWidget {
 		for (String row : rows) {
 			float w = Type.width(row, cap, Weight.BOLD);
 			float x = cx - w / 2f;
-			Paint.shadow(d, x - cap * 0.2f, y, x + w + cap * 0.2f, y + cap, cap * 0.5f, 0, 0, cap * 1.6f, cap * 0.2f, 0x590E0820);
-			Type.draw(d, row, x + cap * 0.07f, y + cap * 0.09f, cap, Weight.BOLD, 0xB3140A30);
+			Type.draw(d, row, x + cap * 0.07f, y + cap * 0.09f, cap, Weight.BOLD, 0xB3000000);
 			float here = Math.max(0, Math.min(w, lit));
-			if (here < w) Type.draw(d, row, x, y, cap, Weight.BOLD, 0xB8D9CCFF);
+			if (here < w) Type.draw(d, row, x, y, cap, Weight.BOLD, 0xB8FFFFFF);
 			if (here >= w) {
 				Type.draw(d, row, x, y, cap, Weight.BOLD, 0xFFFFFFFF);
 			} else if (here > 0) {

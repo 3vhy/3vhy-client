@@ -29,6 +29,7 @@ import dev.eventide.client.knife.KnifeRenderer;
 import dev.eventide.client.module.Module;
 import dev.eventide.client.module.Module.Category;
 import dev.eventide.client.module.Modules;
+import dev.eventide.client.module.Nametags;
 import dev.eventide.client.module.NameProtect;
 import dev.eventide.client.module.PlayerList;
 import dev.eventide.client.module.StaffList;
@@ -1297,6 +1298,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 		context.runOnClient(client -> {
 			Modules.KNIVES.set(true);
 			Modules.KNIVES_SLOTS.reset();
+			KnifeRenderer.tricks(false);
 			for (int i = 0; i < KNIFE_SLOTS.length; i++) Knives.setSlot(i, KNIFE_SLOTS[i]);
 			client.getToastManager().clear();
 			client.gui.getChat().clearMessages(false);
@@ -1334,6 +1336,12 @@ public final class EventideGameTest implements FabricClientGameTest {
 				if (model == KnifeModel.BUTTERFLY) check(failed, "the inspect key plays the knife's inspect", KnifeRenderer.inspecting()
 						|| Hooks.knifeInspectRan);
 				context.waitTicks(60);
+				if (model == KnifeModel.BUTTERFLY) {
+					context.runOnClient(client -> KnifeRenderer.preview(model, "trick", 0.44f));
+					context.waitTicks(2);
+					shot(context, "eventide-knife-butterfly-trick");
+					context.runOnClient(client -> KnifeRenderer.preview(null, null, 0));
+				}
 			}
 		}
 		knifeSettings(context, failed);
@@ -1379,6 +1387,7 @@ public final class EventideGameTest implements FabricClientGameTest {
 		context.runOnClient(client -> {
 			Modules.KNIVES.set(false);
 			Modules.KNIVES_SLOTS.reset();
+			KnifeRenderer.tricks(true);
 		});
 		server.runCommand("item replace entity @p hotbar.0 with netherite_sword");
 		context.getInput().pressKey(GLFW.GLFW_KEY_1);
@@ -1746,28 +1755,53 @@ public final class EventideGameTest implements FabricClientGameTest {
 	 * everywhere (the number may change), leaves your name to the name swap, and an excluded stat shows again.
 	 */
 	/**
-	 * A mannequin (drawn like a player) named like a player, close in front of the camera, so the Eventide name
-	 * tag (face, name, health and heart) is pictured big enough to compare with a reference.
+	 * A mannequin (drawn like a player) named like a player on DonutSMP, a rank badge from a font of its own and
+	 * a + before the name, close in front of the camera, so the Eventide name tag is pictured big enough to
+	 * compare with a reference. Both icons are found and listed in the settings, and hiding them takes them
+	 * off the tag (and the space they leave); health stays off unless it's turned on.
 	 */
 	private static void nametagCloseup(ClientGameTestContext context, TestSingleplayerContext singleplayer, List<String> failed) {
 		var server = singleplayer.getServer();
 		boolean waypoints = context.computeOnClient(client -> Modules.WAYPOINTS.enabled());
 		boolean nametags = context.computeOnClient(client -> Modules.NAMETAGS.enabled());
+		List<String> hiddenBefore = context.computeOnClient(client -> new ArrayList<>(Config.get().hiddenNameIcons));
 		context.runOnClient(client -> {
 			Modules.NAMETAGS.set(true);
 			Modules.WAYPOINTS.set(false);
+			Config.get().hiddenNameIcons.clear();
+			Nametags.forgetIcons();
 			client.player.setYRot(0f);
 			client.player.setXRot(-16f);
 		});
-		server.runCommand("execute at @p rotated 0 0 run summon minecraft:mannequin ^ ^ ^2.2 {CustomName:\"Pickzugng\","
+		server.runCommand("execute at @p rotated 0 0 run summon minecraft:mannequin ^ ^ ^2.2 {CustomName:[{text:\"a\",font:\"minecraft:alt\","
+				+ "color:\"light_purple\"},{text:\"+\",color:\"aqua\"},{text:\"Pickzugng\",color:\"white\"}],"
 				+ "CustomNameVisible:1b,hide_description:1b,immovable:1b,Rotation:[180f,0f]}");
 		context.waitTicks(20);
 		Hooks.styledNametagRan = false;
 		context.waitTicks(2);
 		shot(context, "eventide-nametag-closeup");
 		check(failed, "a mannequin's tag drawn in Eventide's style", Hooks.styledNametagRan);
+		List<Nametags.Icon> icons = context.computeOnClient(client -> Nametags.icons());
+		check(failed, "the rank badge and the + in a name are found as icons (found " + icons.size() + ")", icons.size() == 2);
+		context.setScreen(() -> MenuScreen.settings(null, Modules.NAMETAGS));
+		context.waitTicks(20);
+		shot(context, "eventide-menu-nametags");
+		context.setScreen(() -> null);
+		context.runOnClient(client -> {
+			for (Nametags.Icon icon : Nametags.icons()) Nametags.toggle(icon);
+		});
+		context.waitTicks(4);
+		shot(context, "eventide-nametag-closeup-no-icons");
+		String plain = context.computeOnClient(client -> Nametags.shown(net.minecraft.network.chat.Component.literal("a")
+				.withStyle(style -> style.withFont(new net.minecraft.network.chat.FontDescription.Resource(
+						net.minecraft.resources.Identifier.parse("minecraft:alt"))))
+				.append(net.minecraft.network.chat.Component.literal(" + "))
+				.append(net.minecraft.network.chat.Component.literal("Pickzugng"))).getString());
+		check(failed, "hidden icons and their spaces leave the tag (got \"" + plain + "\")", plain.equals("Pickzugng"));
 		server.runCommand("kill @e[type=minecraft:mannequin]");
 		context.runOnClient(client -> {
+			Config.get().hiddenNameIcons.clear();
+			Config.get().hiddenNameIcons.addAll(hiddenBefore);
 			Modules.WAYPOINTS.set(waypoints);
 			Modules.NAMETAGS.set(nametags);
 			client.player.setXRot(0f);
@@ -1918,7 +1952,8 @@ public final class EventideGameTest implements FabricClientGameTest {
 			context.waitTicks(2);
 			shot(context, "lab-" + name + "-rest");
 			List<String> frames = every ? List.of("slash0-15", "slash0-35", "slash0-55", "slash1-35", "use-35", "use-55", "draw-15", "draw-35", "draw-55",
-					"inspect-20", "inspect-40", "inspect-60", "inspect-80") : List.of("slash0-35", "use-35", "draw-35", "inspect-20", "inspect-60");
+					"inspect-20", "inspect-40", "inspect-60", "inspect-80", "trick-30", "trick-45", "trick-60", "trick-75")
+					: List.of("slash0-35", "use-35", "draw-35", "draw-52", "inspect-20", "inspect-60", "trick-45");
 			for (String frame : frames) {
 				String which = frame.substring(0, frame.indexOf('-'));
 				float t = Integer.parseInt(frame.substring(frame.indexOf('-') + 1)) / 100f;

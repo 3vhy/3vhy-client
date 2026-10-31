@@ -2,9 +2,10 @@ package dev.eventide.client.ui;
 
 /**
  * Eventide's design tokens: every colour, size and timing the menus, the Orbit and the HUD share, in one
- * place. The palette is a near-black violet night with lilac text and a violet-to-magenta accent; the
- * same values drive the download page (website/index.html), so the game and the site look alike.
- * Colours are ARGB.
+ * place. The palette is a true near-black night: surfaces are told apart by lightness alone (ground,
+ * surface, raised, each a step lighter), text is white with two neutral greys that both read at 4.5:1, and
+ * one hue, the logo's violet, goes only on what's on or chosen (Theme's Accent colour can change it). No
+ * gradients, glows or tinted surfaces. Colours are ARGB.
  */
 public final class Tokens {
 	private Tokens() {
@@ -14,94 +15,60 @@ public final class Tokens {
 	public static final int BRAND_TILE = 0xFF120D1C;
 	public static final int BRAND_TRIDENT = 0xFFF3ECFF;
 	public static final int BRAND_SWIRL = 0xFFA855F7;
-	public static final int BRAND_WORDMARK = 0xFFF5EFFF;
+	public static final int BRAND_WORDMARK = 0xFFF5F5F6;
 
-	// Night sky and surfaces, darkest first
-	public static final int BG_0 = 0xFF05040A;
-	public static final int BG_1 = 0xFF0B0915;
-	public static final int BG_2 = 0xFF131024;
-	public static final int SURFACE = 0xFF19152D;
-	public static final int SURFACE_HI = 0xFF221C3C;
+	// Surfaces, darkest first, a lightness step apart
+	public static final int BG_0 = 0xFF0A0A0B;
+	public static final int BG_2 = 0xFF141416;
+	public static final int SURFACE = 0xFF19191C;
+	public static final int RAISED = 0xFF232327;
+	/** Over the blurred game behind a menu: dark enough that the menu's surfaces read on it. */
+	public static final int SCRIM = 0xD90A0A0B;
 
-	// Text
-	public static final int TEXT = 0xFFF6F3FF;
-	public static final int TEXT_2 = 0xFFB4ACD2;
-	public static final int TEXT_3 = 0xFF7C7599;
+	// Text: white, then two greys far enough apart to read as two
+	public static final int TEXT = 0xFFF5F5F6;
+	public static final int TEXT_2 = 0xFFB4B4BA;
+	public static final int TEXT_3 = 0xFF8E8E95;
 
-	// Accent family
-	public static final int INDIGO = 0xFF5F04EB;
-	public static final int VIOLET = 0xFF880FF9;
-	public static final int PURPLE = 0xFFB51FF4;
-	public static final int MAGENTA = 0xFFD129F5;
+	// Data hues, for what a value means (health, pops, a staff rank), never for chrome
+	public static final int MAGENTA = 0xFFD946EF;
 	public static final int PINK = 0xFFFF5AD9;
 	public static final int LILAC = 0xFFCDB6FF;
 	public static final int LILAC_2 = 0xFFAC86FF;
-	public static final int LILAC_3 = 0xFFEBA2FF;
 
 	// Signals
 	public static final int GOLD = 0xFFFFD27A;
-	public static final int MINT = 0xFF8AF5C8;
-	public static final int LOW = 0xFFFF5C84;
+	public static final int MINT = 0xFF6EE7B7;
+	public static final int LOW = 0xFFFF5C7A;
 	public static final int EMBER = 0xFFFF8A5C;
 
-	// Hairlines
-	public static final int STROKE = 0x12FFFFFF;
-	public static final int STROKE_HI = 0x24FFFFFF;
-
-	// Glass: HUD pieces and floating panels
-	public static final int GLASS = 0xA80A0814;
-	public static final int GLASS_SOLID = 0xE60E0B1C;
-	public static final int GLASS_EDGE = 0x1AFFFFFF;
-	public static final int GLASS_SHINE = 0x14FFFFFF;
-	/** Module cards: a soft top-to-bottom shade. */
-	public static final int CARD_TOP = 0x80221C3C;
-	public static final int CARD_BOTTOM = 0x6B131024;
-	public static final int CARD_EDGE = 0x12FFFFFF;
-	public static final int CARD_SHINE = 0x0DFFFFFF;
+	/** HUD pieces and floating panels: a neutral dark you can see the game through, and its 1px edge. */
+	public static final int GLASS = 0xB80C0C0E;
+	public static final int GLASS_SOLID = 0xEB111113;
+	public static final int GLASS_EDGE = 0x14FFFFFF;
 	/** Round buttons, the search field and other quiet controls. */
 	public static final int CONTROL = 0x0FFFFFFF;
 	public static final int CONTROL_HOVER = 0x1AFFFFFF;
 	public static final int CONTROL_EDGE = 0x1AFFFFFF;
-	/** An idle icon tile, an off switch's track. */
-	public static final int TILE_OFF = 0x0FFFFFFF;
-	public static final int SWITCH_OFF = 0x1FFFFFFF;
-	public static final int KEY = 0x0DFFFFFF;
 
-	// The accent gradient, violet to magenta (Accent derives other themes from the middle stop)
-	public static final int PRIMARY_FROM = 0xFF7A2CFF;
-	public static final int PRIMARY_MID = 0xFFA52BF5;
-	public static final int PRIMARY_TO = 0xFFD12CF0;
-	public static final int TILE_FROM = 0xFF7C2CFF;
-	public static final int TILE_TO = 0xFFC22CF4;
-	public static final int SWITCH_FROM = 0xFF8A2CFF;
-	public static final int SWITCH_TO = 0xFFC62CF2;
-	public static final int BAR_FROM = 0xFF8A2CFF;
-	public static final int BAR_TO = 0xFFEBA2FF;
-	/** The glow under lit things: purple at 90%. */
-	public static final int GLOW = 0xE6B51FF4;
+	/** The accent: the logo's violet (Accent derives everything else from it). */
+	public static final int PRIMARY_MID = BRAND_SWIRL;
 
-	// Corner radii, in layout units (a layout unit is one CSS pixel on the site)
-	public static final float R_CARD = 20;
-	public static final float R_TILE = 12;
-	public static final float R_GLASS = 14;
-	public static final float R_KEY = 9;
-	public static final float R_PANEL = 24;
+	/** Corner radius of a floating panel (a settings sheet); cards, controls and chips step down from it. */
+	public static final float R_PANEL = 14;
+	public static final float R_CARD = 10;
+	public static final float R_CONTROL = 8;
 	public static final float R_PILL = 999;
 
 	// Motion, in milliseconds. UI moves stay under 300ms and ease out (hover and press faster still), so
 	// the menus answer at once; nothing that a key opens animates on the way in.
-	public static final int T_SWITCH_KNOB = 180;
-	public static final int T_SWITCH_FILL = 160;
-	public static final int T_HOVER = 150;
-	public static final int T_COLOR = 160;
-	public static final int T_INDICATOR = 240;
-	public static final int T_PRESS = 120;
-	public static final int T_CAPTION = 200;
-	public static final int T_REVEAL = 240;
-	public static final int T_REVEAL_MOVE = 280;
-	public static final int T_STAGGER = 40;
-	public static final int T_SHEET = 260;
-	public static final int T_CROSSFADE = 1200;
+	public static final int T_SWITCH_KNOB = 160;
+	public static final int T_SWITCH_FILL = 140;
+	public static final int T_HOVER = 120;
+	public static final int T_COLOR = 140;
+	public static final int T_INDICATOR = 200;
+	public static final int T_CAPTION = 160;
+	public static final int T_SHEET = 220;
 	/** How far things rise as they appear. */
-	public static final float REVEAL_RISE = 8;
+	public static final float REVEAL_RISE = 6;
 }

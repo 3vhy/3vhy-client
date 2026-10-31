@@ -125,15 +125,15 @@ final class ModuleListWidget extends HudWidget {
 			float chipRight = right + (1 - in) * 12;
 			float left = chipRight - chipWidth(module.name);
 			float top = y + slot * STEP;
-			float r = radius(CHIP_H / 2f);
+			float r = radius(Hud.RADIUS);
 			float old = Paint.opacity(Paint.opacity() * in);
 			if (strength > 0.01f) {
 				float glass = Paint.opacity(Paint.opacity() * Math.min(1, strength * 1.15f));
 				Paint.rect(d, left, top, chipRight, top + CHIP_H, r, Tokens.GLASS);
-				Paint.stroke(d, left, top, chipRight, top + CHIP_H, r, hair, 0x1FFFFFFF);
+				Paint.stroke(d, left, top, chipRight, top + CHIP_H, r, hair, 0x14FFFFFF);
 				Paint.opacity(glass);
 			}
-			int accent = Accent.get(slot * 0.035f);
+			int accent = Modules.THEME_RAINBOW.get() ? Accent.get(slot * 0.035f) : Tokens.TEXT_2;
 			float ix = left + PAD;
 			float iy = top + (CHIP_H - ICON) / 2f;
 			Paint.icon(d, module.icon() != null ? module.icon() : "list", ix, iy, ICON, accent);

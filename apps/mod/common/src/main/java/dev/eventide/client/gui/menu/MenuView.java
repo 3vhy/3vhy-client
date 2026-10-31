@@ -2,7 +2,6 @@ package dev.eventide.client.gui.menu;
 
 import dev.eventide.client.Config;
 import dev.eventide.client.Draw;
-import dev.eventide.client.gui.Accent;
 import dev.eventide.client.module.Module;
 import dev.eventide.client.module.Module.Category;
 import dev.eventide.client.module.Modules;
@@ -24,11 +23,10 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The Eventide mod menu, laid out like the Render menu on the website: the logo, a row of round tab buttons
- * with the active one as a sliding gradient pill, a search field ({@code /}), the tab's name and an
- * "N of M on" count, then a grid of module cards, each with its icon and name, one line about it, a
- * settings button and a switch. Click a card to switch it, right-click it (or its settings button) for
- * its settings, Esc for the Orbit.
+ * The Eventide mod menu: the logo, a row of tab buttons with the active one on a sliding raised step with
+ * its name, a search field ({@code /}), the tab's name and an "N of M on" count, then a grid of module
+ * cards, each with its icon and name, up to two lines about it, a settings button and a switch. Click a
+ * card to switch it, right-click it (or its settings button) for its settings, Esc for the Orbit.
  *
  * <p>Everything is laid out on the website mockup's 1600 x 900 canvas and scaled to fit the window, so
  * the menu is the same shape at any GUI scale, and drawn with {@link Paint}, so it's sharp at any size.
@@ -64,18 +62,18 @@ public final class MenuView {
 	static final float DESIGN_W = 1600;
 	static final float DESIGN_H = 900;
 	static final float CONTENT_W = 1456;
-	private static final float TAB_SIZE = 44;
-	private static final float TAB_GAP = 11;
-	private static final float GRID_TOP = 188;
+	private static final float TAB_SIZE = 40;
+	private static final float TAB_GAP = 4;
+	private static final float GRID_TOP = 176;
 	private static final int COLUMNS = 4;
 	private static final float CARD_H = 104;
-	private static final float GAP_X = 21;
-	private static final float GAP_Y = 22;
-	private static final float CARD_R = 18;
-	private static final float PAD = 22;
+	private static final float GAP_X = 16;
+	private static final float GAP_Y = 16;
+	private static final float CARD_R = Tokens.R_CARD;
+	private static final float PAD = 20;
 	private static final float ICON = 18;
-	private static final int REVEAL_STAGGER = 34;
-	private static final int REVEAL_TIME = 760;
+	private static final int REVEAL_STAGGER = 24;
+	private static final int REVEAL_TIME = 240;
 
 	public static final List<Tab> TABS = tabs();
 
@@ -257,25 +255,26 @@ public final class MenuView {
 			boolean hover = within(mx, my, bx, top, bx + TAB_SIZE, top + TAB_SIZE);
 			tabHover[i].set(hover);
 			Tab each = TABS.get(i);
+			float th = tabHover[i].get();
+			if (th > 0.01f) Paint.rect(d, bx, top, bx + TAB_SIZE, top + TAB_SIZE, Tokens.R_CONTROL + 2, Paint.fade(0x14FFFFFF, th));
 			if (each.category() == null) {
-				Paint.circle(d, bx + TAB_SIZE / 2f, top + TAB_SIZE / 2f, TAB_SIZE / 2f, Widgets.mixColor(Tokens.CONTROL, Tokens.CONTROL_HOVER, tabHover[i].get()));
-				Paint.ring(d, bx + TAB_SIZE / 2f, top + TAB_SIZE / 2f, TAB_SIZE / 2f, 1, Tokens.CONTROL_EDGE);
-				face(d, bx + TAB_SIZE / 2f, top + TAB_SIZE / 2f, TAB_SIZE * 0.46f);
+				face(d, bx + TAB_SIZE / 2f, top + TAB_SIZE / 2f, TAB_SIZE * 0.45f);
 			} else {
-				Widgets.roundButton(d, bx + TAB_SIZE / 2f, top + TAB_SIZE / 2f, TAB_SIZE / 2f, each.icon(), tabHover[i].get(), 0.84f);
+				float size = 17;
+				Paint.icon(d, each.icon(), bx + (TAB_SIZE - size) / 2f, top + (TAB_SIZE - size) / 2f, size, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT, th));
 			}
 			int index = i;
 			hits.add(bx, top, bx + TAB_SIZE, top + TAB_SIZE, () -> switchTab(index));
 		}
 		float px = pillX.get();
 		float pw = pillW.get();
-		Paint.rect(d, px, top, px + pw, top + TAB_SIZE, TAB_SIZE / 2f, 0x29FFFFFF);
+		Paint.rect(d, px, top, px + pw, top + TAB_SIZE, Tokens.R_CONTROL + 2, Tokens.RAISED);
 		Tab active = TABS.get(tab);
-		float iconSize = 18;
-		float ix = px + 18;
+		float iconSize = 17;
+		float ix = px + 14;
 		if (active.category() == null) face(d, ix + iconSize / 2f, top + TAB_SIZE / 2f, iconSize * 1.05f);
-		else Paint.icon(d, active.icon(), ix, top + (TAB_SIZE - iconSize) / 2f, iconSize, 0xFFFFFFFF);
-		Type.draw(d, active.name(), ix + iconSize + 10, top + (TAB_SIZE - 12f) / 2f, 12f, Weight.SEMIBOLD, 0xFFFFFFFF);
+		else Paint.icon(d, active.icon(), ix, top + (TAB_SIZE - iconSize) / 2f, iconSize, Tokens.TEXT);
+		Type.draw(d, active.name(), ix + iconSize + 9, top + (TAB_SIZE - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, Tokens.TEXT);
 
 		float sx2 = x0 + CONTENT_W;
 		float sx1 = sx2 - 152;
@@ -286,7 +285,7 @@ public final class MenuView {
 	}
 
 	private float pillWidth(Tab tab) {
-		return 18 + 18 + 10 + Type.width(tab.name(), 12f, Weight.SEMIBOLD) + 22;
+		return 14 + 17 + 9 + Type.width(tab.name(), 11.5f, Weight.SEMIBOLD) + 16;
 	}
 
 	private void face(Draw d, float cx, float cy, float size) {
@@ -311,8 +310,8 @@ public final class MenuView {
 	private void drawTitle(Draw d, float x0, String title, String subtitle, long now) {
 		float t = Ease.OUT.apply((now - tabSince) / (double) Tokens.T_CAPTION);
 		float old = Paint.opacity(Paint.opacity() * t);
-		Type.draw(d, title, x0, 112, 26, Weight.BOLD, Tokens.TEXT);
-		Type.draw(d, subtitle, x0, 151, 12.5f, Weight.MEDIUM, Tokens.TEXT_2);
+		Type.draw(d, title, x0, 108, 19, Weight.BOLD, Tokens.TEXT);
+		Type.draw(d, subtitle, x0, 140, 11, Weight.MEDIUM, Tokens.TEXT_2);
 		Paint.opacity(old);
 	}
 
@@ -334,22 +333,21 @@ public final class MenuView {
 		float right = x0 + CONTENT_W;
 		if (toggleable > 0) {
 			String count = on + " of " + toggleable + " on";
-			float cap = 11.5f;
+			float cap = 11;
 			float tw = Type.width(count, cap, Weight.MEDIUM);
-			Type.draw(d, count, right - tw, 125, cap, Weight.MEDIUM, Tokens.TEXT_2);
-			Paint.circle(d, right - tw - 12, 125 + cap / 2f, 3, Accent.get());
-			right -= tw + 30;
+			Type.draw(d, count, right - tw, 140, cap, Weight.MEDIUM, Tokens.TEXT_3);
+			right -= tw + 20;
 		}
 		if (category() == Category.HUD && !searching) {
 			String label = "Edit layout";
 			float cap = 11f;
 			float w = 16 + 14 + 8 + Type.width(label, cap, Weight.SEMIBOLD) + 16;
 			float bx = right - w;
-			float by = 115;
+			float by = 129;
 			boolean hover = within(mx, my, bx, by, bx + w, by + 32);
 			editHover.set(hover);
 			float e = editHover.get();
-			Widgets.control(d, bx, by, bx + w, by + 32, 16, e);
+			Widgets.control(d, bx, by, bx + w, by + 32, Tokens.R_CONTROL, e);
 			Paint.icon(d, "move", bx + 16, by + 9, 14, Widgets.mixColor(Tokens.TEXT_2, Tokens.TEXT, e));
 			Type.draw(d, label, bx + 38, by + (32 - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 			hits.add(bx, by, bx + w, by + 32, host::openHudEditor);
@@ -420,14 +418,14 @@ public final class MenuView {
 		if (module.toggleable()) {
 			Widgets.toggle(d, toggleX, top + 18, 46, 26, state.knob.get(), state.lit.get());
 		}
-		float scx = module.toggleable() ? toggleX - 10 - 15 : x + w - PAD - 15;
+		float scx = module.toggleable() ? toggleX - 8 - 15 : x + w - PAD - 15;
 		float scy = top + 31;
 		if (hasSettings) {
 			boolean settingsHover = within(mx, my, scx - 15, scy - 15, scx + 15, scy + 15);
 			state.settings.set(settingsHover);
 			float sh = state.settings.get();
-			Paint.circle(d, scx, scy, 15, Widgets.mixColor(0x0AFFFFFF, 0x1FFFFFFF, Math.max(sh, h * 0.4f)));
-			Paint.icon(d, "sliders-horizontal", scx - 7, scy - 7, 14, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT, sh));
+			if (sh > 0.01f) Paint.rect(d, scx - 15, scy - 15, scx + 15, scy + 15, Tokens.R_CONTROL, Paint.fade(0x1AFFFFFF, sh));
+			Paint.icon(d, "sliders-horizontal", scx - 7, scy - 7, 14, Widgets.mixColor(Tokens.TEXT_3, Tokens.TEXT, Math.max(sh, h * 0.5f)));
 		}
 
 		float nameX = x + PAD + ICON + 10;
@@ -436,10 +434,13 @@ public final class MenuView {
 		float textRight = x + w - PAD;
 		String key = host.keyFor(module);
 		if (key != null) {
-			float bw = Widgets.keyBadge(d, x + w - PAD, top + 58, 22, key);
+			float bw = Widgets.keyBadge(d, x + w - PAD, top + 56, 22, key);
 			textRight -= bw + 10;
 		}
-		Type.draw(d, Type.fit(module.description, textRight - x - PAD, 11, Weight.MEDIUM), x + PAD, top + 64, 11, Weight.MEDIUM, Tokens.TEXT_2);
+		List<String> lines = state.lines(module.description, textRight - x - PAD);
+		for (int i = 0; i < lines.size(); i++) {
+			Type.draw(d, lines.get(i), x + PAD, top + 58 + i * 17, 10.5f, Weight.MEDIUM, Tokens.TEXT_2);
+		}
 		Paint.opacity(old);
 
 		if (reveal < 0.5f) return;
@@ -506,10 +507,10 @@ public final class MenuView {
 		Type.draw(d, Type.fit(name, w - 2 * PAD - ICON - 10 - 70, 14, Weight.SEMIBOLD), x + PAD + ICON + 10, y + 24.5f, 14, Weight.SEMIBOLD, Tokens.TEXT);
 		Type.draw(d, active ? "In use now" : "Click to switch to it", x + PAD, y + 64, 11, Weight.MEDIUM, Tokens.TEXT_2);
 		if (active) {
-			float pw = 12 + Type.width("In use", 10.5f, Weight.SEMIBOLD) + 12;
+			float pw = 10 + Type.width("In use", 10, Weight.SEMIBOLD) + 10;
 			float px = x + w - PAD - pw;
-			Paint.rect(d, px, y + 19, px + pw, y + 43, 12, Paint.fade(Accent.get(), 0.22f));
-			Type.draw(d, "In use", px + 12, y + 31 - 5.25f, 10.5f, Weight.SEMIBOLD, Accent.text());
+			Paint.rect(d, px, y + 20, px + pw, y + 42, 6, Tokens.RAISED);
+			Type.draw(d, "In use", px + 10, y + 31 - 5, 10, Weight.SEMIBOLD, Tokens.TEXT);
 			return;
 		}
 		hits.add(x, y, x + w, y + CARD_H, () -> {
@@ -520,7 +521,7 @@ public final class MenuView {
 			float bx = x + w - PAD - 15;
 			float by = y + 31;
 			boolean delHover = within(mx, my, bx - 16, by - 16, bx + 16, by + 16);
-			Paint.circle(d, bx, by, 16, delHover ? 0x33FF5C84 : 0x0AFFFFFF);
+			if (delHover) Paint.rect(d, bx - 16, by - 16, bx + 16, by + 16, Tokens.R_CONTROL, 0x29FF5C7A);
 			Paint.icon(d, "trash-2", bx - 7.5f, by - 7.5f, 15, delHover ? Tokens.LOW : Tokens.TEXT_3);
 			hits.add(bx - 17, by - 17, bx + 17, by + 17, () -> {
 				if (config.deleteProfile(name)) notice("Deleted " + name);
@@ -538,8 +539,8 @@ public final class MenuView {
 		Widgets.field(d, x + PAD, fy, fx2, fy + 36, "pencil", newProfile, "Name it", null, typingProfile, 0, now);
 		hits.add(x + PAD, fy, fx2, fy + 36, () -> typingProfile = true);
 		float bx = x + w - PAD - bw;
-		Widgets.accentPill(d, bx, fy, bx + bw, fy + 36, 0);
-		Type.center(d, "Create", bx + bw / 2f, fy + (36 - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, 0xFFFFFFFF);
+		Widgets.primary(d, bx, fy, bx + bw, fy + 36, 0);
+		Type.center(d, "Create", bx + bw / 2f, fy + (36 - 11.5f) / 2f, 11.5f, Weight.SEMIBOLD, Widgets.ON_PRIMARY);
 		hits.add(bx, fy, bx + bw, fy + 36, this::createProfile);
 	}
 
@@ -576,7 +577,7 @@ public final class MenuView {
 		float x = (canvasW - w) / 2f;
 		float y = canvasH - 92 + (1 - in) * 8;
 		float old = Paint.opacity(Paint.opacity() * a);
-		Widgets.glass(d, x, y, x + w, y + 40, 20);
+		Widgets.glass(d, x, y, x + w, y + 40, Tokens.R_CARD);
 		Paint.icon(d, "info", x + 18, y + 12, 16, Tokens.TEXT_2);
 		Type.draw(d, notice, x + 18 + 16 + 10, y + (40 - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 		Paint.opacity(old);
@@ -728,10 +729,21 @@ public final class MenuView {
 		long drawnAt = -1;
 		float cx;
 		float cy;
+		private List<String> lines = List.of();
+		private float linesWidth = -1;
 
 		CardState(boolean on) {
 			knob = new Anim(on ? 1 : 0, Tokens.T_SWITCH_KNOB, Ease.OUT);
 			lit = new Anim(on ? 1 : 0, Tokens.T_SWITCH_FILL, Ease.OUT);
+		}
+
+		/** The card's description in up to two lines {@code width} wide, worked out again only when the width changes. */
+		List<String> lines(String text, float width) {
+			if (Math.abs(width - linesWidth) > 0.01f) {
+				lines = Type.wrap(text, width, 10.5f, Weight.MEDIUM, 2);
+				linesWidth = width;
+			}
+			return lines;
 		}
 	}
 }

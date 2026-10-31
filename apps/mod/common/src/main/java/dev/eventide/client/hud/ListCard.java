@@ -1,10 +1,8 @@
 package dev.eventide.client.hud;
 
 import dev.eventide.client.Draw;
-import dev.eventide.client.gui.Accent;
 import dev.eventide.client.gui.menu.MenuScreen;
 import dev.eventide.client.ui.Ease;
-import dev.eventide.client.ui.Grad;
 import dev.eventide.client.ui.Paint;
 import dev.eventide.client.ui.Tokens;
 import dev.eventide.client.ui.Type;
@@ -52,7 +50,7 @@ final class ListCard {
 		float cy = y + HEADER / 2f;
 		float r = 12 * K;
 		float size = TILE * 0.62f;
-		Paint.icon(d, icon, tx + (TILE - size) / 2f, cy - size / 2f, size, Accent.text());
+		Paint.icon(d, icon, tx + (TILE - size) / 2f, cy - size / 2f, size, Tokens.TEXT_2);
 		float x = tx + TILE + 21 * K;
 		String fitted = Type.fit(title, maxRight - x - 4, TITLE_CAP, Weight.SEMIBOLD);
 		Hud.text(d, fitted, x, cy - TITLE_CAP / 2f, TITLE_CAP, Weight.SEMIBOLD, Tokens.TEXT, shadow);
@@ -93,14 +91,13 @@ final class ListCard {
 		Paint.opacity(old);
 	}
 
-	/** The soft highlight in {@code color} behind a row that just arrived, fading as {@code glow} goes to 0. */
+	/** A tint of {@code color} behind a row that just arrived, fading as {@code glow} goes to 0. */
 	static void arrival(Draw d, float x1, float x2, float cy, float glow, int color) {
 		if (glow <= 0.01f) return;
 		float e = glow * glow;
 		float y1 = cy - ROW / 2f + 2 * K;
 		float y2 = cy + ROW / 2f - 2 * K;
-		float r = ROW / 2f;
-		Paint.shadow(d, x1, y1, x2, y2, r, 0, 0, 14 * K, 0, Paint.fade(color, 0.35f * e));
+		float r = 4 * K;
 		Paint.rect(d, x1, y1, x2, y2, r, Paint.fade(color, 0.16f * e));
 		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(Hud.hairline(d), 0.5f), Paint.fade(color, 0.5f * e));
 	}

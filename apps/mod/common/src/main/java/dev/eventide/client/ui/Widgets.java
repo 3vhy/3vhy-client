@@ -5,10 +5,11 @@ import dev.eventide.client.gui.Accent;
 import dev.eventide.client.ui.Type.Weight;
 
 /**
- * Eventide's controls: switches, module icons, round icon buttons, the accent pill, search field, key caps,
- * segmented pickers, sliders, panels and cards. They're flat: each surface is one tone step off the one
- * under it, edges are a single 1px line, and the accent colour goes only on what's on or chosen. Nothing
- * at rest has a glow, a sheen or a gradient. Sizes are in layout units; callers scale the whole screen.
+ * Eventide's controls: switches, module icons, round icon buttons, the accent fill, search field, key caps,
+ * segmented pickers, sliders, panels and cards. They're flat and neutral: each surface is one lightness
+ * step off the one under it, edges are a single faint 1px line, corners share one small radius (switches
+ * and knobs are round), and the accent colour goes only on what's on or chosen. Nothing at rest has a
+ * glow, a sheen or a gradient. Sizes are in layout units; callers scale the whole screen.
  * Animation state (hover, on/off) comes in as 0..1 values from {@link Anim}s the caller keeps, so nothing
  * here allocates state.
  */
@@ -18,12 +19,13 @@ public final class Widgets {
 	private static final int CONTROL_FILL_HOVER = 0x24FFFFFF;
 	private static final int CONTROL_EDGE = 0x1FFFFFFF;
 	private static final int CONTROL_EDGE_HOVER = 0x38FFFFFF;
-	private static final int SWITCH_OFF = 0xFF2E2846;
-	private static final int PANEL = 0xF0120E22;
-	private static final int PANEL_EDGE = 0x1AFFFFFF;
-	private static final int CARD = 0xE6171329;
-	private static final int CARD_HOVER = 0xEB201B38;
-	private static final int CARD_EDGE = 0x14FFFFFF;
+	private static final int SWITCH_OFF = 0xFF3A3A40;
+	private static final int PANEL = 0xFA131315;
+	private static final int PANEL_EDGE = 0x17FFFFFF;
+	private static final int CARD = 0xF2161618;
+	private static final int CARD_HOVER = 0xF21E1E21;
+	private static final int CARD_EDGE = 0x0FFFFFFF;
+	private static final int SEGMENT_CHOSEN = 0xFF2E2E33;
 
 	private Widgets() {
 	}
@@ -51,11 +53,16 @@ public final class Widgets {
 		Paint.icon(d, icon, cx - size / 2f, cy - size / 2f, size, mixColor(Tokens.TEXT_2, Tokens.TEXT, hover));
 	}
 
-	/** The accent pill: a primary button or a chosen option, flat. {@code hover} lightens it a step. */
-	public static void accentPill(Draw d, float x1, float y1, float x2, float y2, float hover) {
-		float r = (y2 - y1) / 2f;
-		int c = Accent.get();
-		Paint.rect(d, x1, y1, x2, y2, r, hover > 0.75f ? Accent.lighten(c, 0.12f) : c);
+	/** Text and icons on a {@link #primary} fill. */
+	public static final int ON_PRIMARY = 0xFF0A0A0B;
+
+	/**
+	 * A primary button, or the chosen one of a few options: made primary by inversion, white with
+	 * {@link #ON_PRIMARY} on it, so the accent stays on what's switched on. {@code hover} dims it a step.
+	 */
+	public static void primary(Draw d, float x1, float y1, float x2, float y2, float hover) {
+		float r = Math.min(Tokens.R_CONTROL, (y2 - y1) / 2f);
+		Paint.rect(d, x1, y1, x2, y2, r, hover > 0.75f ? 0xFFE4E4E7 : 0xFFF5F5F6);
 	}
 
 	/** A control (a button, a picker, a slot): a tone step with a 1px edge, both a step lighter on hover. */
@@ -102,7 +109,7 @@ public final class Widgets {
 	public static void field(Draw d, float x1, float y1, float x2, float y2, String icon, String text, String placeholder, String keyHint,
 			boolean focused, float hover, long nowMs) {
 		float h = y2 - y1;
-		float r = h / 2f;
+		float r = Math.min(Tokens.R_CONTROL, h / 2f);
 		Paint.rect(d, x1, y1, x2, y2, r, focused || hover > 0.5f ? CONTROL_FILL_HOVER : CONTROL_FILL);
 		Paint.stroke(d, x1, y1, x2, y2, r, 1, focused ? Accent.get() : hover > 0.5f ? CONTROL_EDGE_HOVER : CONTROL_EDGE);
 		float iconSize = h * 0.4f;
@@ -125,19 +132,19 @@ public final class Widgets {
 	}
 
 	/**
-	 * A segmented picker: options as icons (or labels), the chosen one on a sliding accent pill. {@code at}
-	 * is the pill's animated position (an option index, fractional mid-slide) and {@code hover} the option
-	 * under the mouse or -1.
+	 * A segmented picker: options as icons (or labels), the chosen one on a sliding raised step in white, the
+	 * rest grey. {@code at} is the step's animated position (an option index, fractional mid-slide) and
+	 * {@code hover} the option under the mouse or -1.
 	 */
 	public static void segmented(Draw d, float x1, float y1, float x2, float y2, String[] icons, String[] labels, float at, int hover) {
 		int n = icons != null ? icons.length : labels.length;
 		float h = y2 - y1;
-		float r = h / 2f;
+		float r = Math.min(Tokens.R_CONTROL, h / 2f);
 		Paint.rect(d, x1, y1, x2, y2, r, CONTROL_FILL);
 		float pad = h * 0.1f;
 		float segment = (x2 - x1 - 2 * pad) / n;
 		float px = x1 + pad + at * segment;
-		accentPill(d, px, y1 + pad, px + segment, y2 - pad, 0);
+		Paint.rect(d, px, y1 + pad, px + segment, y2 - pad, Math.max(2, r - pad), SEGMENT_CHOSEN);
 		int nearest = Math.round(at);
 		for (int i = 0; i < n; i++) {
 			float cx = x1 + pad + segment * (i + 0.5f);
@@ -153,19 +160,19 @@ public final class Widgets {
 		}
 	}
 
-	/** A slider: a thin track filled with the accent up to {@code fraction}, and a white knob. */
+	/** A slider: a thin track filled with the accent up to {@code fraction}, and a white knob that grows a little under the mouse. */
 	public static void slider(Draw d, float x1, float cy, float x2, float fraction, float hover) {
-		float t = 2f;
+		float t = 1.5f;
 		Paint.rect(d, x1, cy - t, x2, cy + t, t, 0x1FFFFFFF);
 		float fx = x1 + (x2 - x1) * Math.max(0, Math.min(1, fraction));
 		if (fx > x1 + 0.5f) Paint.rect(d, x1, cy - t, fx, cy + t, t, Accent.get());
-		float knob = 7f + hover;
+		float knob = 6f + hover;
 		Paint.circle(d, fx, cy, knob, 0xFFFFFFFF);
 	}
 
 	/** A floating panel (a settings sheet, a toolbar): opaque, a 1px edge, and the one shadow it earns by floating. */
 	public static void glass(Draw d, float x1, float y1, float x2, float y2, float r) {
-		Paint.shadow(d, x1, y1, x2, y2, r, 0, 12, 32, -12, 0x8C000000);
+		Paint.shadow(d, x1, y1, x2, y2, r, 0, 16, 40, -16, 0x99000000);
 		Paint.rect(d, x1, y1, x2, y2, r, PANEL);
 		Paint.stroke(d, x1, y1, x2, y2, r, 1, PANEL_EDGE);
 	}

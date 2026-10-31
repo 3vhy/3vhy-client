@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Nametags: a player's tag in Eventide's style (face, name and health), with the scoreboard line above it kept as Minecraft draws it. */
+/** Nametags: a player's tag in Eventide's style (face and name, health if you like), with the scoreboard line above it kept as Minecraft draws it. */
 @Mixin(EntityRenderer.class)
 public abstract class EntityNameTagMixin {
 	@Inject(method = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;"
@@ -20,7 +20,11 @@ public abstract class EntityNameTagMixin {
 			cancellable = true)
 	private void eventide$nameTag(EntityRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera, int offset,
 			CallbackInfo ci) {
-		if (!(state instanceof AvatarRenderState avatar) || !Nametags.styled(avatar)) return;
+		if (!(state instanceof AvatarRenderState avatar)) return;
+		if (!Nametags.styled(avatar)) {
+			avatar.nameTag = Nametags.shown(avatar.nameTag);
+			return;
+		}
 		pose.pushPose();
 		if (state.scoreText != null) {
 			collector.submitNameTag(pose, state.nameTagAttachment, offset, state.scoreText, !state.isDiscrete, state.lightCoords, state.distanceToCameraSq,

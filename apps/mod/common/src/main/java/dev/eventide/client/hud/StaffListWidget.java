@@ -169,7 +169,6 @@ final class StaffListWidget extends HudWidget {
 		}
 		if (b > 0.01f) {
 			float old = Paint.opacity(Paint.opacity() * b);
-			Paint.glow(d, cx + 1.5f, cy, 1.5f, 4, Paint.fade(PINK, 0.5f));
 			Paint.circle(d, cx + 1.5f, cy, 1.5f, PINK);
 			float nx = cx + 3 + 4;
 			ListCard.number(d, shownCount, oldCount, countAt, now, nx, cy, Tokens.TEXT);

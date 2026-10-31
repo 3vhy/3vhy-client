@@ -89,8 +89,35 @@ public final class Type {
 	public static String fit(String text, float maxWidth, float cap, Weight weight) {
 		if (width(text, cap, weight) <= maxWidth) return text;
 		String cut = text;
-		while (!cut.isEmpty() && width(cut + "...", cap, weight) > maxWidth) cut = cut.substring(0, cut.length() - 1);
-		return cut.stripTrailing() + "...";
+		while (!cut.isEmpty() && width(cut + "\u2026", cap, weight) > maxWidth) cut = cut.substring(0, cut.length() - 1);
+		return cut.stripTrailing() + "\u2026";
+	}
+
+	/**
+	 * {@code text} broken into lines at most {@code width} wide, on spaces, at most {@code maxLines} of them;
+	 * whatever doesn't fit goes on the last line, cut short with an ellipsis.
+	 */
+	public static java.util.List<String> wrap(String text, float width, float cap, Weight weight, int maxLines) {
+		java.util.List<String> lines = new java.util.ArrayList<>();
+		StringBuilder line = new StringBuilder();
+		String[] words = text.split(" ");
+		for (int i = 0; i < words.length; i++) {
+			String next = line.isEmpty() ? words[i] : line + " " + words[i];
+			if (width(next, cap, weight) <= width || line.isEmpty()) {
+				line = new StringBuilder(next);
+				continue;
+			}
+			if (lines.size() == maxLines - 1) {
+				StringBuilder rest = new StringBuilder(line);
+				for (int j = i; j < words.length; j++) rest.append(' ').append(words[j]);
+				lines.add(fit(rest.toString(), width, cap, weight));
+				return lines;
+			}
+			lines.add(line.toString());
+			line = new StringBuilder(words[i]);
+		}
+		if (!line.isEmpty()) lines.add(fit(line.toString(), width, cap, weight));
+		return lines;
 	}
 
 	/**

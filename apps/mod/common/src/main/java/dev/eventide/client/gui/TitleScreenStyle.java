@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
@@ -218,7 +217,7 @@ public final class TitleScreenStyle {
 		ButtonStyle.pill(d, widget.getX(), widget.getY(), widget.getX() + widget.getWidth(), widget.getY() + widget.getHeight(), anim.get(),
 				widget.isFocused());
 		float size = r * 1.0f;
-		Paint.icon(d, part.icon(), cx - size / 2f, cy - size / 2f, size, 0xFFF4F0FF);
+		Paint.icon(d, part.icon(), cx - size / 2f, cy - size / 2f, size, 0xFFF5F5F6);
 		Paint.opacity(old);
 	}
 
@@ -273,7 +272,7 @@ public final class TitleScreenStyle {
 			case "Dusk" -> Paint.rect(d, 0, 0, w, h, 0, Grad.down(0x66482A9C, 0x59FF7445));
 			case "Night" -> {
 				if (!sky) {
-					Paint.rect(d, 0, 0, w, h, 0, Grad.down(0xB8050414, 0xA0120A2E));
+					Paint.rect(d, 0, 0, w, h, 0, Grad.down(0xB8040508, 0xA00A0C14));
 					float unit = Math.min(w / 1600f, h / 900f);
 					d.push();
 					d.scale(unit);
@@ -281,9 +280,10 @@ public final class TitleScreenStyle {
 					d.pop();
 				}
 			}
-			default -> Paint.rect(d, 0, 0, w, h, 0, Grad.down(0x1F6A2CFF, 0x00000000));
+			default -> {
+			}
 		}
-		Paint.rect(d, 0, h * 0.55f, w, h, 0, Grad.down(0x00000000, 0x8C06040F));
+		Paint.rect(d, 0, h * 0.55f, w, h, 0, Grad.down(0x00000000, 0x8C000000));
 	}
 
 	/**
@@ -310,12 +310,10 @@ public final class TitleScreenStyle {
 	private static void drawVersion(Draw d, Screen screen) {
 		float cap = 5.2f;
 		float y = screen.height - 10 - 6 - cap;
-		float x = 2;
-		Widgets.pulseDot(d, x + 3, y + cap / 2f, 2, Tokens.MAGENTA, System.currentTimeMillis());
-		x += 9;
+		float x = 4;
+		Type.draw(d, "Eventide", x, y, cap, Weight.SEMIBOLD, 0xFFFFFFFF);
 		x += Type.width("Eventide ", cap, Weight.SEMIBOLD);
-		Type.draw(d, "Eventide", 11, y, cap, Weight.SEMIBOLD, 0xFFFFFFFF);
-		Type.draw(d, EventideClient.version(), x, y, cap, Weight.SEMIBOLD, Tokens.LILAC);
+		Type.draw(d, EventideClient.version(), x, y, cap, Weight.SEMIBOLD, Tokens.TEXT_2);
 	}
 
 	private static void drawPanel(Draw d, Screen screen, float t) {

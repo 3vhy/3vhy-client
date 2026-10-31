@@ -42,7 +42,7 @@ final class MusicWidget extends HudWidget {
 	private static final float LINE_CAP = 20 * 0.727f * S;
 	private static final float NEXT_CAP = 14 * 0.727f * S;
 	private static final long CHANGE_MS = 520;
-	private static final Grad ART_FILL = new Grad(0xFF2A2142, 0xFF2A2142, 0);
+	private static final Grad ART_FILL = new Grad(Tokens.RAISED, Tokens.RAISED, 0);
 
 	private final Anim appear = new Anim(0, 480, Ease.OUT);
 	private final Anim playing = new Anim(0, 260, Ease.OUT);
@@ -191,11 +191,9 @@ final class MusicWidget extends HudWidget {
 		Paint.opacity(old);
 	}
 
-	/** A lyric line in white with a soft lilac glow, white as far as it's been sung and faint after. */
+	/** A lyric line, white as far as it's been sung and faint after. */
 	private static void glowText(Draw d, String text, float x, float capTop, float sung, boolean shadow) {
-		float w = Type.width(text, LINE_CAP, Weight.SEMIBOLD);
-		Paint.shadow(d, x, capTop, x + w, capTop + LINE_CAP, LINE_CAP / 2f, 0, 0, 30 * S, 0, 0x26CDB6FF);
-		Hud.karaoke(d, text, x, capTop, LINE_CAP, Weight.SEMIBOLD, sung, 0xFFFFFFFF, 0x57F6F3FF, shadow);
+		Hud.karaoke(d, text, x, capTop, LINE_CAP, Weight.SEMIBOLD, sung, 0xFFFFFFFF, 0x59FFFFFF, shadow);
 	}
 
 	private void drawCard(Draw d, NowPlaying song, float x, float top, long now, float dt, boolean shadow) {
@@ -308,16 +306,16 @@ final class MusicWidget extends HudWidget {
 		Paint.icon(d, "skip-back", x, cy - icon / 2f, icon, Tokens.TEXT_2);
 		float pr = 17 * S * (0.88f + 0.12f * Ease.SPRING.apply(Math.min(1, (now - toggledAt) / 420.0)));
 		float pcx = x + (17 + 10 + 17) * S;
-		Paint.circle(d, pcx, cy, pr, 0xFFF1E8FF);
+		Paint.circle(d, pcx, cy, pr, 0xFFF5F5F6);
 		float p = playing.get();
 		float glyph = 15 * S;
 		float pause = glyph * (0.6f + 0.4f * p);
 		float old = Paint.opacity(Paint.opacity() * p);
-		Paint.icon(d, "pause", pcx - pause / 2f, cy - pause / 2f, pause, 1, true, 0xFF140A24, null);
+		Paint.icon(d, "pause", pcx - pause / 2f, cy - pause / 2f, pause, 1, true, 0xFF0A0A0B, null);
 		Paint.opacity(old);
 		float play = glyph * (0.6f + 0.4f * (1 - p));
 		old = Paint.opacity(Paint.opacity() * (1 - p));
-		Paint.icon(d, "play", pcx - play / 2f + 0.35f, cy - play / 2f, play, 1, true, 0xFF140A24, null);
+		Paint.icon(d, "play", pcx - play / 2f + 0.35f, cy - play / 2f, play, 1, true, 0xFF0A0A0B, null);
 		Paint.opacity(old);
 		Paint.icon(d, "skip-forward", x + (17 + 10 + 34 + 10) * S, cy - icon / 2f, icon, Tokens.TEXT_2);
 	}

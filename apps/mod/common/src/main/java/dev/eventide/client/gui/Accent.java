@@ -6,10 +6,9 @@ import dev.eventide.client.ui.Tokens;
 import java.util.List;
 
 /**
- * The client's accent colour, picked in Theme (Accent colour) with Rainbow as an option. Lit switches,
- * active tabs, icon tiles, bars and glows use it as a gradient: Violet, the default, is the website's
- * violet-to-magenta exactly, and every other colour gets a gradient the same way, by turning its hue a
- * little either side.
+ * The client's accent colour, picked in Theme (Accent colour) with Rainbow as an option. It's the one hue
+ * in Eventide's interface and it's always flat: lit switches, the chosen option, a slider's fill and
+ * progress bars. Violet, the default, is the logo's own.
  */
 public final class Accent {
 	/** A named colour in the accent picker. */
@@ -40,23 +39,7 @@ public final class Accent {
 		return Modules.THEME_PANEL_COLOR.get() | 0xFF000000;
 	}
 
-	private static boolean isDefault(int color) {
-		return (color | 0xFF000000) == DEFAULT;
-	}
-
-	/** The gradient's violet end. */
-	public static int from() {
-		int c = get();
-		return isDefault(c) ? Tokens.PRIMARY_FROM : turn(c, -17);
-	}
-
-	/** The gradient's magenta end. */
-	public static int to() {
-		int c = get();
-		return isDefault(c) ? Tokens.PRIMARY_TO : turn(c, 9);
-	}
-
-	/** Buttons and the active tab: the accent, flat. */
+	/** Buttons and the chosen option: the accent, flat. */
 	public static Grad primary() {
 		int c = get();
 		return new Grad(c, c, 0);
@@ -77,17 +60,14 @@ public final class Accent {
 		return primary();
 	}
 
-	/** The soft glow under lit things. */
+	/** The accent at {@code alpha}, for the few things that light up (lyrics written in the sky). */
 	public static int glow(float alpha) {
-		int c = get();
-		int base = isDefault(c) ? Tokens.PURPLE : c;
-		return Math.round(255 * Math.max(0, Math.min(1, alpha))) << 24 | (base & 0xFFFFFF);
+		return Math.round(255 * Math.max(0, Math.min(1, alpha))) << 24 | (get() & 0xFFFFFF);
 	}
 
-	/** A pale, readable tint of the accent for small text, like the website's lilac. */
+	/** A pale, readable tint of the accent for small marks on dark (a HUD widget's icon). */
 	public static int text() {
-		int c = get();
-		return isDefault(c) ? Tokens.LILAC : lighten(c, 0.55f);
+		return lighten(get(), 0.45f);
 	}
 
 	/** {@code color} with its hue turned by {@code degrees}, keeping saturation and lightness. */

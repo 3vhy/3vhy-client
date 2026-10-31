@@ -29,7 +29,7 @@ public final class Modules {
 		Module module = new Module(id, name, description, category, on);
 		module.add(new Toggle("label", "Show label", "The name in front of the value, in the accent colour", true));
 		background(module, 85);
-		module.add(new Color("color", "Text colour", "Colour of the value", 0xFFF6F3FF));
+		module.add(new Color("color", "Text colour", "Colour of the value", 0xFFF5F5F6));
 		return module;
 	}
 
@@ -80,7 +80,7 @@ public final class Modules {
 	public static final Toggle HIGHLIGHT_GAPPLES = ITEM_HIGHLIGHTER.add(new Toggle("gapple", "Golden apples", "Golden apples", true));
 	public static final Toggle HIGHLIGHT_PEARLS = ITEM_HIGHLIGHTER.add(new Toggle("pearl", "Ender pearls", "Ender pearls", true));
 	public static final Toggle HIGHLIGHT_XP = ITEM_HIGHLIGHTER.add(new Toggle("xp", "XP bottles", "Bottles o' Enchanting", false));
-	public static final Color HIGHLIGHT_COLOR = ITEM_HIGHLIGHTER.add(new Color("color", "Colour", "Highlight colour", 0xFFA52BF5));
+	public static final Color HIGHLIGHT_COLOR = ITEM_HIGHLIGHTER.add(new Color("color", "Colour", "Highlight colour", 0xFFA855F7));
 	public static final Module HURT_CAM = new Module("no_hurt_cam", "Hurt Cam",
 			"Choose how much your view shakes when you're hit", Category.COMBAT, false).icon("heart-crack");
 	public static final Slider HURT_CAM_STRENGTH = HURT_CAM.add(new Slider("strength", "Shake", "0% means no shake at all",
@@ -97,7 +97,7 @@ public final class Modules {
 	public static final Slider CROSSHAIR_GAP = CROSSHAIR.add(new Slider("gap", "Gap", "Space in the middle", 0, 6, 1, 2, ""));
 	public static final Slider CROSSHAIR_THICKNESS = CROSSHAIR.add(new Slider("thickness", "Thickness", "Width of the lines",
 			1, 3, 1, 1, ""));
-	public static final Color CROSSHAIR_COLOR = CROSSHAIR.add(new Color("color", "Colour", "Crosshair colour", 0xFFF6F3FF));
+	public static final Color CROSSHAIR_COLOR = CROSSHAIR.add(new Color("color", "Colour", "Crosshair colour", 0xFFF5F5F6));
 	public static final Toggle CROSSHAIR_OUTLINE = CROSSHAIR.add(new Toggle("outline", "Outline", "A dark edge so it shows on bright blocks", true));
 	public static final Toggle CROSSHAIR_TARGET = CROSSHAIR.add(new Toggle("target", "Lit on players",
 			"Turns pink while you're aiming at a player", true));
@@ -111,10 +111,11 @@ public final class Modules {
 	public static final Choice FREELOOK_MODE = FREELOOK.add(new Choice("mode", "Key mode", "Hold the key or press it once",
 			0, "Hold", "Toggle"));
 	public static final Module NAMETAGS = new Module("nametags", "Nametags",
-			"Tags with each player's face and health, and your own in third person", Category.RENDER, false).icon("tag").markNew();
+			"Tags with each player's face, server icons you pick, and your own in third person", Category.RENDER, false).icon("tag").markNew();
 	public static final Toggle NAMETAGS_OWN = NAMETAGS.add(new Toggle("own", "Show your own", "See your nametag in third person", true));
-	public static final Choice NAMETAGS_STYLE = NAMETAGS.add(new Choice("style", "Style", "Each player's face and health beside their name, or Minecraft's own tag",
+	public static final Choice NAMETAGS_STYLE = NAMETAGS.add(new Choice("style", "Style", "Each player's face beside their name, or Minecraft's own tag",
 			0, "Eventide", "Minecraft"));
+	public static final Toggle NAMETAGS_HEALTH = NAMETAGS.add(new Toggle("health", "Health", "Their health after the name, with a heart", false));
 	public static final Module FOV_CHANGER = new Module("fov_changer", "FOV Changer",
 			"How much your view widens when you sprint or fly", Category.RENDER, false).icon("focus").markNew();
 	public static final Slider FOV_EFFECTS = FOV_CHANGER.add(new Slider("effects", "FOV effects",
@@ -232,7 +233,7 @@ public final class Modules {
 	public static final Toggle KEYSTROKES_MOUSE = KEYSTROKES.add(new Toggle("mouse", "Mouse buttons", "LMB and RMB with CPS", true));
 	public static final Toggle KEYSTROKES_SPACE = KEYSTROKES.add(new Toggle("space", "Space bar", "The jump key", true));
 	public static final Color KEYSTROKES_PRESSED = KEYSTROKES.add(new Color("pressed", "Pressed colour",
-			"The colour a key lights up while you hold it", 0xFFA52BF5));
+			"The colour a key lights up while you hold it", 0xFFA855F7));
 	public static final Module ARMOR = background(new Module("armor", "Armor Status",
 			"Your armour's durability at a glance", Category.HUD, true).icon("shield-half"));
 	public static final Choice ARMOR_LAYOUT = ARMOR.add(new Choice("layout", "Layout",
@@ -252,7 +253,7 @@ public final class Modules {
 	public static final Slider SCOREBOARD_BACKGROUND = SCOREBOARD.add(new Slider("background", "Background",
 			"How dark the box behind it is. 0% removes it", 0, 100, 5, 55, "%"));
 	public static final Color SCOREBOARD_COLOR = SCOREBOARD.add(new Color("color", "Background colour",
-			"Colour of the box behind it", 0xFF0A0814));
+			"Colour of the box behind it", 0xFF0A0A0B));
 	public static final Toggle SCOREBOARD_TITLE_BAR = SCOREBOARD.add(new Toggle("title_bar", "Title bar",
 			"A darker strip behind the title, like Minecraft's", true));
 	public static final Module HOTBAR = new Module("hotbar", "Hotbar",
@@ -268,7 +269,7 @@ public final class Modules {
 	public static final Toggle MUSIC_ART = MUSIC.add(new Toggle("art", "Album art", "The cover next to the song", true));
 	public static final Toggle MUSIC_PROGRESS = MUSIC.add(new Toggle("progress", "Progress bar", "Time played and time left", true));
 	public static final Toggle MUSIC_VOLUME = MUSIC.add(new Toggle("volume", "Volume", "Windows' volume under the song", false));
-	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The progress bar and volume bar", 0xFFA52BF5));
+	public static final Color MUSIC_COLOR = MUSIC.add(new Color("color", "Colour", "The progress bar and volume bar", 0xFFA855F7));
 	public static final Toggle MUSIC_PAUSED = MUSIC.add(new Toggle("paused", "Show when paused",
 			"Keep it on screen while the music is paused", true));
 	public static final Toggle MUSIC_LYRICS = MUSIC.add(new Toggle("lyrics", "Lyrics line",
@@ -278,7 +279,7 @@ public final class Modules {
 	public static final Toggle MODULE_LIST_HUD = MODULE_LIST.add(new Toggle("hud", "HUD mods",
 			"Also list the HUD mods you can already see, like FPS and Keystrokes", false));
 	public static final Toggle MODULE_LIST_GLOW = MODULE_LIST.add(new Toggle("glow", "Glow",
-			"A soft glow behind the icons", true));
+			"A soft glow behind the icons", false));
 
 	public static final Module SKIES = new Module("skies", "Skies",
 			"Living skies drawn per pixel: auroras, a ringed planet, flame clouds and more", Category.RENDER, false).icon("moon-star").markNew();
@@ -366,16 +367,16 @@ public final class Modules {
 	public static final Module THEME = new Module("theme", "Theme",
 			"Accent colour, fonts, buttons and the HUD's size", Category.CLIENT, true).icon("palette").alwaysOn();
 	public static final Color THEME_PANEL_COLOR = THEME.add(new Color("panel_color", "Accent colour",
-			"Switches, tabs, bars and glows; Violet is Eventide's own", dev.eventide.client.gui.Accent.DEFAULT));
+			"What's on or chosen: switches, sliders and bars. Violet is Eventide's own", dev.eventide.client.gui.Accent.DEFAULT));
 	public static final Toggle THEME_RAINBOW = THEME.add(new Toggle("rainbow", "Rainbow",
 			"The accent slowly cycles through the rainbow", false));
 	public static final Choice THEME_FONT = THEME.add(new Choice("font", "Menu font",
 			"Inter, like the website, or Minecraft's pixel font", 0, "Clean", "Minecraft"));
-	public static final Toggle THEME_BUTTONS = THEME.add(new Toggle("buttons", "Glass buttons",
-			"Every screen's buttons, text boxes, sliders, lists and tooltips in Eventide's violet glass, other mods' too", true));
+	public static final Toggle THEME_BUTTONS = THEME.add(new Toggle("buttons", "Eventide buttons",
+			"Every screen's buttons, text boxes, sliders, lists and tooltips in Eventide's flat style, other mods' too", true));
 	public static final Choice THEME_RIGHT_SHIFT = THEME.add(new Choice("right_shift", "Right Shift opens",
 			"The Orbit, to pick a tab, or the menu straight away", 0, "Orbit", "Menu"));
-	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Stars", "Twinkling stars behind Eventide's menus", true));
+	public static final Toggle THEME_SNOW = THEME.add(new Toggle("snow", "Stars", "Twinkling stars behind Eventide's menus", false));
 	public static final Slider THEME_SNOW_AMOUNT = THEME.add(new Slider("snow_amount", "Star amount", "How many stars",
 			10, 100, 10, 50, "%"));
 	public static final Slider THEME_HUD_SCALE = THEME.add(new Slider("hud_scale", "HUD size", "Makes every HUD widget bigger or smaller",

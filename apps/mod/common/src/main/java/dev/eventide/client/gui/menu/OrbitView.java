@@ -20,8 +20,8 @@ import java.util.List;
 
 /**
  * The Orbit (Right Shift): the menu's tabs as discs on a ring seen from slightly above, with the Eventide
- * trident standing in the middle. The tab at the front is the big violet disc at the trident's foot, named
- * underneath with its tagline and how many of its mods are on; the rest shrink and fade as they go round the
+ * trident standing in the middle. The tab at the front is the big disc in the accent colour at the
+ * trident's foot, named underneath with its tagline and how many of its mods are on; the rest shrink and fade as they go round the
  * back, the nearer ones labelled. Drag, scroll or use
  * the arrow keys to turn the ring, click a disc to bring it to the front, and click the front one (or
  * press Enter) to open that tab. It opens at once, since it's opened from the keyboard.
@@ -51,10 +51,8 @@ public final class OrbitView {
 	private static final float TILT = (float) Math.toRadians(-9);
 	private static final float MARK = FRONT_R * 2 * 1.9f;
 	private static final int RING_POINTS = 72;
-	private static final int DISC = 0xF01E1934;
-	private static final int DISC_HOVER = 0xF02A2347;
-	private static final int PILL = 0xD91B1530;
-	private static final int PILL_EDGE = 0x1AFFFFFF;
+	private static final int DISC = 0xF01A1A1D;
+	private static final int DISC_HOVER = 0xF026262A;
 
 	private final Host host;
 	private final List<MenuView.Tab> tabs = MenuView.TABS;
@@ -154,7 +152,7 @@ public final class OrbitView {
 			double a = Math.PI * 2 * i / RING_POINTS;
 			ringXY[2 * i] = px(a);
 			ringXY[2 * i + 1] = py(a);
-			ringColors[i] = Paint.fade(Accent.get(), 0.08f + 0.14f * depth(a));
+			ringColors[i] = Paint.fade(0xFFFFFFFF, 0.05f + 0.1f * depth(a));
 		}
 		Paint.line(d, ringXY, ringColors, RING_POINTS + 1, false, 1.4f);
 	}
@@ -218,18 +216,7 @@ public final class OrbitView {
 		Type.center(d, tab.name(), w / 2f, top, disc * 0.3f, Weight.BOLD, Tokens.TEXT);
 		Type.center(d, tab.tagline(), w / 2f, top + disc * 0.55f, disc * 0.137f, Weight.MEDIUM, Tokens.TEXT_2);
 		String count = count(tab);
-		if (count != null) {
-			float pillCap = disc * 0.125f;
-			float ph = disc * 0.36f;
-			float textW = Type.width(count, pillCap, Weight.MEDIUM);
-			float pw = textW + ph * 1.35f;
-			float x = w / 2f - pw / 2f;
-			float y = top + disc * 0.94f;
-			Paint.rect(d, x, y, x + pw, y + ph, ph / 2f, PILL);
-			Paint.stroke(d, x, y, x + pw, y + ph, ph / 2f, 1, PILL_EDGE);
-			Paint.circle(d, x + ph * 0.45f, y + ph / 2f, ph * 0.09f, Accent.get());
-			Type.draw(d, count, x + ph * 0.75f, y + (ph - pillCap) / 2f, pillCap, Weight.MEDIUM, Tokens.TEXT_2);
-		}
+		if (count != null) Type.center(d, count, w / 2f, top + disc * 0.86f, disc * 0.12f, Weight.MEDIUM, Tokens.TEXT_3);
 		Paint.opacity(old);
 	}
 

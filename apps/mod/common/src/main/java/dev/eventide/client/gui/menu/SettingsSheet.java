@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A module's settings, on a glass sheet that slides in from the right over the menu: its tile, name and
- * switch at the top, then a row for each setting (switches, sliders, segmented pickers, text fields,
+ * A module's settings, on a sheet that slides in from the right over the menu: its icon, name and switch
+ * at the top, then a row for each setting (switches, sliders, segmented pickers, text fields,
  * colour swatches) and whatever else the module needs, like the Player List's names ({@link Extras}).
  */
 public final class SettingsSheet {
@@ -135,9 +135,9 @@ public final class SettingsSheet {
 		}
 		hits.clear();
 		float old = Paint.opacity(Paint.opacity() * t);
-		Paint.rect(d, 0, 0, canvasW, canvasH, 0, 0x73030208);
+		Paint.rect(d, 0, 0, canvasW, canvasH, 0, 0x66000000);
 		float right = (canvasW - MenuView.CONTENT_W) / 2f + MenuView.CONTENT_W;
-		float x = right - WIDTH + (1 - t) * 48;
+		float x = right - WIDTH + (1 - t) * 24;
 		float y1 = 96;
 		float y2 = canvasH - 56;
 		sheetX = x;
@@ -189,7 +189,7 @@ public final class SettingsSheet {
 			float barH = listBottom - listTop;
 			float thumb = Math.max(36, barH * barH / (barH + (float) maxScroll));
 			float ty = listTop + (barH - thumb) * (float) (shownScroll / maxScroll);
-			Paint.rect(d, x + WIDTH - 10, ty, x + WIDTH - 7, ty + thumb, 1.5f, 0x40CDB6FF);
+			Paint.rect(d, x + WIDTH - 10, ty, x + WIDTH - 7, ty + thumb, 1.5f, 0x33FFFFFF);
 		}
 		Paint.opacity(old);
 	}
@@ -198,15 +198,15 @@ public final class SettingsSheet {
 		boolean on = shown.enabled();
 		headKnob.set(on);
 		headLit.set(on);
-		float tile = 50;
-		Widgets.iconTile(d, x + PAD, y + PAD, tile, shown.icon(), shown.toggleable() ? headLit.get() : 1, 0);
-		float tx = x + PAD + tile + 16;
+		float tile = 22;
+		Widgets.iconTile(d, x + PAD, y + PAD + 3, tile, shown.icon(), shown.toggleable() ? headLit.get() : 1, 0);
+		float tx = x + PAD + tile + 12;
 		float right = x + WIDTH - PAD;
 		float closeR = 15;
 		float ccx = right - closeR;
 		float ccy = y + PAD + closeR - 2;
 		boolean closeHover = within(mx, my, ccx - closeR, ccy - closeR, ccx + closeR, ccy + closeR);
-		Paint.circle(d, ccx, ccy, closeR, closeHover ? 0x1FFFFFFF : 0x0AFFFFFF);
+		if (closeHover) Paint.rect(d, ccx - closeR, ccy - closeR, ccx + closeR, ccy + closeR, Tokens.R_CONTROL, 0x1AFFFFFF);
 		Paint.icon(d, "x", ccx - 7, ccy - 7, 14, closeHover ? Tokens.TEXT : Tokens.TEXT_2);
 		hits.add(ccx - closeR, ccy - closeR, ccx + closeR, ccy + closeR, this::close);
 		float textRight = ccx - closeR - 12;
@@ -217,7 +217,7 @@ public final class SettingsSheet {
 			textRight = sx - 12;
 		}
 		Type.draw(d, Type.fit(shown.name, textRight - tx, 16, Weight.BOLD), tx, y + PAD + 7, 16, Weight.BOLD, Tokens.TEXT);
-		List<String> lines = wrap(shown.description, textRight - tx, 10.5f, 2);
+		List<String> lines = Type.wrap(shown.description, textRight - tx, 10.5f, Weight.MEDIUM, 2);
 		for (int i = 0; i < lines.size(); i++) {
 			Type.draw(d, lines.get(i), tx, y + PAD + 31 + i * 16, 10.5f, Weight.MEDIUM, Tokens.TEXT_2);
 		}
@@ -258,7 +258,7 @@ public final class SettingsSheet {
 			hits.add(x - 6, y, right + 6, y + 62, toggle::toggle);
 		} else if (setting instanceof Setting.Slider slider) {
 			String value = slider.format();
-			Type.right(d, value, right, labelTop, 11.5f, Weight.SEMIBOLD, Tokens.LILAC);
+			Type.right(d, value, right, labelTop, 11.5f, Weight.SEMIBOLD, Tokens.TEXT);
 			float ty = y + 58;
 			boolean hover = within(mx, my, x - 6, ty - 12, right + 6, ty + 12) || dragging == slider;
 			Widgets.slider(d, x + 7, ty, right - 7, (float) slider.fraction(), hover ? 1 : 0);
@@ -288,7 +288,7 @@ public final class SettingsSheet {
 				float bx = right - bw;
 				float by = y + 15;
 				boolean hover = within(mx, my, bx, by, right, by + 32);
-				Widgets.control(d, bx, by, right, by + 32, 16, hover ? 1 : 0);
+				Widgets.control(d, bx, by, right, by + 32, Tokens.R_CONTROL, hover ? 1 : 0);
 				Paint.icon(d, "chevron-left", bx + 9, by + 9, 14, Tokens.TEXT_2);
 				Paint.icon(d, "chevron-right", right - 23, by + 9, 14, Tokens.TEXT_2);
 				Type.center(d, Type.fit(choice.get(), bw - 56, 10.5f, Weight.SEMIBOLD), bx + bw / 2f, by + (32 - 10.5f) / 2f, 10.5f,
@@ -322,29 +322,6 @@ public final class SettingsSheet {
 				sx += size + gap;
 			}
 		}
-	}
-
-	private static List<String> wrap(String text, float width, float cap, int maxLines) {
-		List<String> lines = new java.util.ArrayList<>();
-		StringBuilder line = new StringBuilder();
-		String[] words = text.split(" ");
-		for (int i = 0; i < words.length; i++) {
-			String next = line.isEmpty() ? words[i] : line + " " + words[i];
-			if (Type.width(next, cap, Weight.MEDIUM) <= width || line.isEmpty()) {
-				line = new StringBuilder(next);
-				continue;
-			}
-			if (lines.size() == maxLines - 1) {
-				StringBuilder rest = new StringBuilder(line);
-				for (int j = i; j < words.length; j++) rest.append(' ').append(words[j]);
-				lines.add(Type.fit(rest.toString(), width, cap, Weight.MEDIUM));
-				return lines;
-			}
-			lines.add(line.toString());
-			line = new StringBuilder(words[i]);
-		}
-		if (!line.isEmpty()) lines.add(line.toString());
-		return lines;
 	}
 
 	private static boolean within(float x, float y, float x1, float y1, float x2, float y2) {

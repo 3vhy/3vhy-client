@@ -22,7 +22,7 @@ public final class Hud {
 	public static final float PILL_H = 18;
 	public static final float PAD_X = 6.5f;
 	public static final float GAP = 4;
-	public static final float RADIUS = 7;
+	public static final float RADIUS = 5;
 
 	private Hud() {
 	}
@@ -33,7 +33,7 @@ public final class Hud {
 		float old = Paint.opacity(Paint.opacity() * Math.min(1, strength * 1.15f));
 		float hair = hairline(d);
 		Paint.rect(d, x1, y1, x2, y2, r, Tokens.GLASS);
-		Paint.stroke(d, x1, y1, x2, y2, r, hair, 0x1FFFFFFF);
+		Paint.stroke(d, x1, y1, x2, y2, r, hair, 0x14FFFFFF);
 		Paint.opacity(old);
 	}
 

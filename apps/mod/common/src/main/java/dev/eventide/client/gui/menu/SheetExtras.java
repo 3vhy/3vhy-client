@@ -12,6 +12,7 @@ import dev.eventide.client.module.Knives;
 import dev.eventide.client.module.Module;
 import dev.eventide.client.module.Modules;
 import dev.eventide.client.module.NameDetect;
+import dev.eventide.client.module.Nametags;
 import dev.eventide.client.module.ProtectedText;
 import dev.eventide.client.module.PlayerList;
 import dev.eventide.client.module.Setting;
@@ -93,7 +94,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 	public boolean has(Module module) {
 		return widgetOf(module) != null || module == Modules.THEME || module == Modules.MUSIC || module == Modules.LYRICS || module == Modules.SKIN_PROTECT
 				|| module == Modules.PLAYER_LIST || module == Modules.NAME_PROTECT || module == Modules.TEXT_HOTKEYS
-				|| module == Modules.WAYPOINTS || module == Modules.KNIVES || module == Modules.SKIES;
+				|| module == Modules.WAYPOINTS || module == Modules.KNIVES || module == Modules.SKIES || module == Modules.NAMETAGS;
 	}
 
 	@Override
@@ -115,6 +116,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.WAYPOINTS) h += waypointsHeight();
 		if (module == Modules.KNIVES) h += knivesHeight(width);
 		if (module == Modules.SKIES) h += skiesHeight(width);
+		if (module == Modules.NAMETAGS) h += nameIconsHeight(width);
 		return h;
 	}
 
@@ -163,6 +165,60 @@ final class SheetExtras implements SettingsSheet.Extras {
 		if (module == Modules.WAYPOINTS) drawWaypoints(d, hits, x, y, w, now);
 		if (module == Modules.KNIVES) drawKnives(d, hits, x, y, w);
 		if (module == Modules.SKIES) drawSkies(d, hits, x, y, w);
+		if (module == Modules.NAMETAGS) drawNameIcons(d, hits, x, y, w);
+	}
+
+	private static final float ICON_CHIP_W = 52;
+	private static final float ICON_CHIP_H = 40;
+
+	private static int iconChipsPerRow(float width) {
+		return Math.max(1, (int) ((width + SLOT_GAP) / (ICON_CHIP_W + SLOT_GAP)));
+	}
+
+	private static float nameIconsHeight(float width) {
+		int count = Nametags.icons().size();
+		if (count == 0) return ROW - 12 + EMPTY + 4;
+		int rows = (count + iconChipsPerRow(width) - 1) / iconChipsPerRow(width);
+		return ROW - 12 + rows * ICON_CHIP_H + (rows - 1) * SLOT_GAP + 14;
+	}
+
+	/**
+	 * The icons servers put in names (a rank badge, a +), each drawn as it is on the tag, in its own font and
+	 * colour. Click one to leave it off everyone's tag; a hidden one fades and gets a line through it.
+	 */
+	private void drawNameIcons(Draw d, Hits hits, float x, float y, float w) {
+		List<Nametags.Icon> icons = Nametags.icons();
+		row(d, x, y, w, "Icons in names", icons.isEmpty() ? "Rank badges and + signs show here once you see them on a server"
+				: "Click an icon to take it off name tags, again to bring it back", 0);
+		y += ROW - 12;
+		if (icons.isEmpty()) {
+			empty(d, x, y, w, "No icons seen yet");
+			return;
+		}
+		int perRow = iconChipsPerRow(w);
+		for (int i = 0; i < icons.size(); i++) {
+			Nametags.Icon icon = icons.get(i);
+			float cx = x + (i % perRow) * (ICON_CHIP_W + SLOT_GAP);
+			float cy = y + (i / perRow) * (ICON_CHIP_H + SLOT_GAP);
+			boolean off = Nametags.hidden(icon);
+			boolean hover = over(cx, cy, cx + ICON_CHIP_W, cy + ICON_CHIP_H);
+			Widgets.control(d, cx, cy, cx + ICON_CHIP_W, cy + ICON_CHIP_H, Tokens.R_CONTROL, hover ? 1 : 0);
+			float scale = 2;
+			int width = Minecraft.getInstance().font.width(icon.glyph());
+			d.push();
+			d.translate(cx + ICON_CHIP_W / 2f - width * scale / 2f, cy + ICON_CHIP_H / 2f - 4 * scale);
+			d.scale(scale);
+			d.text(icon.glyph(), 0, 0, off ? 0x59FFFFFF : 0xFFFFFFFF, false);
+			d.pop();
+			if (off) {
+				float inset = 13;
+				Paint.line(d, new float[] {cx + inset, cy + ICON_CHIP_H - 10, cx + ICON_CHIP_W - inset, cy + 10}, 2, false, 1.6f, Tokens.TEXT_2);
+			}
+			hits.add(cx, cy, cx + ICON_CHIP_W, cy + ICON_CHIP_H, () -> {
+				Nametags.toggle(icon);
+				screen.view().notice(off ? "Showing that icon on name tags" : "That icon is off name tags");
+			});
+		}
 	}
 
 	private boolean over(float x1, float y1, float x2, float y2) {
@@ -189,34 +245,32 @@ final class SheetExtras implements SettingsSheet.Extras {
 		float contentW = iconSize + (icon == null ? 0 : 8) + Type.width(label, cap, Weight.SEMIBOLD);
 		float cx = (x1 + x2) / 2f - contentW / 2f;
 		if (primary) {
-			Widgets.accentPill(d, x1, y1, x2, y2, hover ? 1 : 0.6f);
+			Widgets.primary(d, x1, y1, x2, y2, hover ? 1 : 0.6f);
 		} else {
-			Widgets.control(d, x1, y1, x2, y2, h / 2f, hover ? 1 : 0);
+			Widgets.control(d, x1, y1, x2, y2, Tokens.R_CONTROL, hover ? 1 : 0);
 		}
 		if (icon != null) {
-			Paint.icon(d, icon, cx, y1 + (h - iconSize) / 2f, iconSize, primary ? 0xFFFFFFFF : hover ? 0xFFFFFFFF : Tokens.LILAC);
+			Paint.icon(d, icon, cx, y1 + (h - iconSize) / 2f, iconSize, primary ? Widgets.ON_PRIMARY : hover ? Tokens.TEXT : Tokens.TEXT_2);
 			cx += iconSize + 8;
 		}
-		Type.draw(d, label, cx, y1 + (h - cap) / 2f, cap, Weight.SEMIBOLD, primary ? 0xFFFFFFFF : Tokens.TEXT);
+		Type.draw(d, label, cx, y1 + (h - cap) / 2f, cap, Weight.SEMIBOLD, primary ? Widgets.ON_PRIMARY : Tokens.TEXT);
 		hits.add(x1, y1, x2, y2, action);
 	}
 
-	/** A round icon button, like a list row's delete. */
+	/** A small icon button, like a list row's delete: no fill at rest, a step lighter under the mouse. */
 	private void iconButton(Draw d, Hits hits, float cx, float cy, String icon, boolean danger, boolean lit, Runnable action) {
 		float r = 15;
 		boolean hover = over(cx - r, cy - r, cx + r, cy + r);
-		Paint.circle(d, cx, cy, r, hover ? danger ? 0x33FF5C84 : 0x1FFFFFFF : 0x0AFFFFFF);
-		Paint.ring(d, cx, cy, r, 1, hover && danger ? Grad.down(0x66FF5C84, 0x1AFF5C84) : Grad.down(0x33FFFFFF, 0x08FFFFFF));
+		if (hover) Paint.rect(d, cx - r, cy - r, cx + r, cy + r, Tokens.R_CONTROL, danger ? 0x29FF5C7A : 0x1AFFFFFF);
 		int color = hover ? danger ? Tokens.LOW : Tokens.TEXT : lit ? Tokens.TEXT_2 : Tokens.TEXT_3;
 		Paint.icon(d, icon, cx - 7, cy - 7, 14, color);
 		hits.add(cx - r - 1, cy - r - 1, cx + r + 1, cy + r + 1, action);
 	}
 
-	/** One item in a list: a faint glass bar. */
+	/** One item in a list: a step lighter than the sheet, a step more under the mouse. */
 	private void item(Draw d, float x, float y, float w) {
 		boolean hover = over(x, y, x + w, y + ITEM);
-		Paint.rect(d, x, y, x + w, y + ITEM, 14, hover ? 0x12FFFFFF : 0x0AFFFFFF);
-		Paint.stroke(d, x, y, x + w, y + ITEM, 14, 1, hover ? Grad.down(0x4DCDB6FF, 0x1ACDB6FF) : Grad.down(0x26FFFFFF, 0x0AFFFFFF));
+		Paint.rect(d, x, y, x + w, y + ITEM, Tokens.R_CARD, hover ? 0x14FFFFFF : 0x0AFFFFFF);
 	}
 
 	private void field(Draw d, Hits hits, float x1, float y, float x2, String icon, String text, String placeholder, Focus which, long now) {
@@ -230,7 +284,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 	}
 
 	private static void empty(Draw d, float x, float y, float w, String text) {
-		Paint.rect(d, x, y, x + w, y + EMPTY - 6, 14, 0x06FFFFFF);
+		Paint.rect(d, x, y, x + w, y + EMPTY - 6, Tokens.R_CARD, 0x06FFFFFF);
 		Type.center(d, Type.fit(text, w - 24, 10, Weight.MEDIUM), x + w / 2f, y + (EMPTY - 6 - 10) / 2f, 10, Weight.MEDIUM, Tokens.TEXT_3);
 	}
 
@@ -272,7 +326,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		float bx1 = bx2 - 176;
 		float by = y + 15;
 		boolean hover = over(bx1, by, bx2, by + 32);
-		Widgets.control(d, bx1, by, bx2, by + 32, 16, hover ? 1 : 0);
+		Widgets.control(d, bx1, by, bx2, by + 32, Tokens.R_CONTROL, hover ? 1 : 0);
 		String current = Config.get().skinFile;
 		String shown = files.isEmpty() ? "No files yet" : current.isBlank() || !files.contains(current) ? "Pick one" : current;
 		Type.center(d, Type.fit(shown, 176 - 56, 10.5f, Weight.SEMIBOLD), (bx1 + bx2) / 2f, by + (32 - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD,
@@ -321,8 +375,8 @@ final class SheetExtras implements SettingsSheet.Extras {
 				float pw = Type.width(name, 10, Weight.SEMIBOLD) + 34;
 				if (sx + pw > x + w) break;
 				boolean hover = over(sx, y, sx + pw, y + 28);
-				Widgets.control(d, sx, y, sx + pw, y + 28, 14, hover ? 1 : 0);
-				Paint.icon(d, "plus", sx + 10, y + 8, 12, hover ? Tokens.LILAC : Tokens.TEXT_2);
+				Widgets.control(d, sx, y, sx + pw, y + 28, Tokens.R_CONTROL, hover ? 1 : 0);
+				Paint.icon(d, "plus", sx + 10, y + 8, 12, hover ? Tokens.TEXT : Tokens.TEXT_2);
 				Type.draw(d, name, sx + 26, y + 9, 10, Weight.SEMIBOLD, hover ? Tokens.TEXT : Tokens.TEXT_2);
 				hits.add(sx, y, sx + pw, y + 28, () -> {
 					if (PlayerList.add(name)) screen.view().notice("Added " + name);
@@ -386,8 +440,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 			item(d, x, y, w);
 			float badge = 28;
 			float by = y + (ITEM - badge) / 2f;
-			Paint.rect(d, x + 10, by, x + 10 + badge, by + badge, 9, off ? 0x0AFFFFFF : Paint.fade(accent, 0.22f));
-			Paint.icon(d, item.kind().icon, x + 10 + (badge - 14) / 2f, by + (badge - 14) / 2f, 14, off ? Tokens.TEXT_3 : 0xFFFFFFFF);
+			Paint.icon(d, item.kind().icon, x + 10 + (badge - 14) / 2f, by + (badge - 14) / 2f, 14, off ? Tokens.TEXT_3 : Tokens.TEXT_2);
 			float tx = x + 10 + badge + 12;
 			float eyeX = x + w - 24;
 			float room = eyeX - 22 - tx;
@@ -397,9 +450,9 @@ final class SheetExtras implements SettingsSheet.Extras {
 				Type.draw(d, Type.fit(item.shown(), half - 18, 10.5f, Weight.SEMIBOLD), tx, ty, 10.5f, Weight.SEMIBOLD, off ? Tokens.TEXT_2 : Tokens.TEXT);
 				return null;
 			});
-			Paint.icon(d, "arrow-right", tx + half - 14, ty - 1, 12, off ? Tokens.TEXT_3 : Tokens.LILAC);
+			Paint.icon(d, "arrow-right", tx + half - 14, ty - 1, 12, Tokens.TEXT_3);
 			Type.draw(d, Type.fit(off ? "left as it is" : item.replacement(), half, 10.5f, Weight.SEMIBOLD), tx + half + 4, ty, 10.5f, Weight.SEMIBOLD,
-					off ? Tokens.TEXT_3 : Tokens.LILAC);
+					off ? Tokens.TEXT_3 : Tokens.TEXT);
 			Type.draw(d, Type.fit(item.kind().label + "  ·  " + item.where(), room, 9, Weight.MEDIUM), tx, y + 28, 9, Weight.MEDIUM, Tokens.TEXT_3);
 			if (item.kind() != NameDetect.Kind.NAME) {
 				iconButton(d, hits, eyeX, y + ITEM / 2f, off ? "eye" : "eye-off", false, !off, () -> {
@@ -435,7 +488,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 			float half = (w - 70) / 2f;
 			float ty = y + (ITEM - 10.5f) / 2f;
 			Type.draw(d, Type.fit(rule.find, half - 8, 10.5f, Weight.SEMIBOLD), x + 14, ty, 10.5f, Weight.SEMIBOLD, Tokens.TEXT);
-			Paint.icon(d, "arrow-right", x + 14 + half, y + (ITEM - 13) / 2f, 13, Tokens.LILAC);
+			Paint.icon(d, "arrow-right", x + 14 + half, y + (ITEM - 13) / 2f, 13, Tokens.TEXT_3);
 			boolean blank = rule.replace.isEmpty();
 			Type.draw(d, Type.fit(blank ? "(nothing)" : rule.replace, half - 8, 10.5f, Weight.SEMIBOLD), x + 14 + half + 22, ty, 10.5f,
 					Weight.SEMIBOLD, blank ? Tokens.TEXT_3 : Tokens.TEXT);
@@ -449,8 +502,8 @@ final class SheetExtras implements SettingsSheet.Extras {
 
 	private void plusButton(Draw d, Hits hits, float x, float y, Runnable action) {
 		boolean hover = over(x, y, x + FIELD + 8, y + FIELD);
-		Widgets.accentPill(d, x, y, x + FIELD + 8, y + FIELD, hover ? 1 : 0.6f);
-		Paint.icon(d, "plus", x + (FIELD + 8 - 16) / 2f, y + (FIELD - 16) / 2f, 16, 0xFFFFFFFF);
+		Widgets.primary(d, x, y, x + FIELD + 8, y + FIELD, hover ? 1 : 0.6f);
+		Paint.icon(d, "plus", x + (FIELD + 8 - 16) / 2f, y + (FIELD - 16) / 2f, 16, Widgets.ON_PRIMARY);
 		hits.add(x, y, x + FIELD + 8, y + FIELD, action);
 	}
 
@@ -464,13 +517,13 @@ final class SheetExtras implements SettingsSheet.Extras {
 		String keyLabel = picking ? "Press a key" : hotkeyKey < 0 ? "Pick a key" : TextHotkeys.keyName(hotkeyKey, hotkeyMouse);
 		boolean hover = over(x, y, x + keyW, y + FIELD);
 		if (picking) {
-			Widgets.accentPill(d, x, y, x + keyW, y + FIELD, 0.8f);
+			Widgets.primary(d, x, y, x + keyW, y + FIELD, 0.8f);
 		} else {
-			Widgets.control(d, x, y, x + keyW, y + FIELD, FIELD / 2f, hover ? 1 : 0);
+			Widgets.control(d, x, y, x + keyW, y + FIELD, Tokens.R_CONTROL, hover ? 1 : 0);
 		}
-		Paint.icon(d, "keyboard", x + 14, y + (FIELD - 14) / 2f, 14, picking ? 0xFFFFFFFF : Tokens.LILAC);
+		Paint.icon(d, "keyboard", x + 14, y + (FIELD - 14) / 2f, 14, picking ? Widgets.ON_PRIMARY : Tokens.TEXT_2);
 		Type.draw(d, Type.fit(keyLabel, keyW - 46, 10.5f, Weight.SEMIBOLD), x + 36, y + (FIELD - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD,
-				picking ? 0xFFFFFFFF : hotkeyKey < 0 ? Tokens.TEXT_2 : Tokens.TEXT);
+				picking ? Widgets.ON_PRIMARY : hotkeyKey < 0 ? Tokens.TEXT_2 : Tokens.TEXT);
 		hits.add(x, y, x + keyW, y + FIELD, () -> focus = Focus.HOTKEY_KEY);
 		field(d, hits, x + keyW + 8, y, x + w - addW - 8, "message-square", hotkeyText, "Message or /command", Focus.HOTKEY_TEXT, now);
 		plusButton(d, hits, x + w - addW, y, this::addHotkey);
@@ -489,7 +542,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 			boolean command = hotkey.text.startsWith("/");
 			float tx = x + 12 + kw + 12;
 			Type.draw(d, Type.fit(hotkey.text, x + w - 50 - tx, 10.5f, Weight.SEMIBOLD), tx, y + (ITEM - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD,
-					command ? Tokens.LILAC : Tokens.TEXT);
+					command ? Tokens.TEXT_2 : Tokens.TEXT);
 			iconButton(d, hits, x + w - 24, y + ITEM / 2f, "trash-2", true, false, () -> {
 				TextHotkeys.remove(hotkey);
 				screen.view().notice("Removed the " + TextHotkeys.keyName(hotkey) + " hotkey");
@@ -529,8 +582,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 		float h = ITEM + 8;
 		for (Waypoint waypoint : list) {
 			boolean hover = over(x, y, x + w, y + h);
-			Paint.rect(d, x, y, x + w, y + h, 14, hover ? 0x12FFFFFF : 0x0AFFFFFF);
-			Paint.stroke(d, x, y, x + w, y + h, 14, 1, hover ? 0x26CDB6FF : 0x12FFFFFF);
+			Paint.rect(d, x, y, x + w, y + h, Tokens.R_CARD, hover ? 0x14FFFFFF : 0x0AFFFFFF);
 			int color = waypoint.color | 0xFF000000;
 			float dot = 9;
 			float dcx = x + 22;
@@ -565,7 +617,7 @@ final class SheetExtras implements SettingsSheet.Extras {
 				Config.saveSoon();
 			});
 			String distance = Math.round(Waypoints.distance(mc, waypoint)) + "m";
-			Type.right(d, distance, right - 58, y + (h - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD, Tokens.LILAC);
+			Type.right(d, distance, right - 58, y + (h - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD, Tokens.TEXT_2);
 			y += h + ITEM_GAP;
 		}
 	}
@@ -594,13 +646,12 @@ final class SheetExtras implements SettingsSheet.Extras {
 		boolean live = LivingSky.drawThumbnails(192, 108, 720, 264);
 		SkyType current = LivingSky.selected();
 		int accent = Accent.get();
-		Paint.shadow(d, x, y, x + w, y + PREVIEW_H, 18, 0, 8, 24, -6, 0x8C000000);
-		if (live) Paint.image(d, LivingSky.preview(), x, y, x + w, y + PREVIEW_H, 18, 0, 1, 1, 0, 0xFFFFFFFF, true);
-		else Paint.rect(d, x, y, x + w, y + PREVIEW_H, 18, Tokens.SURFACE);
-		Paint.rect(d, x, y + PREVIEW_H * 0.45f, x + w, y + PREVIEW_H, 18, Grad.down(0x00050410, 0xB3050410));
-		Paint.stroke(d, x, y, x + w, y + PREVIEW_H, 18, 1, Grad.down(0x40FFFFFF, 0x0DFFFFFF));
+		if (live) Paint.image(d, LivingSky.preview(), x, y, x + w, y + PREVIEW_H, Tokens.R_CARD, 0, 1, 1, 0, 0xFFFFFFFF, true);
+		else Paint.rect(d, x, y, x + w, y + PREVIEW_H, Tokens.R_CARD, Tokens.SURFACE);
+		Paint.rect(d, x, y + PREVIEW_H * 0.45f, x + w, y + PREVIEW_H, Tokens.R_CARD, Grad.down(0x00000000, 0xB3000000));
+		Paint.stroke(d, x, y, x + w, y + PREVIEW_H, Tokens.R_CARD, 1, 0x14FFFFFF);
 		Type.draw(d, current.label, x + 18, y + PREVIEW_H - 46, 15, Weight.BOLD, 0xFFFFFFFF);
-		Type.draw(d, Type.fit(current.description, w - 36, 9.5f, Weight.MEDIUM), x + 18, y + PREVIEW_H - 22, 9.5f, Weight.MEDIUM, 0xD9F2EEFF);
+		Type.draw(d, Type.fit(current.description, w - 36, 9.5f, Weight.MEDIUM), x + 18, y + PREVIEW_H - 22, 9.5f, Weight.MEDIUM, 0xE6FFFFFF);
 		y += PREVIEW_H + 14;
 		SkyType[] all = SkyType.values();
 		for (int i = 0; i < all.length; i++) {
@@ -609,13 +660,12 @@ final class SheetExtras implements SettingsSheet.Extras {
 			float ty = y + (i / 5) * (th + THUMB_LABEL);
 			boolean active = sky == current;
 			boolean hover = over(tx, ty, tx + tw, ty + th);
-			if (active) Paint.shadow(d, tx, ty, tx + tw, ty + th, 10, 0, 0, 12, 0, Accent.glow(0.85f));
 			if (live) Paint.image(d, LivingSky.thumbnail(sky), tx, ty, tx + tw, ty + th, 10, 0, 1, 1, 0, 0xFFFFFFFF, true);
 			else Paint.rect(d, tx, ty, tx + tw, ty + th, 10, Tokens.SURFACE);
 			if (active) {
-				Paint.stroke(d, tx, ty, tx + tw, ty + th, 10, 2, Accent.lighten(accent, 0.3f));
+				Paint.stroke(d, tx, ty, tx + tw, ty + th, 10, 2, accent);
 			} else {
-				Paint.stroke(d, tx, ty, tx + tw, ty + th, 10, 1, hover ? Grad.down(0x99E2D4FF, 0x40CDB6FF) : Grad.down(0x33FFFFFF, 0x0DFFFFFF));
+				Paint.stroke(d, tx, ty, tx + tw, ty + th, 10, 1, hover ? 0x40FFFFFF : 0x14FFFFFF);
 			}
 			Type.center(d, Type.fit(sky.label, tw, 8.5f, Weight.SEMIBOLD), tx + tw / 2f, ty + th + 6, 8.5f, Weight.SEMIBOLD,
 					active ? Tokens.TEXT : hover ? Tokens.TEXT_2 : Tokens.TEXT_3);
@@ -691,11 +741,10 @@ final class SheetExtras implements SettingsSheet.Extras {
 			boolean marked = model != null;
 			boolean hover = over(sx, y, sx + size, y + size);
 			if (marked) {
-				Paint.shadow(d, sx, y, sx + size, y + size, 12, 0, 0, 10, 0, Accent.glow(hover ? 0.9f : 0.65f));
-				Paint.rect(d, sx, y, sx + size, y + size, 12, Paint.fade(accent, hover ? 0.3f : 0.22f));
-				Paint.stroke(d, sx, y, sx + size, y + size, 12, 1.5f, Accent.lighten(accent, 0.25f));
+				Paint.rect(d, sx, y, sx + size, y + size, Tokens.R_CONTROL, Paint.fade(accent, hover ? 0.26f : 0.18f));
+				Paint.stroke(d, sx, y, sx + size, y + size, Tokens.R_CONTROL, 1.5f, accent);
 			} else {
-				Widgets.control(d, sx, y, sx + size, y + size, 12, hover ? 1 : 0);
+				Widgets.control(d, sx, y, sx + size, y + size, Tokens.R_CONTROL, hover ? 1 : 0);
 			}
 			ItemStack stack = hotbarItem(i);
 			if (!stack.isEmpty()) {
@@ -744,13 +793,8 @@ final class SheetExtras implements SettingsSheet.Extras {
 			float py = y + (ITEM - 30) / 2f;
 			boolean open = knifeMenu == slot;
 			boolean hover = over(px1, py, px2, py + 30);
-			if (open) {
-				Paint.rect(d, px1, py, px2, py + 30, 15, Paint.fade(accent, 0.25f));
-				Paint.stroke(d, px1, py, px2, py + 30, 15, 1, Accent.lighten(accent, 0.25f));
-			} else {
-				Widgets.control(d, px1, py, px2, py + 30, 15, hover ? 1 : 0);
-			}
-			Paint.icon(d, "sword", px1 + 12, py + 8, 14, open ? 0xFFFFFFFF : Tokens.LILAC);
+			Widgets.control(d, px1, py, px2, py + 30, Tokens.R_CONTROL, open || hover ? 1 : 0);
+			Paint.icon(d, "sword", px1 + 12, py + 8, 14, open ? 0xFFFFFFFF : Tokens.TEXT_2);
 			Type.draw(d, Type.fit(model.label, 150 - 62, 10.5f, Weight.SEMIBOLD), px1 + 34, py + (30 - 10.5f) / 2f, 10.5f, Weight.SEMIBOLD, Tokens.TEXT);
 			Paint.icon(d, open ? "chevron-up" : "chevron-down", px2 - 24, py + 8, 14, Tokens.TEXT_2);
 			hits.add(px1, py, px2, py + 30, () -> knifeMenu = open ? -1 : slot, () -> Knives.cycleSlot(slot, 1));
@@ -765,12 +809,12 @@ final class SheetExtras implements SettingsSheet.Extras {
 					boolean current = each == model;
 					boolean chipHover = over(cx, cy, cx + chipW, cy + CHIP);
 					if (current) {
-						Widgets.accentPill(d, cx, cy, cx + chipW, cy + CHIP, 0.9f);
+						Widgets.primary(d, cx, cy, cx + chipW, cy + CHIP, 0.9f);
 					} else {
-						Widgets.control(d, cx, cy, cx + chipW, cy + CHIP, CHIP / 2f, chipHover ? 1 : 0);
+						Widgets.control(d, cx, cy, cx + chipW, cy + CHIP, Tokens.R_CONTROL, chipHover ? 1 : 0);
 					}
 					Type.center(d, Type.fit(each.label, chipW - 16, 10, Weight.SEMIBOLD), cx + chipW / 2f, cy + (CHIP - 10) / 2f, 10, Weight.SEMIBOLD,
-							current ? 0xFFFFFFFF : chipHover ? Tokens.TEXT : Tokens.TEXT_2);
+							current ? Widgets.ON_PRIMARY : chipHover ? Tokens.TEXT : Tokens.TEXT_2);
 					hits.add(cx, cy, cx + chipW, cy + CHIP, () -> {
 						Knives.setSlot(slot, each);
 						knifeMenu = -1;

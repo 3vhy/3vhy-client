@@ -11,8 +11,10 @@ import java.util.List;
  * it's turned ({@link #PITCH}, {@link #YAW}, {@link #ROLL}, degrees, about the wrist), how the knife turns in
  * the hand ({@link #K_PITCH}, {@link #K_YAW}, {@link #K_ROLL}, about the knife's spin point), how far it
  * slides along its blade ({@link #SLIDE}, pixels), how open it is ({@link #OPEN}: a butterfly knife's handles
- * or an energy blade's length, 1 at rest), two extra handle angles for butterfly tricks, and a sweep in the
- * screen's plane about the fist ({@link #SWEEP}, degrees, counter-clockwise) for slashes.
+ * or an energy blade's length, 1 at rest), two extra handle angles for butterfly tricks, a sweep in the
+ * screen's plane about the fist ({@link #SWEEP}, degrees, counter-clockwise) for slashes, and how far the
+ * knife has left the hand when it's tossed ({@link #TOSS_X}, {@link #TOSS_Y}, pixels in the hand's frame:
+ * towards the edge and up the handle), for the draws and tricks that throw it and catch it.
  */
 final class Clip {
 	static final int X = 0;
@@ -30,7 +32,10 @@ final class Clip {
 	static final int HANDLE_B = 12;
 	/** A turn of the whole viewmodel in the screen's plane about the fist, for slashes that sweep across. */
 	static final int SWEEP = 13;
-	static final int CHANNELS = 14;
+	/** How far the knife is out of the fist in a toss, in the hand's pixels. */
+	static final int TOSS_X = 14;
+	static final int TOSS_Y = 15;
+	static final int CHANNELS = 16;
 
 	/** The pose at rest: everything 0 but {@link #OPEN}. */
 	static float[] rest() {

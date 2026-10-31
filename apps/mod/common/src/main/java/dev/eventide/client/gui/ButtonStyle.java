@@ -4,7 +4,6 @@ import dev.eventide.client.Draw;
 import dev.eventide.client.mixin.AbstractSliderButtonAccessor;
 import dev.eventide.client.ui.Anim;
 import dev.eventide.client.ui.Ease;
-import dev.eventide.client.ui.Grad;
 import dev.eventide.client.ui.Paint;
 import dev.eventide.client.ui.Tokens;
 import dev.eventide.client.ui.Type;
@@ -17,19 +16,20 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.contents.TranslatableContents;
 
 /**
- * Minecraft's buttons and sliders as Eventide's violet glass pills (Theme > Glass buttons): a translucent
- * lavender pill with a light top edge, white Inter text, and a soft accent glow on hover. It hooks the
+ * Minecraft's buttons and sliders in Eventide's flat style (Theme > Eventide buttons): a translucent
+ * near-black button with small round corners, a faint 1px edge, white Inter text, a step lighter on
+ * hover. It hooks the
  * button's own background and label, not its class, so any mod's button that draws Minecraft's button
  * background turns glass too and keeps whatever it draws on top (like Mod Menu's update badge). Buttons
  * with art of their own keep it; the language and accessibility icons become line icons.
  */
 public final class ButtonStyle {
 	private static final Map<AbstractWidget, Anim> HOVER = new WeakHashMap<>();
-	private static final int FILL = 0xCC2B2546;
-	private static final int FILL_HOVER = 0xE03A335C;
-	private static final int EDGE = 0x24FFFFFF;
-	private static final int EDGE_HOVER = 0x47FFFFFF;
-	private static final int TRACK = 0xCC1F1A35;
+	private static final int FILL = 0xC71A1A1D;
+	private static final int FILL_HOVER = 0xDB2A2A2F;
+	private static final int EDGE = 0x1AFFFFFF;
+	private static final int EDGE_HOVER = 0x33FFFFFF;
+	private static final int TRACK = 0xCC18181B;
 
 	private ButtonStyle() {
 	}
@@ -79,7 +79,7 @@ public final class ButtonStyle {
 		if (icon == null) return false;
 		float old = fade(widget);
 		float size = Math.min(widget.getWidth(), widget.getHeight()) * 0.5f;
-		Paint.icon(d, icon, widget.getX() + (widget.getWidth() - size) / 2f, widget.getY() + (widget.getHeight() - size) / 2f, size, 0xFFF4F0FF);
+		Paint.icon(d, icon, widget.getX() + (widget.getWidth() - size) / 2f, widget.getY() + (widget.getHeight() - size) / 2f, size, 0xFFF5F5F6);
 		Paint.opacity(old);
 		return true;
 	}
@@ -94,9 +94,9 @@ public final class ButtonStyle {
 		return true;
 	}
 
-	/** The pill itself, also used by Eventide's own title screen buttons: one flat tone with a 1px edge, a step lighter on hover. */
+	/** The button itself, also used by Eventide's own title screen buttons: one flat tone with a 1px edge, a step lighter on hover. */
 	public static void pill(Draw d, float x1, float y1, float x2, float y2, float hover, boolean focused) {
-		float r = (y2 - y1) / 2f;
+		float r = Math.min(5, (y2 - y1) * 0.28f);
 		float hair = 1f / Math.max(1, Paint.density(d));
 		Paint.rect(d, x1, y1, x2, y2, r, Widgets.mixColor(FILL, FILL_HOVER, hover));
 		Paint.stroke(d, x1, y1, x2, y2, r, Math.max(hair, 0.5f), Widgets.mixColor(EDGE, EDGE_HOVER, hover));
@@ -107,7 +107,7 @@ public final class ButtonStyle {
 		float h = y2 - y1;
 		float cap = Math.min(6.4f, h * 0.31f);
 		String shown = Type.fit(text, x2 - x1 - h * 0.6f, cap, Weight.SEMIBOLD);
-		Type.center(d, shown, (x1 + x2) / 2f, y1 + (h - cap) / 2f, cap, Weight.SEMIBOLD, 0xFFF4F0FF);
+		Type.center(d, shown, (x1 + x2) / 2f, y1 + (h - cap) / 2f, cap, Weight.SEMIBOLD, 0xFFF5F5F6);
 	}
 
 	private static void drawSlider(Draw d, AbstractSliderButton slider, float x1, float y1, float x2, float y2, float hover) {

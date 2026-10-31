@@ -70,7 +70,7 @@ public final class HudEditorScreen extends CompatScreen {
 		if (Minecraft.getInstance().level == null && TitleScreenStyle.drawsBackground()) {
 			TitleScreenStyle.drawBackground(d, this.width, this.height);
 		}
-		Paint.rect(d, 0, 0, this.width, this.height, 0, 0x2E120A2A);
+		Paint.rect(d, 0, 0, this.width, this.height, 0, 0x33000000);
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public final class HudEditorScreen extends CompatScreen {
 		d.pop();
 	}
 
-	/** A widget's frame: a faint violet edge, lit up with a glow while it's hovered or dragged. */
+	/** A widget's frame: a faint edge, in the accent with a light tint while it's hovered or dragged. */
 	private static void frame(Draw d, int[] box, float lit, long now) {
 		float x1 = box[0] - 2;
 		float y1 = box[1] - 2;
@@ -128,10 +128,9 @@ public final class HudEditorScreen extends CompatScreen {
 		float y2 = box[3] + 2;
 		float hair = 1f / Math.max(1, Paint.density(d));
 		if (lit > 0.01f) {
-			Paint.shadow(d, x1, y1, x2, y2, 4, 0, 0, 8, -3, Paint.fade(Accent.glow(0.45f), lit));
-			Paint.rect(d, x1, y1, x2, y2, 4, Paint.fade(0x14880FF9, lit));
+			Paint.rect(d, x1, y1, x2, y2, 4, Paint.fade(Paint.fade(Accent.get(), 0.08f), lit));
 		}
-		Paint.stroke(d, x1, y1, x2, y2, 4, Math.max(hair, 0.5f), Widgets.mixColor(0x5ACDB6FF, Accent.lighten(Accent.get(), 0.25f), lit));
+		Paint.stroke(d, x1, y1, x2, y2, 4, Math.max(hair, 0.5f), Widgets.mixColor(0x40FFFFFF, Accent.get(), lit));
 	}
 
 	private void toolbar(Draw d, Minecraft mc, HudWidget widget, int mouseX, int mouseY) {
@@ -171,9 +170,9 @@ public final class HudEditorScreen extends CompatScreen {
 		float w = 8 + 8 + 5 + titleW + 12 + hintW + 12 + resetW + 4 + doneW + 4;
 		float x = (this.width - w) / 2f;
 		float y = 6;
-		Widgets.glass(d, x, y, x + w, y + BAR_H, BAR_H / 2f);
+		Widgets.glass(d, x, y, x + w, y + BAR_H, 7);
 		float cx = x + 8;
-		Paint.icon(d, "move", cx, y + (BAR_H - 8) / 2f, 8, Tokens.LILAC);
+		Paint.icon(d, "move", cx, y + (BAR_H - 8) / 2f, 8, Tokens.TEXT_2);
 		cx += 8 + 5;
 		Type.draw(d, "Edit HUD layout", cx, y + (BAR_H - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 		cx += titleW + 12;
@@ -182,7 +181,7 @@ public final class HudEditorScreen extends CompatScreen {
 		float by = y + 3;
 		float bh = BAR_H - 6;
 		boolean resetHover = mouseX >= cx && mouseX < cx + resetW && mouseY >= by && mouseY < by + bh;
-		Paint.rect(d, cx, by, cx + resetW, by + bh, bh / 2f, resetHover ? 0x1FFFFFFF : 0x0DFFFFFF);
+		Paint.rect(d, cx, by, cx + resetW, by + bh, 4, resetHover ? 0x1FFFFFFF : 0x0DFFFFFF);
 		Paint.icon(d, "rotate-ccw", cx + 8, by + (bh - 8) / 2f, 8, resetHover ? 0xFFFFFFFF : Tokens.TEXT_2);
 		Type.draw(d, "Reset", cx + 20, by + (bh - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
 		float rx = cx;
@@ -191,8 +190,8 @@ public final class HudEditorScreen extends CompatScreen {
 		});
 		cx += resetW + 4;
 		boolean doneHover = mouseX >= cx && mouseX < cx + doneW && mouseY >= by && mouseY < by + bh;
-		Widgets.accentPill(d, cx, by, cx + doneW, by + bh, doneHover ? 1 : 0.6f);
-		Type.center(d, "Done", cx + doneW / 2f, by + (bh - cap) / 2f, cap, Weight.SEMIBOLD, 0xFFFFFFFF);
+		Widgets.primary(d, cx, by, cx + doneW, by + bh, doneHover ? 1 : 0.6f);
+		Type.center(d, "Done", cx + doneW / 2f, by + (bh - cap) / 2f, cap, Weight.SEMIBOLD, Widgets.ON_PRIMARY);
 		hits.add(cx, by, cx + doneW, by + bh, this::onClose);
 	}
 

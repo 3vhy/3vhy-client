@@ -98,7 +98,7 @@ public final class HudWidgets {
 		private float layout(String value) {
 			String label = labelText();
 			float w = Hud.PAD_X + ICON + Hud.GAP + valueWidth(value, template());
-			if (!label.isEmpty()) w += 2.6f + Type.spacedWidth(label, Hud.SMALL, 0.05f, Weight.SEMIBOLD);
+			if (!label.isEmpty()) w += 2.6f + Type.width(label, Hud.SMALL, Weight.SEMIBOLD);
 			if (extraWidth() > 0) w += Hud.GAP + 1 + extraWidth();
 			return w + Hud.PAD_X;
 		}
@@ -126,7 +126,7 @@ public final class HudWidgets {
 			if (icon == null) {
 				Logo.mark(d, cx - 1, cy - 5.5f, 11, 1, System.currentTimeMillis());
 			} else {
-				Paint.icon(d, icon, cx, cy - ICON / 2f, ICON, Accent.text());
+				Paint.icon(d, icon, cx, cy - ICON / 2f, ICON, Tokens.TEXT_2);
 			}
 			cx += ICON + Hud.GAP;
 			float vw = valueWidth(value, template());
@@ -135,8 +135,8 @@ public final class HudWidgets {
 			String label = labelText();
 			if (!label.isEmpty()) {
 				cx += 2.6f;
-				Type.spaced(d, label, cx, cy - Hud.SMALL / 2f + 0.15f, Hud.SMALL, 0.05f, Weight.SEMIBOLD, shadow ? Tokens.TEXT_2 : Tokens.TEXT_3);
-				cx += Type.spacedWidth(label, Hud.SMALL, 0.05f, Weight.SEMIBOLD);
+				Type.draw(d, label, cx, cy - Hud.SMALL / 2f + 0.15f, Hud.SMALL, Weight.SEMIBOLD, shadow ? Tokens.TEXT_2 : Tokens.TEXT_3);
+				cx += Type.width(label, Hud.SMALL, Weight.SEMIBOLD);
 			}
 			if (extraWidth() > 0) drawExtra(d, cx + Hud.GAP + 1, cy);
 		}
@@ -199,7 +199,7 @@ public final class HudWidgets {
 				points[count * 2 + 1] = cy + h / 2f - (history[i] - min) / range * h;
 				count++;
 			}
-			Paint.line(d, points, count, false, 0.75f, Tokens.LILAC_2);
+			Paint.line(d, points, count, false, 0.75f, Accent.get());
 		}
 	};
 
@@ -354,7 +354,7 @@ public final class HudWidgets {
 			String[] lines = lines(mc);
 			float text = Math.max(Hud.width(lines[0], Hud.CAP, Weight.SEMIBOLD), Hud.width("-0000, 00, -0000", Hud.CAP, Weight.SEMIBOLD));
 			if (Modules.COORDS_FACING.get()) text = Math.max(text, Hud.width(lines[1], Hud.CAP, Weight.SEMIBOLD));
-			float label = showLabel() ? Type.spacedWidth("Facing", Hud.SMALL, 0.05f, Weight.SEMIBOLD) + 4 : 0;
+			float label = showLabel() ? Type.width("Facing", Hud.SMALL, Weight.SEMIBOLD) + 4 : 0;
 			return (int) Math.ceil((Hud.PAD_X + 8 + Hud.GAP + label + text + Hud.PAD_X) / 4) * 4;
 		}
 
@@ -368,23 +368,23 @@ public final class HudWidgets {
 			String[] lines = lines(mc);
 			boolean shadow = textShadow();
 			glass(d, x, y, width(mc), height(mc), Hud.RADIUS);
-			float labelW = showLabel() ? Type.spacedWidth("Facing", Hud.SMALL, 0.05f, Weight.SEMIBOLD) + 4 : 0;
+			float labelW = showLabel() ? Type.width("Facing", Hud.SMALL, Weight.SEMIBOLD) + 4 : 0;
 			row(d, x, y + Hud.PILL_H / 2f, "map-pin", "XYZ", lines[0], labelW, shadow);
 			if (Modules.COORDS_FACING.get()) row(d, x, y + Hud.PILL_H / 2f + ROW, "compass", "Facing", lines[1], labelW, shadow);
 		}
 
 		private void row(Draw d, float x, float cy, String icon, String label, String value, float labelW, boolean shadow) {
 			float cx = x + Hud.PAD_X;
-			Paint.icon(d, icon, cx, cy - 4, 8, Accent.text());
+			Paint.icon(d, icon, cx, cy - 4, 8, Tokens.TEXT_2);
 			cx += 8 + Hud.GAP;
-			if (labelW > 0) Type.spaced(d, label, cx, cy - Hud.SMALL / 2f, Hud.SMALL, 0.05f, Weight.SEMIBOLD, shadow ? Tokens.TEXT_2 : Tokens.TEXT_3);
+			if (labelW > 0) Type.draw(d, label, cx, cy - Hud.SMALL / 2f, Hud.SMALL, Weight.SEMIBOLD, shadow ? Tokens.TEXT_2 : Tokens.TEXT_3);
 			Hud.text(d, value, cx + labelW, cy - Hud.CAP / 2f, Hud.CAP, Weight.SEMIBOLD, valueColor(), shadow);
 		}
 	};
 
 	/**
 	 * The website's keystrokes: W, A, S and D on a glass block with the mouse buttons and their CPS
-	 * under them. A key lights up in the accent gradient with a glow and dips a little while held.
+	 * under them. A key lights up in the pressed colour and dips a little while held.
 	 */
 	public static final HudWidget KEYSTROKES = new HudWidget("keystrokes", Modules.KEYSTROKES, Anchor.TOP_LEFT) {
 		private static final float S = 0.44f;
@@ -473,7 +473,6 @@ public final class HudWidgets {
 			Paint.opacity(old);
 			if (t > 0.01f) {
 				float lit = Paint.opacity(Paint.opacity() * t);
-				Paint.shadow(d, x1, y1, x2, y2, radius(R), 0, 0, 8, -2, 0xE6B51FF4);
 				Paint.rect(d, x1, y1, x2, y2, radius(R), pressedFill());
 				Paint.stroke(d, x1, y1, x2, y2, radius(R), hair, 0x33FFFFFF);
 				Paint.opacity(lit);
@@ -621,7 +620,7 @@ public final class HudWidgets {
 				int ix = x + 6 + i * 20;
 				int iy = y + 4;
 				if (icon != null) d.item(icon, ix, iy);
-				if (count == 0) Paint.rect(d, ix - 1, iy - 1, ix + 17, iy + 17, 4, 0xB00A0814);
+				if (count == 0) Paint.rect(d, ix - 1, iy - 1, ix + 17, iy + 17, 4, 0xB00A0A0B);
 				String label = Integer.toString(count);
 				float cap = 3.9f;
 				float tw = Hud.width(label, cap, Weight.BOLD);
@@ -642,8 +641,8 @@ public final class HudWidgets {
 	public static final HudWidget POPS = new PopsWidget();
 
 	/**
-	 * The website's Target HUD: the face in violet corner brackets, the name, a badge for what they
-	 * hold, a heart with their health, the distance, a gradient health bar (pink when they're low, with
+	 * The Target HUD: their face, the name, a quiet tag for what they hold, a heart with their health, the
+	 * distance, a health bar (pink when they're low, with
 	 * absorption in gold and a ghost of the last hit), their armour, and chips for combo, pops and armour.
 	 */
 	public static final HudWidget TARGET = new HudWidget("target", Modules.TARGET_HUD, Anchor.BELOW_CROSSHAIR) {
@@ -675,17 +674,17 @@ public final class HudWidgets {
 		}
 
 		private static String badge(ItemStack held) {
-			if (held.isEmpty()) return "FISTS";
+			if (held.isEmpty()) return "Fists";
 			String id = held.getItem().toString().toLowerCase(Locale.ROOT);
-			if (id.contains("sword")) return "SWORD";
-			if (id.contains("_axe")) return "AXE";
-			if (id.contains("mace")) return "MACE";
-			if (id.contains("crossbow")) return "CROSSBOW";
-			if (id.contains("bow")) return "BOW";
-			if (id.contains("trident")) return "TRIDENT";
-			if (id.contains("crystal")) return "CRYSTAL";
-			if (id.contains("totem")) return "TOTEM";
-			return "ITEM";
+			if (id.contains("sword")) return "Sword";
+			if (id.contains("_axe")) return "Axe";
+			if (id.contains("mace")) return "Mace";
+			if (id.contains("crossbow")) return "Crossbow";
+			if (id.contains("bow")) return "Bow";
+			if (id.contains("trident")) return "Trident";
+			if (id.contains("crystal")) return "Crystal";
+			if (id.contains("totem")) return "Totem";
+			return "Item";
 		}
 
 		@Override
@@ -724,8 +723,8 @@ public final class HudWidgets {
 			float r = radius(9 * U);
 			float strength = Math.max(0.25f, glassStrength());
 			float glassOld = Paint.opacity(Paint.opacity() * strength);
-			Paint.rect(d, x0, y, x0 + W, y + h, r, 0x940A0814);
-			int edge = dead || low ? 0x80FF5AD9 : 0x1FFFFFFF;
+			Paint.rect(d, x0, y, x0 + W, y + h, r, 0x940C0C0E);
+			int edge = dead || low ? 0x80FF5AD9 : 0x14FFFFFF;
 			Paint.stroke(d, x0, y, x0 + W, y + h, r, Hud.hairline(d), edge);
 			Paint.opacity(glassOld);
 
@@ -746,25 +745,22 @@ public final class HudWidgets {
 			}
 			Paint.stroke(d, fcx - fs / 2f, fcy - fs / 2f, fcx + fs / 2f, fcy + fs / 2f, 6 * U, Hud.hairline(d), 0x2EFFFFFF);
 			if (dead) {
-				Paint.rect(d, fx, fy, fx + face, fy + face, 6 * U, 0xA80B0915);
+				Paint.rect(d, fx, fy, fx + face, fy + face, 6 * U, 0xA80A0A0B);
 				Paint.icon(d, "skull", fx + face * 0.21f, fy + face * 0.21f, face * 0.58f, Tokens.PINK);
-			} else {
-				brackets(d, fx, fy, face, now);
 			}
 
 			float nx = x0 + 41 * U;
 			float nameCap = 10 * U * 0.727f;
-			String badge = target == null ? "SWORD" : badge(target.getMainHandItem());
-			float badgeCap = 6 * U * 0.727f;
+			String badge = target == null ? "Sword" : badge(target.getMainHandItem());
+			float badgeCap = 6.5f * U * 0.727f;
 			float bh = 11 * U;
-			float bw = 5 * U + 6.5f * U + 3 * U + Type.spacedWidth(badge, badgeCap, 0.08f, Weight.BOLD) + 6 * U;
+			float bw = 4 * U + 6.5f * U + 3 * U + Type.width(badge, badgeCap, Weight.SEMIBOLD) + 5 * U;
 			float bx = x0 + W - PAD - bw;
 			float by = y + 8 * U;
-			Paint.rect(d, bx, by, bx + bw, by + bh, bh / 2f, 0x50880FF9);
-			Paint.stroke(d, bx, by, bx + bw, by + bh, bh / 2f, Hud.hairline(d), 0x80B51FF4);
-			Paint.icon(d, badge.equals("AXE") ? "hammer" : badge.equals("BOW") || badge.equals("CROSSBOW") ? "target" : "sword", bx + 5 * U,
-					by + (bh - 6.5f * U) / 2f, 6.5f * U, Tokens.LILAC);
-			Type.spaced(d, badge, bx + 5 * U + 6.5f * U + 3 * U, by + (bh - badgeCap) / 2f, badgeCap, 0.08f, Weight.BOLD, Tokens.TEXT);
+			Paint.rect(d, bx, by, bx + bw, by + bh, 3 * U, 0x14FFFFFF);
+			Paint.icon(d, badge.equals("Axe") ? "hammer" : badge.equals("Bow") || badge.equals("Crossbow") ? "target" : "sword", bx + 4 * U,
+					by + (bh - 6.5f * U) / 2f, 6.5f * U, Tokens.TEXT_2);
+			Type.draw(d, badge, bx + 4 * U + 6.5f * U + 3 * U, by + (bh - badgeCap) / 2f, badgeCap, Weight.SEMIBOLD, Tokens.TEXT);
 			String shownName = Type.fit(name, bx - nx - 4, nameCap, Weight.SEMIBOLD);
 			Hud.text(d, shownName, nx, y + 13.5f * U - nameCap / 2f, nameCap, Weight.SEMIBOLD, dead ? Tokens.TEXT_2 : Tokens.TEXT, shadow);
 			if (dead) {
@@ -803,7 +799,6 @@ public final class HudWidgets {
 			}
 			if (absorption > 0) {
 				float aw = (bx2 - bx1) * Math.min(1, absorption / max);
-				Paint.shadow(d, bx1, barY - 0.5f * U, bx1 + aw, barY + 0.9f * U, 0.7f * U, 0, 0, 5 * U, 0, 0x99FFD27A);
 				Paint.rect(d, bx1, barY - 0.5f * U, bx1 + aw, barY + 0.9f * U, 0.7f * U, Tokens.GOLD);
 			}
 
@@ -852,7 +847,7 @@ public final class HudWidgets {
 			Paint.rect(d, x, y, x + w, y + h, 4 * U, 0x0DFFFFFF);
 			Paint.stroke(d, x, y, x + w, y + h, 4 * U, Hud.hairline(d), 0x10FFFFFF);
 			float cx = x + 3 * U;
-			Paint.icon(d, icon, cx, y + (h - 7.5f * U) / 2f, 7.5f * U, Tokens.LILAC);
+			Paint.icon(d, icon, cx, y + (h - 7.5f * U) / 2f, 7.5f * U, Tokens.TEXT_3);
 			cx += 7.5f * U + 2.5f * U;
 			float cap = 8.5f * U * 0.727f;
 			Type.draw(d, value, cx, y + (h - cap) / 2f, cap, Weight.SEMIBOLD, Tokens.TEXT);
@@ -870,26 +865,6 @@ public final class HudWidgets {
 			return 1;
 		}
 
-		/** The violet corner brackets round the face, breathing in and out a little. */
-		private void brackets(Draw d, float x, float y, float size, long now) {
-			float breathe = (float) (0.5 - 0.5 * Math.cos((now % 2600) / 2600.0 * Math.PI * 2));
-			float off = (2.5f + 0.5f * breathe) * U;
-			float len = 5.5f * U;
-			float th = 1.2f * U;
-			int color = Paint.fade(0xFFC324F4, 0.45f + 0.55f * Math.max(0, 1 - (now - since) / 1000f));
-			float x1 = x - off;
-			float y1 = y - off;
-			float x2 = x + size + off;
-			float y2 = y + size + off;
-			Paint.rect(d, x1, y1, x1 + len, y1 + th, 0.4f, color);
-			Paint.rect(d, x1, y1, x1 + th, y1 + len, 0.4f, color);
-			Paint.rect(d, x2 - len, y1, x2, y1 + th, 0.4f, color);
-			Paint.rect(d, x2 - th, y1, x2, y1 + len, 0.4f, color);
-			Paint.rect(d, x1, y2 - th, x1 + len, y2, 0.4f, color);
-			Paint.rect(d, x1, y2 - len, x1 + th, y2, 0.4f, color);
-			Paint.rect(d, x2 - len, y2 - th, x2, y2, 0.4f, color);
-			Paint.rect(d, x2 - th, y2 - len, x2, y2, 0.4f, color);
-		}
 
 		private String trim(float value) {
 			return value == Math.floor(value) ? Integer.toString((int) value) : String.format(Locale.ROOT, "%.1f", value);
@@ -986,7 +961,7 @@ public final class HudWidgets {
 			Hud.text(d, Type.fit(name, right - tw - 4 - tx, Hud.CAP * 0.9f, Weight.SEMIBOLD), tx, cy - Hud.CAP * 0.45f, Hud.CAP * 0.9f,
 					Weight.SEMIBOLD, Tokens.TEXT, shadow);
 			if (Modules.POTIONS_BARS.get()) {
-				Hud.bar(d, tx, y + ROW - 0.5f, right, 1.4f, left, new Grad(Accent.lighten(color, 0.1f), color, 90));
+				Hud.bar(d, tx, y + ROW - 0.5f, right, 1.4f, left, new Grad(color, color, 90));
 			}
 		}
 
@@ -1011,7 +986,7 @@ public final class HudWidgets {
 	public static final HudWidget JUMP_RESET = new HudWidget("jump_reset", Modules.JUMP_RESET, Anchor.ABOVE_HOTBAR) {
 		@Override
 		public int width(Minecraft mc) {
-			return (int) Math.ceil(Hud.PAD_X + 8 + Hud.GAP + Type.spacedWidth("Jump reset", Hud.SMALL, 0.05f, Weight.SEMIBOLD) + 4
+			return (int) Math.ceil(Hud.PAD_X + 8 + Hud.GAP + Type.width("Jump reset", Hud.SMALL, Weight.SEMIBOLD) + 4
 					+ Hud.width("Perfect +1t", Hud.CAP, Weight.BOLD) + Hud.PAD_X);
 		}
 
@@ -1032,17 +1007,17 @@ public final class HudWidgets {
 			int color = result == null ? Tokens.MINT : result.color();
 			boolean label = showLabel();
 			boolean shadow = textShadow();
-			float w = Hud.PAD_X + 8 + Hud.GAP + (label ? Type.spacedWidth("Jump reset", Hud.SMALL, 0.05f, Weight.SEMIBOLD) + 4 : 0)
+			float w = Hud.PAD_X + 8 + Hud.GAP + (label ? Type.width("Jump reset", Hud.SMALL, Weight.SEMIBOLD) + 4 : 0)
 					+ Hud.width(text, Hud.CAP, Weight.BOLD) + Hud.PAD_X;
 			float cx = x + (width(mc) - w) / 2f;
 			float cy = y + Hud.PILL_H / 2f;
 			glass(d, cx, y, w, Hud.PILL_H, Hud.RADIUS);
 			cx += Hud.PAD_X;
-			Paint.icon(d, "arrow-big-up-dash", cx, cy - 4, 8, Accent.text());
+			Paint.icon(d, "arrow-big-up-dash", cx, cy - 4, 8, Tokens.TEXT_2);
 			cx += 8 + Hud.GAP;
 			if (label) {
-				Type.spaced(d, "Jump reset", cx, cy - Hud.SMALL / 2f, Hud.SMALL, 0.05f, Weight.SEMIBOLD, Tokens.TEXT_3);
-				cx += Type.spacedWidth("Jump reset", Hud.SMALL, 0.05f, Weight.SEMIBOLD) + 4;
+				Type.draw(d, "Jump reset", cx, cy - Hud.SMALL / 2f, Hud.SMALL, Weight.SEMIBOLD, Tokens.TEXT_3);
+				cx += Type.width("Jump reset", Hud.SMALL, Weight.SEMIBOLD) + 4;
 			}
 			Hud.text(d, text, cx, cy - Hud.CAP / 2f, Hud.CAP, Weight.BOLD, color, shadow);
 		}
@@ -1096,8 +1071,7 @@ public final class HudWidgets {
 			float w = width(mc);
 			float pulse = (float) (0.5 - 0.5 * Math.cos((System.currentTimeMillis() % 1050) / 1050.0 * Math.PI * 2));
 			float r = radius(H / 2f);
-			Paint.shadow(d, x, y, x + w, y + H, r, 0, 0, 12, -2, Paint.fade(0xFFFF5AD9, 0.25f + 0.35f * pulse));
-			Paint.rect(d, x, y, x + w, y + H, r, 0xD60E0B1C);
+			Paint.rect(d, x, y, x + w, y + H, r, 0xD60C0C0E);
 			Paint.rect(d, x, y, x + w, y + H, r, 0x38FF5AD9);
 			Paint.stroke(d, x, y, x + w, y + H, r, Hud.hairline(d), Draw.mix(0x59FF5AD9, 0xB3FF5AD9, pulse));
 			ItemStack totem = SafeItems.stack(Items.TOTEM_OF_UNDYING);

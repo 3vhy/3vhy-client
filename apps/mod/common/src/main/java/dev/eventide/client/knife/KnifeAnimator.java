@@ -23,7 +23,9 @@ final class KnifeAnimator {
 		for (int c : new int[] {Clip.PITCH, Clip.YAW, Clip.ROLL, Clip.K_PITCH, Clip.K_YAW, Clip.K_ROLL, Clip.HANDLE_A, Clip.HANDLE_B, Clip.SWEEP}) {
 			ANGLE[c] = true;
 		}
-		for (int c = 0; c < Clip.CHANNELS; c++) MOMENTUM_LIMIT[c] = ANGLE[c] ? 240 : c == Clip.SLIDE ? 6 : 0.5f;
+		for (int c = 0; c < Clip.CHANNELS; c++) {
+			MOMENTUM_LIMIT[c] = ANGLE[c] ? 240 : c == Clip.SLIDE ? 6 : c == Clip.TOSS_X || c == Clip.TOSS_Y ? 4 : 0.5f;
+		}
 	}
 
 	private Clip clip;
